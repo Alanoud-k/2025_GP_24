@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'pages/HomePage.dart';
-import 'pages/AboutPage.dart';
+import 'pages/HomePage';
+import 'pages/AboutPage';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
