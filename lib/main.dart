@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'pages/HomePage';
-import 'pages/AboutPage';
+import 'package:my_app/opening.dart';
+//import 'pages/HomePage';
+//import 'pages/AboutPage';
 
 void main() {
   runApp(MyApp());
@@ -13,11 +14,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Navigation Demo',
-      initialRoute: '/',
-      routes: {
-        '/': (context) => HomePage(),
-        '/about': (context) => AboutPage(),
-      },
+     // initialRoute: '/',
+      debugShowCheckedModeBanner: false,
+     // routes: {
+       // '/': (context) => HomePage(),
+       // '/about': (context) => AboutPage(),
+     // },
+      home: SplashView(),
     );
   }
 }
