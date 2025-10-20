@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'core/constants/app_colors.dart';
+import '../core/constants/app_colors.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -8,15 +8,23 @@ class SplashView extends StatefulWidget {
   State<SplashView> createState() => _SplashViewState();
 }
 
-class _SplashViewState extends State<SplashView> with SingleTickerProviderStateMixin {
+class _SplashViewState extends State<SplashView>
+    with SingleTickerProviderStateMixin {
   double _opacity = 0.0;
 
   @override
   void initState() {
     super.initState();
 
-    Future.delayed(const Duration(milliseconds: 200), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       setState(() => _opacity = 1.0);
+      //Navigator.pushReplacementNamed(context, '/mobile');
+    });
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/mobile');
+      }
     });
   }
 
@@ -36,16 +44,12 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
                 tween: Tween(begin: 0.8, end: 1.0),
                 duration: const Duration(milliseconds: 800),
                 curve: Curves.easeOutBack,
-                builder: (context, scale, child) => Transform.scale(
-                  scale: scale,
-                  child: child,
-                ),
+                builder: (context, scale, child) =>
+                    Transform.scale(scale: scale, child: child),
                 child: Image.asset('assets/logo/hassalaLogo.png'),
               ),
 
               const SizedBox(height: 20),
-
-             
             ],
           ),
         ),
