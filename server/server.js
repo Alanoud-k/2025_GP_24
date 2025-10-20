@@ -27,6 +27,11 @@ app.get("/", async (req, res) => {
 app.post("/api/auth/check-user", async (req, res) => {
   const { phoneNo } = req.body;
 
+const phoneRegex = /^05\d{8}$/;
+  if (!phoneRegex.test(phoneNo)) {
+    return res.status(400).json({ error: "Invalid phone number format" });
+  }
+
   try {
     const users = await sql`SELECT * FROM "User" WHERE phoneNo = ${phoneNo}`;
     if (users.length > 0) {

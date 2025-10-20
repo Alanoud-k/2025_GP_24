@@ -69,6 +69,16 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                   return;
                 }
 
+                final phoneRegex = RegExp(r'^05\d{8}$'); // Saudi 05 + 8 digits
+                if (!phoneRegex.hasMatch(phone)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Enter a valid Saudi phone number'),
+                    ),
+                  );
+                  return;
+                }
+
                 try {
                   // use 10.0.2.2 to reach localhost from the Android emulator
                   final response = await http.post(
