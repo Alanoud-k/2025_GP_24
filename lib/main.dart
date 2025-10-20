@@ -20,8 +20,24 @@ class MyApp extends StatelessWidget {
       title: 'Hassalah App',
       debugShowCheckedModeBanner: false,
       home: SplashView(),
+
       routes: {
         '/mobile': (context) => MobileInputScreen(),
+
+        '/parentLogin': (context) => Scaffold(
+          appBar: AppBar(title: Text("Parent Login")),
+          body: Center(child: Text("Parent login page coming soon")),
+        ),
+
+        '/childLogin': (context) => Scaffold(
+          appBar: AppBar(title: Text("Child Login")),
+          body: Center(child: Text("Child login page coming soon")),
+        ),
+
+        '/register': (context) => Scaffold(
+          appBar: AppBar(title: Text("Register")),
+          body: Center(child: Text("Registration page coming soon")),
+        ),
         //'/register': (context) => RegisterScreen(),
         //'/password': (context) => PasswordScreen(),
         //'/loginID': (context) => LoginIDScreen(),
