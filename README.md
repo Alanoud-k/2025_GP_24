@@ -1,16 +1,39 @@
-# my_app
+## Hassalah 
 
-A new Flutter project.
 
-## Getting Started
+## Introduction  
+**Hassalah** is a mobile fintech application designed to enhance financial literacy and responsibility among Saudi families.  
+It enables **parents** to monitor and manage their children’s spending while allowing **children** to learn saving, budgeting, and responsible spending in a fun, gamified way.  
 
-This project is a starting point for a Flutter application.
+The project aligns with **Saudi Vision 2030** goals of promoting financial inclusion, digital transformation, and building financially responsible future generations.  
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Key Goals  
+- Empower parents to guide their children’s financial habits.  
+- Help children practice saving and responsible spending through interactive tools.  
+- Support **Saudi Vision 2030** in digital innovation and financial literacy.  
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+### Technologies Used  
+
+| Category | Tools / Technologies |
+|-----------|----------------------|
+| **Frontend / Mobile** | Flutter (Dart) |
+| **Backend** | Node.js |
+| **Database** | PostgreSQL (hosted on [Neon]) |
+| **AI / Data Analysis** | Python |
+| **Integration** | Open Banking Sandbox APIs, Payment Service Provider (PSP) APIs |
+| **Design & Collaboration** | Figma |
+| **Project Management** | Jira |
+| **Version Control** | GitHub |
+
+---
+
+###  Brief Launch Instructions  
+
+1. Clone the repository  
+2. Install dependencies
+3. Connect to the Neon PostgreSQL database
+4. Run the Flutter app
