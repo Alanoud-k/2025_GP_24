@@ -97,7 +97,11 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         Navigator.pushNamed(context, '/childLogin');
                       }
                     } else {
-                      Navigator.pushNamed(context, '/register');
+                      Navigator.pushNamed(
+                        context,
+                        '/register',
+                        arguments: {'phoneNo': phone},
+                      );
                     }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
