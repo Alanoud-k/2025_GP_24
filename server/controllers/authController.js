@@ -75,3 +75,42 @@ exports.registerParent = async (req, res) => {
     res.status(500).json({ error: "Failed to register parent" });
   }
 };
+
+// parent  login
+// =====================================================
+// PARENT LOGIN
+// =====================================================
+exports.loginParent = async (req, res) => {
+  const { phoneNo, password } = req.body;
+
+  if (!validatePhone(phoneNo))
+    return res.status(400).json({ error: "Invalid phone number format" });
+
+  if (!password)
+    return res.status(400).json({ error: "Password is required" });
+
+  try {
+    // check if the parent exists
+    const result = await sql`
+      SELECT parentId, password
+      FROM "Parent"
+      WHERE phoneNo = ${phoneNo}
+    `;
+
+    if (result.length === 0)
+      return res.status(404).json({ message: "Parent not found" });
+
+    const parent = result[0];
+
+    // TODO: 🔐 Replace with bcrypt.compare() when you hash passwords
+    if (parent.password !== password)
+      return res.status(401).json({ message: "Incorrect password" });
+
+    // ✅ Optionally create session entry here later
+    res.json({ message: "Parent login successful", parentId: parent.parentid });
+  } catch (err) {
+    console.error("❌ Login error:", err);
+    res.status(500).json({ error: "Failed to login" });
+  }
+};
+

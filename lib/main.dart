@@ -3,7 +3,7 @@ import 'package:my_app/pages/mobile_input_screen.dart';
 import 'package:my_app/pages/opening.dart';
 import 'package:my_app/pages/register_screen.dart';
 //import 'pages/password_screen.dart';
-//import 'pages/parent_login_screen.dart';
+import 'package:my_app/pages/parent_login_screen.dart';
 //import 'pages/child_login_screen.dart';
 //import 'pages/pin_screen.dart';
 
@@ -25,17 +25,15 @@ class MyApp extends StatelessWidget {
         '/mobile': (context) => MobileInputScreen(),
 
         '/register': (context) => const RegisterScreen(),
+        '/parentLogin': (context) => const ParentLoginScreen(),
+        '/parentHome': (context) => Scaffold(
+          appBar: AppBar(title: const Text("Parent Dashboard")),
+          body: const Center(child: Text("Welcome, Parent!")),
+        ),
 
         //'/password': (context) => const PasswordScreen(),
-        '/parentLogin': (context) => Scaffold(
-          appBar: AppBar(title: Text("Parent Login")),
-          body: Center(child: Text("Parent login page coming soon")),
-        ),
-
-        '/childLogin': (context) => Scaffold(
-          appBar: AppBar(title: Text("Child Login")),
-          body: Center(child: Text("Child login page coming soon")),
-        ),
+        //'/parentLogin': (context) => const ParentLoginScreen(),
+        //'/childLogin': (context) => const ChildLoginScreen(),
 
         //'/loginID': (context) => LoginIDScreen(),
         //'/username': (context) => UsernameScreen(),
