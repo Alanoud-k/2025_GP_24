@@ -94,7 +94,11 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                       if (data['role'] == 'Parent') {
                         Navigator.pushNamed(context, '/parentLogin');
                       } else {
-                        Navigator.pushNamed(context, '/childLogin');
+                        Navigator.pushNamed(
+                          context,
+                          '/childLogin',
+                          arguments: {'phoneNo': phone},
+                        );
                       }
                     } else {
                       Navigator.pushNamed(

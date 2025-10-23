@@ -102,11 +102,11 @@ exports.loginParent = async (req, res) => {
 
     const parent = result[0];
 
-    // TODO: 🔐 Replace with bcrypt.compare() when you hash passwords
+    //Replace with bcrypt.compare() when you hash passwords
     if (parent.password !== password)
       return res.status(401).json({ message: "Incorrect password" });
 
-    // ✅ Optionally create session entry here later
+    // Optionally create session entry here later
     res.json({ message: "Parent login successful", parentId: parent.parentid });
   } catch (err) {
     console.error("❌ Login error:", err);
@@ -114,3 +114,41 @@ exports.loginParent = async (req, res) => {
   }
 };
 
+exports.loginChild = async (req, res) => {
+  const { phoneNo, PIN } = req.body;
+  console.log("📞 Child login attempt:", phoneNo, PIN); // add this
+
+  if (!phoneNo || !PIN)
+    return res.status(400).json({ error: "Phone number and PIN are required" });
+
+  try {
+    const child = await sql`
+      SELECT * FROM "Child" WHERE phoneNo = ${phoneNo}
+    `;
+
+    console.log("🔍 Query result:", child);
+
+    if (child.length === 0) {
+      console.log("❌ Child not found");
+      return res.status(404).json({ error: "Child not found" });
+    }
+
+    const storedPin = child[0].pin?.trim(); // 👈 ensures whitespace removed
+    console.log("🧩 Stored PIN:", storedPin);
+
+    if (storedPin !== PIN) {
+      console.log("❌ Invalid PIN entered");
+      return res.status(401).json({ error: "Invalid PIN" });
+    }
+
+    console.log("✅ Child login successful!");
+    res.json({
+      message: "Child login successful",
+      childId: child[0].childid,
+      parentId: child[0].parentid,
+    });
+  } catch (err) {
+    console.error("❌ Child login error:", err);
+    res.status(500).json({ error: "Failed to login child" });
+  }
+};

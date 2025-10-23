@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:my_app/pages/mobile_input_screen.dart';
 import 'package:my_app/pages/opening.dart';
 import 'package:my_app/pages/register_screen.dart';
-//import 'pages/password_screen.dart';
 import 'package:my_app/pages/parent_login_screen.dart';
-//import 'pages/child_login_screen.dart';
+import 'package:my_app/pages/child_login_screen.dart';
 //import 'pages/pin_screen.dart';
 
 void main() {
@@ -25,10 +24,17 @@ class MyApp extends StatelessWidget {
         '/mobile': (context) => MobileInputScreen(),
 
         '/register': (context) => const RegisterScreen(),
+
         '/parentLogin': (context) => const ParentLoginScreen(),
         '/parentHome': (context) => Scaffold(
           appBar: AppBar(title: const Text("Parent Dashboard")),
           body: const Center(child: Text("Welcome, Parent!")),
+        ),
+
+        '/childLogin': (context) => const ChildLoginScreen(),
+        '/childHome': (context) => Scaffold(
+          appBar: AppBar(title: const Text("Child Dashboard")),
+          body: const Center(child: Text("Welcome, Child!")),
         ),
 
         //'/password': (context) => const PasswordScreen(),
