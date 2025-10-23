@@ -26,47 +26,56 @@ exports.checkUser = async (req, res) => {
   }
 };
 
-// parent registration logic
+
+//----------------------------------------------------------------------
+// PARENT REGISTRATION
+// --------------------------------------------------------------------
+
 exports.registerParent = async (req, res) => {
   const { firstName, lastName, nationalId, DoB, phoneNo, password } = req.body;
 
   if (!firstName || !lastName || !nationalId || !DoB || !phoneNo || !password)
     return res.status(400).json({ error: "All fields are required" });
 
-  if (!validatePhone(phoneNo)) {
+  if (!validatePhone(phoneNo))
     return res.status(400).json({ error: "Invalid phone number format" });
-  }
 
   if (!validatePassword(password))
     return res.status(400).json({ error: "Weak password" });
 
   try {
-    //check if phoneNo already exists
-    const existingParent = await sql`SELECT * FROM "Parent" WHERE phoneNo = ${phoneNo}`;
-    if (existingParent.length > 0)
+    // Check if phone number already registered
+    const existing = await sql`SELECT * FROM "Parent" WHERE phoneNo = ${phoneNo}`;
+    if (existing.length > 0)
       return res.status(400).json({ error: "Phone number already registered" });
 
-    //validate national id
-    const validNational = await sql`
+    // Validate national ID
+    const national = await sql`
       SELECT * FROM "National_Id"
       WHERE nationalId = ${nationalId} AND valid = true
     `;
-    if (validNational.length === 0) {
+    if (national.length === 0)
       return res.status(400).json({ error: "Invalid or unverified National ID" });
-    }
-    //insert new parent
-    const result = await sql`
+
+    // Insert parent and return id
+    const inserted = await sql`
       INSERT INTO "Parent" (nationalId, phoneNo, firstName, lastName, "DoB", password)
       VALUES (${nationalId}, ${phoneNo}, ${firstName}, ${lastName}, ${DoB}, ${password})
-      RETURNING parentId
+      RETURNING parentId AS "parentId"
     `;
+    const newParentId = inserted[0].parentId;
 
-    const newParentId = result[0].parentId;
-
-    //create a wallet for the parent
+    // Create wallet with foreign key
     await sql`
       INSERT INTO "Wallet" (parentId, walletBalance, currency)
       VALUES (${newParentId}, 0, 'SAR')
+    `;
+
+    // Mark National ID as used
+    await sql`
+      UPDATE "National_Id"
+      SET valid = false
+      WHERE nationalId = ${nationalId}
     `;
 
     res.json({ message: "Parent registered successfully", parentId: newParentId });
@@ -76,10 +85,12 @@ exports.registerParent = async (req, res) => {
   }
 };
 
-// parent  login
+
+
 // =====================================================
 // PARENT LOGIN
 // =====================================================
+
 exports.loginParent = async (req, res) => {
   const { phoneNo, password } = req.body;
 
