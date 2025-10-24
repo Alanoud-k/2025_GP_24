@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ParentLoginScreen extends StatefulWidget {
-  const ParentLoginScreen({Key? key}) : super(key: key);
+  const ParentLoginScreen({super.key});
 
   @override
   State<ParentLoginScreen> createState() => _ParentLoginScreenState();
@@ -86,7 +86,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(),
-              Image.asset('assets/logo_icon.png', width: 100),
+              Image.asset('assets/logo/hassalaLogo.png', width: 100),
               const SizedBox(height: 20),
 
               const Text(

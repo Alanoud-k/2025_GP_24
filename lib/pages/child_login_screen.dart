@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ChildLoginScreen extends StatefulWidget {
-  const ChildLoginScreen({Key? key}) : super(key: key);
+  const ChildLoginScreen({super.key});
 
   @override
   State<ChildLoginScreen> createState() => _ChildLoginScreenState();

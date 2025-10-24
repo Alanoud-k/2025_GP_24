@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class MobileInputScreen extends StatefulWidget {
-  const MobileInputScreen({Key? key}) : super(key: key);
+  const MobileInputScreen({super.key});
 
   @override
   State<MobileInputScreen> createState() => _MobileInputScreenState();

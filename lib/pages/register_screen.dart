@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -97,7 +97,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                Image.asset('assets/logo_icon.png', width: 100),
+                Image.asset('assets/logo/hassalaLogo.png', width: 100),
                 const SizedBox(height: 20),
 
                 // FIRST NAME
@@ -159,8 +159,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(labelText: 'Password'),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Enter password';
-                    if (v.length < 8)
+                    if (v.length < 8) {
                       return 'Password must be at least 8 characters';
+                    }
                     if (!RegExp(
                       r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)',
                     ).hasMatch(v)) {
