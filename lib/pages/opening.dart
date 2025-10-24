@@ -22,7 +22,7 @@ class _SplashViewState extends State<SplashView>
     });
 
     // الانتقال بعد 3 ثواني
-    Future.delayed(const Duration(seconds: 7), () {
+    Future.delayed(const Duration(seconds: 10), () {
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/mobile');
       }
@@ -33,7 +33,7 @@ class _SplashViewState extends State<SplashView>
   Widget build(BuildContext context) {
     return Scaffold(
       //Background
-      backgroundColor: const Color(0xFF37C4BE), 
+      backgroundColor: const Color(0xFF37C4BE),
       body: Center(
         child: AnimatedOpacity(
           duration: const Duration(seconds: 1),
@@ -48,7 +48,7 @@ class _SplashViewState extends State<SplashView>
             // 🟢 هذا هو الشعار
             child: Image.asset(
               'assets/logo/hassalaLogo.png', // ← تأكد من المسار
-              width: 500, // ← هذا السطر اللي نعدّله
+              width: 400, // ← هذا السطر اللي نعدّله
               fit: BoxFit.contain,
             ),
           ),
