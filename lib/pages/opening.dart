@@ -16,12 +16,13 @@ class _SplashViewState extends State<SplashView>
   void initState() {
     super.initState();
 
+    // أنيميشن ظهور الشعار
     Future.delayed(const Duration(milliseconds: 300), () {
       setState(() => _opacity = 1.0);
-      //Navigator.pushReplacementNamed(context, '/mobile');
     });
 
-    Future.delayed(const Duration(seconds: 3), () {
+    // الانتقال بعد 3 ثواني
+    Future.delayed(const Duration(seconds: 7), () {
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/mobile');
       }
@@ -31,26 +32,25 @@ class _SplashViewState extends State<SplashView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      //Background
+      backgroundColor: const Color(0xFF37C4BE), 
       body: Center(
         child: AnimatedOpacity(
           duration: const Duration(seconds: 1),
           opacity: _opacity,
           curve: Curves.easeInOut,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // ← هذا هو الأساس
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.8, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeOutBack,
-                builder: (context, scale, child) =>
-                    Transform.scale(scale: scale, child: child),
-                child: Image.asset('assets/logo/hassalaLogo.png'),
-              ),
-
-              const SizedBox(height: 20),
-            ],
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.8, end: 1.0),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOutBack,
+            builder: (context, scale, child) =>
+                Transform.scale(scale: scale, child: child),
+            // 🟢 هذا هو الشعار
+            child: Image.asset(
+              'assets/logo/hassalaLogo.png', // ← تأكد من المسار
+              width: 500, // ← هذا السطر اللي نعدّله
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),
