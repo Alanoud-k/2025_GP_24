@@ -11,14 +11,14 @@ class ParentLoginScreen extends StatefulWidget {
 
 class _ParentLoginScreenState extends State<ParentLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final phoneController = TextEditingController();
+  final nationalIdController = TextEditingController();
   final passwordController = TextEditingController();
 
   bool _isLoading = false;
 
   @override
   void dispose() {
-    phoneController.dispose();
+    nationalIdController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -35,7 +35,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'phoneNo': phoneController.text.trim(),
+          'nationalId': int.tryParse(nationalIdController.text.trim()),
           'password': passwordController.text.trim(),
         }),
       );
@@ -72,75 +72,202 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const primary = Color(0xFF1ABC9C);
+
     return Scaffold(
       appBar: AppBar(
-        leading: const BackButton(color: Colors.black),
+        leading: const BackButton(color: Colors.black87),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(),
-              Image.asset('assets/logo/hassalaLogo.png', width: 100),
-              const SizedBox(height: 20),
-
-              const Text(
-                "Parent Login",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 30),
-
-              // Phone number input
-              TextFormField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  prefixText: '+966 ',
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Enter your phone number';
-                  if (!RegExp(r'^05\d{8}$').hasMatch(v)) {
-                    return 'Invalid Saudi phone format';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 15),
-
-              // Password input
-              TextFormField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Enter your password';
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 30),
-
-              // Login button
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                onPressed: _isLoading ? null : _loginParent,
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Login'),
-              ),
-
-              const Spacer(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF7F8FA),
+              Color(0xFFE9E9E9),
             ],
+            stops: [0.64, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 10),
+
+                
+                        // --- الشعار ---
+                        Image.asset(
+                          'assets/logo/hassalaLogo2.png',
+                          width: 350,
+                          fit: BoxFit.contain,
+                        ),
+
+                        const SizedBox(height: 25),
+
+                    
+                        // --- النص التوضيحي ---
+                        const Text(
+                          "Enter Your National ID / Iqama\nand Password",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+
+                        // --- National ID / Iqama ---
+                        Material(
+                          elevation: 3,
+                          shadowColor: const Color(0x22000000),
+                          borderRadius: BorderRadius.circular(14),
+                          child: TextFormField(
+                            controller: nationalIdController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'National ID / Iqama',
+                              labelStyle: const TextStyle(
+                                color: Colors.black45,
+                                fontSize: 16,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Colors.red),
+                              ),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'Enter National ID / Iqama';
+                              if (v.length != 10) return 'Must be 10 digits';
+                              if (int.tryParse(v) == null) return 'Must be numeric';
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // --- Password ---
+                        Material(
+                          elevation: 3,
+                          shadowColor: const Color(0x22000000),
+                          borderRadius: BorderRadius.circular(14),
+                          child: TextFormField(
+                            controller: passwordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              labelStyle: const TextStyle(
+                                color: Colors.black45,
+                                fontSize: 16,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: Colors.red),
+                              ),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'Enter your password';
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+
+                        // --- Forget password ---
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: GestureDetector(
+                            onTap: () {
+                              // TODO: Add forget password functionality
+                            },
+                            child: const Text(
+                              "Forget password?",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // --- زر Continue ---
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _loginParent,
+                            style: ButtonStyle(
+                              backgroundColor:
+                                  MaterialStateProperty.all<Color>(primary),
+                              foregroundColor:
+                                  MaterialStateProperty.all<Color>(Colors.white),
+                              elevation: MaterialStateProperty.all<double>(6),
+                              shadowColor: MaterialStateProperty.all<Color>(
+                                primary.withOpacity(0.35),
+                              ),
+                              padding: MaterialStateProperty.all<EdgeInsets>(
+                                const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              shape: MaterialStateProperty.all<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
+                                ),
+                              ),
+                              textStyle: MaterialStateProperty.all<TextStyle>(
+                                const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text("Continue"),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

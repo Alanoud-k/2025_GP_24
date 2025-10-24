@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class MobileInputScreen extends StatefulWidget {
-  const MobileInputScreen({super.key});
+  const MobileInputScreen({Key? key}) : super(key: key);
 
   @override
   State<MobileInputScreen> createState() => _MobileInputScreenState();
@@ -28,7 +28,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF1ABC9C); // اللون الرئيسي (تركوازي)
+    const primary = Color(0xFF1ABC9C);
 
     return Scaffold(
       appBar: AppBar(
@@ -42,8 +42,8 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFF7F8FA), // الأعلى
-              Color(0xFFE9E9E9), // الأسفل
+              Color(0xFFF7F8FA),
+              Color(0xFFE9E9E9),
             ],
             stops: [0.64, 1.0],
           ),
@@ -57,41 +57,42 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 40), // مسافة من الأعلى
 
                     // --- Welcome ---
                     const Text(
                       "Welcome to",
                       style: TextStyle(
-                        fontSize: 36,
+                        fontSize: 28, // أصغر قليلاً
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF222222),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
 
-                    // --- الشعار بدون خلفية ---
+                    // --- الشعار ---
                     Image.asset(
                       'assets/logo/hassalaLogo2.png',
-                      width: 350,
+                      width: 280, // أصغر قليلاً
                       fit: BoxFit.contain,
                     ),
 
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 40), // مسافة أكبر بعد الشعار
 
                     // --- النص التوضيحي ---
                     const Text(
-                      "Please Enter Mobile Number",
+                      "Please Enter Mobile\nNumber",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 24, // أصغر من 32
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF222222),
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 40), // مسافة أكبر قبل الحقل
 
-                    // --- حقل إدخال رقم الجوال (نفس التصميم) ---
+                    // --- حقل إدخال رقم الجوال ---
                     Material(
                       elevation: 3,
                       shadowColor: const Color(0x22000000),
@@ -100,22 +101,22 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         controller: phoneController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
+                          labelText: 'Phone number', // استخدام label بدلاً من hint
+                          labelStyle: const TextStyle(
+                            color: Colors.black45,
+                            fontSize: 16,
+                          ),
                           prefixText: '+966 ',
                           prefixStyle: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                             color: Colors.black87,
                           ),
-                          hintText: "Phone number",
-                          hintStyle: const TextStyle(
-                            color: Colors.black45,
-                            fontSize: 16,
-                          ),
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 16,
+                            vertical: 18, // زيادة الارتفاع قليلاً
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -127,7 +128,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
 
                     const Spacer(),
 
-                    // --- الشروط (أسود) ---
+                    // --- الشروط ---
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6.0),
                       child: Text(
@@ -136,13 +137,13 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.black,
-                          height: 1.3,
+                          height: 1.4,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 20), // مسافة أكبر قبل الزر
 
-                    // --- زر Continue (تفاعلي: يتغير لونه/ارتفاعه حسب الإدخال) ---
+                    // --- زر Continue ---
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -152,9 +153,9 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                               MaterialStateProperty.resolveWith<Color>(
                             (states) {
                               if (states.contains(MaterialState.disabled)) {
-                                return primary.withOpacity(0.35); // فاتح عند التعطيل
+                                return primary.withOpacity(0.35);
                               }
-                              return primary; // غامق عند التفعيل
+                              return primary;
                             },
                           ),
                           foregroundColor:
@@ -168,7 +169,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                             primary.withOpacity(0.35),
                           ),
                           padding: MaterialStateProperty.all<EdgeInsets>(
-                            const EdgeInsets.symmetric(vertical: 16),
+                            const EdgeInsets.symmetric(vertical: 18), // زر أعلى
                           ),
                           shape:
                               MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -186,7 +187,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         child: const Text("Continue"),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 30), // مسافة من الأسفل
                   ],
                 ),
               ),
@@ -208,7 +209,6 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
       return;
     }
 
-    // يبدأ بـ 5 وطوله 9 أرقام (بدون +966 لأننا نضيفها عند الإرسال)
     final phoneRegex = RegExp(r'^5\d{8}$');
     if (!phoneRegex.hasMatch(phoneRaw)) {
       ScaffoldMessenger.of(context).showSnackBar(
