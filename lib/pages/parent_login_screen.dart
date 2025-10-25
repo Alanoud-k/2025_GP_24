@@ -60,7 +60,11 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pushNamed(context, '/parentHome');
+        Navigator.pushReplacementNamed(
+          context,
+          '/parentHome',
+          arguments: {'parentId': data['parentId']},
+        );
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(

@@ -4,7 +4,8 @@ import 'package:my_app/pages/opening.dart';
 import 'package:my_app/pages/register_screen.dart';
 import 'package:my_app/pages/parent_login_screen.dart';
 import 'package:my_app/pages/child_login_screen.dart';
-//import 'pages/pin_screen.dart';
+import 'package:my_app/pages/parent_homepage_screen.dart';
+import 'package:my_app/pages/manage_kids_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,24 +27,14 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
 
         '/parentLogin': (context) => const ParentLoginScreen(),
-        '/parentHome': (context) => Scaffold(
-          appBar: AppBar(title: const Text("Parent Dashboard")),
-          body: const Center(child: Text("Welcome, Parent!")),
-        ),
+        '/parentHome': (context) => const ParentHomeScreen(),
 
         '/childLogin': (context) => const ChildLoginScreen(),
         '/childHome': (context) => Scaffold(
           appBar: AppBar(title: const Text("Child Dashboard")),
           body: const Center(child: Text("Welcome, Child!")),
         ),
-
-        //'/password': (context) => const PasswordScreen(),
-        //'/parentLogin': (context) => const ParentLoginScreen(),
-        //'/childLogin': (context) => const ChildLoginScreen(),
-
-        //'/loginID': (context) => LoginIDScreen(),
-        //'/username': (context) => UsernameScreen(),
-        //'/pin': (context) => PinScreen(),
+        '/manageKids': (context) => ManageKidsScreen(),
       },
     );
   }
