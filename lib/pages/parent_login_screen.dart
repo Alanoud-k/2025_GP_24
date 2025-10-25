@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'forget_password_screen.dart';
+
 
 class ParentLoginScreen extends StatefulWidget {
   const ParentLoginScreen({super.key});
@@ -210,8 +212,12 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                           alignment: Alignment.centerLeft,
                           child: GestureDetector(
                             onTap: () {
-                              // TODO: Add forget password functionality
+                             Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ForgetPasswordScreen()),
+                             );
                             },
+
                             child: const Text(
                               "Forget password?",
                               style: TextStyle(

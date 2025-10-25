@@ -222,6 +222,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
     try {
       final response = await http.post(
         Uri.parse('http://10.0.2.2:3000/api/auth/check-user'),
+
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'phoneNo': phone}),
       );
