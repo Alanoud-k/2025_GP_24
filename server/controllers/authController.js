@@ -55,7 +55,7 @@ exports.registerParent = async (req, res) => {
       WHERE nationalId = ${nationalId} AND valid = true
     `;
     if (national.length === 0)
-      return res.status(400).json({ error: "Invalid or unverified National ID" });
+      return res.status(400).json({ error: "Invalid or already used National ID" });
 
     // Insert parent and return id
     const inserted = await sql`
@@ -80,7 +80,7 @@ exports.registerParent = async (req, res) => {
 
     res.json({ message: "Parent registered successfully", parentId: newParentId });
   } catch (err) {
-    console.error("❌ Registration error:", err);
+    console.error("Registration error:", err);
     res.status(500).json({ error: "Failed to register parent" });
   }
 };
@@ -92,7 +92,7 @@ exports.registerParent = async (req, res) => {
 // =====================================================
 
 exports.loginParent = async (req, res) => {
-  const { phoneNo, password } = req.body;
+  const { phoneNo, nationalId, password } = req.body;
 
   if (!validatePhone(phoneNo))
     return res.status(400).json({ error: "Invalid phone number format" });
@@ -105,7 +105,7 @@ exports.loginParent = async (req, res) => {
     const result = await sql`
       SELECT parentId, password
       FROM "Parent"
-      WHERE phoneNo = ${phoneNo}
+      WHERE phoneNo = ${phoneNo} AND nationalId = ${nationalId}
     `;
 
     if (result.length === 0)

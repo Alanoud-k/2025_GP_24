@@ -41,10 +41,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF7F8FA),
-              Color(0xFFE9E9E9),
-            ],
+            colors: [Color(0xFFF7F8FA), Color(0xFFE9E9E9)],
             stops: [0.64, 1.0],
           ),
         ),
@@ -58,7 +55,6 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 40), // مسافة من الأعلى
-
                     // --- Welcome ---
                     const Text(
                       "Welcome to",
@@ -78,7 +74,6 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                     ),
 
                     const SizedBox(height: 40), // مسافة أكبر بعد الشعار
-
                     // --- النص التوضيحي ---
                     const Text(
                       "Please Enter Mobile\nNumber",
@@ -91,7 +86,6 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                       ),
                     ),
                     const SizedBox(height: 40), // مسافة أكبر قبل الحقل
-
                     // --- حقل إدخال رقم الجوال ---
                     Material(
                       elevation: 3,
@@ -101,7 +95,8 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         controller: phoneController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: 'Phone number', // استخدام label بدلاً من hint
+                          labelText:
+                              'Phone number', // استخدام label بدلاً من hint
                           labelStyle: const TextStyle(
                             color: Colors.black45,
                             fontSize: 16,
@@ -142,7 +137,6 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                       ),
                     ),
                     const SizedBox(height: 20), // مسافة أكبر قبل الزر
-
                     // --- زر Continue ---
                     SizedBox(
                       width: double.infinity,
@@ -150,20 +144,20 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         onPressed: _canContinue ? _onContinuePressed : null,
                         style: ButtonStyle(
                           backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>(
-                            (states) {
-                              if (states.contains(MaterialState.disabled)) {
-                                return primary.withOpacity(0.35);
-                              }
-                              return primary;
-                            },
+                              MaterialStateProperty.resolveWith<Color>((
+                                states,
+                              ) {
+                                if (states.contains(MaterialState.disabled)) {
+                                  return primary.withOpacity(0.35);
+                                }
+                                return primary;
+                              }),
+                          foregroundColor: MaterialStateProperty.all<Color>(
+                            Colors.white,
                           ),
-                          foregroundColor:
-                              MaterialStateProperty.all<Color>(Colors.white),
                           elevation: MaterialStateProperty.resolveWith<double>(
-                            (states) => states.contains(MaterialState.disabled)
-                                ? 0
-                                : 6,
+                            (states) =>
+                                states.contains(MaterialState.disabled) ? 0 : 6,
                           ),
                           shadowColor: MaterialStateProperty.all<Color>(
                             primary.withOpacity(0.35),
@@ -173,10 +167,10 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                           ),
                           shape:
                               MaterialStateProperty.all<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                          ),
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
+                                ),
+                              ),
                           textStyle: MaterialStateProperty.all<TextStyle>(
                             const TextStyle(
                               fontSize: 18,
@@ -217,7 +211,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
       return;
     }
 
-    final phone = '+966$phoneRaw';
+    final phone = phoneRaw.startsWith('0') ? phoneRaw : '0$phoneRaw';
 
     try {
       final response = await http.post(
@@ -234,7 +228,11 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
 
         if (data['exists'] == true) {
           if (data['role'] == 'Parent') {
-            Navigator.pushNamed(context, '/parentLogin');
+            Navigator.pushNamed(
+              context,
+              '/parentLogin',
+              arguments: {'phoneNo': phone},
+            );
           } else {
             Navigator.pushNamed(
               context,
@@ -251,13 +249,16 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Server error. Please try again later.')),
+          const SnackBar(
+            content: Text('Server error. Please try again later.'),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 }

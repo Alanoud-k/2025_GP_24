@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'forget_password_screen.dart';
 
-
 class ParentLoginScreen extends StatefulWidget {
   const ParentLoginScreen({super.key});
 
@@ -15,8 +14,17 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final nationalIdController = TextEditingController();
   final passwordController = TextEditingController();
-
   bool _isLoading = false;
+
+  late String phoneNo;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Get phone number from previous screen
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
+    phoneNo = args?['phoneNo'] ?? '';
+  }
 
   @override
   void dispose() {
@@ -29,7 +37,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-parent');
 
     try {
@@ -37,6 +44,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
+          'phoneNo': phoneNo.trim(),
           'nationalId': int.tryParse(nationalIdController.text.trim()),
           'password': passwordController.text.trim(),
         }),
@@ -52,23 +60,21 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-
-        // Navigate to parent home or dashboard later
         Navigator.pushNamed(context, '/parentHome');
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error['message'] ?? 'Login failed'),
+            content: Text(error['message'] ?? error['error'] ?? 'Login failed'),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -87,10 +93,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF7F8FA),
-              Color(0xFFE9E9E9),
-            ],
+            colors: [Color(0xFFF7F8FA), Color(0xFFE9E9E9)],
             stops: [0.64, 1.0],
           ),
         ),
@@ -108,30 +111,34 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                       children: [
                         const SizedBox(height: 10),
 
-                
-                        // --- الشعار ---
                         Image.asset(
                           'assets/logo/hassalaLogo2.png',
                           width: 350,
                           fit: BoxFit.contain,
                         ),
-
                         const SizedBox(height: 25),
 
-                    
-                        // --- النص التوضيحي ---
+                        Text(
+                          "Login for $phoneNo",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+
                         const Text(
-                          "Enter Your National ID / Iqama\nand Password",
+                          "Enter your National ID / Iqama and Password",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF222222),
+                            fontSize: 16,
+                            color: Color(0xFF333333),
                           ),
                         ),
                         const SizedBox(height: 30),
 
-                        // --- National ID / Iqama ---
+                        // National ID field
                         Material(
                           elevation: 3,
                           shadowColor: const Color(0x22000000),
@@ -155,22 +162,20 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide.none,
                               ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(color: Colors.red),
-                              ),
                             ),
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'Enter National ID / Iqama';
+                              if (v == null || v.isEmpty)
+                                return 'Enter your National ID';
                               if (v.length != 10) return 'Must be 10 digits';
-                              if (int.tryParse(v) == null) return 'Must be numeric';
+                              if (int.tryParse(v) == null)
+                                return 'Must be numeric';
                               return null;
                             },
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        // --- Password ---
+                        // Password field
                         Material(
                           elevation: 3,
                           shadowColor: const Color(0x22000000),
@@ -194,35 +199,33 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                 borderRadius: BorderRadius.circular(14),
                                 borderSide: BorderSide.none,
                               ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: const BorderSide(color: Colors.red),
-                              ),
                             ),
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'Enter your password';
+                              if (v == null || v.isEmpty)
+                                return 'Enter your password';
                               return null;
                             },
                           ),
                         ),
                         const SizedBox(height: 15),
 
-                        // --- Forget password ---
+                        // Forget password
                         Align(
                           alignment: Alignment.centerLeft,
                           child: GestureDetector(
                             onTap: () {
-                             Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const ForgetPasswordScreen()),
-                             );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ForgetPasswordScreen(),
+                                ),
+                              );
                             },
-
                             child: const Text(
-                              "Forget password?",
+                              "Forgot password?",
                               style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: FontWeight.w500,
                                 color: Colors.black87,
                                 decoration: TextDecoration.underline,
                               ),
@@ -232,39 +235,42 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
 
                         const SizedBox(height: 40),
 
-                        // --- زر Continue ---
+                        // Continue button
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _loginParent,
                             style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.all<Color>(primary),
-                              foregroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.white),
-                              elevation: MaterialStateProperty.all<double>(6),
-                              shadowColor: MaterialStateProperty.all<Color>(
-                                primary.withOpacity(0.35),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                primary,
                               ),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                Colors.white,
+                              ),
+                              elevation: MaterialStateProperty.all<double>(6),
+                              shape:
+                                  MaterialStateProperty.all<
+                                    RoundedRectangleBorder
+                                  >(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(22),
+                                    ),
+                                  ),
                               padding: MaterialStateProperty.all<EdgeInsets>(
                                 const EdgeInsets.symmetric(vertical: 16),
                               ),
-                              shape: MaterialStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
-                              ),
-                              textStyle: MaterialStateProperty.all<TextStyle>(
-                                const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
                             ),
                             child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text("Continue"),
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    "Continue",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 24),

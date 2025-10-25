@@ -65,7 +65,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
 
         // Redirect to parent login after success
-        Navigator.pushNamed(context, '/parentLogin');
+        Navigator.pushNamed(
+          context,
+          '/parentLogin',
+          arguments: {'phoneNo': phoneNo},
+        );
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,7 +122,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       children: [
                         const SizedBox(height: 10),
 
-                        
                         // --- الشعار ---
                         Image.asset(
                           'assets/logo/hassalaLogo2.png',
@@ -144,8 +147,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         _buildTextField(
                           controller: firstName,
                           label: 'First name',
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'Enter first name' : null,
+                          validator: (v) => v == null || v.isEmpty
+                              ? 'Enter first name'
+                              : null,
                         ),
                         const SizedBox(height: 20),
 
@@ -164,9 +168,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'National ID / Iqama',
                           keyboardType: TextInputType.number,
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Enter a National ID';
-                            if (v.length != 10) return 'National ID must be 10 digits';
-                            if (int.tryParse(v) == null) return 'Must be numeric';
+                            if (v == null || v.isEmpty)
+                              return 'Enter a National ID';
+                            if (v.length != 10)
+                              return 'National ID must be 10 digits';
+                            if (int.tryParse(v) == null)
+                              return 'Must be numeric';
                             return null;
                           },
                         ),
@@ -203,10 +210,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: ElevatedButton(
                             onPressed: _registerParent,
                             style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.all<Color>(primary),
-                              foregroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.white),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                primary,
+                              ),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                Colors.white,
+                              ),
                               elevation: MaterialStateProperty.all<double>(6),
                               shadowColor: MaterialStateProperty.all<Color>(
                                 primary.withOpacity(0.35),
@@ -214,12 +223,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               padding: MaterialStateProperty.all<EdgeInsets>(
                                 const EdgeInsets.symmetric(vertical: 16),
                               ),
-                              shape: MaterialStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
-                              ),
+                              shape:
+                                  MaterialStateProperty.all<
+                                    RoundedRectangleBorder
+                                  >(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(22),
+                                    ),
+                                  ),
                               textStyle: MaterialStateProperty.all<TextStyle>(
                                 const TextStyle(
                                   fontSize: 18,
@@ -260,10 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         obscureText: obscureText,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-            color: Colors.black45,
-            fontSize: 16,
-          ),
+          labelStyle: const TextStyle(color: Colors.black45, fontSize: 16),
           filled: true,
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(
@@ -294,10 +302,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         readOnly: true,
         decoration: InputDecoration(
           labelText: 'Date of birth',
-          labelStyle: const TextStyle(
-            color: Colors.black45,
-            fontSize: 16,
-          ),
+          labelStyle: const TextStyle(color: Colors.black45, fontSize: 16),
           filled: true,
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(
