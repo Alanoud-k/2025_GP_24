@@ -59,7 +59,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                     const Text(
                       "Welcome to",
                       style: TextStyle(
-                        fontSize: 28, // أصغر قليلاً
+                        fontSize: 28, 
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF222222),
                       ),
@@ -69,7 +69,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                     // --- الشعار ---
                     Image.asset(
                       'assets/logo/hassalaLogo2.png',
-                      width: 280, // أصغر قليلاً
+                      width: 280,
                       fit: BoxFit.contain,
                     ),
 
