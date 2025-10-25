@@ -163,3 +163,55 @@ exports.loginChild = async (req, res) => {
     res.status(500).json({ error: "Failed to login child" });
   }
 };
+// =====================================================
+// FORGOT PASSWORD (Parent only - generate random password)
+// =====================================================
+
+//const twilio = require("twilio");
+ 
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { phoneNo } = req.body;
+
+    if (!phoneNo)
+      return res.status(400).json({ error: "Phone number is required" });
+
+    if (!validatePhone(phoneNo))
+      return res.status(400).json({ error: "Invalid phone number format" });
+
+    // توليد كلمة مرور جديدة عشوائية (8 رموز)
+    const newPassword = Math.random().toString(36).slice(-8); 
+
+    // التأكد من وجود الأب
+    const parent = await sql`SELECT * FROM "Parent" WHERE phoneNo = ${phoneNo}`;
+    if (parent.length === 0)
+      return res.status(404).json({ error: "Parent not found" });
+
+    // تحديث كلمة المرور
+    await sql`UPDATE "Parent" SET password = ${newPassword} WHERE phoneNo = ${phoneNo}`;
+
+    console.log(`🔑 New password for ${phoneNo}: ${newPassword}`);
+
+   /* // إعداد Twilio client
+const client = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+// إرسال الرسالة النصية
+await client.messages.create({
+  body: `Hassala: Your new password is ${newPassword}`,
+  from: process.env.TWILIO_PHONE, // رقم Twilio اللي عندك
+  to: phoneNo, // رقم المستخدم بصيغة +9665xxxxxxx
+});
+*/
+
+    res.json({
+      message: "Parent password reset successfully",
+      newPassword,
+    });
+  } catch (err) {
+    console.error("❌ Forgot password error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
