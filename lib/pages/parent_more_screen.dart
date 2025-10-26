@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class MorePage extends StatelessWidget {
-  const MorePage({super.key});
+  final int parentId;
+  const MorePage({super.key, required this.parentId});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,11 @@ class MorePage extends StatelessWidget {
             title: const Text('Manage Kids'),
             onTap: () {
               //print("Manage Kids tapped!");
-              Navigator.pushNamed(context, '/manageKids');
+              Navigator.pushNamed(
+                context,
+                '/manageKids',
+                arguments: {'parentId': parentId},
+              );
             },
           ),
           const ListTile(

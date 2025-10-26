@@ -5,7 +5,7 @@ exports.getChildrenByParent = async (req, res) => {
 
   try {
     const children = await sql`
-      SELECT childId, firstName, phoneNo, "DoB"
+      SELECT childId, firstName, phoneNo, dob
       FROM "Child"
       WHERE parentId = ${parentId}
     `;
@@ -17,9 +17,9 @@ exports.getChildrenByParent = async (req, res) => {
 };
 
 exports.registerChild = async (req, res) => {
-  const { parentId, firstName, nationalId, phoneNo, DoB, PIN } = req.body;
+  const { parentId, firstName, nationalId, phoneNo, dob, PIN } = req.body;
 
-  if (!parentId || !firstName || !nationalId || !phoneNo || !DoB || !PIN)
+  if (!parentId || !firstName || !nationalId || !phoneNo || !dob || !PIN)
     return res.status(400).json({ error: "All fields are required" });
 
   // basic validations
@@ -30,7 +30,7 @@ exports.registerChild = async (req, res) => {
     return res.status(400).json({ error: "Invalid phone number format" });
 
   // Check child is under 18
-  const birthDate = new Date(DoB);
+  const birthDate = new Date(dob);
   const age = new Date().getFullYear() - birthDate.getFullYear();
   if (age >= 18)
     return res.status(400).json({ error: "Child must be under 18 years old" });
@@ -50,18 +50,23 @@ exports.registerChild = async (req, res) => {
       return res.status(400).json({ error: "Phone number already in use" });
 
     // Insert child
-    const inserted = await sql`
-      INSERT INTO "Child" (parentId, firstName, nationalId, phoneNo, "DoB", pin)
-      VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${DoB}, ${PIN})
-      RETURNING childId
-    `;
-    const childId = inserted[0].childId;
+    const childResult = await pool.query(
+  `INSERT INTO "Child" (parentId, firstName, nationalId, phoneNo, dob, pin)
+   VALUES ($1, $2, $3, $4, $5, $6)
+   RETURNING childId`,
+  [parentId, firstName, nationalId, phoneNo, dob, pin]
+);
 
-    // Create wallet
-    await sql`
-      INSERT INTO "Wallet" (childId, walletBalance, currency)
-      VALUES (${childId}, 0, 'SAR')
-    `;
+
+   const childId = childResult.rows[0].childid;
+
+// Create wallet for the child
+await pool.query(
+  `INSERT INTO "Wallet" (childId, balance, status)
+   VALUES ($1, 0.0, 'Active')`,
+  [childId]
+);
+
 
     // Mark National ID as used
     await sql`

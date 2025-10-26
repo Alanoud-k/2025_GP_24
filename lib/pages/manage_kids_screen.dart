@@ -12,16 +12,19 @@ class ManageKidsScreen extends StatefulWidget {
 class _ManageKidsScreenState extends State<ManageKidsScreen> {
   List children = [];
   bool _loading = true;
-
-  final int parentId = 1; // 👈 replace with logged-in parent ID later
+  late int parentId;
 
   @override
-  void initState() {
-    super.initState();
-    fetchChildren();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
+    parentId = args?['parentId'] ?? 0;
+    print('📱 ManageKidsScreen received parentId: $parentId');
+    fetchChildren(); // ✅ Only called after parentId is ready
   }
 
   Future<void> fetchChildren() async {
+    setState(() => _loading = true);
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/child/$parentId');
 //final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
@@ -40,11 +43,12 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       setState(() => _loading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error fetching children: $e')));
     }
   }
 
   void _openAddChildDialog() {
+    final _formKey = GlobalKey<FormState>();
     final firstName = TextEditingController();
     final nationalId = TextEditingController();
     final phoneNo = TextEditingController();
@@ -57,22 +61,93 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         return AlertDialog(
           title: const Text("Add Child"),
           content: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildField(firstName, "First Name"),
-                _buildField(
-                  nationalId,
-                  "National ID",
-                  keyboardType: TextInputType.number,
-                ),
-                _buildField(
-                  phoneNo,
-                  "Phone Number",
-                  keyboardType: TextInputType.number,
-                ),
-                _buildField(dob, "Date of Birth (YYYY-MM-DD)"),
-                _buildField(pin, "PIN (4 digits)", obscureText: true),
-              ],
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildValidatedField(
+                    controller: firstName,
+                    label: "First Name",
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter first name';
+                      if (!RegExp(r'^[a-zA-Z]+$').hasMatch(v)) {
+                        return 'Letters only';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _buildValidatedField(
+                    controller: nationalId,
+                    label: "National ID",
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter National ID';
+                      if (v.length != 10) return 'Must be 10 digits';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _buildValidatedField(
+                    controller: phoneNo,
+                    label: "Phone Number",
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter phone number';
+                      if (!RegExp(r'^05\d{8}$').hasMatch(v)) {
+                        return 'Invalid format (must start with 05)';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  // 🎯 Date Picker
+                  TextFormField(
+                    controller: dob,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: "Date of Birth",
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) {
+                        return 'Select date of birth';
+                      }
+                      return null;
+                    },
+                    onTap: () async {
+                      FocusScope.of(context).unfocus();
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime(2010),
+                        firstDate: DateTime(2007),
+                        lastDate: DateTime.now(),
+                      );
+                      if (pickedDate != null) {
+                        dob.text = pickedDate
+                            .toIso8601String()
+                            .split('T')
+                            .first;
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _buildValidatedField(
+                    controller: pin,
+                    label: "PIN (4 digits)",
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter PIN';
+                      if (!RegExp(r'^\d{4}$').hasMatch(v)) {
+                        return 'Must be 4 digits';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -82,6 +157,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                if (!_formKey.currentState!.validate()) return;
                 await registerChild(
                   firstName.text.trim(),
                   nationalId.text.trim(),
@@ -89,7 +165,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                   dob.text.trim(),
                   pin.text.trim(),
                 );
-                Navigator.pop(context);
+                if (context.mounted) Navigator.pop(context);
               },
               child: const Text("Add"),
             ),
@@ -112,7 +188,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       "firstName": firstName,
       "nationalId": int.tryParse(nationalId),
       "phoneNo": phoneNo,
-      "DoB": dob,
+      "dob": dob,
       "PIN": pin,
     };
 
@@ -127,7 +203,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Child added successfully!")),
         );
-        fetchChildren();
+        fetchChildren(); // ✅ Refresh after adding
       } else {
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -141,23 +217,22 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     }
   }
 
-  Widget _buildField(
-    TextEditingController controller,
-    String label, {
+  Widget _buildValidatedField({
+    required TextEditingController controller,
+    required String label,
     bool obscureText = false,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
       ),
+      validator: validator,
     );
   }
 
@@ -177,23 +252,38 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : children.isEmpty
-          ? const Center(child: Text("No children added yet"))
-          : ListView.builder(
-              itemCount: children.length,
-              itemBuilder: (context, index) {
-                final kid = children[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.family_restroom, size: 80, color: Colors.grey),
+                  SizedBox(height: 20),
+                  Text(
+                    "No children added yet",
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
-                  child: ListTile(
-                    leading: const Icon(Icons.person_outline),
-                    title: Text(kid['firstname'] ?? 'Unnamed'),
-                    subtitle: Text('Phone: ${kid['phoneno']}'),
-                  ),
-                );
-              },
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: fetchChildren,
+              child: ListView.builder(
+                itemCount: children.length,
+                itemBuilder: (context, index) {
+                  final kid = children[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: ListTile(
+                      leading: const Icon(Icons.person_outline),
+                      title: Text(kid['firstname'] ?? 'Unnamed'),
+                      subtitle: Text('Phone: ${kid['phoneno']}'),
+                    ),
+                  );
+                },
+              ),
             ),
     );
   }
