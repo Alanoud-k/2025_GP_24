@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class MobileInputScreen extends StatefulWidget {
-  const MobileInputScreen({Key? key}) : super(key: key);
+  const MobileInputScreen({super.key});
 
   @override
   State<MobileInputScreen> createState() => _MobileInputScreenState();
@@ -144,34 +144,34 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         onPressed: _canContinue ? _onContinuePressed : null,
                         style: ButtonStyle(
                           backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>((
+                              WidgetStateProperty.resolveWith<Color>((
                                 states,
                               ) {
-                                if (states.contains(MaterialState.disabled)) {
-                                  return primary.withOpacity(0.35);
+                                if (states.contains(WidgetState.disabled)) {
+                                  return primary.withValues(alpha: 0.35);
                                 }
                                 return primary;
                               }),
-                          foregroundColor: MaterialStateProperty.all<Color>(
+                          foregroundColor: WidgetStateProperty.all<Color>(
                             Colors.white,
                           ),
-                          elevation: MaterialStateProperty.resolveWith<double>(
+                          elevation: WidgetStateProperty.resolveWith<double>(
                             (states) =>
-                                states.contains(MaterialState.disabled) ? 0 : 6,
+                                states.contains(WidgetState.disabled) ? 0 : 6,
                           ),
-                          shadowColor: MaterialStateProperty.all<Color>(
-                            primary.withOpacity(0.35),
+                          shadowColor: WidgetStateProperty.all<Color>(
+                            primary.withValues(alpha: 0.35),
                           ),
-                          padding: MaterialStateProperty.all<EdgeInsets>(
+                          padding: WidgetStateProperty.all<EdgeInsets>(
                             const EdgeInsets.symmetric(vertical: 18), // زر أعلى
                           ),
                           shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
                                 RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(22),
                                 ),
                               ),
-                          textStyle: MaterialStateProperty.all<TextStyle>(
+                          textStyle: WidgetStateProperty.all<TextStyle>(
                             const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,

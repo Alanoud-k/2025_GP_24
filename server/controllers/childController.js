@@ -1,5 +1,9 @@
+const bcrypt = require("bcrypt");
 const { sql } = require("../config/db");
 
+// =====================================================
+// Get Children by Parent
+// =====================================================
 exports.getChildrenByParent = async (req, res) => {
   const { parentId } = req.params;
 
@@ -16,6 +20,9 @@ exports.getChildrenByParent = async (req, res) => {
   }
 };
 
+// =====================================================
+// Register Child (with hashed PIN)
+// =====================================================
 exports.registerChild = async (req, res) => {
   const { parentId, firstName, nationalId, phoneNo, dob, PIN } = req.body;
 
@@ -49,24 +56,24 @@ exports.registerChild = async (req, res) => {
     if (existing.length > 0)
       return res.status(400).json({ error: "Phone number already in use" });
 
-    // Insert child
-    const childResult = await pool.query(
-  `INSERT INTO "Child" (parentId, firstName, nationalId, phoneNo, dob, pin)
-   VALUES ($1, $2, $3, $4, $5, $6)
-   RETURNING childId`,
-  [parentId, firstName, nationalId, phoneNo, dob, pin]
-);
+    // ✅ تشفير الـ PIN
+    const saltRounds = 10;
+    const hashedPIN = await bcrypt.hash(PIN, saltRounds);
 
+    // ✅ إدخال الطفل في قاعدة البيانات مع الـ PIN المشفر
+    const inserted = await sql`
+      INSERT INTO "Child" (parentId, firstName, nationalId, phoneNo, dob, pin)
+      VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${dob}, ${hashedPIN})
+      RETURNING childId AS "childId"
+    `;
 
-   const childId = childResult.rows[0].childid;
+    const childId = inserted[0].childId;
 
-// Create wallet for the child
-await pool.query(
-  `INSERT INTO "Wallet" (childId, balance, status)
-   VALUES ($1, 0.0, 'Active')`,
-  [childId]
-);
-
+    // Create wallet for the child
+    await sql`
+      INSERT INTO "Wallet" (childId, balance, status)
+      VALUES (${childId}, 0.0, 'Active')
+    `;
 
     // Mark National ID as used
     await sql`

@@ -59,29 +59,35 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
 
     setState(() => _isLoading = false);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-  content: Text('✅ Password reset successful!'),
-  backgroundColor: Colors.green,
-),
+    if (!mounted) return;
 
-      );
+    if (response.statusCode == 200) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Password reset successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } else {
       final data = jsonDecode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('❌ ${data['error']}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ ${data['error']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   } catch (e) {
     setState(() => _isLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error connecting to server: $e')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error connecting to server: $e')),
+      );
+    }
   }
 }
 
@@ -176,23 +182,23 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                           onPressed: _isLoading ? null : _onContinue,
                           style: ButtonStyle(
                             backgroundColor:
-                                MaterialStateProperty.all<Color>(primary),
+                                WidgetStateProperty.all<Color>(primary),
                             foregroundColor:
-                                MaterialStateProperty.all<Color>(Colors.white),
-                            elevation: MaterialStateProperty.all<double>(6),
-                            shadowColor: MaterialStateProperty.all<Color>(
-                              primary.withOpacity(0.35),
+                                WidgetStateProperty.all<Color>(Colors.white),
+                            elevation: WidgetStateProperty.all<double>(6),
+                            shadowColor: WidgetStateProperty.all<Color>(
+                              primary.withValues(alpha: 0.35),
                             ),
-                            padding: MaterialStateProperty.all<EdgeInsets>(
+                            padding: WidgetStateProperty.all<EdgeInsets>(
                               const EdgeInsets.symmetric(vertical: 16),
                             ),
-                            shape: MaterialStateProperty.all<
+                            shape: WidgetStateProperty.all<
                                 RoundedRectangleBorder>(
                               RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(22),
                               ),
                             ),
-                            textStyle: MaterialStateProperty.all<TextStyle>(
+                            textStyle: WidgetStateProperty.all<TextStyle>(
                               const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,

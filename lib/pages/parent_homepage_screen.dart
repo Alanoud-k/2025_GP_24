@@ -17,7 +17,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     parentId = args?['parentId'] ?? 0;
-    print('🧩 Logged-in Parent ID: $parentId');
   }
 
   void _onItemTapped(int index) {

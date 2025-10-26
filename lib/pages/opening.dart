@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/constants/app_colors.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
