@@ -37,7 +37,8 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-parent');
+  final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-parent');
+//final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
     try {
       final response = await http.post(

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({super.key});
@@ -18,26 +20,71 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   }
 
   void _onContinue() async {
-    if (phoneController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your phone number')),
-      );
-      return;
-    }
+  var phone = phoneController.text.trim();
 
-    setState(() => _isLoading = true);
+  if (phone.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please enter your phone number')),
+    );
+    return;
+  }
 
-    await Future.delayed(const Duration(seconds: 1)); // مؤقت للتجربة
+  if (phone.startsWith('+966')) {
+    phone = phone.replaceFirst('+966', '0');
+  }
+  if (phone.startsWith('966')) {
+    phone = phone.replaceFirst('966', '0');
+  }
+
+  final phonePattern = RegExp(r'^05\d{8}$');
+  if (!phonePattern.hasMatch(phone)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Invalid phone number format')),
+    );
+    return;
+  }
+
+
+
+
+  setState(() => _isLoading = true);
+
+  try {
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:3000/api/auth/check-user'),
+     // Uri.parse('http://localhost:3000/api/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'phoneNo': phone}),
+    );
 
     setState(() => _isLoading = false);
 
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+  content: Text('✅ Password reset successful!'),
+  backgroundColor: Colors.green,
+),
+
+      );
+    } else {
+      final data = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ ${data['error']}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
+    setState(() => _isLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('A reset link has been sent to ${phoneController.text}'),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text('Error connecting to server: $e')),
     );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

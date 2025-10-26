@@ -23,6 +23,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
   Future<void> fetchChildren() async {
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/child/$parentId');
+//final url = Uri.parse('http://localhost:3000/api/auth/check-user');
+
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

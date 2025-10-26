@@ -167,8 +167,6 @@ exports.loginChild = async (req, res) => {
 // FORGOT PASSWORD (Parent only - generate random password)
 // =====================================================
 
-//const twilio = require("twilio");
- 
 exports.forgotPassword = async (req, res) => {
   try {
     const { phoneNo } = req.body;
@@ -176,42 +174,53 @@ exports.forgotPassword = async (req, res) => {
     if (!phoneNo)
       return res.status(400).json({ error: "Phone number is required" });
 
-    if (!validatePhone(phoneNo))
-      return res.status(400).json({ error: "Invalid phone number format" });
+    const cleaned = phoneNo
+      .replace("+966", "0")   // نحوله لنمط القاعدة
+      .trim();
 
-    // توليد كلمة مرور جديدة عشوائية (8 رموز)
-    const newPassword = Math.random().toString(36).slice(-8); 
+    const newPassword = Math.random().toString(36).slice(-8);
 
-    // التأكد من وجود الأب
-    const parent = await sql`SELECT * FROM "Parent" WHERE phoneNo = ${phoneNo}`;
+    const parent = await sql`
+      SELECT * FROM "Parent" WHERE phoneNo = ${cleaned}
+    `;
+
     if (parent.length === 0)
       return res.status(404).json({ error: "Parent not found" });
 
-    // تحديث كلمة المرور
-    await sql`UPDATE "Parent" SET password = ${newPassword} WHERE phoneNo = ${phoneNo}`;
+    await sql`
+      UPDATE "Parent" SET password = ${newPassword} WHERE phoneNo = ${cleaned}
+    `;
 
-    console.log(`🔑 New password for ${phoneNo}: ${newPassword}`);
+    console.log(`✅ Updated password for ${cleaned} -> ${newPassword}`);
 
-   /* // إعداد Twilio client
+// =====================================================
+// SEND SMS (Twilio integration)
+// =====================================================
+/*const twilio = require("twilio");
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
 
-// إرسال الرسالة النصية
-await client.messages.create({
-  body: `Hassala: Your new password is ${newPassword}`,
-  from: process.env.TWILIO_PHONE, // رقم Twilio اللي عندك
-  to: phoneNo, // رقم المستخدم بصيغة +9665xxxxxxx
-});
-*/
+try {
+  await client.messages.create({
+    body: `Hassala: Your new password is ${newPassword}`,
+    from: process.env.TWILIO_PHONE, 
+    to: `+966${cleaned.substring(1)}` // يحول 0555... إلى +966555...
+  });
+  console.log("📩 SMS sent successfully!");
+} catch (smsErr) {
+  console.error("❌ Failed to send SMS:", smsErr);
+}
+//////////////////////////////////////////////////*/
 
-    res.json({
-      message: "Parent password reset successfully",
-      newPassword,
-    });
+    const verify = await sql`SELECT phoneNo, password FROM "Parent" WHERE phoneNo = ${cleaned}`;
+console.log("📄 After update:", verify);
+
+
+    res.json({ message: "Password reset", newPassword });
   } catch (err) {
-    console.error("❌ Forgot password error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Forgot password error:", err);
+    res.status(500).json({ error: "Internal error" });
   }
 };

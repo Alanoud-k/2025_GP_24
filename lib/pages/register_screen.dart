@@ -39,7 +39,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _registerParent() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
+  final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
+//final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
     try {
       final response = await http.post(
