@@ -77,11 +77,9 @@ class _HomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            Text(
-              parentInfo != null
-                  ? "${parentInfo!['firstName']} ${parentInfo!['lastName']}"
-                  : "Loading...",
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+            const Text(
+              "Username",
+              style: TextStyle(fontSize:22, fontWeight:FontWeight.w600)
             ),
 
             const SizedBox(height: 5),
