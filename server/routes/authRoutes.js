@@ -12,6 +12,7 @@ router.post("/login-parent", loginParent);
 router.post("/login-child", loginChild);
 router.get("/child/:parentId", getChildrenByParent);
 router.post("/child/register", registerChild);
+router.get("/parent/:parentId", authController.getParentInfo);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/logout", logout);
 

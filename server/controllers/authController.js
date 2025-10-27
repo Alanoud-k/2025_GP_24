@@ -34,6 +34,13 @@ exports.checkUser = async (req, res) => {
 exports.registerParent = async (req, res) => {
   const { firstName, lastName, nationalId, DoB, phoneNo, password } = req.body;
 
+// Validate age (parent must be 18 or older)
+const birthDate = new Date(DoB);
+const age = new Date().getFullYear() - birthDate.getFullYear();
+if (age < 18)
+  return res.status(400).json({ error: "Parent must be at least 18 years old" });
+
+
   if (!firstName || !lastName || !nationalId || !DoB || !phoneNo || !password)
     return res.status(400).json({ error: "All fields are required" });
 
@@ -157,6 +164,44 @@ exports.loginChild = async (req, res) => {
     res.status(500).json({ error: "Failed to login child" });
   }
 };
+
+// =====================================================
+// GET PARENT INFO BY ID
+// =====================================================
+exports.getParentInfo = async (req, res) => {
+  const { parentId } = req.params;
+
+  try {
+    const result = await sql`
+      SELECT firstName, lastName, phoneNo
+      FROM "Parent"
+      WHERE parentId = ${parentId}
+    `;
+
+    if (result.length === 0)
+      return res.status(404).json({ error: "Parent not found" });
+
+    // Fetch wallet balance
+    const wallet = await sql`
+      SELECT walletBalance
+      FROM "Wallet"
+      WHERE parentId = ${parentId}
+    `;
+
+    const balance = wallet.length > 0 ? wallet[0].walletbalance : 0;
+
+    res.json({
+      firstName: result[0].firstname,
+      lastName: result[0].lastname,
+      phoneNo: result[0].phoneno,
+      balance,
+    });
+  } catch (err) {
+    console.error("Error fetching parent info:", err);
+    res.status(500).json({ error: "Failed to fetch parent info" });
+  }
+};
+
 // ----------------------------------------------------------------------
 // LOGOUT (temporary)
 // ----------------------------------------------------------------------

@@ -39,8 +39,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _registerParent() async {
     if (!_formKey.currentState!.validate()) return;
 
-  final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
-//final url = Uri.parse('http://localhost:3000/api/auth/check-user');
+    final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
+    //final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
     try {
       final response = await http.post(
@@ -144,22 +144,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 30),
 
-                        // FIRST NAME
                         _buildTextField(
                           controller: firstName,
                           label: 'First name',
-                          validator: (v) => v == null || v.isEmpty
-                              ? 'Enter first name'
-                              : null,
+                          validator: (v) {
+                            if (v == null || v.isEmpty)
+                              return 'Enter first name';
+                            if (!RegExp(r'^[A-Za-z]+$').hasMatch(v.trim())) {
+                              return 'First name must contain only letters';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 20),
 
-                        // LAST NAME
                         _buildTextField(
                           controller: lastName,
                           label: 'Last name',
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'Enter last name' : null,
+                          validator: (v) {
+                            if (v == null || v.isEmpty)
+                              return 'Enter last name';
+                            if (!RegExp(r'^[A-Za-z]+$').hasMatch(v.trim())) {
+                              return 'Last name must contain only letters';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 20),
 
@@ -195,9 +204,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               return 'Password must be at least 8 characters';
                             }
                             if (!RegExp(
-                              r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)',
+                              r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
                             ).hasMatch(v)) {
-                              return 'Use at least 1 upper, 1 lower, 1 number';
+                              return 'Use upper, lower, number & special character (!@#\$%^&*)';
                             }
                             return null;
                           },
