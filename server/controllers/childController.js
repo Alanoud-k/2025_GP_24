@@ -56,11 +56,11 @@ exports.registerChild = async (req, res) => {
     if (existing.length > 0)
       return res.status(400).json({ error: "Phone number already in use" });
 
-    // ✅ تشفير الـ PIN
+
     const saltRounds = 10;
     const hashedPIN = await bcrypt.hash(PIN, saltRounds);
 
-    // ✅ إدخال الطفل في قاعدة البيانات مع الـ PIN المشفر
+
     const inserted = await sql`
       INSERT INTO "Child" (parentId, firstName, nationalId, phoneNo, dob, pin)
       VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${dob}, ${hashedPIN})
@@ -71,7 +71,7 @@ exports.registerChild = async (req, res) => {
 
     // Create wallet for the child
     await sql`
-      INSERT INTO "Wallet" (childId, balance, status)
+      INSERT INTO "Wallet" (childId, walletBalance, walletStatus)
       VALUES (${childId}, 0.0, 'Active')
     `;
 

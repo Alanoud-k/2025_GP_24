@@ -120,3 +120,49 @@ exports.loginParent = async (req, res) => {
     res.status(500).json({ error: "Failed to login" });
   }
 };
+//----------------------------------------------------------------------
+//CHILD LOGIN
+// --------------------------------------------------------------------
+exports.loginChild = async (req, res) => {
+  const { phoneNo, PIN } = req.body;
+
+  if (!/^05\d{8}$/.test(phoneNo))
+    return res.status(400).json({ error: "Invalid phone number format" });
+
+  if (!PIN)
+    return res.status(400).json({ error: "PIN is required" });
+
+  try {
+    const result = await sql`
+      SELECT childId, pin
+      FROM "Child"
+      WHERE phoneNo = ${phoneNo}
+    `;
+
+    if (result.length === 0)
+      return res.status(404).json({ message: "Child not found" });
+
+    const child = result[0];
+    const isMatch = await bcrypt.compare(PIN, child.pin);
+
+    if (!isMatch)
+      return res.status(401).json({ message: "Incorrect PIN" });
+
+    res.json({
+      message: "Child login successful",
+      childId: child.childid,
+    });
+  } catch (err) {
+    console.error("❌ Child login error:", err);
+    res.status(500).json({ error: "Failed to login child" });
+  }
+};
+// ----------------------------------------------------------------------
+// LOGOUT (temporary)
+// ----------------------------------------------------------------------
+exports.logout = (req, res) => {
+  console.log("✅ Logout endpoint hit");
+  res.json({ message: "Logged out successfully" });
+};
+
+

@@ -32,7 +32,13 @@ class MorePage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           TextButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/mobile',
+                (route) => false,
+              );
+            },
             icon: const Icon(Icons.logout, color: Colors.red),
             label: const Text('Log Out', style: TextStyle(color: Colors.red)),
           ),
