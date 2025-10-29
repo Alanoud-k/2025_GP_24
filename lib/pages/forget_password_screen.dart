@@ -63,7 +63,7 @@ if (response.statusCode == 200) {
 if (mounted) {
 ScaffoldMessenger.of(context).showSnackBar(
 SnackBar(
-content: Text('✅ Password reset successful!'),
+content: Text('A new password was sent to your phone number. You can change it later in Settings.'),
 backgroundColor: Colors.green,
 ),
 );

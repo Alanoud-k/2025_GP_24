@@ -60,7 +60,11 @@ SELECT * FROM "National_Id"
 WHERE nationalId = ${nationalId} AND valid = true
 `;
 if (national.length === 0)
-return res.status(400).json({ error: "Invalid or already used National ID" });
+return res.status(400).json({ error: "National ID not found" });
+
+  if (national[0].valid === false) {
+      return res.status(400).json({ error: "National ID already registered" });
+    }
 
 // ✅ تشفير كلمة المرور
 const saltRounds = 10;

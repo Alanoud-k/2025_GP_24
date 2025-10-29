@@ -65,12 +65,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
 
-        // Redirect to parent login after success
-        Navigator.pushNamed(
-          context,
-          '/parentLogin',
-          arguments: {'phoneNo': phoneNo},
-        );
+      // Redirect to parent home page after success
+Navigator.pushReplacementNamed(
+  context,
+  '/parentHome',
+  arguments: {'parentId': data['parentId']},
+);
+
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
