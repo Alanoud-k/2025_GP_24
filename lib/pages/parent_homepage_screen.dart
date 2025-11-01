@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'parent_more_screen.dart';
+import 'parent_select_child_screen.dart';
+
 
 class ParentHomeScreen extends StatefulWidget {
   const ParentHomeScreen({super.key});
+
 
   @override
   State<ParentHomeScreen> createState() => _ParentHomeScreenState();
@@ -29,7 +32,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   Widget build(BuildContext context) {
     // Build pages dynamically AFTER parentId is available
     final pages = [
-      const _HomePage(),
+      //const _HomePage(),
+      _HomePage(parentId: parentId),
+
       const _PlaceholderPage(title: 'Gifts'),
       MorePage(parentId: parentId),
     ];
@@ -54,8 +59,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   }
 }
 
+//class _HomePage extends StatelessWidget {
+  //const _HomePage();
 class _HomePage extends StatelessWidget {
-  const _HomePage();
+  final int parentId;
+  const _HomePage({required this.parentId});
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +201,16 @@ class _HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             ElevatedButton.icon(
-              onPressed: () {},
+             // onPressed: () {},
+             onPressed: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ParentSelectChildScreen(parentId: parentId),
+    ),
+  );
+},
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
