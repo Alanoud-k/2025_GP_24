@@ -6,6 +6,7 @@ import 'package:my_app/pages/parent_login_screen.dart';
 import 'package:my_app/pages/child_login_screen.dart';
 import 'package:my_app/pages/parent_homepage_screen.dart';
 import 'package:my_app/pages/manage_kids_screen.dart';
+import 'package:my_app/pages/child_homepage_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,11 +31,9 @@ class MyApp extends StatelessWidget {
         '/parentHome': (context) => const ParentHomeScreen(),
 
         '/childLogin': (context) => const ChildLoginScreen(),
-        '/childHome': (context) => Scaffold(
-          appBar: AppBar(title: const Text("Child Dashboard")),
-          body: const Center(child: Text("Welcome, Child!")),
-        ),
-        '/manageKids': (context) => ManageKidsScreen(),
+        '/childHome': (context) => const ChildHomePageScreen(),
+
+        '/manageKids': (context) => const ManageKidsScreen(),
       },
     );
   }

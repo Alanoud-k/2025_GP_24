@@ -96,12 +96,32 @@ res.status(500).json({ error: "Failed to register parent" });
 }
 };
 
+//----------------------------------------------------------------------
+exports.getNameByPhone = async (req, res) => {
+  const { phoneNo } = req.params;
+  try {
+    const parent = await sql`
+      SELECT firstName FROM "Parent" WHERE phoneNo = ${phoneNo}
+    `;
+    const child = await sql`
+      SELECT firstName FROM "Child" WHERE phoneNo = ${phoneNo}
+    `;
+    if (parent.length > 0) return res.json({ firstName: parent[0].firstname });
+    if (child.length > 0) return res.json({ firstName: child[0].firstname });
+    res.status(404).json({ error: "User not found" });
+  } catch (err) {
+    console.error("Error fetching firstName:", err);
+    res.status(500).json({ error: "Failed to fetch name" });
+  }
+};
+//----------------------------------------------------------------------
+
 
 //----------------------------------------------------------------------
 // PARENT LOGIN (with bcrypt compare)
 // --------------------------------------------------------------------
 exports.loginParent = async (req, res) => {
-const { phoneNo, nationalId, password } = req.body;
+const { phoneNo, password } = req.body;
 
 if (!validatePhone(phoneNo))
 return res.status(400).json({ error: "Invalid phone number format" });
@@ -113,7 +133,7 @@ try {
 const result = await sql`
 SELECT parentId, password
 FROM "Parent"
-WHERE phoneNo = ${phoneNo} AND nationalId = ${nationalId}
+WHERE phoneNo = ${phoneNo} 
 `;
 
 if (result.length === 0)
@@ -136,17 +156,18 @@ res.status(500).json({ error: "Failed to login" });
 //CHILD LOGIN
 // --------------------------------------------------------------------
 exports.loginChild = async (req, res) => {
-const { phoneNo, PIN } = req.body;
+const { phoneNo, password } = req.body;
+console.log("📱 Child login request:", req.body);
 
 if (!/^05\d{8}$/.test(phoneNo))
 return res.status(400).json({ error: "Invalid phone number format" });
 
-if (!PIN)
-return res.status(400).json({ error: "PIN is required" });
+if (!password)
+return res.status(400).json({ error: "Password is required" });
 
 try {
 const result = await sql`
-SELECT childId, pin
+SELECT childId, password
 FROM "Child"
 WHERE phoneNo = ${phoneNo}
 `;
@@ -155,10 +176,10 @@ if (result.length === 0)
 return res.status(404).json({ message: "Child not found" });
 
 const child = result[0];
-const isMatch = await bcrypt.compare(PIN, child.pin);
+const isMatch = await bcrypt.compare(password, child.password);
 
 if (!isMatch)
-return res.status(401).json({ message: "Incorrect PIN" });
+return res.status(401).json({ message: "Incorrect password" });
 
 res.json({
 message: "Child login successful",
@@ -258,6 +279,48 @@ console.error("❌ Forgot password error:", err);
 res.status(500).json({ error: "Internal error" });
 }
 };
+
+//----------------------------------------------------------------------
+// CHILD INFO
+// ----------------------------------------------------------------------
+// =====================================================
+// GET CHILD INFO BY ID (with points)
+// =====================================================
+exports.getChildInfo = async (req, res) => {
+  const { childId } = req.params;
+
+  try {
+    // Get basic child info + points in one query
+    const result = await sql`
+      SELECT firstName, phoneNo, points
+      FROM "Child"
+      WHERE childId = ${childId}
+    `;
+
+    if (result.length === 0)
+      return res.status(404).json({ error: "Child not found" });
+
+    // Get wallet info
+    const wallet = await sql`
+      SELECT walletBalance
+      FROM "Wallet"
+      WHERE childId = ${childId}
+    `;
+
+    const balance = wallet.length > 0 ? wallet[0].walletbalance : 0;
+
+    res.json({
+      firstName: result[0].firstname,
+      phoneNo: result[0].phoneno,
+      balance,
+      points: result[0].points ?? 0,
+    });
+  } catch (err) {
+    console.error("Error fetching child info:", err);
+    res.status(500).json({ error: "Failed to fetch child info" });
+  }
+};
+
 
 // ----------------------------------------------------------------------
 // LOGOUT (temporary)

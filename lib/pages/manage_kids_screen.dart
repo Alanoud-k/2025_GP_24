@@ -13,6 +13,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
   List children = [];
   bool _loading = true;
   late int parentId;
+  final TextEditingController password = TextEditingController();
 
   @override
   void didChangeDependencies() {
@@ -26,7 +27,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
   Future<void> fetchChildren() async {
     setState(() => _loading = true);
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/child/$parentId');
-//final url = Uri.parse('http://localhost:3000/api/auth/check-user');
+    //final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
     try {
       final response = await http.get(url);
@@ -53,7 +54,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     final nationalId = TextEditingController();
     final phoneNo = TextEditingController();
     final dob = TextEditingController();
-    final pin = TextEditingController();
+    //final password = TextEditingController();
 
     showDialog(
       context: context,
@@ -134,14 +135,19 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                   ),
                   const SizedBox(height: 10),
                   _buildValidatedField(
-                    controller: pin,
-                    label: "PIN (4 digits)",
+                    controller: password,
+                    label: "Password",
                     obscureText: true,
                     keyboardType: TextInputType.number,
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Enter PIN';
-                      if (!RegExp(r'^\d{4}$').hasMatch(v)) {
-                        return 'Must be 4 digits';
+                      if (v == null || v.isEmpty) return 'Enter password';
+                      if (v.length < 8) {
+                        return 'Password must be at least 8 characters';
+                      }
+                      if (!RegExp(
+                        r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
+                      ).hasMatch(v)) {
+                        return 'Use upper, lower, number & special character (!@#\$%^&*)';
                       }
                       return null;
                     },
@@ -163,7 +169,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                   nationalId.text.trim(),
                   phoneNo.text.trim(),
                   dob.text.trim(),
-                  pin.text.trim(),
+                  password.text.trim(),
                 );
                 if (context.mounted) Navigator.pop(context);
               },
@@ -180,7 +186,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     String nationalId,
     String phoneNo,
     String dob,
-    String pin,
+    String password,
   ) async {
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/child/register');
     final body = {
@@ -189,7 +195,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       "nationalId": int.tryParse(nationalId),
       "phoneNo": phoneNo,
       "dob": dob,
-      "PIN": pin,
+      "password": password,
     };
 
     try {

@@ -59,7 +59,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                     const Text(
                       "Welcome to",
                       style: TextStyle(
-                        fontSize: 28, 
+                        fontSize: 28,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF222222),
                       ),
@@ -101,12 +101,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                             color: Colors.black45,
                             fontSize: 16,
                           ),
-                          prefixText: '+966 ',
-                          prefixStyle: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
+
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.symmetric(
@@ -144,9 +139,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         onPressed: _canContinue ? _onContinuePressed : null,
                         style: ButtonStyle(
                           backgroundColor:
-                              WidgetStateProperty.resolveWith<Color>((
-                                states,
-                              ) {
+                              WidgetStateProperty.resolveWith<Color>((states) {
                                 if (states.contains(WidgetState.disabled)) {
                                   return primary.withValues(alpha: 0.35);
                                 }
@@ -203,25 +196,25 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
       return;
     }
 
-    final phoneRegex = RegExp(r'^5\d{8}$');
+    final phoneRegex = RegExp(r'^05\d{8}$');
     if (!phoneRegex.hasMatch(phoneRaw)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid Saudi phone number')),
+        const SnackBar(
+          content: Text('Enter a valid Saudi phone number starting with 05'),
+        ),
       );
       return;
     }
 
-    final phone = phoneRaw.startsWith('0') ? phoneRaw : '0$phoneRaw';
+    final phone = phoneRaw;
 
     try {
       final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/api/auth/check-user'),
-//Uri.parse('http://localhost:3000/api/auth/check-user'),
+        Uri.parse('http://10.0.2.2:3000/api/auth/check-user'),
+        //Uri.parse('http://localhost:3000/api/auth/check-user'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'phoneNo': phone}),
       );
-
-      
 
       if (!mounted) return;
 

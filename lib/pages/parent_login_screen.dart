@@ -24,6 +24,22 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
     // Get phone number from previous screen
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     phoneNo = args?['phoneNo'] ?? '';
+    _fetchFirstName();
+  }
+
+  String firstName = '';
+
+  Future<void> _fetchFirstName() async {
+    final url = Uri.parse('http://10.0.2.2:3000/api/auth/name/$phoneNo');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() => firstName = data['firstName'] ?? '');
+      }
+    } catch (e) {
+      print("Error fetching name: $e");
+    }
   }
 
   @override
@@ -37,8 +53,8 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
- final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-parent');
-//final url = Uri.parse('http://localhost:3000/api/auth/check-user');
+    final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-parent');
+    //final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
     try {
       final response = await http.post(
@@ -46,7 +62,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'phoneNo': phoneNo.trim(),
-          'nationalId': int.tryParse(nationalIdController.text.trim()),
+          //'nationalId': int.tryParse(nationalIdController.text.trim()),
           'password': passwordController.text.trim(),
         }),
       );
@@ -124,7 +140,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                         const SizedBox(height: 25),
 
                         Text(
-                          "Login for $phoneNo",
+                          "Login for ${firstName.isNotEmpty ? firstName : phoneNo}",
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -134,51 +150,14 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                         const SizedBox(height: 25),
 
                         const Text(
-                          "Enter your National ID / Iqama and Password",
+                          "Enter your Password",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
                             color: Color(0xFF333333),
                           ),
                         ),
-                        const SizedBox(height: 30),
-
-                        // National ID field
-                        Material(
-                          elevation: 3,
-                          shadowColor: const Color(0x22000000),
-                          borderRadius: BorderRadius.circular(14),
-                          child: TextFormField(
-                            controller: nationalIdController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'National ID / Iqama',
-                              labelStyle: const TextStyle(
-                                color: Colors.black45,
-                                fontSize: 16,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            validator: (v) {
-                              if (v == null || v.isEmpty)
-                                return 'Enter your National ID';
-                              if (v.length != 10) return 'Must be 10 digits';
-                              if (int.tryParse(v) == null)
-                                return 'Must be numeric';
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+                        //const SizedBox(height: 30),
 
                         // Password field
                         Material(

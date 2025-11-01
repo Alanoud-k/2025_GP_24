@@ -24,9 +24,9 @@ exports.getChildrenByParent = async (req, res) => {
 // Register Child (with hashed PIN)
 // =====================================================
 exports.registerChild = async (req, res) => {
-  const { parentId, firstName, nationalId, phoneNo, dob, PIN } = req.body;
+  const { parentId, firstName, nationalId, phoneNo, dob, password } = req.body;
 
-  if (!parentId || !firstName || !nationalId || !phoneNo || !dob || !PIN)
+  if (!parentId || !firstName || !nationalId || !phoneNo || !dob || !password)
     return res.status(400).json({ error: "All fields are required" });
 
   // basic validations
@@ -58,12 +58,14 @@ exports.registerChild = async (req, res) => {
 
 
     const saltRounds = 10;
-    const hashedPIN = await bcrypt.hash(PIN, saltRounds);
+    const hashedPasswordChild = await bcrypt.hash(password, saltRounds);
+
+
 
 
     const inserted = await sql`
-      INSERT INTO "Child" (parentId, firstName, nationalId, phoneNo, dob, pin)
-      VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${dob}, ${hashedPIN})
+      INSERT INTO "Child" (parentId, firstName, nationalId, phoneNo, dob, password)
+      VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${dob}, ${hashedPasswordChild})
       RETURNING childId AS "childId"
     `;
 

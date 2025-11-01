@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -12,32 +11,42 @@ class ChildLoginScreen extends StatefulWidget {
 
 class _ChildLoginScreenState extends State<ChildLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _pinCtrl = TextEditingController();
-  final FocusNode _pinFocus = FocusNode();
-
+  final passwordController = TextEditingController();
   bool _isLoading = false;
-  late String phoneNo = '';
+  late String phoneNo;
 
-  Color get _brandTeal => const Color(0xFF37C4BE); 
-  Color get _bgTop => const Color(0xFFF7F8FA);    
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
-    phoneNo = (args?['phoneNo'] ?? '').toString();
+    phoneNo = args?['phoneNo'] ?? '';
+    _fetchFirstName();
+  }
+
+  String firstName = '';
+
+  Future<void> _fetchFirstName() async {
+    final url = Uri.parse('http://10.0.2.2:3000/api/auth/name/$phoneNo');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() => firstName = data['firstName'] ?? '');
+      }
+    } catch (e) {
+      print("Error fetching name: $e");
+    }
   }
 
   @override
   void dispose() {
-    _pinCtrl.dispose();
-    _pinFocus.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 
-  bool get _pinValid => _pinCtrl.text.trim().length == 4;
-
   Future<void> _loginChild() async {
-    if (!_pinValid || _isLoading) return;
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
 
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-child');
@@ -48,7 +57,7 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'phoneNo': phoneNo.trim(),
-          'PIN': _pinCtrl.text.trim(),
+          'password': passwordController.text.trim(),
         }),
       );
 
@@ -57,188 +66,177 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Login successful!')),
+          SnackBar(
+            content: Text(data['message'] ?? 'Login successful!'),
+            backgroundColor: Colors.green,
+          ),
         );
-        Navigator.pushNamed(context, '/childHome');
+        Navigator.pushReplacementNamed(
+          context,
+          '/childHome',
+          arguments: {'childId': data['childId']},
+        );
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error['error'] ?? 'Login failed')),
+          SnackBar(
+            content: Text(error['message'] ?? error['error'] ?? 'Login failed'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    const primary = Color(0xFF1ABC9C);
+
     return Scaffold(
- 
       appBar: AppBar(
-        leading: const BackButton(color: Colors.black),
+        leading: const BackButton(color: Colors.black87),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [_bgTop, Colors.white],
+            colors: [Color(0xFFF7F8FA), Color(0xFFE9E9E9)],
+            stops: [0.64, 1.0],
           ),
         ),
         child: SafeArea(
-          child: GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  const Spacer(),
-                  // Logo
-                  Image.asset(
-                    'assets/logo/hassalaLogo2.png',
-                    width: 350,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 28),
-                  const Text(
-                    'Enter Your PIN',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 10),
 
-                
-                  GestureDetector(
-                    onTap: () => FocusScope.of(context).requestFocus(_pinFocus),
-                    child: _PinBoxes(pinText: _pinCtrl.text),
-                  ),
+                        Image.asset(
+                          'assets/logo/hassalaLogo2.png',
+                          width: 350,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(height: 25),
 
-                  // PIN
-                  Offstage(
-                    offstage: false,
-                    child: SizedBox(
-                      height: 0,
-                      width: 0,
-                      child: TextFormField(
-                        controller: _pinCtrl,
-                        focusNode: _pinFocus,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
-                        ],
-                        obscureText: true,
-                        obscuringCharacter: '•',
-                        onChanged: (_) => setState(() {}),
-                        validator: (v) {
-                          final t = v?.trim() ?? '';
-                          if (t.isEmpty) return 'Enter your PIN';
-                          if (t.length != 4) return 'PIN must be 4 digits';
-                          return null;
-                        },
-                        enableInteractiveSelection: false,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 22),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: (_pinValid && !_isLoading)
-                            ? _loginChild
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _brandTeal,
-                          disabledBackgroundColor:
-                              _brandTeal.withOpacity(0.35),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+                        Text(
+                          "Login for ${firstName.isNotEmpty ? firstName : phoneNo}",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
+                        const SizedBox(height: 25),
+
+                        const Text(
+                          "Enter your password",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF333333),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+
+                        // Password field
+                        Material(
+                          elevation: 3,
+                          shadowColor: const Color(0x22000000),
+                          borderRadius: BorderRadius.circular(14),
+                          child: TextFormField(
+                            controller: passwordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              labelStyle: const TextStyle(
+                                color: Colors.black45,
+                                fontSize: 16,
                               ),
-                      ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.isEmpty)
+                                return 'Enter your password';
+                              if (v.length < 8)
+                                return 'Password must be at least 8 characters';
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+
+                        // Continue button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _loginChild,
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                primary,
+                              ),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                Colors.white,
+                              ),
+                              elevation: MaterialStateProperty.all<double>(6),
+                              shape:
+                                  MaterialStateProperty.all<
+                                    RoundedRectangleBorder
+                                  >(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(22),
+                                    ),
+                                  ),
+                              padding: MaterialStateProperty.all<EdgeInsets>(
+                                const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    "Continue",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  const Spacer(),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _PinBoxes extends StatelessWidget {
-  final String pinText;
-  const _PinBoxes({required this.pinText});
-
-  @override
-  Widget build(BuildContext context) {
-    final chars = pinText.characters.toList();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (i) {
-        final hasChar = i < chars.length;
-        return Container(
-          width: 54,
-          height: 54,
-          margin: EdgeInsets.only(right: i == 3 ? 0 : 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: const [
-              BoxShadow(
-                blurRadius: 8,
-                spreadRadius: 0,
-                offset: Offset(0, 2),
-                color: Color(0x14000000), 
-              ),
-            ],
-            border: Border.all(
-              color: hasChar ? const Color(0xFFE0E0E0) : const Color(0xFFEAEAEA),
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            hasChar ? '•' : '',
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-          ),
-        );
-      }),
     );
   }
 }
