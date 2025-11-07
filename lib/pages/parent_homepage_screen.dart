@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'parent_more_screen.dart';
 import 'parent_select_child_screen.dart';
 
-
 class ParentHomeScreen extends StatefulWidget {
   const ParentHomeScreen({super.key});
-
 
   @override
   State<ParentHomeScreen> createState() => _ParentHomeScreenState();
@@ -20,6 +18,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     parentId = args?['parentId'] ?? 0;
+    print("🟢 ParentHomeScreen loaded with parentId: $parentId");
   }
 
   void _onItemTapped(int index) {
@@ -60,7 +59,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 }
 
 //class _HomePage extends StatelessWidget {
-  //const _HomePage();
+//const _HomePage();
 class _HomePage extends StatelessWidget {
   final int parentId;
   const _HomePage({required this.parentId});
@@ -87,7 +86,7 @@ class _HomePage extends StatelessWidget {
             const SizedBox(height: 20),
             const Text(
               "Username",
-              style: TextStyle(fontSize:22, fontWeight:FontWeight.w600)
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
             ),
 
             const SizedBox(height: 5),
@@ -201,15 +200,16 @@ class _HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             ElevatedButton.icon(
-             // onPressed: () {},
-             onPressed: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ParentSelectChildScreen(parentId: parentId),
-    ),
-  );
-},
+              // onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ParentSelectChildScreen(parentId: parentId),
+                  ),
+                );
+              },
 
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,

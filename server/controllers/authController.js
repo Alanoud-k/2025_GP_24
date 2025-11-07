@@ -280,17 +280,16 @@ res.status(500).json({ error: "Internal error" });
 }
 };
 
-//----------------------------------------------------------------------
-// CHILD INFO
-// ----------------------------------------------------------------------
 // =====================================================
-// GET CHILD INFO BY ID (with points)
+// GET CHILD INFO BY ID 
+// =====================================================
+// =====================================================
+// GET CHILD INFO BY ID
 // =====================================================
 exports.getChildInfo = async (req, res) => {
   const { childId } = req.params;
 
   try {
-    // Get basic child info + points in one query
     const result = await sql`
       SELECT firstName, phoneNo, points
       FROM "Child"
@@ -300,26 +299,49 @@ exports.getChildInfo = async (req, res) => {
     if (result.length === 0)
       return res.status(404).json({ error: "Child not found" });
 
-    // Get wallet info
+    // ✅ Get wallet + balance breakdown
     const wallet = await sql`
-      SELECT walletBalance
+      SELECT walletId, walletBalance
       FROM "Wallet"
       WHERE childId = ${childId}
     `;
 
-    const balance = wallet.length > 0 ? wallet[0].walletbalance : 0;
+    let balance = 0;
+    let saving = 0;
+    let spend = 0;
+
+    if (wallet.length > 0) {
+      balance = wallet[0].walletbalance;
+
+      const breakdown = await sql`
+        SELECT 
+          COALESCE(savedamount, 0) AS "saving",
+          COALESCE(spendamount, 0) AS "spend"
+        FROM "BalanceBreakdown"
+        WHERE walletId = ${wallet[0].walletid}
+      `;
+
+      if (breakdown.length > 0) {
+        saving = breakdown[0].saving;
+        spend = breakdown[0].spend;
+      }
+    }
 
     res.json({
       firstName: result[0].firstname,
       phoneNo: result[0].phoneno,
       balance,
+      saving,
+      spend,
       points: result[0].points ?? 0,
     });
   } catch (err) {
-    console.error("Error fetching child info:", err);
+    console.error("❌ Error fetching child info:", err);
     res.status(500).json({ error: "Failed to fetch child info" });
   }
 };
+
+
 
 
 // ----------------------------------------------------------------------

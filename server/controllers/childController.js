@@ -6,19 +6,31 @@ const { sql } = require("../config/db");
 // =====================================================
 exports.getChildrenByParent = async (req, res) => {
   const { parentId } = req.params;
+  console.log("📩 Request received for parentId:", parentId);
 
   try {
     const children = await sql`
-      SELECT childId, firstName, phoneNo, dob
-      FROM "Child"
-      WHERE parentId = ${parentId}
+      SELECT 
+        c.childid AS "childid",
+        c.firstname AS "firstname",
+        c.phoneno AS "phoneno",
+        COALESCE(w.walletbalance, 0) AS "balance"
+      FROM "Child" c
+      LEFT JOIN "Wallet" w ON c.childid = w.childid
+      WHERE c.parentid = ${parentId};
     `;
-    res.json(children);
+
+    console.log("✅ Query result:", children);
+    res.status(200).json(children);
   } catch (err) {
-    console.error("Error fetching children:", err);
-    res.status(500).json({ error: "Failed to fetch children" });
+    console.error("❌ Error fetching children:", err);
+    res.status(500).json({ error: err.message });
   }
 };
+
+
+
+
 
 // =====================================================
 // Register Child (with hashed PIN)
@@ -90,3 +102,7 @@ exports.registerChild = async (req, res) => {
     res.status(500).json({ error: "Failed to register child" });
   }
 };
+
+
+
+
