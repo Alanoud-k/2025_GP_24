@@ -351,3 +351,30 @@ exports.logout = (req, res) => {
 console.log("✅ Logout endpoint hit");
 res.json({ message: "Logged out successfully" });
 };
+
+
+// =====================================================
+// GET PARENT BY ID
+// =====================================================
+
+exports.getParentById = async (req, res) => {
+  try {
+    const { parentId } = req.params;
+
+    const result = await sql`
+      SELECT firstname, lastname, phoneno, nationalid
+      FROM "Parent"
+      WHERE parentId = ${parentId}
+    `;
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Parent not found" });
+    }
+
+    res.json(result[0]);
+  } catch (err) {
+    console.error("❌ Error fetching parent:", err);
+    res.status(500).json({ error: "Failed to fetch parent" });
+  }
+};
+

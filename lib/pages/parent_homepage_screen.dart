@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'parent_more_screen.dart';
 import 'parent_select_child_screen.dart';
 
@@ -12,13 +14,46 @@ class ParentHomeScreen extends StatefulWidget {
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
   late int parentId;
   int _selectedIndex = 0;
+  String firstname = '';
+  String walletBalance = ''; // ✅ إضافة متغير الرصيد
+  bool _isLoading = true;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map?;
-    parentId = args?['parentId'] ?? 0;
-    print("🟢 ParentHomeScreen loaded with parentId: $parentId");
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map?;
+      parentId = args?['parentId'] ?? 0;
+      print("🟢 ParentHomeScreen loaded with parentId: $parentId");
+      fetchParentInfo(); // ✅ نادينا الدالة المحدثة
+    });
+  }
+
+  // ✅ جلب الاسم والرصيد معًا من السيرفر
+  Future<void> fetchParentInfo() async {
+    final url = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId');
+    print("📡 Fetching parent info from: $url");
+
+    try {
+      final response = await http.get(url);
+      print("📩 Response: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          firstname = data['firstname'] ?? data['firstName'] ?? data['FirstName'] ?? '';
+          walletBalance = data['walletbalance']?.toString() ?? '0.0';
+          _isLoading = false;
+        });
+      } else {
+        print("⚠️ Failed to load parent info: ${response.statusCode}");
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      print("❌ Error fetching parent info: $e");
+      setState(() => _isLoading = false);
+    }
   }
 
   void _onItemTapped(int index) {
@@ -29,11 +64,18 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Build pages dynamically AFTER parentId is available
-    final pages = [
-      //const _HomePage(),
-      _HomePage(parentId: parentId),
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colors.teal)),
+      );
+    }
 
+    final pages = [
+      _HomePage(
+        parentId: parentId,
+        firstname: firstname,
+        walletBalance: walletBalance,
+      ),
       const _PlaceholderPage(title: 'Gifts'),
       MorePage(parentId: parentId),
     ];
@@ -47,10 +89,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard_outlined),
-            label: '',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard_outlined), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: ''),
         ],
       ),
@@ -58,11 +97,16 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   }
 }
 
-//class _HomePage extends StatelessWidget {
-//const _HomePage();
 class _HomePage extends StatelessWidget {
   final int parentId;
-  const _HomePage({required this.parentId});
+  final String firstname;
+  final String walletBalance;
+
+  const _HomePage({
+    required this.parentId,
+    required this.firstname,
+    required this.walletBalance,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -84,31 +128,39 @@ class _HomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
-              "Username",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+
+            // ✅ عرض الاسم
+            Text(
+              firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
             ),
 
             const SizedBox(height: 5),
+
+            // ✅ عرض الرصيد الحقيقي
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const SizedBox(
+              child: SizedBox(
                 width: double.infinity,
                 child: Padding(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         "current balance",
                         style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
-                      SizedBox(height: 5),
+                      const SizedBox(height: 5),
                       Text(
-                        "﷼102.9",
-                        style: TextStyle(
+                        "﷼${walletBalance.isNotEmpty ? walletBalance : '0.0'}",
+                        style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
@@ -118,7 +170,9 @@ class _HomePage extends StatelessWidget {
                 ),
               ),
             ),
+
             const SizedBox(height: 30),
+
             Column(
               children: [
                 Row(
@@ -198,19 +252,18 @@ class _HomePage extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 30),
+
             ElevatedButton.icon(
-              // onPressed: () {},
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        ParentSelectChildScreen(parentId: parentId),
+                    builder: (context) => ParentSelectChildScreen(parentId: parentId),
                   ),
                 );
               },
-
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
@@ -222,12 +275,8 @@ class _HomePage extends StatelessWidget {
               icon: const Icon(Icons.group),
               label: const Text("My Kids"),
             ),
+
             const SizedBox(height: 30),
-            const Text(
-              "Leaderboard",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
           ],
         ),
       ),

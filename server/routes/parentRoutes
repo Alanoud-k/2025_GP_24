@@ -1,0 +1,8 @@
+const express = require("express");
+const router = express.Router();
+const parentController = require("../controllers/parentController");
+
+// ✅ Define route to get parent info by ID
+router.get("/parent/:parentId", parentController.getParentInfo);
+
+module.exports = router;

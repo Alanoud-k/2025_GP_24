@@ -31,11 +31,11 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
     const primary = Color(0xFF1ABC9C);
 
     return Scaffold(
-      appBar: AppBar(
+      /*appBar: AppBar(
         leading: const BackButton(color: Colors.black87),
         backgroundColor: Colors.transparent,
         elevation: 0,
-      ),
+      ),*/
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

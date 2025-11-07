@@ -10,6 +10,8 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
+const parentRoutes = require("./routes/parentRoutes");
+
 
 // إنشاء التطبيق
 const app = express();
@@ -26,6 +28,8 @@ if (!process.env.DATABASE_URL) {
 
 // ربط الراوتر
 app.use("/api/auth", authRoutes);
+app.use("/api", parentRoutes);
+
 
 // اختبار سريع (للتأكد أن السيرفر شغال)
 app.get("/", (req, res) => {
