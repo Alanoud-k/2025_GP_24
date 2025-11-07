@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:fl_chart/fl_chart.dart';
 
 class ChildHomePageScreen extends StatefulWidget {
   const ChildHomePageScreen({super.key});
@@ -52,161 +53,251 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF7F8FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
-          children: [
-            const CircleAvatar(
-              radius: 20,
-              backgroundImage: AssetImage('assets/images/child_avatar.png'),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              childName.isNotEmpty ? childName : 'Child',
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        actions: const [
-          Icon(Icons.notifications_none, color: Colors.black87),
-          SizedBox(width: 12),
-          Icon(Icons.more_horiz, color: Colors.black87),
-          SizedBox(width: 12),
-        ],
-      ),
 
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ===== Wallet Card =====
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12.withOpacity(0.05),
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 20,
-                      horizontal: 8,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ===== Header =====
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _infoColumn(
-                          'current balance',
-                          '﷼${currentBalance.toStringAsFixed(1)}',
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 22,
+                              backgroundImage:
+                                  AssetImage('assets/images/child_avatar.png'),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              childName.isNotEmpty ? childName : 'Child',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                        Container(
-                          width: 1,
-                          height: 40,
-                          color: Colors.grey[300],
-                        ),
-                        _infoColumn('current points', currentPoints.toString()),
+                        const Icon(Icons.notifications_none,
+                            color: Colors.black),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 25),
 
-                  // ===== Buttons Row =====
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _actionButton(Icons.history, 'Transactions', () {
-                        // TODO: navigate to transactions page
-                      }),
-                      _actionButton(
-                        Icons.account_balance_wallet_outlined,
-                        'Request Money',
-                        () {
-                          // TODO: navigate to request money page
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-
-                  // ===== Optional placeholder =====
-                  const Center(
-                    child: Text(
-                      'Recent transactions and activities will appear here.',
-                      style: TextStyle(color: Colors.grey),
+                    // ===== Balance Cards =====
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _balanceCard('spend balance', '﷼ 38.9'),
+                        _balanceCard('saving balance', '﷼ 76.5'),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 25),
+
+                    // ===== Action Buttons =====
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.8,
+                      children: [
+                        _actionButton('Chores', () {}),
+                        _actionButton('Goals', () {}),
+                        _actionButton('Transaction', () {}),
+                        _actionButton('Request Money', () {}),
+                      ],
+                    ),
+                    const SizedBox(height: 35),
+
+                    // ===== Pie Chart (Expense Breakdown) =====
+                    Center(
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Spending Breakdown',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 220,
+                            width: 220,
+                            child: PieChart(
+                              PieChartData(
+                                sectionsSpace: 3,
+                                centerSpaceRadius: 40,
+                                borderData: FlBorderData(show: false),
+                                sections: _buildPieSections(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // ===== Legend (الألوان والعناوين) =====
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 16,
+                            runSpacing: 8,
+                            children: [
+                              _legendItem(Colors.teal, 'Food'),
+                              _legendItem(Colors.orange, 'Shopping'),
+                              _legendItem(Colors.purple, 'Gifts'),
+                              _legendItem(Colors.blueGrey, 'Others'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
       // ===== Bottom Navigation =====
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
+        currentIndex: 2,
         selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
-        currentIndex: 0,
-        onTap: (index) {
-          // TODO: handle navigation between tabs
-        },
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
           BottomNavigationBarItem(
-            icon: Icon(Icons.videogame_asset_outlined),
-            label: '',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: ''),
+              icon: Icon(Icons.card_giftcard_outlined), label: ''),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.videogame_asset_outlined), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt_outlined), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: ''),
         ],
       ),
     );
   }
 
-  // Reusable widget for balance and points
-  Widget _infoColumn(String title, String value) {
-    return Column(
-      children: [
-        Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+  // ===== Widgets =====
+
+  Widget _balanceCard(String title, String value) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-      ],
+        child: Column(
+          children: [
+            Text(title,
+                style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            const SizedBox(height: 6),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
     );
   }
 
-  // Reusable widget for buttons
-  Widget _actionButton(IconData icon, String text, VoidCallback onTap) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          onPressed: onTap,
-          icon: Icon(icon, size: 22),
-          label: Text(text),
+  Widget _actionButton(String text, VoidCallback onTap) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
+      onPressed: onTap,
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  List<PieChartSectionData> _buildPieSections() {
+    return [
+      PieChartSectionData(
+        value: 25,
+        color: Colors.teal,
+        title: '25%',
+        radius: 55,
+        titleStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      ),
+      PieChartSectionData(
+        value: 55,
+        color: Colors.orange,
+        title: '55%',
+        radius: 55,
+        titleStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      ),
+      PieChartSectionData(
+        value: 10,
+        color: Colors.purple,
+        title: '10%',
+        radius: 55,
+        titleStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      ),
+      PieChartSectionData(
+        value: 10,
+        color: Colors.blueGrey,
+        title: '10%',
+        radius: 55,
+        titleStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      ),
+    ];
+  }
+
+  Widget _legendItem(Color color, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(text, style: const TextStyle(fontSize: 13)),
+      ],
     );
   }
 }
