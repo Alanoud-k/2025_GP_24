@@ -103,6 +103,99 @@ exports.registerChild = async (req, res) => {
   }
 };
 
+// =====================================================
+// Get Child Info (used in ChildHomePageScreen)
+// =====================================================
+exports.getChildInfo = async (req, res) => {
+  const { childId } = req.params;
+console.log("📩 Fetching child info for ID:", childId);
+
+  try {
+    // 1️⃣ بيانات الطفل + الرصيد من Wallet
+      console.log("🟡 Step 1: Fetching child + wallet...");
+
+    const childData = await sql`
+      SELECT 
+        c.childid AS "childId",
+        c.firstname AS "firstName",
+        c.points AS "points",
+        COALESCE(w.walletbalance, 0) AS "balance"
+      FROM "Child" c
+      LEFT JOIN "Wallet" w ON c.childid = w.childid
+      WHERE c.childid = ${childId};
+    `;
+
+    if (childData.length === 0)
+      return res.status(404).json({ error: "Child not found" });
+
+    const child = childData[0];
+
+    // 2️⃣ المصروف (spend): كل العمليات اللي قام بها الطفل
+      console.log("🟡 Step 2: Fetching spend...");
+    const spendResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) AS "totalSpend"
+      FROM "Transaction"
+      WHERE receiverchildid = ${childId} 
+      AND sourcetype = 'Child'
+      AND transactionstatus = 'Completed';
+    `;
+
+    // 3️⃣ الادخار (saving): كل المبالغ اللي أرسلها له الوالد
+     console.log("🟡 Step 3: Fetching saving...");
+    const savingResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) AS "totalSaving"
+      FROM "Transaction"
+      WHERE receiverchildid = ${childId}
+      AND sourcetype = 'Parent'
+      AND transactionstatus = 'Completed';
+    `;
+
+    const spend = Number(spendResult[0].totalSpend);
+    const saving = Number(savingResult[0].totalSaving);
+
+    // 4️⃣ توزيع التصنيفات (categories) حسب transactionCategory
+      console.log("🟡 Step 4: Fetching categories...");
+    const categoryResult = await sql`
+      SELECT transactioncategory AS category, SUM(amount) AS total
+      FROM "Transaction"
+      WHERE receiverchildid = ${childId}
+      AND transactionstatus = 'Completed'
+      GROUP BY transactioncategory;
+    `;
+
+    let total = 0;
+    categoryResult.forEach(row => total += Number(row.total));
+
+    const categories = {};
+    categoryResult.forEach(row => {
+      const percent = total > 0 ? (Number(row.total) / total) * 100 : 0;
+      categories[row.category] = Number(percent.toFixed(1));
+    });
+
+    // إذا ما فيه معاملات، نحط قيم افتراضية
+    if (Object.keys(categories).length === 0) {
+      categories.Food = 25;
+      categories.Shopping = 55;
+      categories.Gifts = 10;
+      categories.Others = 10;
+    }
+
+    // ✅ 5️⃣ نرجّع الرد للواجهة
+    res.json({
+      firstName: child.firstName,
+      balance: child.balance,
+      spend,
+      saving,
+      points: child.points || 0,
+      categories
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching child info:", err);
+    res.status(500).json({ error: "Failed to fetch child info" });
+  }
+};
+
 
 
 
