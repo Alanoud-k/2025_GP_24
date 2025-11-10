@@ -21,20 +21,51 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.6,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black87),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Goals',
-          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+
+      // App bar
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(85),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new,
+                        size: 20, color: Colors.black87),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const Spacer(),
+                  const Text(
+                    'Goals',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Spacer(),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
 
+      // Body
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: const [
@@ -44,6 +75,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
         ],
       ),
 
+      // Bottom nav
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
@@ -60,37 +92,36 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
         ],
         onTap: (i) {
           setState(() => _navIndex = i);
-          // Add navigation logic here
         },
       ),
     );
   }
 }
 
+// Saving balance card
 class _SavingBalanceCard extends StatelessWidget {
   const _SavingBalanceCard({required this.balance});
-
   final double balance;
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Colors.white,
       elevation: 2.2,
-      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
               'saving balance',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6E6E6E)),
+              style: TextStyle(fontSize: 13, color: Color(0xFF6E6E6E)),
             ),
             const SizedBox(height: 6),
             Text(
               '﷼ ${balance.toStringAsFixed(1)}',
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -99,6 +130,7 @@ class _SavingBalanceCard extends StatelessWidget {
   }
 }
 
+// Empty goals card
 class _EmptyGoalsCard extends StatelessWidget {
   const _EmptyGoalsCard();
 
@@ -108,38 +140,66 @@ class _EmptyGoalsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Colors.white,
       elevation: 2.2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+
+      // ✅ Added navigation to Add Goal page
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
-          // Open add goal page
+          Navigator.pushNamed(context, '/childAddGoal');
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
           alignment: Alignment.center,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                "you don't have any goal yet\nclick '+' to add",
+                "Start your savings journey",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: kTextSecondary, height: 1.4),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: kAddBtn,
-                  shape: BoxShape.circle,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: kTextSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: const Icon(Icons.add, size: 30, color: Colors.white),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               const Text(
-                'Add new goal',
-                style: TextStyle(fontSize: 13, color: Colors.black87),
+                "set your first goal now!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: kTextSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // + icon + text
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: const BoxDecoration(
+                      color: kAddBtn,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add, size: 30, color: Colors.white),
+                  ),
+                  const SizedBox(width: 14),
+                  const Text(
+                    'Add new goal',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -8,6 +8,7 @@ import 'package:my_app/pages/parent_homepage_screen.dart';
 import 'package:my_app/pages/manage_kids_screen.dart';
 import 'package:my_app/pages/child_homepage_screen.dart';
 import 'package:my_app/pages/child_goals_screen.dart'; 
+import 'package:my_app/pages/child_add_goal_screen.dart';
 
 
 void main() {
@@ -37,6 +38,8 @@ class MyApp extends StatelessWidget {
 
         '/manageKids': (context) => const ManageKidsScreen(),
         '/childGoals': (context) => const ChildGoalsScreen(),
+        '/childAddGoal': (context) => const ChildAddGoalScreen(),  
+
       },
     );
   }
