@@ -132,7 +132,9 @@ Future<void> _fetchChildInfo() async {
                       childAspectRatio: 1.8,
                       children: [
                         _actionButton('Chores', () {}),
-                        _actionButton('Goals', () {}),
+                            _actionButton('Goals', () {
+                              Navigator.pushNamed(context, '/childGoals');
+                            }),
                         _actionButton('Transaction', () {}),
                         _actionButton('Request Money', () {}),
                       ],

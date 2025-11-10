@@ -7,6 +7,8 @@ import 'package:my_app/pages/child_login_screen.dart';
 import 'package:my_app/pages/parent_homepage_screen.dart';
 import 'package:my_app/pages/manage_kids_screen.dart';
 import 'package:my_app/pages/child_homepage_screen.dart';
+import 'package:my_app/pages/child_goals_screen.dart'; 
+
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hassalah App',
+      title: 'Hassala App',
       debugShowCheckedModeBanner: false,
       home: SplashView(),
 
@@ -34,6 +36,7 @@ class MyApp extends StatelessWidget {
         '/childHome': (context) => const ChildHomePageScreen(),
 
         '/manageKids': (context) => const ManageKidsScreen(),
+        '/childGoals': (context) => const ChildGoalsScreen(),
       },
     );
   }
