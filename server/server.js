@@ -11,6 +11,7 @@ const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const parentRoutes = require("./routes/parentRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 
 // إنشاء التطبيق
@@ -19,6 +20,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
 
 //  تأكد أن متغير قاعدة البيانات موجود
 if (!process.env.DATABASE_URL) {
@@ -29,6 +31,7 @@ if (!process.env.DATABASE_URL) {
 // ربط الراوتر
 app.use("/api/auth", authRoutes);
 app.use("/api", parentRoutes);
+app.use("/api", paymentRoutes);
 
 
 // اختبار سريع (للتأكد أن السيرفر شغال)

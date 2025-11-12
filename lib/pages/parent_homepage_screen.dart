@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'parent_more_screen.dart';
 import 'parent_select_child_screen.dart';
+import 'parent_add_money_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   const ParentHomeScreen({super.key});
@@ -42,7 +43,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         final data = jsonDecode(response.body);
 
         setState(() {
-          firstname = data['firstname'] ?? data['firstName'] ?? data['FirstName'] ?? '';
+          firstname =
+              data['firstname'] ?? data['firstName'] ?? data['FirstName'] ?? '';
           walletBalance = data['walletbalance']?.toString() ?? '0.0';
           _isLoading = false;
         });
@@ -89,7 +91,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard_outlined), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.card_giftcard_outlined),
+            label: '',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: ''),
         ],
       ),
@@ -196,7 +201,16 @@ class _HomePage extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ParentAddMoneyScreen(parentId: parentId),
+                            ),
+                          );
+                        },
+
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
@@ -260,7 +274,8 @@ class _HomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ParentSelectChildScreen(parentId: parentId),
+                    builder: (context) =>
+                        ParentSelectChildScreen(parentId: parentId),
                   ),
                 );
               },

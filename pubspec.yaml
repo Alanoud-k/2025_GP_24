@@ -17,6 +17,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   crypto: ^3.0.6
   fl_chart: ^0.66.0
+  url_launcher: ^6.3.2
 
 
 dev_dependencies:
