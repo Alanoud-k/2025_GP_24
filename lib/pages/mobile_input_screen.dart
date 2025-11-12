@@ -76,7 +76,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                     const SizedBox(height: 40), // مسافة أكبر بعد الشعار
                     // --- النص التوضيحي ---
                     const Text(
-                      "Please Enter Mobile\nNumber",
+                      "Please Enter Your \nMobile Number",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24, // أصغر من 32

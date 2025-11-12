@@ -8,10 +8,9 @@ exports.getParentInfo = async (req, res) => {
     console.log(`📡 Fetching parent info for ID: ${parentId}`);
 
     const result = await sql`
-      SELECT p.firstname, p.lastname, p.phoneno, p.nationalid, w.walletbalance
-      FROM "Parent" p
-      JOIN "Wallet" w ON p.parentid = w.parentid
-      WHERE p.parentid = ${parentId};
+      SELECT firstname, lastname, phoneno, nationalid
+      FROM "Parent"
+      WHERE parentid = ${parentId};
     `;
 
     if (result.length === 0) {
@@ -23,7 +22,7 @@ exports.getParentInfo = async (req, res) => {
       firstName: parent.firstname,
       lastName: parent.lastname,
       phoneNo: parent.phoneno,
-      walletBalance: parent.walletbalance,
+      nationalId: parent.nationalid
     });
 
   } catch (err) {

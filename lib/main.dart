@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hassala App',
+      title: 'Hassalah App',
       debugShowCheckedModeBanner: false,
       home: SplashView(),
 
