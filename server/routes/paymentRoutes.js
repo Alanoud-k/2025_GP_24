@@ -1,13 +1,15 @@
-const express = require("express");
+// server/routes/paymentRoutes.js (ESM version)
+
+import express from "express";
+import * as addMoneyController from "../controllers/addMoneyController.js";
+import * as moyasarWebhookController from "../controllers/moyasarWebhookController.js";
+
 const router = express.Router();
 
-const { createPayment } = require("../controllers/addMoneyController");
-const { handleMoyasarWebhook } = require("../controllers/moyasarWebhookController");
-
 // Payment creation
-router.post("/create-payment", createPayment);
+router.post("/create-payment", addMoneyController.createPayment);
 
 // Moyasar webhook
-router.post("/moyasar-webhook", handleMoyasarWebhook);
+router.post("/moyasar-webhook", moyasarWebhookController.handleMoyasarWebhook);
 
-module.exports = router;
+export default router;

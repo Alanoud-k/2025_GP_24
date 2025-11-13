@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+import '../core/api_config.dart'; // ✅ base URL
 
 class MobileInputScreen extends StatefulWidget {
   const MobileInputScreen({super.key});
@@ -12,7 +15,10 @@ class MobileInputScreen extends StatefulWidget {
 class _MobileInputScreenState extends State<MobileInputScreen> {
   final TextEditingController phoneController = TextEditingController();
 
-  bool get _canContinue => phoneController.text.trim().isNotEmpty;
+  bool _loading = false;
+
+  bool get _canContinue =>
+      !_loading && phoneController.text.trim().isNotEmpty;
 
   @override
   void initState() {
@@ -31,11 +37,6 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
     const primary = Color(0xFF1ABC9C);
 
     return Scaffold(
-      /*appBar: AppBar(
-        leading: const BackButton(color: Colors.black87),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),*/
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -54,8 +55,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40), // مسافة من الأعلى
-                    // --- Welcome ---
+                    const SizedBox(height: 40),
                     const Text(
                       "Welcome to",
                       style: TextStyle(
@@ -65,28 +65,23 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // --- الشعار ---
                     Image.asset(
                       'assets/logo/hassalaLogo2.png',
                       width: 280,
                       fit: BoxFit.contain,
                     ),
-
-                    const SizedBox(height: 40), // مسافة أكبر بعد الشعار
-                    // --- النص التوضيحي ---
+                    const SizedBox(height: 40),
                     const Text(
                       "Please Enter Your \nMobile Number",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 24, // أصغر من 32
+                        fontSize: 24,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF222222),
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 40), // مسافة أكبر قبل الحقل
-                    // --- حقل إدخال رقم الجوال ---
+                    const SizedBox(height: 40),
                     Material(
                       elevation: 3,
                       shadowColor: const Color(0x22000000),
@@ -95,18 +90,16 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         controller: phoneController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText:
-                              'Phone number', // استخدام label بدلاً من hint
+                          labelText: 'Phone number',
                           labelStyle: const TextStyle(
                             color: Colors.black45,
                             fontSize: 16,
                           ),
-
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 18, // زيادة الارتفاع قليلاً
+                            vertical: 18,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -115,10 +108,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         ),
                       ),
                     ),
-
                     const Spacer(),
-
-                    // --- الشروط ---
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6.0),
                       child: Text(
@@ -131,8 +121,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20), // مسافة أكبر قبل الزر
-                    // --- زر Continue ---
+                    const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -140,30 +129,30 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                         style: ButtonStyle(
                           backgroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.disabled)) {
-                                  return primary.withValues(alpha: 0.35);
-                                }
-                                return primary;
-                              }),
-                          foregroundColor: WidgetStateProperty.all<Color>(
-                            Colors.white,
-                          ),
-                          elevation: WidgetStateProperty.resolveWith<double>(
-                            (states) =>
-                                states.contains(WidgetState.disabled) ? 0 : 6,
-                          ),
+                            if (states.contains(WidgetState.disabled)) {
+                              return primary.withValues(alpha: 0.35);
+                            }
+                            return primary;
+                          }),
+                          foregroundColor:
+                              WidgetStateProperty.all<Color>(Colors.white),
+                          elevation:
+                              WidgetStateProperty.resolveWith<double>((states) {
+                            return states.contains(WidgetState.disabled)
+                                ? 0
+                                : 6;
+                          }),
                           shadowColor: WidgetStateProperty.all<Color>(
                             primary.withValues(alpha: 0.35),
                           ),
                           padding: WidgetStateProperty.all<EdgeInsets>(
-                            const EdgeInsets.symmetric(vertical: 18), // زر أعلى
+                            const EdgeInsets.symmetric(vertical: 18),
                           ),
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
-                              ),
+                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                          ),
                           textStyle: WidgetStateProperty.all<TextStyle>(
                             const TextStyle(
                               fontSize: 18,
@@ -171,10 +160,20 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                             ),
                           ),
                         ),
-                        child: const Text("Continue"),
+                        child: _loading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text("Continue"),
                       ),
                     ),
-                    const SizedBox(height: 30), // مسافة من الأسفل
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
@@ -185,7 +184,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
     );
   }
 
-  // --- عملية التحقق والانتقال ---
+  // --- API call to /api/auth/check-user ---
   Future<void> _onContinuePressed() async {
     final phoneRaw = phoneController.text.trim();
 
@@ -208,13 +207,19 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
 
     final phone = phoneRaw;
 
+    setState(() => _loading = true);
     try {
+      final uri = Uri.parse('$kBaseUrl/api/auth/check-user');
+
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/api/auth/check-user'),
-        //Uri.parse('http://localhost:3000/api/auth/check-user'),
+        uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'phoneNo': phone}),
       );
+
+      // Debug logs
+      debugPrint('CHECK-USER → status: ${response.statusCode}');
+      debugPrint('CHECK-USER → body  : ${response.body}');
 
       if (!mounted) return;
 
@@ -244,16 +249,21 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Server error. Please try again later.'),
+          SnackBar(
+            content: Text(
+              'Server error (${response.statusCode}). Please try again later.',
+            ),
           ),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      debugPrint('CHECK-USER → exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 }

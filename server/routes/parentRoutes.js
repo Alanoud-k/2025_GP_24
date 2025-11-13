@@ -1,8 +1,9 @@
-const express = require("express");
+import express from "express";
+import * as parentController from "../controllers/parentController.js";
+
 const router = express.Router();
-const parentController = require("../controllers/parentController");
 
 // ✅ Define route to get parent info by ID
 router.get("/parent/:parentId", parentController.getParentInfo);
 
-module.exports = router;
+export default router;

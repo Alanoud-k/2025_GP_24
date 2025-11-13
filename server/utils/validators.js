@@ -1,6 +1,8 @@
-exports.validatePhone = (phone) => /^05\d{8}$/.test(phone);
+// server/utils/validators.js
 
-exports.validatePassword = (password) => {
+export const validatePhone = (phone) => /^05\d{8}$/.test(phone);
+
+export const validatePassword = (password) => {
   const pattern =
     /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
   return pattern.test(password);

@@ -1,19 +1,28 @@
-const axios = require("axios");
+// server/controllers/addMoneyController.js  (ESM)
 
-const createPayment = async (req, res) => {
+import axios from "axios";
+
+/**
+ * Create Moyasar payment (wallet top-up)
+ * Body: { amount: number (SAR), parentId: number|string, test?: boolean }
+ */
+export const createPayment = async (req, res) => {
   try {
     const { amount, parentId, test } = req.body;
+    if (!amount || !parentId) {
+      return res.status(400).json({ message: "amount and parentId are required" });
+    }
 
-    // 🧩 Build the base payload
+    // Build the base payload (Moyasar expects amount in halalas)
     const payload = {
-      amount: amount * 100, // convert to halalas (100 = 1 SAR)
+      amount: Math.round(Number(amount) * 100), // 1 SAR = 100 halalas
       currency: "SAR",
       description: `Wallet top-up for Parent ${parentId}`,
-      callback_url: "https://example.com/payment-success", // replace later with your hosted confirmation page
+      callback_url: "https://example.com/payment-success", // TODO: replace with your hosted page
       source: { type: "creditcard" },
     };
 
-    // 💳 For sandbox testing in Postman, include test card info
+    // Optional: test card for sandboxing
     if (test) {
       payload.source = {
         type: "creditcard",
@@ -25,7 +34,7 @@ const createPayment = async (req, res) => {
       };
     }
 
-    // 🔐 Send request to Moyasar API
+    // Call Moyasar API (Basic Auth with secret key)
     const response = await axios.post("https://api.moyasar.com/v1/payments", payload, {
       auth: {
         username: process.env.MOYASAR_SECRET_KEY,
@@ -33,32 +42,28 @@ const createPayment = async (req, res) => {
       },
     });
 
-    // 🌐 Determine correct transaction URL (hosted page)
+    // Hosted transaction URL
     const transactionUrl =
-      response.data.source?.transaction_url ||
-      `https://moyasar.com/pay/${response.data.id}`;
+      response.data?.source?.transaction_url ||
+      `https://moyasar.com/pay/${response.data?.id}`;
 
-    // ✅ Return clean JSON to frontend
-    res.json({
-      status: response.data.status,
-      paymentId: response.data.id,
-      transactionUrl: transactionUrl,
-      amount: response.data.amount / 100,
+    // Respond to client
+    return res.json({
+      status: response.data?.status,
+      paymentId: response.data?.id,
+      transactionUrl,
+      amount: (response.data?.amount ?? 0) / 100,
       message:
-        response.data.status === "initiated"
+        response.data?.status === "initiated"
           ? "Payment created successfully. Redirect user to transactionUrl."
           : "Payment processed instantly (test mode).",
     });
   } catch (err) {
-    console.error("❌ Payment creation error:");
-    console.error(err.response?.data || err.message);
-
-    // 📦 Include more info in the error for debugging
+    // Log and propagate a clear error
+    console.error("❌ Payment creation error:", err.response?.data || err.message);
     return res.status(500).json({
       message: "Failed to create payment",
       error: err.response?.data || err.message,
     });
   }
 };
-
-module.exports = { createPayment };

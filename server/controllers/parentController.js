@@ -1,7 +1,9 @@
-const { sql } = require("../config/db");
+// server/controllers/parentController.js  (ESM)
 
-// 🟢 Get Parent Info by ID
-exports.getParentInfo = async (req, res) => {
+import { sql } from "../config/db.js";
+
+// 🟢 Get Parent Info by ID (ESM version)
+export const getParentInfo = async (req, res) => {
   try {
     const { parentId } = req.params;
 
@@ -18,15 +20,19 @@ exports.getParentInfo = async (req, res) => {
     }
 
     const parent = result[0];
-    res.json({
+
+    return res.json({
       firstName: parent.firstname,
       lastName: parent.lastname,
       phoneNo: parent.phoneno,
-      nationalId: parent.nationalid
+      nationalId: parent.nationalid,
     });
 
   } catch (err) {
     console.error("❌ Error fetching parent info:", err);
-    res.status(500).json({ error: "Failed to fetch parent info", details: err.message });
+    return res.status(500).json({
+      error: "Failed to fetch parent info",
+      details: err.message,
+    });
   }
 };

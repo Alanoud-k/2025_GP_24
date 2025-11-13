@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:fl_chart/fl_chart.dart';
+import 'package:fl_chart/fl_chart.dart'; 
+
+import 'package:my_app/core/api_config.dart';
 
 class ChildHomePageScreen extends StatefulWidget {
   const ChildHomePageScreen({super.key});
@@ -26,50 +28,56 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     childId = args?['childId'] ?? 0;
+
+    // Debug print to make sure childId is correct
+    print('ChildHomePageScreen -> childId = $childId');
+
     _fetchChildInfo();
   }
 
-Future<void> _fetchChildInfo() async {
-  setState(() => _loading = true);
-  final url = Uri.parse('http://10.0.2.2:3000/api/auth/child/info/$childId');
+  Future<void> _fetchChildInfo() async {
+    setState(() => _loading = true);
 
-  try {
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}/api/auth/child/info/$childId',
+    );
 
-      double _toDouble(dynamic v) =>
-          (v is num) ? v.toDouble() : (double.tryParse(v?.toString() ?? '') ?? 0.0);
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      setState(() {
-        childName = data['firstName'] ?? '';
-        currentBalance = _toDouble(data['balance']);
-        spendBalance = _toDouble(data['spend']);
-        savingBalance = _toDouble(data['saving']);
-        currentPoints = (data['points'] ?? 0).toInt();
+        double _toDouble(dynamic v) =>
+            (v is num) ? v.toDouble() : (double.tryParse(v?.toString() ?? '') ?? 0.0);
 
-        // لو السيرفر ما يرجع التصنيفات، نحط قيم افتراضية
-        categoryPercentages = Map<String, double>.from(
-          data['categories'] ?? {
-            'Food': 25,
-            'Shopping': 55,
-            'Gifts': 10,
-            'Others': 10,
-          },
-        );
+        setState(() {
+          childName = data['firstName'] ?? '';
+          currentBalance = _toDouble(data['balance']);
+          spendBalance = _toDouble(data['spend']);
+          savingBalance = _toDouble(data['saving']);
+          currentPoints = (data['points'] ?? 0).toInt();
 
-        _loading = false;
-      });
-    } else {
+          // Fallback categories if none returned from server
+          categoryPercentages = Map<String, double>.from(
+            data['categories'] ?? {
+              'Food': 25,
+              'Shopping': 55,
+              'Gifts': 10,
+              'Others': 10,
+            },
+          );
+
+          _loading = false;
+        });
+      } else {
+        setState(() => _loading = false);
+        print('Failed to load child info: ${response.body}');
+      }
+    } catch (e) {
       setState(() => _loading = false);
-      print('Failed to load child info: ${response.body}');
+      print('Error fetching child info: $e');
     }
-  } catch (e) {
-    setState(() => _loading = false);
-    print('Error fetching child info: $e');
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -115,9 +123,14 @@ Future<void> _fetchChildInfo() async {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                       _balanceCard('spend balance', '﷼ ${spendBalance.toStringAsFixed(2)}'),
-                       _balanceCard('saving balance', '﷼ ${savingBalance.toStringAsFixed(2)}'),
-
+                        _balanceCard(
+                          'spend balance',
+                          '﷼ ${spendBalance.toStringAsFixed(2)}',
+                        ),
+                        _balanceCard(
+                          'saving balance',
+                          '﷼ ${savingBalance.toStringAsFixed(2)}',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 25),
@@ -132,9 +145,22 @@ Future<void> _fetchChildInfo() async {
                       childAspectRatio: 1.8,
                       children: [
                         _actionButton('Chores', () {}),
-                            _actionButton('Goals', () {
-                              Navigator.pushNamed(context, '/childGoals');
-                            }),
+                        _actionButton('Goals', () async {
+                          // 👉 pass childId + baseUrl to goals screen
+                          final needRefresh = await Navigator.pushNamed(
+                            context,
+                            '/childGoals',
+                            arguments: {
+                              'childId': childId,
+                              'baseUrl': ApiConfig.baseUrl,
+                            },
+                          );
+
+                          // If a goal was added, refresh home data
+                          if (needRefresh == true) {
+                            _fetchChildInfo();
+                          }
+                        }),
                         _actionButton('Transaction', () {}),
                         _actionButton('Request Money', () {}),
                       ],
@@ -167,16 +193,18 @@ Future<void> _fetchChildInfo() async {
                           ),
                           const SizedBox(height: 20),
 
-                          // ===== Legend (الألوان والعناوين) =====
-        Wrap(
-  alignment: WrapAlignment.center,
-  spacing: 16,
-  runSpacing: 8,
-  children: categoryPercentages.keys.map((key) {
-    return _legendItem(_getColorForCategory(key), key);
-  }).toList(),
-),
-
+                          // Legend
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 16,
+                            runSpacing: 8,
+                            children: categoryPercentages.keys.map((key) {
+                              return _legendItem(
+                                _getColorForCategory(key),
+                                key,
+                              );
+                            }).toList(),
+                          ),
                         ],
                       ),
                     ),
@@ -227,12 +255,18 @@ Future<void> _fetchChildInfo() async {
         ),
         child: Column(
           children: [
-            Text(title,
-                style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            ),
             const SizedBox(height: 6),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -257,37 +291,37 @@ Future<void> _fetchChildInfo() async {
     );
   }
 
- List<PieChartSectionData> _buildPieSections() {
-  if (categoryPercentages.isEmpty) return [];
+  List<PieChartSectionData> _buildPieSections() {
+    if (categoryPercentages.isEmpty) return [];
 
-  return categoryPercentages.entries.map((entry) {
-    final color = _getColorForCategory(entry.key);
-    return PieChartSectionData(
-      value: entry.value,
-      color: color,
-      title: '${entry.value.toStringAsFixed(0)}%',
-      radius: 55,
-      titleStyle: const TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-        fontSize: 14,
-      ),
-    );
-  }).toList();
-}
-Color _getColorForCategory(String category) {
-  switch (category) {
-    case 'Food':
-      return Colors.teal;
-    case 'Shopping':
-      return Colors.orange;
-    case 'Gifts':
-      return Colors.purple;
-    default:
-      return Colors.blueGrey;
+    return categoryPercentages.entries.map((entry) {
+      final color = _getColorForCategory(entry.key);
+      return PieChartSectionData(
+        value: entry.value,
+        color: color,
+        title: '${entry.value.toStringAsFixed(0)}%',
+        radius: 55,
+        titleStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      );
+    }).toList();
   }
-}
 
+  Color _getColorForCategory(String category) {
+    switch (category) {
+      case 'Food':
+        return Colors.teal;
+      case 'Shopping':
+        return Colors.orange;
+      case 'Gifts':
+        return Colors.purple;
+      default:
+        return Colors.blueGrey;
+    }
+  }
 
   Widget _legendItem(Color color, String text) {
     return Row(
