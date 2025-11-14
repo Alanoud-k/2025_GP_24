@@ -6,7 +6,6 @@ class GoalsApi {
   final String baseUrl;
   GoalsApi(this.baseUrl);
 
-
   Future<void> setupWallet(int childId) async {
     return;
   }
@@ -32,19 +31,24 @@ class GoalsApi {
   Future<void> createGoal({
     required int childId,
     required String goalName,
-    String? description,
     required double targetAmount,
   }) async {
     final r = await http.post(
-      Uri.parse('$baseUrl/api/goals'),
+      Uri.parse('$baseUrl/api/goals'), 
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'childId': childId,
         'goalName': goalName,
-        'goalDescription': description,
         'targetAmount': targetAmount,
       }),
     );
+
+
+    // ignore: avoid_print
+    print('CreateGoal status: ${r.statusCode}');
+    // ignore: avoid_print
+    print('CreateGoal body: ${r.body}');
+
     if (r.statusCode != 201) {
       throw Exception('Create goal failed: ${r.body}');
     }

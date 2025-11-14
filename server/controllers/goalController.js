@@ -1,6 +1,5 @@
 import { sql } from '../config/db.js';
 
-
 // Ensure the child has a wallet and return walletid
 async function ensureWallet(childId, s) {
   const w = await s`
@@ -45,12 +44,11 @@ async function ensureCoreAccounts(walletId, s) {
 export async function setupChildWallet(req, res) {
   try {
     const childId = Number(req.params.childId);
-    const result = await sql.begin(async (s) => {
-      const walletId = await ensureWallet(childId, s);
-      await ensureCoreAccounts(walletId, s);
-      return { walletId };
-    });
-    res.status(201).json(result);
+
+    const walletId = await ensureWallet(childId, sql);
+    await ensureCoreAccounts(walletId, sql);
+
+    res.status(201).json({ walletId });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'wallet_setup_failed' });
@@ -92,7 +90,6 @@ export async function listChildGoals(req, res) {
       SELECT
         g."goalid",
         g."goalname",
-        g."goaldescription",
         g."targetamount",
         g."goalstatus",
         a."balance" AS balance
@@ -108,46 +105,49 @@ export async function listChildGoals(req, res) {
   }
 }
 
-/** POST /api/goals   body: { childId, goalName, goalDescription?, targetAmount } */
+/** POST /api/goals   body: { childId, goalName, targetAmount } */
 export async function createGoal(req, res) {
   try {
-    const { childId, goalName, goalDescription, targetAmount } = req.body;
-    if (!childId || !goalName || !targetAmount) {
+    const { childId, goalName, targetAmount } = req.body;
+
+    if (!childId || !goalName || targetAmount == null) {
       return res.status(400).json({ error: 'missing_fields' });
     }
 
-    const out = await sql.begin(async (s) => {
-      // Ensure wallet + saving/spending exist
-      const walletId = await ensureWallet(childId, s);
-      await ensureCoreAccounts(walletId, s);
+    const cId = Number(childId);
+    const tAmount = Number(targetAmount);
 
-      // Get SavingAccount id
-      const sav = await s`
-        SELECT "accountid" FROM "Account"
-        WHERE "walletid" = ${walletId} AND "accounttype" = 'SavingAccount'
-        LIMIT 1
-      `;
-      const savingAccountId = sav[0].accountid;
+    // 1) Ensure wallet + saving/spending exist
+    const walletId = await ensureWallet(cId, sql);
+    await ensureCoreAccounts(walletId, sql);
 
-      // Create GoalAccount linked to SavingAccount (limitamount = target)
-      const gacc = await s`
-        INSERT INTO "Account"("walletid","savingaccountid","accounttype","currency","balance","limitamount")
-        VALUES (${walletId}, ${savingAccountId}, 'GoalAccount', 'SAR', 0, ${targetAmount})
-        RETURNING "accountid","balance"
-      `;
-      const goalAccountId = gacc[0].accountid;
+    // 2) Get SavingAccount id
+    const sav = await sql`
+      SELECT "accountid" FROM "Account"
+      WHERE "walletid" = ${walletId} AND "accounttype" = 'SavingAccount'
+      LIMIT 1
+    `;
+    if (!sav.length) {
+      return res.status(500).json({ error: 'saving_account_missing' });
+    }
+    const savingAccountId = sav[0].accountid;
 
-      // Insert Goal
-      const g = await s`
-        INSERT INTO "Goal"("childid","accountid","goalname","goaldescription","targetamount","goalstatus")
-        VALUES (${childId}, ${goalAccountId}, ${goalName}, ${goalDescription ?? null}, ${targetAmount}, 'InProgress')
-        RETURNING *
-      `;
+    // 3) Create GoalAccount linked to SavingAccount (limitamount = target)
+    const gacc = await sql`
+      INSERT INTO "Account"("walletid","savingaccountid","accounttype","currency","balance","limitamount")
+      VALUES (${walletId}, ${savingAccountId}, 'GoalAccount', 'SAR', 0, ${tAmount})
+      RETURNING "accountid","balance"
+    `;
+    const goalAccountId = gacc[0].accountid;
 
-      return { goal: g[0] };
-    });
+    // 4) Insert Goal (بدون goaldescription)
+    const g = await sql`
+      INSERT INTO "Goal"("childid","accountid","goalname","targetamount","goalstatus")
+      VALUES (${cId}, ${goalAccountId}, ${goalName}, ${tAmount}, 'InProgress')
+      RETURNING *
+    `;
 
-    res.status(201).json(out);
+    res.status(201).json({ goal: g[0] });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'create_goal_failed' });
@@ -159,82 +159,85 @@ export async function contributeToGoal(req, res) {
   try {
     const goalId = Number(req.params.goalId);
     const { childId, amount } = req.body;
+
     if (!childId || !amount) {
       return res.status(400).json({ error: 'missing_fields' });
     }
 
-    const out = await sql.begin(async (s) => {
-      // Fetch goal + related accounts (aliases are lowercased to match access)
-      const g = await s`
-        SELECT
-          g."goalid",
-          g."targetamount",
-          ga."accountid"       AS goalaccountid,
-          ga."savingaccountid" AS savingaccountid
-        FROM "Goal" g
-        JOIN "Account" ga ON ga."accountid" = g."accountid"
-        WHERE g."goalid" = ${goalId} AND g."childid" = ${childId}
-        LIMIT 1
-      `;
-      if (!g.length) {
-        return { error: 'goal_not_found' };
-      }
-      const goalAccountId   = g[0].goalaccountid;
-      const savingAccountId = g[0].savingaccountid;
-      const targetAmount    = Number(g[0].targetamount);
+    const cId = Number(childId);
+    const amt = Number(amount);
 
-      // Check saving balance
-      const sBal = await s`
-        SELECT "balance" FROM "Account" WHERE "accountid" = ${savingAccountId}
-      `;
-      const savingBal = Number(sBal[0]?.balance ?? 0);
-      if (savingBal < Number(amount)) {
-        return { error: 'insufficient_balance' };
-      }
+    // 1) Fetch goal + related accounts
+    const g = await sql`
+      SELECT
+        g."goalid",
+        g."targetamount",
+        ga."accountid"       AS goalaccountid,
+        ga."savingaccountid" AS savingaccountid
+      FROM "Goal" g
+      JOIN "Account" ga ON ga."accountid" = g."accountid"
+      WHERE g."goalid" = ${goalId} AND g."childid" = ${cId}
+      LIMIT 1
+    `;
 
-      // Insert transaction record
-      await s`
-        INSERT INTO "Transaction"(
-          "transactiontype","amount","transactiondate","transactionstatus",
-          "merchantname","sourcetype","transactioncategory",
-          "senderAccountId","receiverAccountId"
-        )
-        VALUES (
-          'Transfer', ${amount}, CURRENT_TIMESTAMP, 'Completed',
-          'Goal Contribution', 'Transfer', 'internal',
-          ${savingAccountId}, ${goalAccountId}
-        )
-      `;
-
-      // Update balances
-      await s`
-        UPDATE "Account" SET "balance" = "balance" - ${amount}
-        WHERE "accountid" = ${savingAccountId}
-      `;
-      const updGoal = await s`
-        UPDATE "Account" SET "balance" = "balance" + ${amount}
-        WHERE "accountid" = ${goalAccountId}
-        RETURNING "balance"
-      `;
-      const newGoalBalance = Number(updGoal[0].balance);
-
-      // If achieved, mark goal Achieved
-      if (newGoalBalance >= targetAmount) {
-        await s`
-          UPDATE "Goal" SET "goalstatus" = 'Achieved'
-          WHERE "goalid" = ${goalId}
-        `;
-      }
-
-      return { ok: true, goalId, goalBalance: newGoalBalance };
-    });
-
-    if (out?.error) {
-      if (out.error === 'goal_not_found') return res.status(404).json(out);
-      if (out.error === 'insufficient_balance') return res.status(400).json(out);
+    if (!g.length) {
+      return res.status(404).json({ error: 'goal_not_found' });
     }
 
-    res.status(201).json(out);
+    const goalAccountId   = g[0].goalaccountid;
+    const savingAccountId = g[0].savingaccountid;
+    const targetAmount    = Number(g[0].targetamount);
+
+    // 2) Check saving balance
+    const sBal = await sql`
+      SELECT "balance" FROM "Account" WHERE "accountid" = ${savingAccountId}
+    `;
+    const savingBal = Number(sBal[0]?.balance ?? 0);
+    if (savingBal < amt) {
+      return res.status(400).json({ error: 'insufficient_balance' });
+    }
+
+    // 3) Insert transaction record
+    await sql`
+      INSERT INTO "Transaction"(
+        "transactiontype","amount","transactiondate","transactionstatus",
+        "merchantname","sourcetype","transactioncategory",
+        "senderAccountId","receiverAccountId"
+      )
+      VALUES (
+        'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
+        'Goal Contribution', 'Transfer', 'internal',
+        ${savingAccountId}, ${goalAccountId}
+      )
+    `;
+
+    // 4) Update balances
+    await sql`
+      UPDATE "Account" SET "balance" = "balance" - ${amt}
+      WHERE "accountid" = ${savingAccountId}
+    `;
+
+    const updGoal = await sql`
+      UPDATE "Account" SET "balance" = "balance" + ${amt}
+      WHERE "accountid" = ${goalAccountId}
+      RETURNING "balance"
+    `;
+
+    const newGoalBalance = Number(updGoal[0].balance);
+
+    // 5) If achieved, mark goal Achieved
+    if (newGoalBalance >= targetAmount) {
+      await sql`
+        UPDATE "Goal" SET "goalstatus" = 'Achieved'
+        WHERE "goalid" = ${goalId}
+      `;
+    }
+
+    res.status(201).json({
+      ok: true,
+      goalId,
+      goalBalance: newGoalBalance,
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'contribution_failed' });

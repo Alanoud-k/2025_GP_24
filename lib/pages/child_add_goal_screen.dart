@@ -12,14 +12,13 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   // 🎨 Colors
   static const kBg = Color(0xFFF7F8FA);
   static const kCard = Color(0xFF9FE5E2);
-  static const kAddBtn = Color(0xFF75C6C3); // exact Add button color
+  static const kAddBtn = Color(0xFF75C6C3);
   static const kTextSecondary = Color(0xFF6E6E6E);
 
   // --- Form state ---
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
   bool _submitting = false;
 
   // --- API wiring ---
@@ -29,9 +28,9 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Read arguments passed from previous screen
     final args = (ModalRoute.of(context)?.settings.arguments as Map?) ?? {};
     _childId = (args['childId'] ?? 0) as int;
+
     final baseUrl = (args['baseUrl'] ?? 'http://10.0.2.2:3000') as String;
     _api = GoalsApi(baseUrl);
   }
@@ -40,30 +39,25 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _amountCtrl.dispose();
-    _descCtrl.dispose();
     super.dispose();
-    // No additional cleanup needed
   }
 
-  // Handle Add button -> validate -> call API -> pop(true)
+  // Submit goal
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _submitting = true);
     try {
       final name = _nameCtrl.text.trim();
       final amount = double.parse(_amountCtrl.text.trim());
-      final desc =
-          _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim();
 
       await _api.createGoal(
         childId: _childId,
         goalName: name,
-        description: desc,
         targetAmount: amount,
       );
 
       if (!mounted) return;
-      // Return to previous screen and signal success so it can refresh
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
@@ -80,7 +74,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
     return Scaffold(
       backgroundColor: kBg,
 
-      // Fintech-style App Bar
+      // App Bar
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(85),
         child: Container(
@@ -101,8 +95,10 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   const Spacer(),
-                  const Text('Goals',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Colors.black87)),
+                  const Text(
+                    'Goals',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Colors.black87),
+                  ),
                   const Spacer(),
                   const SizedBox(width: 48),
                 ],
@@ -112,7 +108,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
         ),
       ),
 
-      // Centered card slightly higher
+      // Body
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -127,7 +123,6 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                     child: _GoalFormCard(
                       nameCtrl: _nameCtrl,
                       amountCtrl: _amountCtrl,
-                      descCtrl: _descCtrl,
                       formKey: _formKey,
                       submitting: _submitting,
                       onSubmit: _onSubmit,
@@ -141,7 +136,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
         },
       ),
 
-      // Bottom Navigation (static)
+      // Bottom Nav
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
@@ -164,17 +159,14 @@ class _GoalFormCard extends StatelessWidget {
   const _GoalFormCard({
     required this.nameCtrl,
     required this.amountCtrl,
-    required this.descCtrl,
     required this.formKey,
     required this.submitting,
     required this.onSubmit,
     required this.onCancel,
   });
 
-  // Inputs & state
   final TextEditingController nameCtrl;
   final TextEditingController amountCtrl;
-  final TextEditingController descCtrl;
   final GlobalKey<FormState> formKey;
   final bool submitting;
   final VoidCallback onSubmit;
@@ -198,7 +190,6 @@ class _GoalFormCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Title
               const Center(
                 child: Padding(
                   padding: EdgeInsets.only(bottom: 20),
@@ -210,8 +201,10 @@ class _GoalFormCard extends StatelessWidget {
               ),
 
               // Goal name
-              const Text('Goal name',
-                  style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600)),
+              const Text(
+                'Goal name',
+                style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 8),
               _inputField(
                 controller: nameCtrl,
@@ -220,9 +213,11 @@ class _GoalFormCard extends StatelessWidget {
 
               const SizedBox(height: 22),
 
-              // Amount field
-              const Text('Amount of money need to save',
-                  style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600)),
+              // Amount
+              const Text(
+                'Amount of money need to save',
+                style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 8),
               _inputField(
                 controller: amountCtrl,
@@ -235,17 +230,9 @@ class _GoalFormCard extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 16),
-
-              // Optional description
-              const Text('Description (optional)',
-                  style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              _inputField(controller: descCtrl),
-
               const SizedBox(height: 28),
 
-              // Buttons (exact look)
+              // Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -257,7 +244,12 @@ class _GoalFormCard extends StatelessWidget {
                     loading: submitting,
                   ),
                   const SizedBox(width: 16),
-                  _flatPillButton('Cancel', bg: Colors.white, textColor: Colors.black, onTap: submitting ? null : onCancel),
+                  _flatPillButton(
+                    'Cancel',
+                    bg: Colors.white,
+                    textColor: Colors.black,
+                    onTap: submitting ? null : onCancel,
+                  ),
                 ],
               ),
             ],
@@ -267,7 +259,7 @@ class _GoalFormCard extends StatelessWidget {
     );
   }
 
-  // Reusable input
+  // Inputs
   static Widget _inputField({
     TextEditingController? controller,
     TextInputType? keyboardType,
@@ -287,9 +279,9 @@ class _GoalFormCard extends StatelessWidget {
         ),
       ),
     );
-    }
+  }
 
-  // Flat style button (like image) with optional loading
+  // Buttons
   static Widget _flatPillButton(
     String text, {
     required Color bg,
