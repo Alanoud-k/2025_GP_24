@@ -162,7 +162,12 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                           }
                         }),
                         _actionButton('Transaction', () {}),
-                        _actionButton('Request Money', () {}),
+                        _actionButton('Request Money', () {  Navigator.pushNamed(
+    context,
+    '/childRequestMoney',
+    arguments: {'childId': childId},
+  );
+}),
                       ],
                     ),
                     const SizedBox(height: 35),

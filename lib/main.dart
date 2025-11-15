@@ -9,6 +9,9 @@ import 'package:my_app/pages/manage_kids_screen.dart';
 import 'package:my_app/pages/child_homepage_screen.dart';
 import 'package:my_app/pages/child_goals_screen.dart'; 
 import 'package:my_app/pages/child_add_goal_screen.dart';
+import 'package:my_app/pages/child_request_money_screen.dart';
+import 'package:my_app/pages/child_request_success.dart';
+
 
 
 void main() {
@@ -38,7 +41,15 @@ class MyApp extends StatelessWidget {
 
         '/manageKids': (context) => const ManageKidsScreen(),
         '/childGoals': (context) => const ChildGoalsScreen(),
-        '/childAddGoal': (context) => const ChildAddGoalScreen(),  
+        '/childAddGoal': (context) => const ChildAddGoalScreen(), 
+
+         '/childRequestMoney': (context) {
+    final args = ModalRoute.of(context)!.settings.arguments as Map;
+    return ChildRequestMoneyScreen(childId: args['childId']);
+  },
+
+  '/childRequestSuccess': (context) => const ChildRequestSuccessScreen(),
+ 
 
       },
     );

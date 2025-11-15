@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes.js";
 import parentRoutes from "./routes/parentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js"; // لو ما سويته لسه احذفه من هنا
+import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 
 // ----- ESM __dirname setup -----
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +40,7 @@ app.use("/api/auth", authRoutes); // ✅ هنا يكون /api/auth/...
 app.use("/api", parentRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api", goalRoutes); 
+app.use("/api", moneyRequestRoutes);
 
 // Test route
 app.get("/", (_req, res) => {

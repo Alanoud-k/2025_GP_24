@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'parent_transfer_screen.dart';
+import 'parent_money_requests_screen.dart';
+
 
 class ParentChildOverviewScreen extends StatefulWidget {
   final int parentId;
@@ -236,10 +238,20 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _tileButton(
-                          'Money Requests',
-                          Icons.request_page_outlined, // 📄 fits for requests
-                          () {},
-                        ),
+  'Money Requests',
+  Icons.request_page_outlined,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ParentMoneyRequestsScreen(
+          parentId: widget.parentId,
+          childId: widget.childId,
+        ),
+      ),
+    );
+  },
+),
                       ),
                     ],
                   ),
