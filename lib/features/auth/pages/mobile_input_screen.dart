@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../core/api_config.dart'; // ✅ base URL
+import '../../../core/api_config.dart'; // ✅ base URL
 
 class MobileInputScreen extends StatefulWidget {
   const MobileInputScreen({super.key});

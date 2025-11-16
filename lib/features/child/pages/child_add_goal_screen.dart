@@ -2,37 +2,35 @@ import 'package:flutter/material.dart';
 import '../services/goals_api.dart';
 
 class ChildAddGoalScreen extends StatefulWidget {
-  const ChildAddGoalScreen({super.key});
+  final int childId;
+  final String baseUrl;
+
+  const ChildAddGoalScreen({
+    super.key,
+    required this.childId,
+    required this.baseUrl,
+  });
 
   @override
   State<ChildAddGoalScreen> createState() => _ChildAddGoalScreenState();
 }
 
 class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
-  // 🎨 Colors
   static const kBg = Color(0xFFF7F8FA);
   static const kCard = Color(0xFF9FE5E2);
   static const kAddBtn = Color(0xFF75C6C3);
   static const kTextSecondary = Color(0xFF6E6E6E);
 
-  // --- Form state ---
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
   bool _submitting = false;
-
-  // --- API wiring ---
-  late int _childId;
   late GoalsApi _api;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = (ModalRoute.of(context)?.settings.arguments as Map?) ?? {};
-    _childId = (args['childId'] ?? 0) as int;
-
-    final baseUrl = (args['baseUrl'] ?? 'http://10.0.2.2:3000') as String;
-    _api = GoalsApi(baseUrl);
+  void initState() {
+    super.initState();
+    _api = GoalsApi(widget.baseUrl);
   }
 
   @override
@@ -42,7 +40,6 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
     super.dispose();
   }
 
-  // Submit goal
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -52,7 +49,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
       final amount = double.parse(_amountCtrl.text.trim());
 
       await _api.createGoal(
-        childId: _childId,
+        childId: widget.childId,
         goalName: name,
         targetAmount: amount,
       );
@@ -73,8 +70,6 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-
-      // App Bar
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(85),
         child: Container(
@@ -92,7 +87,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black87),
-                    onPressed: () => Navigator.of(context).maybePop(),
+                    onPressed: () => Navigator.of(context).maybePop(false),
                   ),
                   const Spacer(),
                   const Text(
@@ -107,8 +102,6 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
           ),
         ),
       ),
-
-      // Body
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -134,22 +127,6 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
             ),
           );
         },
-      ),
-
-      // Bottom Nav
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: kAddBtn,
-        unselectedItemColor: const Color(0xFFAAAAAA),
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.sports_esports), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: ''),
-        ],
       ),
     );
   }
@@ -187,8 +164,8 @@ class _GoalFormCard extends StatelessWidget {
         child: Form(
           key: formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Center(
                 child: Padding(
@@ -199,8 +176,6 @@ class _GoalFormCard extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // Goal name
               const Text(
                 'Goal name',
                 style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600),
@@ -210,10 +185,7 @@ class _GoalFormCard extends StatelessWidget {
                 controller: nameCtrl,
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter goal name' : null,
               ),
-
               const SizedBox(height: 22),
-
-              // Amount
               const Text(
                 'Amount of money need to save',
                 style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600),
@@ -229,10 +201,7 @@ class _GoalFormCard extends StatelessWidget {
                   return null;
                 },
               ),
-
               const SizedBox(height: 28),
-
-              // Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -259,7 +228,6 @@ class _GoalFormCard extends StatelessWidget {
     );
   }
 
-  // Inputs
   static Widget _inputField({
     TextEditingController? controller,
     TextInputType? keyboardType,
@@ -281,7 +249,6 @@ class _GoalFormCard extends StatelessWidget {
     );
   }
 
-  // Buttons
   static Widget _flatPillButton(
     String text, {
     required Color bg,
@@ -298,8 +265,15 @@ class _GoalFormCard extends StatelessWidget {
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(30)),
         child: Center(
           child: loading
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : Text(text, style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 15)),
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(
+                  text,
+                  style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 15),
+                ),
         ),
       ),
     );
