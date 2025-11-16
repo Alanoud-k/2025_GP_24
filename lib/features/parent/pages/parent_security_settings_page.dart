@@ -1,0 +1,390 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class ParentSecuritySettingsPage extends StatefulWidget {
+  final int parentId;
+  
+  const ParentSecuritySettingsPage({super.key, required this.parentId});
+
+  @override
+  State<ParentSecuritySettingsPage> createState() => _ParentSecuritySettingsPageState();
+}
+
+class _ParentSecuritySettingsPageState extends State<ParentSecuritySettingsPage> {
+  List<dynamic> children = [];
+  bool isLoadingChildren = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchChildren();
+  }
+
+  Future<void> fetchChildren() async {
+    setState(() {
+      isLoadingChildren = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/parent/${widget.parentId}/children'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          children = data['children'] ?? [];
+        });
+      } else {
+        _showErrorSnackbar('Failed to load children');
+      }
+    } catch (e) {
+      _showErrorSnackbar('Error: $e');
+    } finally {
+      setState(() {
+        isLoadingChildren = false;
+      });
+    }
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text(
+            'Change Password',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: currentPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'Current Password',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: newPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'New Password',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: confirmPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'Confirm New Password',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (newPasswordController.text != confirmPasswordController.text) {
+                  _showErrorSnackbar('Passwords do not match');
+                  return;
+                }
+
+                await _changeParentPassword(
+                  currentPasswordController.text,
+                  newPasswordController.text,
+                );
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+              child: const Text('Change'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _changeParentPassword(String currentPassword, String newPassword) async {
+    try {
+      final response = await http.put(
+        Uri.parse('http://10.0.2.2:3000/api/parent/${widget.parentId}/password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _showSuccessSnackbar('Password changed successfully');
+      } else if (response.statusCode == 401) {
+        _showErrorSnackbar('Current password is incorrect');
+      } else {
+        _showErrorSnackbar('Failed to change password');
+      }
+    } catch (e) {
+      _showErrorSnackbar('Error: $e');
+    }
+  }
+
+  void _showChangeChildPasswordDialog(BuildContext context) {
+  String? selectedChildId;
+  final newPasswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: const Text(
+              'Change Child Password',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Child Selection Dropdown
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Select Child',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  value: selectedChildId,
+                  items: children.map<DropdownMenuItem<String>>((child) {
+                    return DropdownMenuItem<String>(
+                      value: child['id'].toString(),
+                      child: Text(child['firstName']),
+                    );
+                  }).toList(),
+                  onChanged: (String? value) {
+                    setDialogState(() {
+                      selectedChildId = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newPasswordController,
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmPasswordController,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm New Password',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  obscureText: true,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: selectedChildId == null ? null : () async {
+                  if (newPasswordController.text.isEmpty) {
+                    _showErrorSnackbar('Please enter new password');
+                    return;
+                  }
+
+                  if (newPasswordController.text != confirmPasswordController.text) {
+                    _showErrorSnackbar('Passwords do not match');
+                    return;
+                  }
+
+                  await _changeChildPassword(
+                    int.parse(selectedChildId!),
+                    newPasswordController.text,
+                  );
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  // إزالة disabled style
+                ),
+                child: const Text('Change'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+  Future<void> _changeChildPassword(int childId, String newPassword) async {
+  try {
+    // تشفير كلمة المرور الجديدة
+    final response = await http.put(
+      Uri.parse('http://10.0.2.2:3000/api/child/$childId/password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'newPassword': newPassword, // نرسلها غير مشفرة، السيرفر هو اللي يشفرها
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      _showSuccessSnackbar('Child password changed successfully');
+    } else {
+      final errorData = jsonDecode(response.body);
+      _showErrorSnackbar('Failed to change child password: ${errorData['error']}');
+    }
+  } catch (e) {
+    _showErrorSnackbar('Error: $e');
+  }
+}
+
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text('Security settings'),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 8, bottom: 8, top: 8),
+                child: Text(
+                  'Security',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey),
+                ),
+              ),
+
+              // Change Password Card
+              _buildSecurityCard(
+                icon: Icons.lock_outline,
+                title: 'Change password',
+                onTap: () => _showChangePasswordDialog(context),
+              ),
+              const SizedBox(height: 16),
+
+              // Change Child Password Card
+              _buildSecurityCard(
+                icon: Icons.child_care_outlined,
+                title: 'Change child password',
+                onTap: isLoadingChildren || children.isEmpty 
+                    ? null
+                    : () => _showChangeChildPasswordDialog(context),
+              ),
+
+              // Show loading or empty state
+              if (isLoadingChildren)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (children.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(
+                    child: Text(
+                      'No children found',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecurityCard({
+    required IconData icon,
+    required String title,
+    required VoidCallback? onTap,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.teal.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: onTap == null ? Colors.grey : Colors.teal, size: 20),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 16, 
+            fontWeight: FontWeight.w500,
+            color: onTap == null ? Colors.grey : Colors.black,
+          ),
+        ),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: onTap == null ? Colors.grey : Colors.grey),
+        onTap: onTap,
+      ),
+    );
+  }
+}

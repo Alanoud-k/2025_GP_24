@@ -8,7 +8,11 @@ import 'package:my_app/features/auth/pages/opening.dart';
 import 'package:my_app/features/parent/pages/register_screen.dart';
 import 'package:my_app/features/parent/pages/parent_login_screen.dart';
 import 'package:my_app/features/parent/pages/parent_homepage_screen.dart';
+import 'package:my_app/features/parent/pages/parent_more_screen.dart';
 import 'package:my_app/features/parent/pages/manage_kids_screen.dart';
+import 'package:my_app/features/parent/pages/parent_security_settings_page.dart';
+import 'package:my_app/features/parent/pages/terms_privacy_page.dart';
+
 
 // Child
 import 'package:my_app/features/child/pages/child_login_screen.dart';
@@ -43,6 +47,13 @@ class MyApp extends StatelessWidget {
         '/parentLogin': (context) => const ParentLoginScreen(),
         '/parentHome': (context) => const ParentHomeScreen(),
         '/manageKids': (context) => const ManageKidsScreen(),
+         '/parentSecuritySettings': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return ParentSecuritySettingsPage(parentId: args['parentId']);
+        },
+          '/termsPrivacy': (context) => const TermsPrivacyPage(),
+
+
 
         // --------------------------
         // Child Login Only

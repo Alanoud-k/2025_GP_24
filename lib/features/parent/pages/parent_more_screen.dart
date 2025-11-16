@@ -54,6 +54,88 @@ class _MorePageState extends State<MorePage> {
     }
   }
 
+  // دالة عرض نافذة تأكيد تسجيل الخروج
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.logout, color: Colors.red, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Log Out',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Are you sure you want to log out?',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black54,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // إغلاق النافذة
+              },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // إغلاق النافذة
+                _performLogout(context); // تنفيذ تسجيل الخروج
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Log Out',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // دالة تنفيذ تسجيل الخروج
+  void _performLogout(BuildContext context) {
+    // هنا يمكنك إضافة أي عمليات تنظيف إضافية إذا needed
+    // مثل مسح البيانات المحلية، إغلاق الجلسات، etc.
+    
+    // التنقل إلى صفحة mobile مع إزالة كل الصفحات السابقة
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/mobile',
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,11 +194,17 @@ class _MorePageState extends State<MorePage> {
                         const SizedBox(height: 40),
 
                         // 🧩 Menu Items
-                        _buildMenuItem(
-                          icon: Icons.lock_outline,
-                          title: 'Security settings',
-                          onTap: () {},
-                        ),
+                       _buildMenuItem(
+                        icon: Icons.lock_outline,
+                        title: 'Security settings',
+                        onTap: () {
+                        Navigator.pushNamed(
+                         context,
+                       '/parentSecuritySettings',
+                       arguments: {'parentId': widget.parentId},
+                      );
+                     },
+                   ),
                         const SizedBox(height: 16),
 
                         _buildMenuItem(
@@ -132,11 +220,13 @@ class _MorePageState extends State<MorePage> {
                         ),
                         const SizedBox(height: 16),
 
-                        _buildMenuItem(
-                          icon: Icons.privacy_tip_outlined,
-                          title: 'Terms & privacy policy',
-                          onTap: () {},
-                        ),
+                       _buildMenuItem(
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Terms & privacy policy',
+                         onTap: () {
+                          Navigator.pushNamed(context, '/termsPrivacy');
+                           },
+                         ),
                         const SizedBox(height: 16),
 
                         _buildMenuItem(
@@ -145,11 +235,7 @@ class _MorePageState extends State<MorePage> {
                           titleColor: Colors.red,
                           iconColor: Colors.red,
                           onTap: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              '/mobile',
-                              (route) => false,
-                            );
+                            _showLogoutConfirmation(context);
                           },
                         ),
 
