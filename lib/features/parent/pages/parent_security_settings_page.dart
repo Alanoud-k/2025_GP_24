@@ -48,77 +48,90 @@ class _ParentSecuritySettingsPageState extends State<ParentSecuritySettingsPage>
     }
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
+void _showChangePasswordDialog(BuildContext context) {
+  final currentPasswordController = TextEditingController();
+  final newPasswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: const Text(
-            'Change Password',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: currentPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Current Password',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                obscureText: true,
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: currentPasswordController,
+              decoration: InputDecoration(
+                labelText: 'Current Password',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'New Password',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Confirm New Password',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                obscureText: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              obscureText: true,
             ),
-            ElevatedButton(
-              onPressed: () async {
-                if (newPasswordController.text != confirmPasswordController.text) {
-                  _showErrorSnackbar('Passwords do not match');
-                  return;
-                }
-
-                await _changeParentPassword(
-                  currentPasswordController.text,
-                  newPasswordController.text,
-                );
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-              child: const Text('Change'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: newPasswordController,
+              decoration: InputDecoration(
+                labelText: 'New Password',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.info_outline, size: 18),
+                  onPressed: () => _showPasswordRequirementsDialog(context),
+                ),
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: confirmPasswordController,
+              decoration: InputDecoration(
+                labelText: 'Confirm New Password',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              obscureText: true,
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newPassword = newPasswordController.text;
+              
+              // التحقق من تطابق كلمات المرور
+              if (newPassword != confirmPasswordController.text) {
+                _showErrorSnackbar('Passwords do not match');
+                return;
+              }
+
+              // التحقق من شروط كلمة المرور
+              if (!_validatePassword(newPassword)) {
+                _showErrorSnackbar('Password does not meet requirements. Tap the info icon for details.');
+                return;
+              }
+
+              await _changeParentPassword(
+                currentPasswordController.text,
+                newPassword,
+              );
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            child: const Text('Change'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Future<void> _changeParentPassword(String currentPassword, String newPassword) async {
     try {
@@ -187,6 +200,10 @@ class _ParentSecuritySettingsPageState extends State<ParentSecuritySettingsPage>
                   decoration: InputDecoration(
                     labelText: 'New Password',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.info_outline, size: 18),
+                      onPressed: () => _showPasswordRequirementsDialog(context),
+                    ),
                   ),
                   obscureText: true,
                 ),
@@ -208,26 +225,31 @@ class _ParentSecuritySettingsPageState extends State<ParentSecuritySettingsPage>
               ),
               ElevatedButton(
                 onPressed: selectedChildId == null ? null : () async {
-                  if (newPasswordController.text.isEmpty) {
+                  final newPassword = newPasswordController.text;
+                  
+                  if (newPassword.isEmpty) {
                     _showErrorSnackbar('Please enter new password');
                     return;
                   }
 
-                  if (newPasswordController.text != confirmPasswordController.text) {
+                  if (newPassword != confirmPasswordController.text) {
                     _showErrorSnackbar('Passwords do not match');
+                    return;
+                  }
+
+                  // التحقق من شروط كلمة المرور
+                  if (!_validatePassword(newPassword)) {
+                    _showErrorSnackbar('Password does not meet requirements. Tap the info icon for details.');
                     return;
                   }
 
                   await _changeChildPassword(
                     int.parse(selectedChildId!),
-                    newPasswordController.text,
+                    newPassword,
                   );
                   Navigator.pop(context);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  // إزالة disabled style
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
                 child: const Text('Change'),
               ),
             ],
@@ -387,4 +409,47 @@ class _ParentSecuritySettingsPageState extends State<ParentSecuritySettingsPage>
       ),
     );
   }
+}
+// دالة التحقق من شروط كلمة المرور
+bool _validatePassword(String password) {
+  if (password.length < 8) {
+    return false;
+  }
+  if (!RegExp(r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])').hasMatch(password)) {
+    return false;
+  }
+  return true;
+}
+
+// دالة لعرض رسالة الخطأ
+void _showPasswordRequirementsDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text(
+          'Password Requirements',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('• At least 8 characters'),
+            Text('• One uppercase letter (A-Z)'),
+            Text('• One lowercase letter (a-z)'),
+            Text('• One number (0-9)'),
+            Text('• One special character (!@#\$%^&*)'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
 }
