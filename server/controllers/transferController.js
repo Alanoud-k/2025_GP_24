@@ -52,7 +52,6 @@ async function ensureParentWalletAndAccount(parentId, s) {
  * Returns: { walletId, savingAccountId, spendingAccountId }
  */
 async function ensureChildWalletAndCoreAccounts(childId, s) {
-  // Find or create child wallet
   const w = await s`
     SELECT "walletid" FROM "Wallet"
     WHERE "childid" = ${childId}
@@ -70,7 +69,7 @@ async function ensureChildWalletAndCoreAccounts(childId, s) {
     walletId = ins[0].walletid;
   }
 
-  // Ensure SavingAccount
+  // Ensure accounts
   await s`
     INSERT INTO "Account"("walletid","savingaccountid","accounttype","currency","balance","limitamount")
     SELECT ${walletId}, NULL, 'SavingAccount', 'SAR', 0, 0
@@ -80,7 +79,6 @@ async function ensureChildWalletAndCoreAccounts(childId, s) {
     )
   `;
 
-  // Ensure SpendingAccount
   await s`
     INSERT INTO "Account"("walletid","savingaccountid","accounttype","currency","balance","limitamount")
     SELECT ${walletId}, NULL, 'SpendingAccount', 'SAR', 0, 0
@@ -123,110 +121,92 @@ export const transferMoney = async (req, res) => {
     const amt = Number(amount);
     const savePct = Number(savePercentage);
 
-    if (amt <= 0) {
+    if (amt <= 0)
       return res.status(400).json({ error: "Amount must be > 0" });
-    }
-    if (savePct < 0 || savePct > 100) {
-      return res.status(400).json({ error: "savePercentage must be between 0 and 100" });
-    }
+    if (savePct < 0 || savePct > 100)
+      return res
+        .status(400)
+        .json({ error: "savePercentage must be between 0 and 100" });
 
     const spendPct = 100 - savePct;
     const saveAmount = (savePct / 100) * amt;
     const spendAmount = (spendPct / 100) * amt;
 
-    const out = await sql.begin(async (s) => {
-      // 1) Parent wallet + ParentAccount
-      const {
-        parentAccountId,
-        parentBalance,
-      } = await ensureParentWalletAndAccount(parentId, s);
+    // Neon-compatible: execute sequentially (no .begin)
+    const s = sql;
 
-      if (parentBalance < amt) {
-        return { error: "insufficient_balance" };
-      }
+    // 1) Parent wallet + account
+    const { parentAccountId, parentBalance } =
+      await ensureParentWalletAndAccount(parentId, s);
 
-      // 2) Child wallet + Saving / Spending accounts
-      const {
-        savingAccountId,
-        spendingAccountId,
-      } = await ensureChildWalletAndCoreAccounts(childId, s);
+    if (parentBalance < amt)
+      return res.status(400).json({ error: "Insufficient parent balance" });
 
-      if (!savingAccountId || !spendingAccountId) {
-        return { error: "child_accounts_not_ready" };
-      }
+    // 2) Child wallet + accounts
+    const { savingAccountId, spendingAccountId } =
+      await ensureChildWalletAndCoreAccounts(childId, s);
 
-      // 3) Insert transactions (ParentAccount → SavingAccount / SpendingAccount)
-      if (saveAmount > 0) {
-        await s`
-          INSERT INTO "Transaction"(
-            "transactiontype","amount","transactiondate","transactionstatus",
-            "merchantname","sourcetype","transactioncategory",
-            "senderAccountId","receiverAccountId"
-          )
-          VALUES (
-            'Transfer', ${saveAmount}, CURRENT_TIMESTAMP, 'Completed',
-            'Parent Allowance', 'Allowance', 'Saving',
-            ${parentAccountId}, ${savingAccountId}
-          )
-        `;
-      }
+    if (!savingAccountId || !spendingAccountId)
+      return res.status(500).json({ error: "Child accounts not ready" });
 
-      if (spendAmount > 0) {
-        await s`
-          INSERT INTO "Transaction"(
-            "transactiontype","amount","transactiondate","transactionstatus",
-            "merchantname","sourcetype","transactioncategory",
-            "senderAccountId","receiverAccountId"
-          )
-          VALUES (
-            'Transfer', ${spendAmount}, CURRENT_TIMESTAMP, 'Completed',
-            'Parent Allowance', 'Allowance', 'Spending',
-            ${parentAccountId}, ${spendingAccountId}
-          )
-        `;
-      }
+    // 3) Insert transactions
+    if (saveAmount > 0) {
+      await s`
+        INSERT INTO "Transaction"(
+          "transactiontype","amount","transactiondate","transactionstatus",
+          "merchantname","sourcetype","transactioncategory",
+          "senderAccountId","receiverAccountId"
+        )
+        VALUES (
+          'Transfer', ${saveAmount}, CURRENT_TIMESTAMP, 'Completed',
+          'Parent Allowance', 'Allowance', 'Saving',
+          ${parentAccountId}, ${savingAccountId}
+        )
+      `;
+    }
 
-      // 4) Update balances
+    if (spendAmount > 0) {
+      await s`
+        INSERT INTO "Transaction"(
+          "transactiontype","amount","transactiondate","transactionstatus",
+          "merchantname","sourcetype","transactioncategory",
+          "senderAccountId","receiverAccountId"
+        )
+        VALUES (
+          'Transfer', ${spendAmount}, CURRENT_TIMESTAMP, 'Completed',
+          'Parent Allowance', 'Allowance', 'Spending',
+          ${parentAccountId}, ${spendingAccountId}
+        )
+      `;
+    }
+
+    // 4) Update balances
+    await s`
+      UPDATE "Account"
+      SET "balance" = "balance" - ${amt}
+      WHERE "accountid" = ${parentAccountId}
+    `;
+
+    if (saveAmount > 0)
       await s`
         UPDATE "Account"
-        SET "balance" = "balance" - ${amt}
-        WHERE "accountid" = ${parentAccountId}
+        SET "balance" = "balance" + ${saveAmount}
+        WHERE "accountid" = ${savingAccountId}
       `;
-      if (saveAmount > 0) {
-        await s`
-          UPDATE "Account"
-          SET "balance" = "balance" + ${saveAmount}
-          WHERE "accountid" = ${savingAccountId}
-        `;
-      }
-      if (spendAmount > 0) {
-        await s`
-          UPDATE "Account"
-          SET "balance" = "balance" + ${spendAmount}
-          WHERE "accountid" = ${spendingAccountId}
-        `;
-      }
 
-      return {
-        ok: true,
-        transferred: amt,
-        saveAmount,
-        spendAmount,
-      };
-    });
+    if (spendAmount > 0)
+      await s`
+        UPDATE "Account"
+        SET "balance" = "balance" + ${spendAmount}
+        WHERE "accountid" = ${spendingAccountId}
+      `;
 
-    if (out?.error === "insufficient_balance") {
-      return res.status(400).json({ error: "Insufficient parent balance" });
-    }
-    if (out?.error === "child_accounts_not_ready") {
-      return res.status(500).json({ error: "Child accounts not ready" });
-    }
-
+    // 5) Respond
     return res.json({
       message: "Transfer successful",
-      transferred: out.transferred,
-      saveAmount: out.saveAmount,
-      spendAmount: out.spendAmount,
+      transferred: amt,
+      saveAmount,
+      spendAmount,
     });
   } catch (err) {
     console.error("❌ Transfer error:", err);

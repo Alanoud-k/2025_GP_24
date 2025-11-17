@@ -38,7 +38,7 @@ export const getChildrenByParent = async (req, res) => {
    Body: { parentId, firstName, nationalId, phoneNo, dob, password }
 ===================================================== */
 export const registerChild = async (req, res) => {
-  const { parentId, firstName, nationalId, phoneNo, dob, password } = req.body;
+  const { parentId, firstName, nationalId, phoneNo, dob, password, limitAmount  } = req.body;
 
   if (!parentId || !firstName || !nationalId || !phoneNo || !dob || !password) {
     return res.status(400).json({ error: "All fields are required" });
@@ -82,6 +82,10 @@ export const registerChild = async (req, res) => {
     // Hash password
     const hashed = await bcrypt.hash(password, 10);
 
+    if (!limitAmount || isNaN(limitAmount) || limitAmount <= 0) {
+  return res.status(400).json({ error: "Limit amount must be a positive number" });
+}
+
     // Insert child (columns follow your schema)
     const inserted = await sql`
       INSERT INTO "Child" ("parentid","firstname","nationalid","phoneno","dob","password")
@@ -90,11 +94,25 @@ export const registerChild = async (req, res) => {
     `;
     const childId = inserted[0].childid;
 
-    // Create wallet (Active) — no balance column in schema
-    await sql`
-      INSERT INTO "Wallet" ("parentid","childid","walletstatus")
-      VALUES (${parentId}, ${childId}, 'Active')
-    `;
+    // Create wallet (Active)
+const walletInsert = await sql`
+  INSERT INTO "Wallet" ("parentid","childid","walletstatus")
+  VALUES (${parentId}, ${childId}, 'Active')
+  RETURNING "walletid"
+`;
+const walletId = walletInsert[0].walletid;
+
+// Create saving account (no limit)
+await sql`
+  INSERT INTO "Account" ("walletid", "accounttype", "balance", "currency")
+  VALUES (${walletId}, 'SavingAccount', 0, 'SAR')
+`;
+
+// Create spending account with limitamount
+await sql`
+  INSERT INTO "Account" ("walletid", "accounttype", "balance", "currency", "limitamount")
+  VALUES (${walletId}, 'SpendingAccount', 0, 'SAR', ${limitAmount})
+`;
 
     // Mark national id as used
     await sql`

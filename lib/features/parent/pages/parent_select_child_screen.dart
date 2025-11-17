@@ -40,8 +40,8 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
         setState(() {
           _kids = data.map((child) {
             return {
-              "id": child["childid"],
-              "name": child["firstname"] ?? "Unnamed",
+              "id": child["childId"],
+              "name": child["firstName"] ?? "Unnamed",
               "balance": double.tryParse(child["balance"].toString()) ?? 0.0,
             };
           }).toList();
@@ -117,7 +117,8 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                           MaterialPageRoute(
                             builder: (_) => ParentChildOverviewScreen(
                               parentId: widget.parentId,
-                              childId: kid["id"],
+                              childId:
+                                  kid["id"], // ✅ ensure this is a valid number
                               childName: kid["name"],
                             ),
                           ),

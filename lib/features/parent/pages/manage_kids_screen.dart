@@ -26,7 +26,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
   Future<void> fetchChildren() async {
     setState(() => _loading = true);
-    final url = Uri.parse('http://10.0.2.2:3000/api/auth/parent/$parentId/children');
+    final url = Uri.parse(
+      'http://10.0.2.2:3000/api/auth/parent/$parentId/children',
+    );
     //final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
     try {
@@ -54,6 +56,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     final nationalId = TextEditingController();
     final phoneNo = TextEditingController();
     final dob = TextEditingController();
+    final limitAmount = TextEditingController();
+
     //final password = TextEditingController();
 
     showDialog(
@@ -152,6 +156,23 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       return null;
                     },
                   ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: limitAmount,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Spending Limit Amount (SAR)",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty)
+                        return 'Enter a spending limit';
+                      final value = double.tryParse(v);
+                      if (value == null || value <= 0)
+                        return 'Enter a valid amount';
+                      return null;
+                    },
+                  ),
                 ],
               ),
             ),
@@ -170,6 +191,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                   phoneNo.text.trim(),
                   dob.text.trim(),
                   password.text.trim(),
+                  limitAmount.text.trim(), // ✅ pass it here
                 );
                 if (context.mounted) Navigator.pop(context);
               },
@@ -187,6 +209,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     String phoneNo,
     String dob,
     String password,
+    String limitAmount,
   ) async {
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/child/register');
     final body = {
@@ -196,6 +219,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       "phoneNo": phoneNo,
       "dob": dob,
       "password": password,
+      "limitAmount": double.tryParse(limitAmount),
     };
 
     try {
@@ -284,8 +308,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     ),
                     child: ListTile(
                       leading: const Icon(Icons.person_outline),
-                      title: Text(kid['firstname'] ?? 'Unnamed'),
-                      subtitle: Text('Phone: ${kid['phoneno']}'),
+                      title: Text(kid['firstName'] ?? 'Unnamed'),
+                      subtitle: Text('Phone: ${kid['phoneNo'] ?? '—'}'),
                     ),
                   );
                 },
