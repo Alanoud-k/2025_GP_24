@@ -96,8 +96,8 @@ export const registerChild = async (req, res) => {
 
     // Create wallet (Active)
 const walletInsert = await sql`
-  INSERT INTO "Wallet" ("parentid","childid","walletstatus")
-  VALUES (${parentId}, ${childId}, 'Active')
+INSERT INTO "Wallet" ("parentid","childid","walletstatus")
+VALUES (NULL, ${childId}, 'Active')
   RETURNING "walletid"
 `;
 const walletId = walletInsert[0].walletid;

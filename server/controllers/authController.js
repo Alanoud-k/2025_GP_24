@@ -106,10 +106,16 @@ export const registerParent = async (req, res) => {
     const newParentId = inserted[0].parentid;
 
     // Create wallet row for parent
-    await sql`
-      INSERT INTO "Wallet" ("parentid","childid","walletstatus")
-      VALUES (${newParentId}, NULL, 'Active')
-    `;
+const parentWallet = await sql`
+  INSERT INTO "Wallet"("parentid","childid","walletstatus")
+  VALUES (${newParentId}, NULL, 'Active')
+  RETURNING walletid
+`;
+
+await sql`
+  INSERT INTO "Account"("walletid","accounttype","currency","balance","limitamount")
+  VALUES (${parentWallet[0].walletid}, 'ParentAccount', 'SAR', 0, 0)
+`;
 
     // Mark national id as used
     await sql`
