@@ -19,6 +19,8 @@ import 'package:my_app/features/child/pages/child_login_screen.dart';
 import 'package:my_app/features/child/widgets/child_shell.dart';
 import 'package:my_app/features/child/pages/child_request_money_screen.dart';
 import 'package:my_app/features/child/pages/child_request_success.dart';
+import 'package:my_app/features/child/pages/child_security_settings_page.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -81,7 +83,16 @@ class MyApp extends StatelessWidget {
 
         '/childRequestSuccess': (context) =>
             const ChildRequestSuccessScreen(),
+
+        '/childSecuritySettings': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return ChildSecuritySettingsPage(
+          childId: args['childId'],
+          baseUrl: args['baseUrl'],
+          );
+        },
       },
     );
   }
 }
+

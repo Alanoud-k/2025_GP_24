@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 // Pages
 import '../pages/child_homepage_screen.dart';
@@ -26,27 +29,65 @@ class ChildShell extends StatefulWidget {
 }
 
 class _ChildShellState extends State<ChildShell> {
-  int currentIndex = 2; // Home tab as default
+  int currentIndex = 2;
+  String childName = 'Child User';
+  String childPhone = '+966 512345678';
+  bool isLoadingData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchChildData();
+  }
+
+  Future<void> _fetchChildData() async {
+    try {
+      // استخدم نفس الرابط الذي يعمل في ChildHomePageScreen
+      final response = await http.get(
+        Uri.parse('${widget.baseUrl}/api/auth/child/info/${widget.childId}'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          childName = data['firstName'] ?? 'Child User';
+          childPhone = data['phoneNo'] ?? '+966 512345678';
+          isLoadingData = false;
+        });
+      } else {
+        setState(() {
+          isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingData = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Shell pages in navigation order
     final List<Widget> pages = [
-      ChildRewardsScreen(childId: widget.childId, baseUrl: widget.baseUrl), // 0
-      ChildGameScreen(childId: widget.childId, baseUrl: widget.baseUrl), // 1
-      ChildHomePageScreen(childId: widget.childId, baseUrl: widget.baseUrl), // 2
-      ChildCardScreen(childId: widget.childId, baseUrl: widget.baseUrl), // 3
-      ChildMoreScreen(childId: widget.childId, baseUrl: widget.baseUrl), // 4
+      ChildRewardsScreen(childId: widget.childId, baseUrl: widget.baseUrl),
+      ChildGameScreen(childId: widget.childId, baseUrl: widget.baseUrl),
+      ChildHomePageScreen(childId: widget.childId, baseUrl: widget.baseUrl),
+      ChildCardScreen(childId: widget.childId, baseUrl: widget.baseUrl),
+      ChildMoreScreen(
+        childId: widget.childId,
+        baseUrl: widget.baseUrl,
+        username: childName,  // ✅ الآن سيكون الاسم الحقيقي
+        phoneNo: childPhone,  // ✅ الآن سيكون الرقم الحقيقي
+      ),
     ];
 
     return Scaffold(
       backgroundColor: const Color(0xffF7F8FA),
-
       body: SafeArea(
-        child: pages[currentIndex],
+        child: isLoadingData
+            ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+            : pages[currentIndex],
       ),
-
-      // Custom bottom navigation bar with floating home button
       bottomNavigationBar: ChildBottomNavBar(
         currentIndex: currentIndex,
         onTap: (i) {
