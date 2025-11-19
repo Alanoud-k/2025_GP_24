@@ -1,15 +1,14 @@
-// server/routes/paymentRoutes.js (ESM version)
+// server/routes/paymentRoutes.js (ESM)
 
 import express from "express";
-import * as addMoneyController from "../controllers/addMoneyController.js";
+import { addMoneyToParentWallet } from "../controllers/addMoneyController.js";
 import * as moyasarWebhookController from "../controllers/moyasarWebhookController.js";
 
 const router = express.Router();
 
-// Payment creation
-router.post("/create-payment", addMoneyController.createPayment);
-
-// Moyasar webhook
+// Add money to parent wallet using saved card
+router.post("/parent/:parentId/add-money", addMoneyToParentWallet);
+// Moyasar webhook 
 router.post("/moyasar-webhook", moyasarWebhookController.handleMoyasarWebhook);
 
 export default router;

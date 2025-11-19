@@ -9,8 +9,9 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import parentRoutes from "./routes/parentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import goalRoutes from "./routes/goalRoutes.js"; // لو ما سويته لسه احذفه من هنا
+import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
+
 
 // ----- ESM __dirname setup -----
 const __filename = fileURLToPath(import.meta.url);

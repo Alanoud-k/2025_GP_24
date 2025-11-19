@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 import 'parent_more_screen.dart';
 import 'parent_select_child_screen.dart';
 import 'parent_add_money_screen.dart';
+import 'parent_add_card_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   const ParentHomeScreen({super.key});
@@ -15,9 +17,12 @@ class ParentHomeScreen extends StatefulWidget {
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
   late int parentId;
   int _selectedIndex = 0;
+
   String firstname = '';
-  String walletBalance = ''; // ✅ إضافة متغير الرصيد
+  String walletBalance = '';
   bool _isLoading = true;
+
+  bool parentHasCard = false;
 
   @override
   void initState() {
@@ -25,43 +30,47 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments as Map?;
       parentId = args?['parentId'] ?? 0;
-      print("🟢 ParentHomeScreen loaded with parentId: $parentId");
-      fetchParentInfo(); // ✅ نادينا الدالة المحدثة
+      fetchParentInfo();
     });
   }
 
-  // ✅ جلب الاسم والرصيد معًا من السيرفر
+  // Fetch parent info + card status from backend
   Future<void> fetchParentInfo() async {
-    final url = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId');
-    print("📡 Fetching parent info from: $url");
+    final parentUrl = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId');
+    final cardUrl = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId/card');
 
     try {
-      final response = await http.get(url);
-      print("📩 Response: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        setState(() {
-          firstname =
-              data['firstname'] ?? data['firstName'] ?? data['FirstName'] ?? '';
-          walletBalance = data['walletbalance']?.toString() ?? '0.0';
-          _isLoading = false;
-        });
-      } else {
-        print("⚠️ Failed to load parent info: ${response.statusCode}");
-        setState(() => _isLoading = false);
+      // Parent info
+      final parentRes = await http.get(parentUrl);
+      if (parentRes.statusCode == 200) {
+        final data = jsonDecode(parentRes.body);
+        firstname = data['firstname'] ?? data['firstName'] ?? '';
+        walletBalance = data['walletbalance']?.toString() ?? '0.0';
       }
+
+      // Card info
+      final cardRes = await http.get(cardUrl);
+      if (cardRes.statusCode == 200) {
+        final cardData = jsonDecode(cardRes.body);
+        parentHasCard = cardData['hasCard'] == true;
+      }
+
+      setState(() => _isLoading = false);
     } catch (e) {
-      print("❌ Error fetching parent info: $e");
       setState(() => _isLoading = false);
     }
   }
 
-  void _onItemTapped(int index) {
+  // Refresh wallet and card info after returning to home
+  void _refreshFromDb() {
     setState(() {
-      _selectedIndex = index;
+      _isLoading = true;
     });
+    fetchParentInfo();
+  }
+
+  void _onItemTapped(int index) {
+    setState(() => _selectedIndex = index);
   }
 
   @override
@@ -77,6 +86,13 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         parentId: parentId,
         firstname: firstname,
         walletBalance: walletBalance,
+        parentHasCard: parentHasCard,
+        onCardAdded: () {
+          setState(() {
+            parentHasCard = true;
+          });
+        },
+        onBalanceChanged: _refreshFromDb,
       ),
       const _PlaceholderPage(title: 'Gifts'),
       MorePage(parentId: parentId),
@@ -92,9 +108,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
           BottomNavigationBarItem(
-            icon: Icon(Icons.card_giftcard_outlined),
-            label: '',
-          ),
+              icon: Icon(Icons.card_giftcard_outlined), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: ''),
         ],
       ),
@@ -107,16 +121,23 @@ class _HomePage extends StatelessWidget {
   final String firstname;
   final String walletBalance;
 
+  final bool parentHasCard;
+  final VoidCallback onCardAdded;
+  final VoidCallback onBalanceChanged;
+
   const _HomePage({
     required this.parentId,
     required this.firstname,
     required this.walletBalance,
+    required this.parentHasCard,
+    required this.onCardAdded,
+    required this.onBalanceChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // إضافة الخلفية الرمادية فقط
+      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -135,8 +156,6 @@ class _HomePage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-
-              // ✅ عرض الاسم
               Text(
                 firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
                 style: const TextStyle(
@@ -145,10 +164,7 @@ class _HomePage extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-
               const SizedBox(height: 5),
-
-              // ✅ عرض الرصيد الحقيقي
               Card(
                 elevation: 3,
                 shape: RoundedRectangleBorder(
@@ -177,16 +193,35 @@ class _HomePage extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
               Column(
                 children: [
                   Row(
                     children: [
+                      // Add Money
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            if (!parentHasCard) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please add a card first'),
+                                ),
+                              );
+                              return;
+                            }
+
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ParentAddMoneyScreen(parentId: parentId),
+                              ),
+                            );
+
+                            // Refresh balance in all cases after returning
+                            onBalanceChanged();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black,
@@ -201,18 +236,18 @@ class _HomePage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
+                      // Transactions placeholder
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ParentAddMoneyScreen(parentId: parentId),
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Transactions page will be added later',
+                                ),
                               ),
                             );
                           },
-
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black,
@@ -231,9 +266,22 @@ class _HomePage extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
+                      // Add Card / My Card
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ParentAddCardScreen(parentId: parentId),
+                              ),
+                            );
+
+                            if (result == true) {
+                              onCardAdded();
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black,
@@ -243,11 +291,12 @@ class _HomePage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          icon: const Icon(Icons.account_balance),
-                          label: const Text("Link Bank Account"),
+                          icon: const Icon(Icons.credit_card),
+                          label: Text(parentHasCard ? "My Card" : "Add Card"),
                         ),
                       ),
                       const SizedBox(width: 12),
+                      // Insights placeholder
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {},
@@ -268,9 +317,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 30),
-
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
@@ -292,7 +339,6 @@ class _HomePage extends StatelessWidget {
                 icon: const Icon(Icons.group),
                 label: const Text("My Kids"),
               ),
-
               const SizedBox(height: 30),
             ],
           ),
@@ -308,6 +354,11 @@ class _PlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text(title, style: const TextStyle(fontSize: 20)));
+    return Center(
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 20),
+      ),
+    );
   }
 }

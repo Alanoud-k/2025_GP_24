@@ -159,3 +159,92 @@ export const changeChildPassword = async (req, res) => {
     });
   }
 };
+
+// 🟢 NEW: Get Parent Wallet (balance)
+export const getParentWallet = async (req, res) => {
+  try {
+    const { parentId } = req.params;
+
+    const result = await sql`
+      SELECT "accountid", "balance"
+      FROM "Account"
+      WHERE "parentid" = ${parentId}
+      LIMIT 1;
+    `;
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Wallet not found for this parent" });
+    }
+
+    const account = result[0];
+
+    return res.json({
+      accountId: account.accountid,
+      balance: account.balance,
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching parent wallet:", err);
+    return res.status(500).json({
+      error: "Failed to fetch parent wallet",
+      details: err.message,
+    });
+  }
+};
+
+// 🟢 NEW: Get Parent Transactions (recent operations)
+export const getParentTransactions = async (req, res) => {
+  try {
+    const { parentId } = req.params;
+    const limit = Number(req.query.limit) || 10;
+
+    // نجيب accountid أول
+    const accounts = await sql`
+      SELECT "accountid"
+      FROM "Account"
+      WHERE "parentid" = ${parentId}
+      LIMIT 1;
+    `;
+
+    if (accounts.length === 0) {
+      return res.status(404).json({ error: "Account not found for this parent" });
+    }
+
+    const accountId = accounts[0].accountid;
+
+    const transactions = await sql`
+      SELECT
+        "transactionid",
+        "transactiontype",
+        "amount",
+        "transactiondate",
+        "transactionstatus",
+        "merchantname",
+        "transactioncategory"
+      FROM "Transaction"
+      WHERE "receiverAccountId" = ${accountId}
+      ORDER BY "transactiondate" DESC
+      LIMIT ${limit};
+    `;
+
+    return res.json({
+      accountId,
+      transactions: transactions.map(tx => ({
+        id: tx.transactionid,
+        type: tx.transactiontype,
+        amount: tx.amount,
+        date: tx.transactiondate,
+        status: tx.transactionstatus,
+        merchantName: tx.merchantname,
+        category: tx.transactioncategory,
+      })),
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching parent transactions:", err);
+    return res.status(500).json({
+      error: "Failed to fetch parent transactions",
+      details: err.message,
+    });
+  }
+};
