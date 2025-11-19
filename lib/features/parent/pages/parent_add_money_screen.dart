@@ -30,7 +30,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://10.0.2.2:3000/api/create-payment"),
+        Uri.parse(
+          "http://10.0.2.2:3000/api/parent/${widget.parentId}/add-money",
+        ),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "amount": double.parse(amountText),

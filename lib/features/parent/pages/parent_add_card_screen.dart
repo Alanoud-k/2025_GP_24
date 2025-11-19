@@ -20,10 +20,7 @@ const String kBaseUrl = 'http://10.0.2.2:3000';
 class ParentAddCardScreen extends StatefulWidget {
   final int parentId; // parent id from home page
 
-  const ParentAddCardScreen({
-    super.key,
-    required this.parentId,
-  });
+  const ParentAddCardScreen({super.key, required this.parentId});
 
   @override
   State<ParentAddCardScreen> createState() => _ParentAddCardScreenState();
@@ -118,10 +115,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
             children: [
               Icon(Icons.credit_card, size: 16),
               SizedBox(width: 4),
-              Text(
-                'Card',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
+              Text('Card', style: TextStyle(fontWeight: FontWeight.w500)),
             ],
           ),
         );
@@ -156,30 +150,21 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     final cardBrand = brandEnum == CardBrand.visa
         ? 'visa'
         : brandEnum == CardBrand.mastercard
-            ? 'mastercard'
-            : 'other';
+        ? 'mastercard'
+        : 'other';
 
-    int expMonth = 1;
-    int expYear = 0;
-    if (_expiryCtrl.text.contains('/')) {
-      final parts = _expiryCtrl.text.split('/');
-      if (parts.length == 2) {
-        expMonth = int.tryParse(parts[0]) ?? 1;
-        final yy = int.tryParse(parts[1]) ?? 0;
-        expYear = yy < 100 ? 2000 + yy : yy;
-      }
-    }
+    final parts = _expiryCtrl.text.split('/');
+    final expMonth = int.parse(parts[0]);
+    final expYear = 2000 + int.parse(parts[1]); // "27" → 2027
 
-    final url = Uri.parse(
-      '$kBaseUrl/api/parent/${widget.parentId}/card',
-    );
+    final url = Uri.parse('$kBaseUrl/api/parent/${widget.parentId}/card');
 
     try {
       final res = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'cardBrand': cardBrand,
+          'brand': cardBrand,
           'last4': last4,
           'expMonth': expMonth,
           'expYear': expYear,
@@ -189,14 +174,14 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
       if (res.statusCode == 201) {
         Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save card')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to save card')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error while saving card')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Error while saving card')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -313,10 +298,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                         const SizedBox(height: 4),
                         const Text(
                           'Debit Card',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ],
                     ),
@@ -328,8 +310,10 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
             // Form
             Expanded(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -379,8 +363,24 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                                 ),
                               ),
                               onChanged: (_) => setState(() {}),
-                              validator: (v) =>
-                                  v == null || v.isEmpty ? 'Required' : null,
+                              validator: (v) {
+                                if (v == null || v.isEmpty) return 'Required';
+
+                                // must be exactly MM/YY
+                                if (!RegExp(r'^\d\d/\d\d$').hasMatch(v)) {
+                                  return 'Invalid format (MM/YY)';
+                                }
+
+                                final parts = v.split('/');
+                                final m = int.tryParse(parts[0]);
+                                final y = int.tryParse(parts[1]);
+
+                                if (m == null || m < 1 || m > 12)
+                                  return 'Invalid month';
+                                if (y == null) return 'Invalid year';
+
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -425,10 +425,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text(
                           'Securely save card and details (demo only)',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: kTextSecondary,
-                          ),
+                          style: TextStyle(fontSize: 13, color: kTextSecondary),
                         ),
                       ),
                       const SizedBox(height: 80),
@@ -442,8 +439,10 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
             SafeArea(
               top: false,
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   height: 50,
