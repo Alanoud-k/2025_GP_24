@@ -1,2 +1,6 @@
-[process]
+[build]
 root = "server"
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "npm start"
