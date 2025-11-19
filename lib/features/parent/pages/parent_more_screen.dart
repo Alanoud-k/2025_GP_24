@@ -1,3 +1,4 @@
+// lib/features/parent/pages/parent_more_screen.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -24,11 +25,11 @@ class _MorePageState extends State<MorePage> {
 
   Future<void> fetchParentInfo() async {
     final url = Uri.parse('http://10.0.2.2:3000/api/parent/${widget.parentId}');
-    print("📡 Fetching parent info from $url");
+    print("Fetching parent info from $url");
 
     try {
       final response = await http.get(url);
-      print("📩 Response: ${response.body}");
+      print("Response: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -46,7 +47,7 @@ class _MorePageState extends State<MorePage> {
         });
       }
     } catch (e) {
-      print("❌ Error fetching parent info: $e");
+      print("Error fetching parent info: $e");
       setState(() {
         hasError = true;
         isLoading = false;
@@ -54,7 +55,6 @@ class _MorePageState extends State<MorePage> {
     }
   }
 
-  // دالة عرض نافذة تأكيد تسجيل الخروج
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -88,7 +88,7 @@ class _MorePageState extends State<MorePage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // إغلاق النافذة
+                Navigator.pop(context);
               },
               child: const Text(
                 'Cancel',
@@ -100,8 +100,8 @@ class _MorePageState extends State<MorePage> {
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context); // إغلاق النافذة
-                _performLogout(context); // تنفيذ تسجيل الخروج
+                Navigator.pop(context);
+                _performLogout(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -123,12 +123,7 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  // دالة تنفيذ تسجيل الخروج
   void _performLogout(BuildContext context) {
-    // هنا يمكنك إضافة أي عمليات تنظيف إضافية إذا needed
-    // مثل مسح البيانات المحلية، إغلاق الجلسات، etc.
-    
-    // التنقل إلى صفحة mobile مع إزالة كل الصفحات السابقة
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/mobile',
@@ -138,111 +133,105 @@ class _MorePageState extends State<MorePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator(color: Colors.teal))
-              : hasError
-                  ? const Center(
-                      child: Text(
-                        "Failed to load data",
-                        style: TextStyle(fontSize: 16, color: Colors.red),
+    return SafeArea(
+      child: Container(
+        color: Colors.grey[100],
+        padding: const EdgeInsets.all(20),
+        child: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: Colors.teal),
+              )
+            : hasError
+                ? const Center(
+                    child: Text(
+                      "Failed to load data",
+                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 30,
+                            backgroundColor: Colors.teal,
+                            child: Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                fullName,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                phoneNo,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
-
-                        // 🟢 User Info
-                        Row(
-                          children: [
-                            const CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.teal,
-                              child: Icon(Icons.person,
-                                  color: Colors.white, size: 30),
-                            ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  fullName,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  phoneNo,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        // 🧩 Menu Items
-                       _buildMenuItem(
+                      const SizedBox(height: 40),
+                      _buildMenuItem(
                         icon: Icons.lock_outline,
                         title: 'Security settings',
                         onTap: () {
-                        Navigator.pushNamed(
-                         context,
-                       '/parentSecuritySettings',
-                       arguments: {'parentId': widget.parentId},
-                      );
-                     },
-                   ),
-                        const SizedBox(height: 16),
-
-                        _buildMenuItem(
-                          icon: Icons.family_restroom_outlined,
-                          title: 'Manage Kids',
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/manageKids',
-                              arguments: {'parentId': widget.parentId},
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                       _buildMenuItem(
+                          Navigator.pushNamed(
+                            context,
+                            '/parentSecuritySettings',
+                            arguments: {'parentId': widget.parentId},
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildMenuItem(
+                        icon: Icons.family_restroom_outlined,
+                        title: 'Manage Kids',
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/manageKids',
+                            arguments: {'parentId': widget.parentId},
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildMenuItem(
                         icon: Icons.privacy_tip_outlined,
                         title: 'Terms & privacy policy',
-                         onTap: () {
+                        onTap: () {
                           Navigator.pushNamed(context, '/termsPrivacy');
-                           },
-                         ),
-                        const SizedBox(height: 16),
-
-                        _buildMenuItem(
-                          icon: Icons.logout,
-                          title: 'Log out',
-                          titleColor: Colors.red,
-                          iconColor: Colors.red,
-                          onTap: () {
-                            _showLogoutConfirmation(context);
-                          },
-                        ),
-
-                        const Spacer(),
-                      ],
-                    ),
-        ),
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildMenuItem(
+                        icon: Icons.logout,
+                        title: 'Log out',
+                        titleColor: Colors.red,
+                        iconColor: Colors.red,
+                        onTap: () {
+                          _showLogoutConfirmation(context);
+                        },
+                      ),
+                      const Spacer(),
+                    ],
+                  ),
       ),
     );
   }
@@ -277,8 +266,11 @@ class _MorePageState extends State<MorePage> {
             color: titleColor,
           ),
         ),
-        trailing:
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey,
+        ),
         onTap: onTap,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

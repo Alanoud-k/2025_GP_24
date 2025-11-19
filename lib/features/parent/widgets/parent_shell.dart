@@ -1,11 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class ChildBottomNavBar extends StatelessWidget {
+import '../pages/parent_homepage_screen.dart';
+import '../pages/parent_chores_screen.dart';
+import '../pages/parent_allowance_screen.dart';
+import '../pages/parent_gifts_screen.dart';
+import '../pages/parent_more_screen.dart';
+
+class ParentShell extends StatefulWidget {
+  const ParentShell({super.key});
+
+  @override
+  State<ParentShell> createState() => _ParentShellState();
+}
+
+class _ParentShellState extends State<ParentShell> {
+  late int parentId;
+  bool _initialized = false;
+
+  // 0: Home, 1: Chores, 2: Allowance, 3: Gifts, 4: More
+  int _index = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map?;
+      parentId = args?['parentId'] ?? 0;
+      _initialized = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_initialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colors.teal)),
+      );
+    }
+
+    final pages = [
+      ParentHomeScreen(parentId: parentId),       // 0
+      ParentChoresScreen(parentId: parentId),     // 1
+      const ParentAllowanceScreen(),              // 2 (later can take childId)
+      ParentGiftsScreen(parentId: parentId),      // 3
+      MorePage(parentId: parentId),               // 4
+    ];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
+      body: pages[_index],
+      bottomNavigationBar: ParentBottomNavBar(
+        currentIndex: _index,
+        onTap: (i) {
+          setState(() => _index = i);
+        },
+      ),
+    );
+  }
+}
+
+class ParentBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const ChildBottomNavBar({
+  const ParentBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
@@ -14,7 +73,7 @@ class ChildBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const double barHeight = 80;
-    const double iconSize = 28; // base icon size
+    const double iconSize = 26;
     const double homeOuter = 80;
     const double homeInner = 62;
 
@@ -27,7 +86,7 @@ class ChildBottomNavBar extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          // bottom bar background
+          // Bottom bar background
           Positioned(
             bottom: 0,
             left: 0,
@@ -45,7 +104,7 @@ class ChildBottomNavBar extends StatelessWidget {
                     color: Colors.black12,
                     blurRadius: 10,
                     offset: Offset(0, -2),
-                  )
+                  ),
                 ],
               ),
               child: Padding(
@@ -53,33 +112,33 @@ class ChildBottomNavBar extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // left section
+                    // Left side: Chores + Allowance (high priority)
                     Row(
                       children: [
                         _NavItem(
                           asset: "assets/icons/Reward.svg",
-                          label: "Rewards",
-                          isSelected: currentIndex == 0,
-                          iconSize: iconSize,
-                          onTap: () => onTap(0),
-                        ),
-                        const SizedBox(width: 20),
-                        _NavItem(
-                          asset: "assets/icons/Game.svg",
-                          label: "Game",
+                          label: "Chores",
                           isSelected: currentIndex == 1,
                           iconSize: iconSize,
                           onTap: () => onTap(1),
                         ),
+                        const SizedBox(width: 20),
+                        _NavItem(
+                          asset: "assets/icons/Card.svg", // used for allowance
+                          label: "Allowance",
+                          isSelected: currentIndex == 2,
+                          iconSize: iconSize,
+                          onTap: () => onTap(2),
+                        ),
                       ],
                     ),
 
-                    // right section
+                    // Right side: Gifts + More (secondary)
                     Row(
                       children: [
                         _NavItem(
-                          asset: "assets/icons/Card.svg",
-                          label: "Card",
+                          asset: "assets/icons/Gift.svg",
+                          label: "Gifts",
                           isSelected: currentIndex == 3,
                           iconSize: iconSize,
                           onTap: () => onTap(3),
@@ -100,11 +159,11 @@ class ChildBottomNavBar extends StatelessWidget {
             ),
           ),
 
-          // home floating button
+          // Floating Home button in the center
           Positioned(
             top: 10,
             child: GestureDetector(
-              onTap: () => onTap(2),
+              onTap: () => onTap(0),
               child: Container(
                 width: homeOuter,
                 height: homeOuter,
@@ -124,7 +183,7 @@ class ChildBottomNavBar extends StatelessWidget {
                     width: homeInner,
                     height: homeInner,
                     decoration: BoxDecoration(
-                      color: currentIndex == 2
+                      color: currentIndex == 0
                           ? kPrimary
                           : const Color(0xFFCCCCCC),
                       shape: BoxShape.circle,
@@ -151,7 +210,6 @@ class ChildBottomNavBar extends StatelessWidget {
   }
 }
 
-// nav item with icon + label
 class _NavItem extends StatelessWidget {
   final String asset;
   final String label;
@@ -174,34 +232,24 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color color = isSelected ? kPrimary : kUnselected;
 
-    // adjust Game icon only
-    double adjustedSize = iconSize;
-    if (asset.contains("Game")) {
-      adjustedSize = iconSize - 4; // fix visual size
-    }
-
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 60, // fixed width for stable layout
+        width: 64,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              height: 32,
-              child: Center(
-                child: SvgPicture.asset(
-                  asset,
-                  width: adjustedSize,
-                  height: adjustedSize,
-                  colorFilter: ColorFilter.mode(
-                    color,
-                    BlendMode.srcIn,
-                  ),
-                ),
+            SvgPicture.asset(
+              asset,
+              width: iconSize,
+              height: iconSize,
+              colorFilter: ColorFilter.mode(
+                color,
+                BlendMode.srcIn,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label,
               maxLines: 1,
