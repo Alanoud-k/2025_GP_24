@@ -221,13 +221,13 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back, color: Color.fromARGB(255, 0, 0, 0)),
                       ),
                       const SizedBox(width: 4),
                       const Text(
                         'Add New Card',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Color.fromARGB(255, 0, 0, 0),
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),

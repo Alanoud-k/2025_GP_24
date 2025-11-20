@@ -26,48 +26,38 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
             children: [
               // Top bar: back + child name + history
               Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                  ),
-                  const Spacer(),
-                  const Text(
-                    "Robert", // child name placeholder
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  OutlinedButton(
-                    onPressed: () {
-                      // open history page later
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: kPrimary,
-                      side: const BorderSide(color: kPrimary),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text(
-                      "History",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+  children: [
+    const Spacer(),
+    const Text(
+      "Robert",
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+      ),
+    ),
+    const Spacer(),
+    OutlinedButton(
+      onPressed: () {},
+      style: OutlinedButton.styleFrom(
+        foregroundColor: kPrimary,
+        side: const BorderSide(color: kPrimary),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: const Text(
+        "History",
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+  ],
+),
+
 
               const SizedBox(height: 8),
 

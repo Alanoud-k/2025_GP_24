@@ -36,6 +36,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  void _showPasswordRequirementsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'Password Requirements',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('• At least 8 characters'),
+              Text('• One uppercase letter (A-Z)'),
+              Text('• One lowercase letter (a-z)'),
+              Text('• One number (0-9)'),
+              Text('• One special character (!@#\$%^&*)'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _registerParent() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -65,13 +99,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
 
-      // Redirect to parent home page after success
-Navigator.pushReplacementNamed(
-  context,
-  '/parentHome',
-  arguments: {'parentId': data['parentId']},
-);
-
+        // Redirect to parent home page after success
+        Navigator.pushReplacementNamed(
+          context,
+          '/parentHome',
+          arguments: {'parentId': data['parentId']},
+        );
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -199,15 +232,23 @@ Navigator.pushReplacementNamed(
                           controller: password,
                           label: 'Password',
                           obscureText: true,
+                          suffixIcon: IconButton(
+                            icon: const Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () =>
+                                _showPasswordRequirementsDialog(context),
+                          ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Enter password';
-                            if (v.length < 8) {
+                            if (v.length < 8)
                               return 'Password must be at least 8 characters';
-                            }
                             if (!RegExp(
                               r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
                             ).hasMatch(v)) {
-                              return 'Use upper, lower, number & special character (!@#\$%^&*)';
+                              return 'Use upper, lower, number & special character';
                             }
                             return null;
                           },
@@ -270,6 +311,7 @@ Navigator.pushReplacementNamed(
     required String label,
     TextInputType? keyboardType,
     bool obscureText = false,
+    Widget? suffixIcon,
     required String? Function(String?) validator,
   }) {
     return Material(
@@ -289,6 +331,7 @@ Navigator.pushReplacementNamed(
             horizontal: 16,
             vertical: 16,
           ),
+          suffixIcon: suffixIcon,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,

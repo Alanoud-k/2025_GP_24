@@ -36,8 +36,8 @@ class _MorePageState extends State<MorePage> {
 
         setState(() {
           fullName =
-              "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}".trim();
-          phoneNo = data['phoneNo'] ?? '';
+              "${data['firstname'] ?? ''} ${data['lastname'] ?? ''}".trim();
+          phoneNo = data['phoneno'] ?? '';
           isLoading = false;
         });
       } else {
