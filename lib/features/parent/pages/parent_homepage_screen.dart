@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-// same folder: lib/features/parent/pages/
 import 'parent_select_child_screen.dart';
 import 'parent_add_money_screen.dart';
 import 'parent_add_card_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
-  const ParentHomeScreen({super.key, required this.parentId});
+  final String token;
+
+  const ParentHomeScreen({
+    super.key,
+    required this.parentId,
+    required this.token,
+  });
 
   @override
   State<ParentHomeScreen> createState() => _ParentHomeScreenState();
@@ -20,6 +25,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   String walletBalance = '';
   bool _isLoading = true;
   bool parentHasCard = false;
+  //String _token = "";
+  String get token => widget.token;
 
   int get parentId => widget.parentId;
 
@@ -27,21 +34,58 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   void initState() {
     super.initState();
     fetchParentInfo();
+    print("🏠 ParentHomeScreen INIT");
+    print("ParentHomeScreen parentId = ${widget.parentId}");
+    print("ParentHomeScreen initial token = $token");
+    //_loadTokenAndFetch();
   }
 
+  /*Future<void> _loadTokenAndFetch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final loaded = prefs.getString("token") ?? "";
+    setState(() {
+      _token = loaded;
+    });
+    await fetchParentInfo();
+  }*/
+
   Future<void> fetchParentInfo() async {
+    if (token.isEmpty) {
+      setState(() => _isLoading = false);
+      return;
+    }
     final parentUrl = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId');
     final cardUrl = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId/card');
 
     try {
-      final parentRes = await http.get(parentUrl);
+      // ------------------------------
+      // GET PARENT INFO (with JWT)
+      // ------------------------------
+      final parentRes = await http.get(
+        parentUrl,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
+
       if (parentRes.statusCode == 200) {
         final data = jsonDecode(parentRes.body);
         firstname = data['firstname'] ?? data['firstName'] ?? '';
-        walletBalance = data['walletbalance']?.toString() ?? '0.0';
+        walletBalance = data['balance']?.toString() ?? '0.0';
       }
 
-      final cardRes = await http.get(cardUrl);
+      // ------------------------------
+      // GET CARD INFO (with JWT)
+      // ------------------------------
+      final cardRes = await http.get(
+        cardUrl,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
+
       if (cardRes.statusCode == 200) {
         final cardData = jsonDecode(cardRes.body);
         parentHasCard = cardData['hasCard'] == true;
@@ -63,9 +107,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.teal),
-      );
+      return const Center(child: CircularProgressIndicator(color: Colors.teal));
     }
 
     return SafeArea(
@@ -144,8 +186,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  ParentAddMoneyScreen(parentId: parentId),
+                              builder: (context) => ParentAddMoneyScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
                             ),
                           );
 
@@ -195,15 +239,17 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                  // Add Card / My Card
+                    // Add Card / My Card
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  ParentAddCardScreen(parentId: parentId),
+                              builder: (context) => ParentAddCardScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
                             ),
                           );
 
@@ -254,8 +300,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        ParentSelectChildScreen(parentId: parentId),
+                    builder: (context) => ParentSelectChildScreen(
+                      parentId: parentId,
+                      token: token,
+                    ),
                   ),
                 );
               },

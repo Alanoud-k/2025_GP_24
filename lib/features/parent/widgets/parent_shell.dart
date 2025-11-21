@@ -8,7 +8,10 @@ import '../pages/parent_gifts_screen.dart';
 import '../pages/parent_more_screen.dart';
 
 class ParentShell extends StatefulWidget {
-  const ParentShell({super.key});
+  final int parentId;
+  final String token;
+
+  const ParentShell({super.key, required this.parentId, required this.token});
 
   @override
   State<ParentShell> createState() => _ParentShellState();
@@ -16,17 +19,32 @@ class ParentShell extends StatefulWidget {
 
 class _ParentShellState extends State<ParentShell> {
   late int parentId;
+  late String token;
+
   bool _initialized = false;
 
   // 0: Home, 1: Chores, 2: Allowance, 3: Gifts, 4: More
   int _index = 0;
 
   @override
+  void initState() {
+    super.initState();
+    parentId = widget.parentId;
+    token = widget.token;
+    print("🐚 ParentShell loaded");
+    print("ParentShell parentId = ${widget.parentId}");
+    print("ParentShell token = ${widget.token}");
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
       final args = ModalRoute.of(context)?.settings.arguments as Map?;
-      parentId = args?['parentId'] ?? 0;
+
+      parentId = args?['parentId'] ?? parentId;
+      token = args?['token'] ?? token;
+
       _initialized = true;
     }
   }
@@ -40,11 +58,11 @@ class _ParentShellState extends State<ParentShell> {
     }
 
     final pages = [
-      ParentHomeScreen(parentId: parentId),       // 0
-      ParentChoresScreen(parentId: parentId),     // 1
-      const ParentAllowanceScreen(),              // 2 (later can take childId)
-      ParentGiftsScreen(parentId: parentId),      // 3
-      MorePage(parentId: parentId),               // 4
+      ParentHomeScreen(parentId: parentId, token: token), // 0
+      ParentChoresScreen(parentId: parentId, token: token), // 1
+      //const ParentAllowanceScreen(), // 2 (later can take childId)
+      ParentGiftsScreen(parentId: parentId, token: token), // 3
+      MorePage(parentId: parentId, token: token), //4
     ];
 
     return Scaffold(
@@ -244,10 +262,7 @@ class _NavItem extends StatelessWidget {
               asset,
               width: iconSize,
               height: iconSize,
-              colorFilter: ColorFilter.mode(
-                color,
-                BlendMode.srcIn,
-              ),
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
             ),
             const SizedBox(height: 4),
             Text(

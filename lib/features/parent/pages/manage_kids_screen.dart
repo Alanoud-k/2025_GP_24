@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ManageKidsScreen extends StatefulWidget {
   const ManageKidsScreen({super.key});
@@ -13,26 +14,47 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
   List children = [];
   bool _loading = true;
   late int parentId;
+
   final TextEditingController password = TextEditingController();
+
+  String? token;
+  static const String baseUrl = "http://10.0.2.2:3000";
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     parentId = args?['parentId'] ?? 0;
+
     print('📱 ManageKidsScreen received parentId: $parentId');
-    fetchChildren(); // ✅ Only called after parentId is ready
+
+    _loadToken().then((_) => fetchChildren());
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
   }
 
   Future<void> fetchChildren() async {
+    if (token == null) {
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Missing token — please log in again.")),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
-    final url = Uri.parse(
-      'http://10.0.2.2:3000/api/auth/parent/$parentId/children',
-    );
-    //final url = Uri.parse('http://localhost:3000/api/auth/check-user');
+
+    final url = Uri.parse("$baseUrl/api/auth/parent/$parentId/children");
 
     try {
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
+      );
+
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         setState(() {
@@ -40,13 +62,15 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
           _loading = false;
         });
       } else {
-        throw Exception('Failed to load children');
+        throw Exception(
+          "Failed to load children (code ${response.statusCode})",
+        );
       }
     } catch (e) {
       setState(() => _loading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error fetching children: $e')));
+      ).showSnackBar(SnackBar(content: Text("Error fetching children: $e")));
     }
   }
 
@@ -57,8 +81,6 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     final phoneNo = TextEditingController();
     final dob = TextEditingController();
     final limitAmount = TextEditingController();
-
-    //final password = TextEditingController();
 
     showDialog(
       context: context,
@@ -82,6 +104,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
+
                   _buildValidatedField(
                     controller: nationalId,
                     label: "National ID",
@@ -93,6 +116,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
+
                   _buildValidatedField(
                     controller: phoneNo,
                     label: "Phone Number",
@@ -106,6 +130,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
+
                   // 🎯 Date Picker
                   TextFormField(
                     controller: dob,
@@ -132,12 +157,13 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       if (pickedDate != null) {
                         dob.text = pickedDate
                             .toIso8601String()
-                            .split('T')
+                            .split("T")
                             .first;
                       }
                     },
                   ),
                   const SizedBox(height: 10),
+
                   _buildValidatedField(
                     controller: password,
                     label: "Password",
@@ -145,18 +171,17 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Enter password';
-                      if (v.length < 8) {
-                        return 'Password must be at least 8 characters';
-                      }
+                      if (v.length < 8) return 'Must be at least 8 characters';
                       if (!RegExp(
                         r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
                       ).hasMatch(v)) {
-                        return 'Use upper, lower, number & special character (!@#\$%^&*)';
+                        return 'Use upper, lower, number & special character';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 10),
+
                   TextFormField(
                     controller: limitAmount,
                     keyboardType: TextInputType.number,
@@ -185,14 +210,16 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (!_formKey.currentState!.validate()) return;
+
                 await registerChild(
                   firstName.text.trim(),
                   nationalId.text.trim(),
                   phoneNo.text.trim(),
                   dob.text.trim(),
                   password.text.trim(),
-                  limitAmount.text.trim(), // ✅ pass it here
+                  limitAmount.text.trim(),
                 );
+
                 if (context.mounted) Navigator.pop(context);
               },
               child: const Text("Add"),
@@ -211,7 +238,15 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     String password,
     String limitAmount,
   ) async {
-    final url = Uri.parse('http://10.0.2.2:3000/api/auth/child/register');
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Missing token — please log in again.")),
+      );
+      return;
+    }
+
+    final url = Uri.parse("$baseUrl/api/auth/child/register");
+
     final body = {
       "parentId": parentId,
       "firstName": firstName,
@@ -225,7 +260,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": "Bearer $token",
+        },
         body: jsonEncode(body),
       );
 
@@ -233,7 +271,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Child added successfully!")),
         );
-        fetchChildren(); // ✅ Refresh after adding
+        fetchChildren(); // Refresh
       } else {
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -269,6 +307,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFF1ABC9C);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Manage Kids"),

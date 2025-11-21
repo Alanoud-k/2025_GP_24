@@ -7,6 +7,7 @@ class ParentTransferScreen extends StatefulWidget {
   final int childId;
   final String childName;
   final String childBalance;
+  final String token;
 
   const ParentTransferScreen({
     super.key,
@@ -14,6 +15,7 @@ class ParentTransferScreen extends StatefulWidget {
     required this.childId,
     required this.childName,
     required this.childBalance,
+    required this.token,
   });
 
   @override
@@ -42,7 +44,10 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}', // ✅ JWT header
+        },
         body: jsonEncode({
           'parentId': widget.parentId,
           'childId': widget.childId,
@@ -55,8 +60,10 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         final double save = (data['saveAmount'] as num).toDouble();
         final double spend = (data['spendAmount'] as num).toDouble();
+
         _showSuccess(save, spend);
       } else {
         final error = jsonDecode(response.body);

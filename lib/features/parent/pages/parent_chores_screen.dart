@@ -3,7 +3,13 @@ import 'package:flutter/material.dart';
 
 class ParentChoresScreen extends StatelessWidget {
   final int parentId;
-  const ParentChoresScreen({super.key, required this.parentId});
+  final String token;
+
+  const ParentChoresScreen({
+    super.key,
+    required this.parentId,
+    required this.token,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,10 +20,7 @@ class ParentChoresScreen extends StatelessWidget {
         child: const Center(
           child: Text(
             "Chores screen will be implemented later",
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.black87),
             textAlign: TextAlign.center,
           ),
         ),

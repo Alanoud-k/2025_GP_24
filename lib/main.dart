@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/core/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Core / Auth
 import 'package:my_app/features/auth/pages/mobile_input_screen.dart';
 import 'package:my_app/features/auth/pages/opening.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Parent
 import 'package:my_app/features/parent/pages/register_screen.dart';
@@ -19,19 +22,50 @@ import 'package:my_app/features/child/pages/child_request_money_screen.dart';
 import 'package:my_app/features/child/pages/child_request_success.dart';
 import 'package:my_app/features/child/pages/child_security_settings_page.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString("token");
+  final role = prefs.getString("role");
+  final childId = prefs.getInt("childId");
+  final parentId = prefs.getInt("parentId");
+
+  Widget startPage;
+
+  if (token != null) {
+    if (role == "Parent") {
+      if (parentId != null) {
+        startPage = ParentShell(parentId: parentId, token: token);
+      } else {
+        startPage = const SplashView();
+      }
+    } else if (role == "Child") {
+      if (childId != null) {
+        startPage = ChildShell(childId: childId!, baseUrl: ApiConfig.baseUrl);
+      } else {
+        startPage = const SplashView();
+      }
+    } else {
+      startPage = const SplashView();
+    }
+  } else {
+    startPage = const SplashView();
+  }
+
+  runApp(MyApp(startPage: startPage));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget startPage;
+  const MyApp({super.key, required this.startPage});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Hassalah App',
       debugShowCheckedModeBanner: false,
-      home: const SplashView(),
+      home: startPage,
 
       routes: {
         // --------------------------
@@ -46,13 +80,23 @@ class MyApp extends StatelessWidget {
         '/parentLogin': (context) => const ParentLoginScreen(),
 
         // Parent main shell (with bottom nav)
-        '/parentHome': (context) => const ParentShell(),
+        '/parentHome': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map?;
+
+          return ParentShell(
+            parentId: args?['parentId'],
+            token: args?['token'],
+          );
+        },
 
         '/manageKids': (context) => const ManageKidsScreen(),
 
         '/parentSecuritySettings': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
-          return ParentSecuritySettingsPage(parentId: args['parentId']);
+          return ParentSecuritySettingsPage(
+            parentId: args['parentId'],
+            token: args['token'],
+          );
         },
 
         '/termsPrivacy': (context) => const TermsPrivacyPage(),
@@ -67,10 +111,7 @@ class MyApp extends StatelessWidget {
         // --------------------------
         '/childShell': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
-          return ChildShell(
-            childId: args['childId'],
-            baseUrl: args['baseUrl'],
-          );
+          return ChildShell(childId: args['childId'], baseUrl: args['baseUrl']);
         },
 
         // --------------------------
@@ -81,8 +122,7 @@ class MyApp extends StatelessWidget {
           return ChildRequestMoneyScreen(childId: args['childId']);
         },
 
-        '/childRequestSuccess': (context) =>
-            const ChildRequestSuccessScreen(),
+        '/childRequestSuccess': (context) => const ChildRequestSuccessScreen(),
 
         '/childSecuritySettings': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;

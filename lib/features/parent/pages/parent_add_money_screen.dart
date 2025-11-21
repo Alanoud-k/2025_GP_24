@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentAddMoneyScreen extends StatefulWidget {
   final int parentId;
-  const ParentAddMoneyScreen({super.key, required this.parentId});
+  final String token;
+
+  const ParentAddMoneyScreen({
+    super.key,
+    required this.parentId,
+    required this.token,
+  });
 
   @override
   State<ParentAddMoneyScreen> createState() => _ParentAddMoneyScreenState();
@@ -15,11 +22,29 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool _loading = false;
   String? _errorMessage;
+  String? token;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadToken();
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
+  }
 
   Future<void> _createPayment() async {
     final amountText = _amountController.text.trim();
+
     if (amountText.isEmpty || double.tryParse(amountText) == null) {
       setState(() => _errorMessage = "Please enter a valid amount.");
+      return;
+    }
+
+    if (token == null) {
+      setState(() => _errorMessage = "Auth error: No token found.");
       return;
     }
 
@@ -33,7 +58,10 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
         Uri.parse(
           "http://10.0.2.2:3000/api/parent/${widget.parentId}/add-money",
         ),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
         body: jsonEncode({
           "amount": double.parse(amountText),
           "parentId": widget.parentId,
@@ -45,6 +73,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
       if (response.statusCode == 200 && data['transactionUrl'] != null) {
         final url = Uri.parse(data['transactionUrl']);
+
         if (await canLaunchUrl(url)) {
           await launchUrl(url, mode: LaunchMode.externalApplication);
         } else {

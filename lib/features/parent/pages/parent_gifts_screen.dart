@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 
 class ParentGiftsScreen extends StatelessWidget {
   final int parentId;
-  const ParentGiftsScreen({super.key, required this.parentId});
+  final String token;
+
+  const ParentGiftsScreen({
+    super.key,
+    required this.parentId,
+    required this.token,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,10 +62,7 @@ class ParentGiftsScreen extends StatelessWidget {
                   SizedBox(height: 8),
                   Text(
                     "Gift feature will be implemented later.",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
@@ -96,10 +99,7 @@ class ParentGiftsScreen extends StatelessWidget {
                   SizedBox(height: 8),
                   Text(
                     "No gift history found.",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),

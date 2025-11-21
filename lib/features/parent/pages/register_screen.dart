@@ -91,20 +91,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['message'] ?? 'Registered successfully!'),
+          const SnackBar(
+            content: Text('Registered successfully! Please log in.'),
             backgroundColor: Colors.green,
           ),
         );
 
-        // Redirect to parent home page after success
-        Navigator.pushReplacementNamed(
-          context,
-          '/parentHome',
-          arguments: {'parentId': data['parentId']},
-        );
+        Navigator.pushReplacementNamed(context, '/parentLogin');
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(

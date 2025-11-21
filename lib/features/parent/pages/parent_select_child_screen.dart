@@ -2,10 +2,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'parent_child_overview_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentSelectChildScreen extends StatefulWidget {
   final int parentId;
-  const ParentSelectChildScreen({super.key, required this.parentId});
+  final String token;
+  const ParentSelectChildScreen({
+    super.key,
+    required this.parentId,
+    required this.token,
+  });
 
   @override
   State<ParentSelectChildScreen> createState() =>
@@ -15,28 +21,47 @@ class ParentSelectChildScreen extends StatefulWidget {
 class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
   bool _loading = true;
   List<Map<String, dynamic>> _kids = [];
+  String? token;
+
+  static const String baseUrl = "http://10.0.2.2:3000";
 
   @override
   void initState() {
     super.initState();
-    _fetchChildren();
+    _loadToken().then((_) => _fetchChildren());
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
   }
 
   Future<void> _fetchChildren() async {
-    try {
-      print('🔍 Fetching children for parentId: ${widget.parentId}');
-      print('URL: http://10.0.2.2:3000/api/parent/${widget.parentId}/children');
+    if (token == null) {
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Authentication error: Missing token.")),
+      );
+      return;
+    }
 
+    try {
       final url = Uri.parse(
-        'http://10.0.2.2:3000/api/auth/parent/${widget.parentId}/children',
+        "$baseUrl/api/auth/parent/${widget.parentId}/children",
       );
 
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token", // 🔥 JWT applied
+        },
+      );
 
-      if (!mounted) return; // ✅ prevents setState() on disposed widget
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
+
         setState(() {
           _kids = data.map((child) {
             return {
@@ -50,11 +75,16 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
       } else {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to load children")),
+          SnackBar(
+            content: Text(
+              "Failed to load children (Code: ${response.statusCode})",
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
+
       setState(() => _loading = false);
       ScaffoldMessenger.of(
         context,
@@ -120,6 +150,7 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                               childId:
                                   kid["id"], // ✅ ensure this is a valid number
                               childName: kid["name"],
+                              token: widget.token,
                             ),
                           ),
                         );

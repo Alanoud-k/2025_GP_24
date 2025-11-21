@@ -5,8 +5,9 @@ import 'dart:convert';
 
 class MorePage extends StatefulWidget {
   final int parentId;
-  const MorePage({super.key, required this.parentId});
+  final String token;
 
+  const MorePage({super.key, required this.parentId, required this.token});
   @override
   State<MorePage> createState() => _MorePageState();
 }
@@ -28,15 +29,21 @@ class _MorePageState extends State<MorePage> {
     print("Fetching parent info from $url");
 
     try {
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}", // ✅ JWT added
+          "Content-Type": "application/json",
+        },
+      );
       print("Response: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
         setState(() {
-          fullName =
-              "${data['firstname'] ?? ''} ${data['lastname'] ?? ''}".trim();
+          fullName = "${data['firstname'] ?? ''} ${data['lastname'] ?? ''}"
+              .trim();
           phoneNo = data['phoneno'] ?? '';
           isLoading = false;
         });
@@ -80,22 +87,14 @@ class _MorePageState extends State<MorePage> {
           ),
           content: const Text(
             'Are you sure you want to log out?',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.black54),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ),
             ElevatedButton(
@@ -111,10 +110,7 @@ class _MorePageState extends State<MorePage> {
               ),
               child: const Text(
                 'Log Out',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
           ],
@@ -124,11 +120,7 @@ class _MorePageState extends State<MorePage> {
   }
 
   void _performLogout(BuildContext context) {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/mobile',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
   }
 
   @override
@@ -138,100 +130,106 @@ class _MorePageState extends State<MorePage> {
         color: Colors.grey[100],
         padding: const EdgeInsets.all(20),
         child: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: Colors.teal),
-              )
+            ? const Center(child: CircularProgressIndicator(color: Colors.teal))
             : hasError
-                ? const Center(
-                    child: Text(
-                      "Failed to load data",
-                      style: TextStyle(fontSize: 16, color: Colors.red),
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            ? const Center(
+                child: Text(
+                  "Failed to load data",
+                  style: TextStyle(fontSize: 16, color: Colors.red),
+                ),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  Row(
                     children: [
-                      const SizedBox(height: 20),
-                      Row(
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.teal,
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.teal,
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 30,
+                          Text(
+                            fullName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fullName,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                phoneNo,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 4),
+                          Text(
+                            phoneNo,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 40),
-                      _buildMenuItem(
-                        icon: Icons.lock_outline,
-                        title: 'Security settings',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/parentSecuritySettings',
-                            arguments: {'parentId': widget.parentId},
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildMenuItem(
-                        icon: Icons.family_restroom_outlined,
-                        title: 'Manage Kids',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/manageKids',
-                            arguments: {'parentId': widget.parentId},
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildMenuItem(
-                        icon: Icons.privacy_tip_outlined,
-                        title: 'Terms & privacy policy',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/termsPrivacy');
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildMenuItem(
-                        icon: Icons.logout,
-                        title: 'Log out',
-                        titleColor: Colors.red,
-                        iconColor: Colors.red,
-                        onTap: () {
-                          _showLogoutConfirmation(context);
-                        },
-                      ),
-                      const Spacer(),
                     ],
                   ),
+                  const SizedBox(height: 40),
+                  _buildMenuItem(
+                    icon: Icons.lock_outline,
+                    title: 'Security settings',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/parentSecuritySettings',
+                        arguments: {
+                          'parentId': widget.parentId,
+                          'token': widget.token,
+                        },
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  _buildMenuItem(
+                    icon: Icons.family_restroom_outlined,
+                    title: 'Manage Kids',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/manageKids',
+                        arguments: {
+                          'parentId': widget.parentId,
+                          'token': widget.token,
+                        },
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  _buildMenuItem(
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Terms & privacy policy',
+                    onTap: () {
+                      Navigator.pushNamed(context, '/termsPrivacy');
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildMenuItem(
+                    icon: Icons.logout,
+                    title: 'Log out',
+                    titleColor: Colors.red,
+                    iconColor: Colors.red,
+                    onTap: () {
+                      _showLogoutConfirmation(context);
+                    },
+                  ),
+                  const Spacer(),
+                ],
+              ),
       ),
     );
   }
@@ -272,8 +270,10 @@ class _MorePageState extends State<MorePage> {
           color: Colors.grey,
         ),
         onTap: onTap,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
     );
   }

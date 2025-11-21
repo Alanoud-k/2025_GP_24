@@ -3,18 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'parent_transfer_screen.dart';
 import 'parent_money_requests_screen.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentChildOverviewScreen extends StatefulWidget {
   final int parentId;
   final int childId;
   final String childName;
+  final String token;
 
   const ParentChildOverviewScreen({
     super.key,
     required this.parentId,
     required this.childId,
     required this.childName,
+    required this.token,
   });
 
   @override
@@ -30,40 +32,63 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
   double _spend = 0.0;
   double _saving = 0.0;
 
+  String? token;
+  static const String baseUrl = "http://10.0.2.2:3000";
+
   @override
   void initState() {
     super.initState();
-    _fetchChildInfo();
+    _loadToken().then((_) => _fetchChildInfo());
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
   }
 
   Future<void> _fetchChildInfo() async {
-    try {
-      final url = Uri.parse(
-        'http://10.0.2.2:3000/api/auth/child/info/${widget.childId}',
+    if (token == null) {
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Missing token — please log in again.")),
       );
-      final res = await http.get(url);
+      return;
+    }
+
+    try {
+      final url = Uri.parse("$baseUrl/api/auth/child/info/${widget.childId}");
+
+      final res = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token", // 🔥 JWT applied
+        },
+      );
+
       if (!mounted) return;
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
 
-        // Safely parse numeric fields that might arrive as strings
-        double _toDouble(dynamic v) => (v is num)
-            ? v.toDouble()
-            : (double.tryParse(v?.toString() ?? '') ?? 0.0);
+        double _toDouble(dynamic v) =>
+            (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
 
         setState(() {
           _firstName = (data['firstName'] ?? widget.childName).toString();
-          _phoneNo = (data['phoneNo'] ?? '').toString(); // << use phoneNo
+          _phoneNo = (data['phoneNo'] ?? '').toString();
           _balance = _toDouble(data['balance']);
-          _spend = _toDouble(data['spend']); // optional (falls back to 0.0)
-          _saving = _toDouble(data['saving']); // optional (falls back to 0.0)
+          _spend = _toDouble(data['spend']);
+          _saving = _toDouble(data['saving']);
           _loading = false;
         });
       } else {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load child info')),
+          SnackBar(
+            content: Text(
+              "Failed to load child info (Code: ${res.statusCode})",
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -71,7 +96,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
       setState(() => _loading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(content: Text("Error fetching child info: $e")));
     }
   }
 
@@ -207,6 +232,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                                   childId: widget.childId,
                                   childName: widget.childName,
                                   childBalance: _balance.toStringAsFixed(2),
+                                  token: widget.token,
                                 ),
                               ),
                             );
@@ -238,20 +264,20 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _tileButton(
-  'Money Requests',
-  Icons.request_page_outlined,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ParentMoneyRequestsScreen(
-          parentId: widget.parentId,
-          childId: widget.childId,
-        ),
-      ),
-    );
-  },
-),
+                          'Money Requests',
+                          Icons.request_page_outlined,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ParentMoneyRequestsScreen(
+                                  parentId: widget.parentId,
+                                  childId: widget.childId,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),

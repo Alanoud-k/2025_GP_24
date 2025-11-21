@@ -42,9 +42,15 @@ class TermsPrivacyPage extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Main Points
-              _buildBulletPoint('Using Hessala means you agree to our terms and policies'),
-              _buildBulletPoint('You control your data and permissions'),
-              _buildBulletPoint('Your data is encrypted and never shared without consent'),
+              _buildBulletPoint(
+                'Using Hassala means you agree to our terms and privacy practices',
+              ),
+              _buildBulletPoint(
+                'You control your data, permissions, and linked devices',
+              ),
+              _buildBulletPoint(
+                'All sensitive data is encrypted and never shared without explicit consent',
+              ),
 
               const SizedBox(height: 24),
               const Divider(height: 1, color: Colors.grey),
@@ -61,11 +67,15 @@ class TermsPrivacyPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'You agree to use Hessala responsibly and for family financial education purposes. '
+                'You agree to use Hassala responsibly and for family financial education purposes. '
                 'All accounts created under a parent are subject to parental supervision. '
-                'Transactions are eliminated or processed via licensed PSPs. '
+                'Transactions are simulated or processed via licensed PSPs. '
                 'The app follows SAMA and Saudi data protection standards. '
-                'Misuse of the platform may result in account suspension.',
+                'Misuse of the platform may result in account suspension.'
+                'Hassala currently uses sandbox-based payment simulations (e.g., Moyasar) '
+                'and does not support real banking transactions. Only one parent account '
+                'is supported per family in this version.',
+
                 style: TextStyle(
                   fontSize: 16,
                   height: 1.5,
@@ -140,11 +150,7 @@ class TermsPrivacyPage extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 6, right: 8),
-            child: Icon(
-              Icons.circle,
-              size: 6,
-              color: Colors.teal,
-            ),
+            child: Icon(Icons.circle, size: 6, color: Colors.teal),
           ),
           Expanded(
             child: Text(

@@ -1,20 +1,122 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentAllowanceScreen extends StatefulWidget {
-  const ParentAllowanceScreen({super.key});
-
+  const ParentAllowanceScreen({
+    super.key,
+    required this.parentId,
+    required this.childId,
+  });
+  final int parentId;
+  final int childId;
   @override
   State<ParentAllowanceScreen> createState() => _ParentAllowanceScreenState();
 }
 
 class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
-  // Temporary demo values – connect to backend later
+  static const String baseUrl = "http://10.0.2.2:3000";
+
   bool allowanceOn = true;
+  bool loading = true;
+
+  String childName = "Loading...";
+  double allowanceAmount = 0.0;
+  String frequency = "—";
+  String nextPayment = "—";
+  String splitText = "—";
+
+  String? token;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTokenAndFetch();
+  }
+
+  Future<void> _loadTokenAndFetch() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
+    await _fetchAllowanceInfo();
+  }
+
+  Future<void> _fetchAllowanceInfo() async {
+    try {
+      final url = Uri.parse(
+        "$baseUrl/api/parent/${widget.parentId}/allowance/${widget.childId}",
+      );
+
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          childName = data["childName"] ?? "Unnamed";
+          allowanceOn = data["enabled"] ?? true;
+          allowanceAmount = (data["amount"] ?? 0).toDouble();
+          frequency = data["frequency"] ?? "weekly";
+          nextPayment = data["nextPayment"] ?? "—";
+          splitText = data["splitText"] ?? "---";
+          loading = false;
+        });
+      } else {
+        setState(() => loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to load allowance info")),
+        );
+      }
+    } catch (e) {
+      setState(() => loading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+    }
+  }
+
+  Future<void> _toggleAllowance(bool value) async {
+    setState(() => allowanceOn = value);
+
+    try {
+      final url = Uri.parse(
+        "$baseUrl/api/parent/${widget.parentId}/allowance/${widget.childId}/toggle",
+      );
+
+      final res = await http.put(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"enabled": value}),
+      );
+
+      if (res.statusCode != 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to update allowance")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const Color kPrimary = Color(0xFF67AFAC);
     const Color kBg = Color(0xFFF7F8FA);
+
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colors.teal)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: kBg,
@@ -24,40 +126,42 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top bar: back + child name + history
+              /// TOP BAR
               Row(
-  children: [
-    const Spacer(),
-    const Text(
-      "Robert",
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: Colors.black87,
-      ),
-    ),
-    const Spacer(),
-    OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        foregroundColor: kPrimary,
-        side: const BorderSide(color: kPrimary),
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-      child: const Text(
-        "History",
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    ),
-  ],
-),
-
+                children: [
+                  const Spacer(),
+                  Text(
+                    childName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Spacer(),
+                  OutlinedButton(
+                    onPressed: () {},
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: kPrimary,
+                      side: const BorderSide(color: kPrimary),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      "History",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
               const SizedBox(height: 8),
 
@@ -72,7 +176,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
 
               const SizedBox(height: 20),
 
-              // Main allowance summary card
+              /// ALLOWANCE SUMMARY CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -89,44 +193,37 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    // Amount + frequency
+                  children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "50.00",
-                          style: TextStyle(
+                          allowanceAmount.toStringAsFixed(2),
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          "SAR weekly",
-                          style: TextStyle(
+                          "SAR $frequency",
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Colors.black87,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      "85% Spend • 10% Savings • 5% Charity",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
+                      splitText,
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text(
-                      "Next payment: Saturday, June 24",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
+                      "Next payment: $nextPayment",
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -134,7 +231,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
 
               const SizedBox(height: 20),
 
-              // "All or nothing" card
+              /// "ALL OR NOTHING" STATIC CARD (demo)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -145,7 +242,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 6,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -155,7 +252,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Color(0xFFFFF3CD),
+                        color: const Color(0xFFFFF3CD),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Icon(
@@ -164,10 +261,10 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             "All or nothing",
                             style: TextStyle(
@@ -179,25 +276,19 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                           SizedBox(height: 4),
                           Text(
                             "Complete 33 chores to earn the next payment.",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
-                    ),
+                    const Icon(Icons.chevron_right, color: Colors.grey),
                   ],
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              // Allowance toggle section
+              /// TOGGLE SECTION
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -216,10 +307,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                         SizedBox(height: 4),
                         Text(
                           "Turning this off will pause allowance payments.",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -228,18 +316,14 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                     value: allowanceOn,
                     activeColor: Colors.white,
                     activeTrackColor: kPrimary,
-                    onChanged: (value) {
-                      setState(() {
-                        allowanceOn = value;
-                      });
-                    },
+                    onChanged: (value) => _toggleAllowance(value),
                   ),
                 ],
               ),
 
               const SizedBox(height: 24),
 
-              // Keep them on track card
+              /// KEEP THEM ON TRACK CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
@@ -283,19 +367,13 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            "See how your child is doing with their current chores.",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey,
-                            ),
+                            "See how your child is doing with their chores.",
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
-                    ),
+                    const Icon(Icons.chevron_right, color: Colors.grey),
                   ],
                 ),
               ),

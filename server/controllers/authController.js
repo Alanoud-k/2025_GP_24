@@ -4,6 +4,19 @@ import bcrypt from "bcrypt";
 import { sql } from "../config/db.js";
 import { validatePhone, validatePassword } from "../utils/validators.js";
 
+
+
+import jwt from "jsonwebtoken";
+
+function generateToken(payload) {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "2h",
+  });
+}
+
+
+
+
 /* ============================================================
    CHECK USER (by phone)
    Body: { phoneNo }
@@ -176,17 +189,14 @@ export const loginParent = async (req, res) => {
   const { phoneNo, password } = req.body;
 
   if (!validatePhone(phoneNo)) {
-    return res.status(400).json({ error: "Invalid phone number format" });
-  }
-  if (!password) {
-    return res.status(400).json({ error: "Password is required" });
+    return res.status(400).json({ error: "Invalid phone format" });
   }
 
   try {
     const result = await sql`
-      SELECT "parentid","password"
+      SELECT parentid, password
       FROM "Parent"
-      WHERE "phoneno" = ${phoneNo}
+      WHERE phoneno = ${phoneNo}
       LIMIT 1
     `;
 
@@ -201,20 +211,32 @@ export const loginParent = async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
+    // CORRECT TOKEN
+    const token = jwt.sign(
+      { id: parent.parentid, role: "Parent" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     return res.json({
       message: "Parent login successful",
       parentId: parent.parentid,
+      token,
     });
+
   } catch (err) {
-    console.error("❌ Login error:", err);
+    console.error("Login error:", err);
     return res.status(500).json({ error: "Failed to login" });
   }
 };
+
 
 /* ============================================================
    CHILD LOGIN
    Body: { phoneNo, password }
 ============================================================ */
+
+
 export const loginChild = async (req, res) => {
   const { phoneNo, password } = req.body;
 
@@ -244,10 +266,19 @@ export const loginChild = async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
-    res.json({
-      message: "Child login successful",
-      childId: child.childid,
-    });
+    const token = jwt.sign(
+      { id: child.childid, role: "Child" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+res.json({
+  message: "Child login successful",
+  childId: child.childid,
+  token
+});
+
+
   } catch (err) {
     console.error("❌ Child login error:", err);
     res.status(500).json({ error: "Failed to login child" });

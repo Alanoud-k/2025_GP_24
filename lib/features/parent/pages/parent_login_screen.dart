@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../auth/pages/forget_password_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/core/api_config.dart';
+import 'package:my_app/features/parent/widgets/parent_shell.dart';
 
 class ParentLoginScreen extends StatefulWidget {
   const ParentLoginScreen({super.key});
@@ -53,7 +56,9 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-parent');
+
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/auth/login-parent');
+    //final url = Uri.parse('http://10.0.2.2:3000/api/auth/login-parent');
     //final url = Uri.parse('http://localhost:3000/api/auth/check-user');
 
     try {
@@ -62,7 +67,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'phoneNo': phoneNo.trim(),
-          //'nationalId': int.tryParse(nationalIdController.text.trim()),
           'password': passwordController.text.trim(),
         }),
       );
@@ -71,22 +75,31 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['message'] ?? 'Login successful!'),
-            backgroundColor: Colors.green,
-          ),
+
+        // ----- SAVE TOKEN -----
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("token", data['token']);
+        await prefs.setString("role", "Parent");
+        await prefs.setInt("parentId", data['parentId']);
+        print("🔐 LOGIN TOKEN = ${data['token']}");
+
+        print(
+          "💾 Saved Token to SharedPreferences: ${prefs.getString("token")}",
         );
-        Navigator.pushReplacementNamed(
+        Navigator.pushReplacement(
           context,
-          '/parentHome',
-          arguments: {'parentId': data['parentId']},
+          MaterialPageRoute(
+            builder: (_) => ParentShell(
+              parentId: data['parentId'],
+              token: data['token'], // <-- ADD THIS
+            ),
+          ),
         );
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error['message'] ?? error['error'] ?? 'Login failed'),
+            content: Text(error['message'] ?? 'Login failed'),
             backgroundColor: Colors.red,
           ),
         );

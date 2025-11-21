@@ -1,8 +1,7 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/core/api_config.dart';
 
 class ChildLoginScreen extends StatefulWidget {
@@ -75,21 +74,16 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['message'] ?? 'Login successful'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // ------- SAVE TOKEN -------
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("token", data['token']);
+        await prefs.setString("role", "Child");
+        await prefs.setInt("childId", data['childId']);
 
-        // Go to child shell (bottom navigation)
         Navigator.pushReplacementNamed(
           context,
           '/childShell',
-          arguments: {
-            'childId': data['childId'],
-            'baseUrl': _baseUrl,
-          },
+          arguments: {'childId': data['childId'], 'baseUrl': _baseUrl},
         );
       } else {
         final error = jsonDecode(response.body);
@@ -102,9 +96,9 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -212,18 +206,21 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _loginChild,
                             style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.all<Color>(primary),
-                              foregroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.white),
-                              elevation:
-                                  MaterialStateProperty.all<double>(6),
-                              shape: MaterialStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                primary,
                               ),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                Colors.white,
+                              ),
+                              elevation: MaterialStateProperty.all<double>(6),
+                              shape:
+                                  MaterialStateProperty.all<
+                                    RoundedRectangleBorder
+                                  >(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(22),
+                                    ),
+                                  ),
                               padding: MaterialStateProperty.all<EdgeInsets>(
                                 const EdgeInsets.symmetric(vertical: 16),
                               ),

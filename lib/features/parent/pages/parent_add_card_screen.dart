@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Top-level enums & constants
 
@@ -19,8 +20,13 @@ const String kBaseUrl = 'http://10.0.2.2:3000';
 
 class ParentAddCardScreen extends StatefulWidget {
   final int parentId; // parent id from home page
+  final String token;
 
-  const ParentAddCardScreen({super.key, required this.parentId});
+  const ParentAddCardScreen({
+    super.key,
+    required this.parentId,
+    required this.token,
+  });
 
   @override
   State<ParentAddCardScreen> createState() => _ParentAddCardScreenState();
@@ -36,6 +42,19 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
 
   bool _saveSecurely = true;
   bool _isSaving = false;
+
+  String? token;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadToken();
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
+  }
 
   @override
   void dispose() {
@@ -141,6 +160,13 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
   Future<void> _onAddCard() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Authentication error: Missing token")),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     final digits = _cardNumberCtrl.text.replaceAll(' ', '');
@@ -162,7 +188,10 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     try {
       final res = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({
           'brand': cardBrand,
           'last4': last4,
@@ -221,7 +250,10 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back, color: Color.fromARGB(255, 0, 0, 0)),
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Color.fromARGB(255, 0, 0, 0),
+                        ),
                       ),
                       const SizedBox(width: 4),
                       const Text(
