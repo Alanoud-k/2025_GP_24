@@ -41,7 +41,7 @@ flutter:
   assets:
   - assets/
   - assets/logo/
-  - assets/icons/Sar.svg
+  - assets/icons/
 
   #   - images/a_dot_ham.jpeg
 
