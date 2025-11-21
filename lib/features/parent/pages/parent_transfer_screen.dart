@@ -38,7 +38,7 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
     final amount = double.parse(_amount.text);
 
     print(
-      "🚀 Sending transfer request: parent=${widget.parentId}, child=${widget.childId}, amount=$amount",
+      "Sending transfer request: parent=${widget.parentId}, child=${widget.childId}, amount=$amount",
     );
 
     try {
@@ -56,7 +56,7 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
         }),
       );
 
-      print("📡 Response (${response.statusCode}): ${response.body}");
+      print("Response (${response.statusCode}): ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -72,7 +72,7 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
         );
       }
     } catch (e) {
-      print("❌ Transfer error: $e");
+      print("Transfer error: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Network error: $e")));

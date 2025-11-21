@@ -209,7 +209,7 @@ export const transferMoney = async (req, res) => {
       spendAmount,
     });
   } catch (err) {
-    console.error("❌ Transfer error:", err);
+    console.error("Transfer error:", err);
     res.status(500).json({ error: "Failed to transfer money" });
   }
 };

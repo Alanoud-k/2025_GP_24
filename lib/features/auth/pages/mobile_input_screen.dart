@@ -268,6 +268,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
   }
 }*/
 import 'dart:convert';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/api_config.dart';
@@ -283,8 +284,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
   final TextEditingController phoneController = TextEditingController();
   bool _loading = false;
 
-  bool get _canContinue =>
-      !_loading && phoneController.text.trim().isNotEmpty;
+  bool get _canContinue => !_loading && phoneController.text.trim().isNotEmpty;
 
   @override
   void initState() {
@@ -301,9 +301,10 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFF1ABC9C);
+    const hassalaLinkColor = Color(0xFF2EA49E);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -313,11 +314,18 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 26),
                 child: Column(
                   children: [
-                    const SizedBox(height: 35),
+                    const SizedBox(height: 30),
+                    // Logo (متوسط)
+                    Image.asset(
+                      'assets/logo/hassalaLogo5.png',
+                      width: 400,
+                      fit: BoxFit.contain,
+                    ),
 
+                    const SizedBox(height: 5),
                     // Welcome Text
                     const Text(
-                      "Welcome to",
+                      "Welcome",
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
@@ -325,23 +333,14 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 14),
-
-                    // Logo
-                    Image.asset(
-                      'assets/logo/hassalaLogo2.png',
-                      width: 260,
-                      fit: BoxFit.contain,
-                    ),
-
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 10),
 
                     // Title
                     const Text(
-                      "Please Enter Your Mobile Number",
+                      "Please enter your mobile number",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF2C3E50),
                         height: 1.4,
@@ -352,7 +351,7 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
 
                     // Input Field
                     Material(
-                      elevation: 6,
+                      elevation: 4,
                       shadowColor: Colors.black12,
                       borderRadius: BorderRadius.circular(16),
                       child: TextField(
@@ -380,15 +379,43 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
 
                     const SizedBox(height: 25),
 
-                    // Info text
-                    const Text(
-                      'By clicking "Continue", you agree to our Terms and\nData Privacy Policy.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                        height: 1.4,
+                    // Terms + Privacy Policy
+                    Text.rich(
+                      TextSpan(
+                        text: 'By clicking "Continue", you agree to our ',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          height: 1.4,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Terms',
+                            style: const TextStyle(
+                              color: hassalaLinkColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                // TODO: open terms
+                              },
+                          ),
+                          const TextSpan(text: ' and '),
+                          TextSpan(
+                            text: 'Data Privacy Policy',
+                            style: const TextStyle(
+                              color: hassalaLinkColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                // TODO: open privacy
+                              },
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
                       ),
+                      textAlign: TextAlign.center,
                     ),
 
                     const SizedBox(height: 35),
@@ -419,8 +446,9 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : const Text("Continue"),
@@ -512,12 +540,11 @@ class _MobileInputScreenState extends State<MobileInputScreen> {
     } catch (e) {
       if (!mounted) return;
       debugPrint('CHECK-USER → exception: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 }
-

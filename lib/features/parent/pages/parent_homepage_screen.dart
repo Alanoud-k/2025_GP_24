@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'parent_select_child_screen.dart';
@@ -128,44 +129,83 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
               ],
             ),
             const SizedBox(height: 20),
+
+            // Welcome text (smaller + dark gray)
             Text(
               firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
               style: const TextStyle(
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: Color(0xFF4F4F4F),
               ),
             ),
-            const SizedBox(height: 5),
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+
+            const SizedBox(height: 20),
+
+            // Parent wallet card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: SizedBox(
-                width: double.infinity,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Parent's Wallet",
+                    style: TextStyle(
+                      fontSize: 17,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Balance + SAR SVG
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
-                        "current balance",
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 5),
                       Text(
-                        "﷼${walletBalance.isNotEmpty ? walletBalance : '0.0'}",
+                        double.tryParse(walletBalance)?.toStringAsFixed(2) ??
+                            "0.00",
                         style: const TextStyle(
-                          fontSize: 32,
+                          fontSize: 34,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: SvgPicture.asset(
+                            'assets/icons/Sar.svg',
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
+
             const SizedBox(height: 30),
+
             Column(
               children: [
                 Row(
@@ -209,15 +249,15 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
+
                     // Transactions placeholder
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                'Transactions page will be added later',
-                              ),
+                              content:
+                                  Text('Transactions page will be added later'),
                             ),
                           );
                         },
@@ -236,7 +276,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 12),
+
                 Row(
                   children: [
                     // Add Card / My Card
@@ -273,6 +315,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
+
                     // Insights placeholder
                     Expanded(
                       child: ElevatedButton.icon(
@@ -294,7 +337,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 ),
               ],
             ),
+
             const SizedBox(height: 30),
+
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -318,6 +363,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
               icon: const Icon(Icons.group),
               label: const Text("My Kids"),
             ),
+
             const SizedBox(height: 30),
           ],
         ),

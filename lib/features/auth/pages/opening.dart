@@ -91,7 +91,7 @@ class _SplashViewState extends State<SplashView>
 
     // Logo Animation
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 2300),
       vsync: this,
     );
 
@@ -118,7 +118,7 @@ class _SplashViewState extends State<SplashView>
     // Coin Animation
     _coinController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: 3500),
     );
 
     _coinSlide = Tween<Offset>(
