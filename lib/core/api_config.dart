@@ -1,9 +1,6 @@
-// lib/core/api_config.dart
-
-/// إعدادات الـ API العامة
 class ApiConfig {
-  /// عنوان السيرفر (الـ backend)
-  static const String baseUrl = "http://10.0.2.2:3000";
+  /// عنوان السيرفر (backend على Railway)
+  static const String baseUrl = "https://2025gp24-production.up.railway.app";
 }
 
 const String kBaseUrl = ApiConfig.baseUrl;
