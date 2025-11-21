@@ -26,6 +26,13 @@ if (!process.env.DATABASE_URL) {
 
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/api/moyasar-webhook", express.urlencoded({ extended: true }));
+app.use("/api/moyasar-webhook", express.json());
+
+
 // Enable CORS
 app.use(cors());
 

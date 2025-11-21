@@ -1,60 +1,60 @@
 // server/controllers/moyasarWebhookController.js
-
 import { sql } from "../config/db.js";
 
 export const handleMoyasarWebhook = async (req, res) => {
   try {
     const event = req.body;
 
-    // بعض نسخة ميسّر ترسل: data → داخل data يكون الدفع
+    // Some Moyasar versions wrap data inside `data`
     const payment = event.data ?? event;
 
     if (!payment) {
-      console.error("❌ No payment data in webhook");
+      console.error("❌ Webhook missing payment object");
       return res.sendStatus(400);
     }
 
-    console.log("📩 Incoming webhook:", payment);
+    console.log("📩 Webhook received:", payment);
 
-    // نستخدم metadata بدل description (أدق وأفضل)
     const parentId = payment.metadata?.parentId;
+
     if (!parentId) {
-      console.error("❌ parentId missing in metadata");
+      console.error("❌ Webhook missing parentId");
       return res.sendStatus(400);
     }
 
     const status = payment.status;
     const amountSAR = payment.amount / 100;
-    const gatewayId = payment.id;
+    const paymentId = payment.id;
 
     if (status !== "paid") {
-      console.log(`ℹ️ Payment not completed (status: ${status})`);
+      console.log(`ℹ️ Payment not completed. Status: ${status}`);
       return res.sendStatus(200);
     }
 
-    console.log(`💸 Paid invoice for Parent ${parentId}: +${amountSAR} SAR`);
-
-    // نمنع التكرار
+    // Prevent double-processing
     const exists = await sql`
-      SELECT 1 FROM "Transaction" WHERE "gatewaypaymentid" = ${gatewayId}
+      SELECT 1 FROM "Transaction" WHERE "gatewaypaymentid" = ${paymentId}
     `;
     if (exists.length > 0) {
-      console.log("⚠️ Payment already processed, skipping...");
+      console.log("⚠️ Payment already processed");
       return res.sendStatus(200);
     }
 
-    // حساب الوالد
+    // Get parent account
     const account = await sql`
-      SELECT "accountid" FROM "Account" WHERE "parentid" = ${parentId}
+      SELECT "accountid"
+      FROM "Account"
+      WHERE "parentid" = ${parentId}
     `;
+
     if (account.length === 0) {
-      console.error("❌ Account not found for parent:", parentId);
+      console.error(`❌ Parent account not found: ${parentId}`);
       return res.sendStatus(404);
     }
 
     const receiverAccountId = account[0].accountid;
 
-    // نحدث الرصيد ونضيف Transaction
+    // Update balance & create transaction
     await sql.begin(async (trx) => {
       await trx`
         UPDATE "Account"
@@ -77,17 +77,16 @@ export const handleMoyasarWebhook = async (req, res) => {
           'Wallet Top-Up',
           0,
           ${receiverAccountId},
-          ${gatewayId}
+          ${paymentId}
         )
       `;
     });
 
-    console.log(`✅ Wallet updated successfully for Parent ${parentId}`);
-
+    console.log(`✅ Wallet updated: Parent ${parentId} +${amountSAR} SAR`);
     return res.sendStatus(200);
 
   } catch (err) {
-    console.error("❌ Webhook Error:", err.message);
+    console.error("🔥 Webhook Error:", err.response?.data || err);
     return res.sendStatus(500);
   }
 };

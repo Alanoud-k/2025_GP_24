@@ -44,7 +44,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     }
 
     if (token == null) {
-      setState(() => _errorMessage = "Auth error: No token found.");
+      setState(
+        () => _errorMessage = "Authentication error. Please log in again.",
+      );
       return;
     }
 
@@ -53,42 +55,41 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
       _errorMessage = null;
     });
 
+    const backendUrl = "https://2025gp24-production.up.railway.app";
+
     try {
       final response = await http.post(
-        Uri.parse(
-          "http://10.0.2.2:3000/api/parent/${widget.parentId}/add-money",
-        ),
+        Uri.parse("$backendUrl/api/parent/${widget.parentId}/create-payment"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
+          "Authorization": "Bearer ${widget.token}",
         },
-        body: jsonEncode({
-          "amount": double.parse(amountText),
-          "parentId": widget.parentId,
-        }),
+        body: jsonEncode({"amount": double.parse(amountText)}),
       );
 
-      final data = jsonDecode(response.body);
-      print("💬 Create Payment Response: $data");
+      final responseBody = jsonDecode(response.body);
+      print("🟣 Payment creation response: $responseBody");
+      launchUrl(
+        Uri.parse(responseBody["redirectUrl"]),
+        mode: LaunchMode.externalApplication,
+      );
 
-      if (response.statusCode == 200 && data['transactionUrl'] != null) {
-        final url = Uri.parse(data['transactionUrl']);
-
+      if (response.statusCode == 200 && responseBody["redirectUrl"] != null) {
+        final url = Uri.parse(responseBody["redirectUrl"]);
         if (await canLaunchUrl(url)) {
           await launchUrl(url, mode: LaunchMode.externalApplication);
         } else {
           setState(() => _errorMessage = "Could not open payment page.");
         }
+        return;
       } else {
-        setState(
-          () => _errorMessage = data['message'] ?? "Failed to create payment.",
-        );
+        setState(() {
+          _errorMessage = responseBody["message"] ?? "Payment creation failed.";
+        });
       }
     } catch (e) {
-      print("❌ Error: $e");
-      setState(
-        () => _errorMessage = "An error occurred while creating the payment.",
-      );
+      print("❌ Error creating payment: $e");
+      setState(() => _errorMessage = "An unexpected error occurred.");
     } finally {
       setState(() => _loading = false);
     }
@@ -111,6 +112,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 12),
+
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
@@ -121,13 +123,14 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 24),
+
             if (_errorMessage != null)
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 14),
-              ),
+              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+
             const SizedBox(height: 12),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -141,11 +144,11 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                 ),
                 icon: _loading
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
                           color: Colors.white,
+                          strokeWidth: 2,
                         ),
                       )
                     : const Icon(Icons.payment),
