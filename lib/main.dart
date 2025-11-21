@@ -36,13 +36,17 @@ void main() async {
   if (token != null) {
     if (role == "Parent") {
       if (parentId != null) {
-        startPage = ParentShell(parentId: parentId, token: token);
+        startPage = ParentShell(parentId: parentId!, token: token!);
       } else {
         startPage = const SplashView();
       }
     } else if (role == "Child") {
       if (childId != null) {
-        startPage = ChildShell(childId: childId!, baseUrl: ApiConfig.baseUrl);
+        startPage = ChildShell(
+          childId: childId!,
+          token: token!,
+          baseUrl: ApiConfig.baseUrl,
+        );
       } else {
         startPage = const SplashView();
       }
@@ -111,7 +115,11 @@ class MyApp extends StatelessWidget {
         // --------------------------
         '/childShell': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
-          return ChildShell(childId: args['childId'], baseUrl: args['baseUrl']);
+          return ChildShell(
+            childId: args['childId'],
+            token: args['token'],
+            baseUrl: args['baseUrl'],
+          );
         },
 
         // --------------------------

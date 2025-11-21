@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChildMoreScreen extends StatefulWidget {
   final int childId;
   final String baseUrl;
   final String username;
   final String phoneNo;
-  
+  final String token;
+
   const ChildMoreScreen({
-    super.key, 
+    super.key,
     required this.childId,
     required this.baseUrl,
     required this.username,
     required this.phoneNo,
+    required this.token,
   });
 
   @override
@@ -22,81 +23,65 @@ class ChildMoreScreen extends StatefulWidget {
 
 class _ChildMoreScreenState extends State<ChildMoreScreen> {
   bool isLoading = true;
-  bool hasError = false;
 
   @override
   void initState() {
     super.initState();
-    // محاكاة تحميل البيانات
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        isLoading = false;
-      });
+
+    // Simulate loading (UI effect)
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => isLoading = false);
     });
   }
 
-  // دالة عرض نافذة تأكيد تسجيل الخروج
-  void _showLogoutConfirmation(BuildContext context) {
+  // -----------------------------
+  // LOGOUT FUNCTION
+  // -----------------------------
+  Future<void> _performLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Removes token, ids, role
+
+    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+  }
+
+  // -----------------------------
+  // LOGOUT POPUP
+  // -----------------------------
+  void _showLogoutConfirmation() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (_) {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           title: const Row(
             children: [
-              Icon(Icons.logout, color: Colors.red, size: 24),
-              SizedBox(width: 8),
-              Text(
-                'Log Out',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
+              Icon(Icons.logout, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
           content: const Text(
             'Are you sure you want to log out?',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: 16),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
                 Navigator.pop(context);
                 _performLogout(context);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Log Out',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
+              child: const Text('Log Out'),
             ),
           ],
         );
@@ -104,116 +89,110 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     );
   }
 
-  // دالة تنفيذ تسجيل الخروج
-  void _performLogout(BuildContext context) {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/mobile',
-      (route) => false,
-    );
-  }
-
+  // -----------------------------
+  // BUILD
+  // -----------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator(color: Colors.teal))
-              : hasError
-                  ? const Center(
-                      child: Text(
-                        "Failed to load data",
-                        style: TextStyle(fontSize: 16, color: Colors.red),
-                      ),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
 
-                        // 🟢 User Info
-                        Row(
+                    // USER PROFILE
+                    Row(
+                      children: [
+                        const CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.teal,
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.teal,
-                              child: Icon(Icons.person,
-                                  color: Colors.white, size: 30),
+                            Text(
+                              widget.username,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.username,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  widget.phoneNo,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.phoneNo,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: 40),
-
-                        // 🧩 Menu Items
-                       _buildMenuItem(
-                         icon: Icons.lock_outline,
-                         title: 'Security settings',
-                         onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                              '/childSecuritySettings',
-                            arguments: {
-                        'childId': widget.childId,
-                        'baseUrl': widget.baseUrl,
-                         },
-                       );
-                      },
-                    ),
-                        const SizedBox(height: 16),
-
-                        _buildMenuItem(
-                          icon: Icons.privacy_tip_outlined,
-                          title: 'Terms & privacy policy',
-                          onTap: () {
-                            Navigator.pushNamed(context, '/termsPrivacy');
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildMenuItem(
-                          icon: Icons.logout,
-                          title: 'Log out',
-                          titleColor: Colors.red,
-                          iconColor: Colors.red,
-                          onTap: () {
-                            _showLogoutConfirmation(context);
-                          },
-                        ),
-
-                        const Spacer(),
                       ],
                     ),
-        ),
-      ),
+
+                    const SizedBox(height: 40),
+
+                    // SECURITY SETTINGS
+                    _buildMenuItem(
+                      icon: Icons.lock_outline,
+                      title: "Security settings",
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/childSecuritySettings',
+                          arguments: {
+                            'childId': widget.childId,
+                            'token': widget.token,
+                            'baseUrl': widget.baseUrl,
+                          },
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // TERMS
+                    _buildMenuItem(
+                      icon: Icons.privacy_tip_outlined,
+                      title: "Terms & privacy policy",
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/termsPrivacy'),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // LOGOUT
+                    _buildMenuItem(
+                      icon: Icons.logout,
+                      title: "Log out",
+                      titleColor: Colors.red,
+                      iconColor: Colors.red,
+                      onTap: _showLogoutConfirmation,
+                    ),
+
+                    const Spacer(),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
+  // -----------------------------
+  // MENU ITEM WIDGET
+  // -----------------------------
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -222,20 +201,19 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     required VoidCallback onTap,
   }) {
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 5,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ListTile(
-        leading: Icon(icon, color: iconColor, size: 24),
+        leading: Icon(icon, color: iconColor),
         title: Text(
           title,
           style: TextStyle(
@@ -244,11 +222,8 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
             color: titleColor,
           ),
         ),
-        trailing:
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }

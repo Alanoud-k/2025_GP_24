@@ -16,8 +16,14 @@ import '../widgets/child_bottom_nav_bar.dart';
 class ChildShell extends StatefulWidget {
   final int childId;
   final String baseUrl;
+  final String token;
 
-  const ChildShell({super.key, required this.childId, required this.baseUrl});
+  const ChildShell({
+    super.key,
+    required this.childId,
+    required this.baseUrl,
+    required this.token,
+  });
 
   @override
   State<ChildShell> createState() => _ChildShellState();
@@ -60,12 +66,29 @@ class _ChildShellState extends State<ChildShell> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      ChildRewardsScreen(childId: widget.childId, baseUrl: widget.baseUrl),
-      ChildGameScreen(childId: widget.childId, baseUrl: widget.baseUrl),
-      ChildHomePageScreen(childId: widget.childId, baseUrl: widget.baseUrl),
-      ChildCardScreen(childId: widget.childId, baseUrl: widget.baseUrl),
+      ChildRewardsScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+      ),
+      ChildGameScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+      ),
+      ChildHomePageScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+      ),
+      ChildCardScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+      ),
       ChildMoreScreen(
         childId: widget.childId,
+        token: widget.token,
         baseUrl: widget.baseUrl,
         username: childName,
         phoneNo: childPhone,

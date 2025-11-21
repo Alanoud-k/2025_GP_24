@@ -9,11 +9,13 @@ import 'child_request_money_screen.dart';
 class ChildHomePageScreen extends StatefulWidget {
   final int childId;
   final String baseUrl;
+  final String token;
 
   const ChildHomePageScreen({
     super.key,
     required this.childId,
     required this.baseUrl,
+    required this.token,
   });
 
   @override
@@ -44,7 +46,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
 
     try {
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
@@ -60,12 +68,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
           categoryPercentages = Map<String, double>.from(
             data['categories'] ??
-                {
-                  'Food': 25,
-                  'Shopping': 55,
-                  'Gifts': 10,
-                  'Others': 10,
-                },
+                {'Food': 25, 'Shopping': 55, 'Gifts': 10, 'Others': 10},
           );
 
           _loading = false;
@@ -97,8 +100,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 children: [
                   const CircleAvatar(
                     radius: 22,
-                    backgroundImage:
-                        AssetImage('assets/images/child_avatar.png'),
+                    backgroundImage: AssetImage(
+                      'assets/images/child_avatar.png',
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -163,9 +167,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ChildRequestMoneyScreen(
-                      childId: widget.childId,
-                    ),
+                    builder: (_) =>
+                        ChildRequestMoneyScreen(childId: widget.childId),
                   ),
                 );
               }),
@@ -180,10 +183,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               children: [
                 const Text(
                   'Spending Breakdown',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -206,10 +206,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                   spacing: 16,
                   runSpacing: 8,
                   children: categoryPercentages.keys.map((key) {
-                    return _legendItem(
-                      _getColorForCategory(key),
-                      key,
-                    );
+                    return _legendItem(_getColorForCategory(key), key);
                   }).toList(),
                 ),
               ],
@@ -240,14 +237,14 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         ),
         child: Column(
           children: [
-            Text(title, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            ),
             const SizedBox(height: 6),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -261,15 +258,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-       borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       onPressed: onTap,
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.w500),
-      ),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w500)),
     );
   }
 
@@ -309,10 +301,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Container(
           width: 14,
           height: 14,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(text, style: const TextStyle(fontSize: 13)),
