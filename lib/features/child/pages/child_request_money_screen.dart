@@ -4,8 +4,15 @@ import 'dart:convert';
 
 class ChildRequestMoneyScreen extends StatefulWidget {
   final int childId;
+  final String baseUrl;
+  final String token;
 
-  const ChildRequestMoneyScreen({super.key, required this.childId});
+  const ChildRequestMoneyScreen({
+    super.key,
+    required this.childId,
+    required this.baseUrl,
+    required this.token,
+  });
 
   @override
   State<ChildRequestMoneyScreen> createState() =>
@@ -23,20 +30,23 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
     final message = _messageController.text.trim();
 
     if (amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid amount')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
       return;
     }
 
     setState(() => _submitting = true);
 
     try {
-      final url = Uri.parse('http://10.0.2.2:3000/api/request-money');
+      final url = Uri.parse('${widget.baseUrl}/api/request-money');
 
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
         body: jsonEncode({
           "childId": widget.childId,
           "amount": amount,
@@ -47,14 +57,14 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
       if (response.statusCode == 200) {
         Navigator.pushNamed(context, '/childRequestSuccess');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: ${response.body}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: ${response.body}')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
 
     setState(() => _submitting = false);
@@ -140,10 +150,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
                 ),
                 child: _submitting
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        "Request",
-                        style: TextStyle(fontSize: 18),
-                      ),
+                    : const Text("Request", style: TextStyle(fontSize: 18)),
               ),
             ),
           ],

@@ -127,16 +127,29 @@ class MyApp extends StatelessWidget {
         // --------------------------
         '/childRequestMoney': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
-          return ChildRequestMoneyScreen(childId: args['childId']);
+          return ChildRequestMoneyScreen(
+            childId: args['childId'],
+            baseUrl: args['baseUrl'],
+            token: args['token'],
+          );
         },
 
-        '/childRequestSuccess': (context) => const ChildRequestSuccessScreen(),
+        '/childRequestSuccess': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+
+          return ChildRequestSuccessScreen(
+            childId: args['childId'],
+            token: args['token'],
+            baseUrl: args['baseUrl'],
+          );
+        },
 
         '/childSecuritySettings': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
           return ChildSecuritySettingsPage(
             childId: args['childId'],
             baseUrl: args['baseUrl'],
+            token: args['token'],
           );
         },
       },

@@ -4,11 +4,13 @@ import '../services/goals_api.dart';
 class ChildAddGoalScreen extends StatefulWidget {
   final int childId;
   final String baseUrl;
+  final String token; // ✅ NEW
 
   const ChildAddGoalScreen({
     super.key,
     required this.childId,
     required this.baseUrl,
+    required this.token, // ✅ NEW
   });
 
   @override
@@ -24,13 +26,14 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
+
   bool _submitting = false;
   late GoalsApi _api;
 
   @override
   void initState() {
     super.initState();
-    _api = GoalsApi(widget.baseUrl);
+    _api = GoalsApi(widget.baseUrl, widget.token); // ⬅️ now accepts token
   }
 
   @override
@@ -44,6 +47,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _submitting = true);
+
     try {
       final name = _nameCtrl.text.trim();
       final amount = double.parse(_amountCtrl.text.trim());
@@ -58,9 +62,9 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create goal: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to create goal: $e')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -76,7 +80,11 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
           decoration: const BoxDecoration(
             color: Colors.white,
             boxShadow: [
-              BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 3)),
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: SafeArea(
@@ -86,13 +94,21 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black87),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      size: 20,
+                      color: Colors.black87,
+                    ),
                     onPressed: () => Navigator.of(context).maybePop(false),
                   ),
                   const Spacer(),
                   const Text(
                     'Goals',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Colors.black87),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      color: Colors.black87,
+                    ),
                   ),
                   const Spacer(),
                   const SizedBox(width: 48),
@@ -110,7 +126,10 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
               child: Align(
                 alignment: Alignment.center,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: _GoalFormCard(
@@ -160,7 +179,10 @@ class _GoalFormCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 36),
-        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18)),
+        decoration: BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: Form(
           key: formKey,
           child: Column(
@@ -172,30 +194,44 @@ class _GoalFormCard extends StatelessWidget {
                   padding: EdgeInsets.only(bottom: 20),
                   child: Text(
                     'Create a new goal',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
               ),
               const Text(
                 'Goal name',
-                style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: kTextSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               _inputField(
                 controller: nameCtrl,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter goal name' : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Enter goal name' : null,
               ),
               const SizedBox(height: 22),
               const Text(
                 'Amount of money need to save',
-                style: TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: kTextSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               _inputField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Enter target amount';
+                  if (v == null || v.trim().isEmpty)
+                    return 'Enter target amount';
                   final d = double.tryParse(v);
                   if (d == null || d <= 0) return 'Invalid amount';
                   return null;
@@ -240,7 +276,10 @@ class _GoalFormCard extends StatelessWidget {
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -262,7 +301,10 @@ class _GoalFormCard extends StatelessWidget {
       child: Container(
         width: 120,
         height: 44,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(30)),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(30),
+        ),
         child: Center(
           child: loading
               ? const SizedBox(
@@ -272,7 +314,11 @@ class _GoalFormCard extends StatelessWidget {
                 )
               : Text(
                   text,
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 15),
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
         ),
       ),

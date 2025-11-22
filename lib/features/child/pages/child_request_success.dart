@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
 class ChildRequestSuccessScreen extends StatelessWidget {
-  const ChildRequestSuccessScreen({super.key});
+  final int childId;
+  final String baseUrl;
+  final String token;
+
+  const ChildRequestSuccessScreen({
+    super.key,
+    required this.childId,
+    required this.baseUrl,
+    required this.token,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,15 +24,14 @@ class ChildRequestSuccessScreen extends StatelessWidget {
             const Text(
               "Money Request\nSubmitted Successfully",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
+
             const SizedBox(height: 40),
 
             ElevatedButton(
               onPressed: () {
+                // Ensure child homepage receives childId, token, baseUrl
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
               style: ElevatedButton.styleFrom(

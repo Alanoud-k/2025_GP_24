@@ -83,7 +83,11 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
         Navigator.pushReplacementNamed(
           context,
           '/childShell',
-          arguments: {'childId': data['childId'], 'baseUrl': _baseUrl},
+          arguments: {
+            'childId': data['childId'],
+            'baseUrl': _baseUrl,
+            'token': data['token'], // <-- REQUIRED
+          },
         );
       } else {
         final error = jsonDecode(response.body);

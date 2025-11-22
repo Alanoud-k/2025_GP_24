@@ -5,15 +5,18 @@ import 'dart:convert';
 class ChildSecuritySettingsPage extends StatefulWidget {
   final int childId;
   final String baseUrl;
-  
+  final String token;
+
   const ChildSecuritySettingsPage({
-    super.key, 
+    super.key,
     required this.childId,
     required this.baseUrl,
+    required this.token, // <-- ADD TOKEN
   });
 
   @override
-  State<ChildSecuritySettingsPage> createState() => _ChildSecuritySettingsPageState();
+  State<ChildSecuritySettingsPage> createState() =>
+      _ChildSecuritySettingsPageState();
 }
 
 class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
@@ -26,7 +29,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           title: const Text(
             'Change Password',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -38,7 +43,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                 controller: currentPasswordController,
                 decoration: InputDecoration(
                   labelText: 'Current Password',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 obscureText: true,
               ),
@@ -47,7 +54,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                 controller: newPasswordController,
                 decoration: InputDecoration(
                   labelText: 'New Password',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.info_outline, size: 18),
                     onPressed: () => _showPasswordRequirementsDialog(context),
@@ -60,7 +69,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                 controller: confirmPasswordController,
                 decoration: InputDecoration(
                   labelText: 'Confirm New Password',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 obscureText: true,
               ),
@@ -74,7 +85,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
             ElevatedButton(
               onPressed: () async {
                 final newPassword = newPasswordController.text;
-                
+
                 // التحقق من تطابق كلمات المرور
                 if (newPassword != confirmPasswordController.text) {
                   _showErrorSnackbar('Passwords do not match');
@@ -83,7 +94,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
 
                 // التحقق من شروط كلمة المرور
                 if (!_validatePassword(newPassword)) {
-                  _showErrorSnackbar('Password does not meet requirements. Tap the info icon for details.');
+                  _showErrorSnackbar(
+                    'Password does not meet requirements. Tap the info icon for details.',
+                  );
                   return;
                 }
 
@@ -102,11 +115,17 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     );
   }
 
-  Future<void> _changeChildPassword(String currentPassword, String newPassword) async {
+  Future<void> _changeChildPassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     try {
       final response = await http.put(
         Uri.parse('${widget.baseUrl}/api/child/${widget.childId}/password'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
         body: jsonEncode({
           'currentPassword': currentPassword,
           'newPassword': newPassword,
@@ -127,19 +146,13 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
 
   void _showSuccessSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -148,7 +161,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     if (password.length < 8) {
       return false;
     }
-    if (!RegExp(r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])').hasMatch(password)) {
+    if (!RegExp(
+      r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
+    ).hasMatch(password)) {
       return false;
     }
     return true;
@@ -160,7 +175,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           title: const Text(
             'Password Requirements',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -219,9 +236,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                 child: Text(
                   'Security',
                   style: TextStyle(
-                    fontSize: 16, 
-                    fontWeight: FontWeight.w600, 
-                    color: Colors.grey
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
                   ),
                 ),
               ),
@@ -272,12 +289,16 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
         title: Text(
           title,
           style: const TextStyle(
-            fontSize: 16, 
+            fontSize: 16,
             fontWeight: FontWeight.w500,
             color: Colors.black,
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey,
+        ),
         onTap: onTap,
       ),
     );

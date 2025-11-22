@@ -154,6 +154,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     builder: (_) => ChildGoalsScreen(
                       childId: widget.childId,
                       baseUrl: widget.baseUrl,
+                      token: widget.token,
                     ),
                   ),
                 );
@@ -167,8 +168,11 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        ChildRequestMoneyScreen(childId: widget.childId),
+                    builder: (_) => ChildRequestMoneyScreen(
+                      childId: widget.childId,
+                      baseUrl: widget.baseUrl,
+                      token: widget.token,
+                    ),
                   ),
                 );
               }),
