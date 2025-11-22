@@ -12,6 +12,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 
+
 // Resolve __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,7 @@ app.use("/api", parentRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
+
 
 // Test route
 app.get("/", (_req, res) => {

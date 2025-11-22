@@ -31,9 +31,6 @@ class _ParentShellState extends State<ParentShell> {
     super.initState();
     parentId = widget.parentId;
     token = widget.token;
-    print("🐚 ParentShell loaded");
-    print("ParentShell parentId = ${widget.parentId}");
-    print("ParentShell token = ${widget.token}");
   }
 
   @override
@@ -57,12 +54,13 @@ class _ParentShellState extends State<ParentShell> {
       );
     }
 
+    // Pages order must match nav indexes
     final pages = [
-      ParentHomeScreen(parentId: parentId, token: token), // 0
-      ParentChoresScreen(parentId: parentId, token: token), // 1
-      //const ParentAllowanceScreen(), // 2 (later can take childId)
-      ParentGiftsScreen(parentId: parentId, token: token), // 3
-      MorePage(parentId: parentId, token: token), //4
+      ParentHomeScreen(parentId: parentId, token: token),       // 0
+      ParentChoresScreen(parentId: parentId, token: token),     // 1
+      ParentAllowanceScreen(parentId: parentId, token: token),  // 2 (placeholder)
+      ParentGiftsScreen(parentId: parentId, token: token),      // 3
+      MorePage(parentId: parentId, token: token),               // 4
     ];
 
     return Scaffold(
@@ -70,9 +68,7 @@ class _ParentShellState extends State<ParentShell> {
       body: pages[_index],
       bottomNavigationBar: ParentBottomNavBar(
         currentIndex: _index,
-        onTap: (i) {
-          setState(() => _index = i);
-        },
+        onTap: (i) => setState(() => _index = i),
       ),
     );
   }
@@ -104,7 +100,7 @@ class ParentBottomNavBar extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          // Bottom bar background
+          // Bar background
           Positioned(
             bottom: 0,
             left: 0,
@@ -130,7 +126,7 @@ class ParentBottomNavBar extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Left side: Chores + Allowance (high priority)
+                    // Left group
                     Row(
                       children: [
                         _NavItem(
@@ -142,7 +138,7 @@ class ParentBottomNavBar extends StatelessWidget {
                         ),
                         const SizedBox(width: 20),
                         _NavItem(
-                          asset: "assets/icons/Card.svg", // used for allowance
+                          asset: "assets/icons/Card.svg",
                           label: "Allowance",
                           isSelected: currentIndex == 2,
                           iconSize: iconSize,
@@ -151,7 +147,7 @@ class ParentBottomNavBar extends StatelessWidget {
                       ],
                     ),
 
-                    // Right side: Gifts + More (secondary)
+                    // Right group
                     Row(
                       children: [
                         _NavItem(
@@ -177,7 +173,7 @@ class ParentBottomNavBar extends StatelessWidget {
             ),
           ),
 
-          // Floating Home button in the center
+          // Floating Home button
           Positioned(
             top: 10,
             child: GestureDetector(
@@ -201,9 +197,7 @@ class ParentBottomNavBar extends StatelessWidget {
                     width: homeInner,
                     height: homeInner,
                     decoration: BoxDecoration(
-                      color: currentIndex == 0
-                          ? kPrimary
-                          : const Color(0xFFCCCCCC),
+                      color: currentIndex == 0 ? kPrimary : const Color(0xFFCCCCCC),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -256,7 +250,6 @@ class _NavItem extends StatelessWidget {
         width: 64,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SvgPicture.asset(
               asset,

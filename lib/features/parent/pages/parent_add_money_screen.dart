@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentAddMoneyScreen extends StatefulWidget {
@@ -21,8 +20,12 @@ class ParentAddMoneyScreen extends StatefulWidget {
 class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool _loading = false;
-  String? _errorMessage;
   String? token;
+
+  // Switch between local and railway when needed
+  static const String backendUrl =
+      "https://2025gp24-production.up.railway.app";
+  // static const String backendUrl = "http://10.0.2.2:3000";
 
   @override
   void initState() {
@@ -35,64 +38,80 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     token = prefs.getString("token");
   }
 
-  Future<void> _createPayment() async {
+  Future<void> _addMoney() async {
     final amountText = _amountController.text.trim();
+    final amount = double.tryParse(amountText);
 
-    if (amountText.isEmpty || double.tryParse(amountText) == null) {
-      setState(() => _errorMessage = "Please enter a valid amount.");
-      return;
-    }
-
-    if (token == null) {
-      setState(
-        () => _errorMessage = "Authentication error. Please log in again.",
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter a valid amount")),
       );
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-    });
+    if (token == null || token!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Authentication error")),
+      );
+      return;
+    }
 
-    const backendUrl = "https://2025gp24-production.up.railway.app";
+    setState(() => _loading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse("$backendUrl/api/parent/${widget.parentId}/create-payment"),
+      // Correct endpoint for your server mounting
+      final res = await http.post(
+        Uri.parse("$backendUrl/api/add-money"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${widget.token}",
+          "Authorization": "Bearer $token",
         },
-        body: jsonEncode({"amount": double.parse(amountText)}),
+        body: jsonEncode({
+          "parentId": widget.parentId,
+          "amount": amount,
+        }),
       );
 
-      final responseBody = jsonDecode(response.body);
-      print("🟣 Payment creation response: $responseBody");
-      launchUrl(
-        Uri.parse(responseBody["redirectUrl"]),
-        mode: LaunchMode.externalApplication,
-      );
+      print("Add money status: ${res.statusCode}");
+      print("Add money body: ${res.body}");
 
-      if (response.statusCode == 200 && responseBody["redirectUrl"] != null) {
-        final url = Uri.parse(responseBody["redirectUrl"]);
-        if (await canLaunchUrl(url)) {
-          await launchUrl(url, mode: LaunchMode.externalApplication);
+      final contentType = res.headers["content-type"] ?? "";
+
+      if (contentType.contains("application/json")) {
+        final data = jsonDecode(res.body);
+
+        if (res.statusCode == 200 && data["success"] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Amount added successfully")),
+          );
+          Navigator.pop(context, true);
         } else {
-          setState(() => _errorMessage = "Could not open payment page.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data["message"] ?? "Add money failed")),
+          );
         }
-        return;
       } else {
-        setState(() {
-          _errorMessage = responseBody["message"] ?? "Payment creation failed.";
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Server returned non-JSON response (${res.statusCode})",
+            ),
+          ),
+        );
       }
     } catch (e) {
-      print("❌ Error creating payment: $e");
-      setState(() => _errorMessage = "An unexpected error occurred.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
   }
 
   @override
@@ -126,15 +145,10 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
             const SizedBox(height: 24),
 
-            if (_errorMessage != null)
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-
-            const SizedBox(height: 12),
-
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _loading ? null : _createPayment,
+              child: ElevatedButton(
+                onPressed: _loading ? null : _addMoney,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -142,7 +156,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: _loading
+                child: _loading
                     ? const SizedBox(
                         width: 22,
                         height: 22,
@@ -151,8 +165,10 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Icon(Icons.payment),
-                label: Text(_loading ? "Processing..." : "Proceed to Payment"),
+                    : const Text(
+                        "Add Money",
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
             ),
           ],

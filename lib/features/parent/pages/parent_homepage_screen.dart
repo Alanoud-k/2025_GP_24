@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
 import 'parent_select_child_screen.dart';
 import 'parent_add_money_screen.dart';
 import 'parent_add_card_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -22,50 +22,40 @@ class ParentHomeScreen extends StatefulWidget {
 }
 
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
+  // Switch baseUrl when needed
+  static const String baseUrl =
+      "https://2025gp24-production.up.railway.app";
+  // static const String baseUrl = "http://10.0.2.2:3000";
+
   String firstname = '';
-  String walletBalance = '';
+  String walletBalance = '0.0';
   bool _isLoading = true;
   bool parentHasCard = false;
-  //String _token = "";
-  String get token => widget.token;
 
+  String get token => widget.token;
   int get parentId => widget.parentId;
 
   @override
   void initState() {
     super.initState();
     fetchParentInfo();
-    print("🏠 ParentHomeScreen INIT");
-    print("ParentHomeScreen parentId = ${widget.parentId}");
-    print("ParentHomeScreen initial token = $token");
-    //_loadTokenAndFetch();
   }
-
-  /*Future<void> _loadTokenAndFetch() async {
-    final prefs = await SharedPreferences.getInstance();
-    final loaded = prefs.getString("token") ?? "";
-    setState(() {
-      _token = loaded;
-    });
-    await fetchParentInfo();
-  }*/
 
   Future<void> fetchParentInfo() async {
     if (token.isEmpty) {
       setState(() => _isLoading = false);
       return;
     }
-    final parentUrl = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId');
-    final cardUrl = Uri.parse('http://10.0.2.2:3000/api/parent/$parentId/card');
+
+    final parentUrl = Uri.parse("$baseUrl/api/parent/$parentId");
+    final cardUrl = Uri.parse("$baseUrl/api/parent/$parentId/card");
 
     try {
-      // ------------------------------
-      // GET PARENT INFO (with JWT)
-      // ------------------------------
+      // Parent info
       final parentRes = await http.get(
         parentUrl,
         headers: {
-          "Authorization": "Bearer ${widget.token}",
+          "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
       );
@@ -76,13 +66,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         walletBalance = data['balance']?.toString() ?? '0.0';
       }
 
-      // ------------------------------
-      // GET CARD INFO (with JWT)
-      // ------------------------------
+      // Card info
       final cardRes = await http.get(
         cardUrl,
         headers: {
-          "Authorization": "Bearer ${widget.token}",
+          "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
       );
@@ -93,22 +81,22 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       }
 
       setState(() => _isLoading = false);
-    } catch (e) {
+    } catch (_) {
       setState(() => _isLoading = false);
     }
   }
 
   void _refreshFromDb() {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
     fetchParentInfo();
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Colors.teal));
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.teal),
+      );
     }
 
     return SafeArea(
@@ -130,7 +118,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Welcome text (smaller + dark gray)
+            // Welcome text
             Text(
               firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
               style: const TextStyle(
@@ -142,7 +130,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
             const SizedBox(height: 20),
 
-            // Parent wallet card
+            // Wallet card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -186,7 +174,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-
                       Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: SizedBox(
@@ -217,23 +204,25 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           if (!parentHasCard) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Please add a card first'),
+                                content: Text("Please add a card first"),
                               ),
                             );
                             return;
                           }
 
-                          await Navigator.push(
+                          final added = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ParentAddMoneyScreen(
+                              builder: (_) => ParentAddMoneyScreen(
                                 parentId: parentId,
                                 token: token,
                               ),
                             ),
                           );
 
-                          _refreshFromDb();
+                          if (added == true) {
+                            _refreshFromDb();
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -257,7 +246,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content:
-                                  Text('Transactions page will be added later'),
+                                  Text("Transactions page will be added later"),
                             ),
                           );
                         },
@@ -288,7 +277,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ParentAddCardScreen(
+                              builder: (_) => ParentAddCardScreen(
                                 parentId: parentId,
                                 token: token,
                               ),
@@ -296,9 +285,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           );
 
                           if (result == true) {
-                            setState(() {
-                              parentHasCard = true;
-                            });
+                            setState(() => parentHasCard = true);
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -345,7 +332,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ParentSelectChildScreen(
+                    builder: (_) => ParentSelectChildScreen(
                       parentId: parentId,
                       token: token,
                     ),
