@@ -269,7 +269,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     if (phone.startsWith('+966')) phone = phone.replaceFirst('+966', '0');
     if (phone.startsWith('966')) phone = phone.replaceFirst('966', '0');
 
-    final phoneRegex = RegExp(r'^05\d{8}\$');
+    final phoneRegex = RegExp(r'^05\d{8}$');
     if (!phoneRegex.hasMatch(phone)) {
       _showSnack('Invalid phone number format');
       return;
