@@ -250,6 +250,14 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     super.dispose();
   }
 
+  bool _validatePassword(String password) {
+    if (password.length < 8) return false;
+    if (!RegExp(r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$%^&*])').hasMatch(password)) {
+      return false;
+    }
+    return true;
+  }
+
   Future<void> _checkPhone() async {
     phone = phoneController.text.trim();
 
@@ -261,8 +269,8 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     if (phone.startsWith('+966')) phone = phone.replaceFirst('+966', '0');
     if (phone.startsWith('966')) phone = phone.replaceFirst('966', '0');
 
-    final phoneRegex = RegExp(r'^05\d{8}$');
-    if (!RegExp(r'^05\d{8}$').hasMatch(phone)) {
+    final phoneRegex = RegExp(r'^05\d{8}\$');
+    if (!phoneRegex.hasMatch(phone)) {
       _showSnack('Invalid phone number format');
       return;
     }
@@ -329,6 +337,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     }
     if (newPass != confirmPass) {
       _showSnack('Passwords do not match');
+      return;
+    }
+    if (!_validatePassword(newPass)) {
+      _showSnack('Password must be at least 8 characters, and include uppercase, lowercase, number, and special character');
       return;
     }
 
