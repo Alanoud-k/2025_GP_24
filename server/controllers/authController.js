@@ -56,7 +56,7 @@ export const checkUser = async (req, res) => {
    Body: { firstName, lastName, nationalId, DoB, phoneNo, password }
 ============================================================ */
 export const registerParent = async (req, res) => {
-  const { firstName, lastName, nationalId, DoB, phoneNo, password } = req.body;
+  const { firstName, lastName, nationalId, DoB, phoneNo, password, securityAnswer } = req.body;
 
   // Basic validations
   if (!firstName || !lastName || !nationalId || !DoB || !phoneNo || !password) {
@@ -106,26 +106,32 @@ export const registerParent = async (req, res) => {
         .json({ error: "National ID not found or already used" });
     }
 
-    // Hash password
+    // Hash password and security answer
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedAnswer = await bcrypt.hash(securityAnswer, saltRounds);
 
-    // Insert parent
+    // Insert parent with security answer hash
     const inserted = await sql`
-      INSERT INTO "Parent" ("nationalid","phoneno","firstname","lastname","DoB","password")
-      VALUES (${nationalId}, ${phoneNo}, ${firstName}, ${lastName}, ${DoB}, ${hashedPassword})
-      RETURNING "parentid"
-    `;
+  INSERT INTO "Parent" (
+    "nationalid", "phoneno", "firstname", "lastname", "DoB", "password", "securityanswerhash"
+  )
+  VALUES (
+    ${nationalId}, ${phoneNo}, ${firstName}, ${lastName}, ${DoB}, ${hashedPassword}, ${hashedAnswer}
+  )
+  RETURNING "parentid"
+`;
     const newParentId = inserted[0].parentid;
 
+
     // Create wallet row for parent
-const parentWallet = await sql`
+    const parentWallet = await sql`
   INSERT INTO "Wallet"("parentid","childid","walletstatus")
   VALUES (${newParentId}, NULL, 'Active')
   RETURNING walletid
 `;
 
-await sql`
+    await sql`
   INSERT INTO "Account"("walletid","accounttype","currency","balance","limitamount")
   VALUES (${parentWallet[0].walletid}, 'ParentAccount', 'SAR', 0, 0)
 `;
@@ -272,11 +278,11 @@ export const loginChild = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-res.json({
-  message: "Child login successful",
-  childId: child.childid,
-  token
-});
+    res.json({
+      message: "Child login successful",
+      childId: child.childid,
+      token
+    });
 
 
   } catch (err) {
@@ -335,46 +341,94 @@ export const getParentInfo = async (req, res) => {
 };
 
 /* ============================================================
-   FORGOT PASSWORD (reset and store new hashed)
+   VERIFY SECURITY QUESTION ANSWER
+   Body: { phoneNo, answer }
 ============================================================ */
-export const forgotPassword = async (req, res) => {
+export const verifySecurityAnswer = async (req, res) => {
+  const { phoneNo, answer } = req.body;
+
+  if (!phoneNo || !answer) {
+    return res.status(400).json({ error: "Phone number and answer are required" });
+  }
+
   try {
-    let { phoneNo } = req.body;
-
-    if (!phoneNo) {
-      return res.status(400).json({ error: "Phone number is required" });
-    }
-
-    phoneNo = phoneNo.trim();
-    if (phoneNo.startsWith("+966")) {
-      phoneNo = "0" + phoneNo.slice(4);
-    }
-
     const parent = await sql`
-      SELECT "parentid","phoneno"
+      SELECT "securityanswerhash"
       FROM "Parent"
       WHERE "phoneno" = ${phoneNo}
       LIMIT 1
     `;
-    if (parent.length === 0) {
-      return res.status(404).json({ error: "Parent not found" });
+
+    if (parent.length > 0) {
+      const isMatch = await bcrypt.compare(answer, parent[0].securityanswerhash);
+      return isMatch
+        ? res.json({ verified: true, role: "Parent" })
+        : res.status(401).json({ error: "Incorrect answer" });
     }
 
-    const newPassword = Math.random().toString(36).slice(-8);
-    const saltRounds = 10;
-    const hashed = await bcrypt.hash(newPassword, saltRounds);
+    const child = await sql`
+      SELECT "securityanswerhash"
+      FROM "Child"
+      WHERE "phoneno" = ${phoneNo}
+      LIMIT 1
+    `;
 
-    await sql`
+    if (child.length > 0) {
+      const isMatch = await bcrypt.compare(answer, child[0].securityanswerhash);
+      return isMatch
+        ? res.json({ verified: true, role: "Child" })
+        : res.status(401).json({ error: "Incorrect answer" });
+    }
+
+    return res.status(404).json({ error: "User not found" });
+  } catch (err) {
+    console.error("❌ Error verifying security answer:", err);
+    res.status(500).json({ error: "Internal error" });
+  }
+};
+
+/* ============================================================
+   RESET PASSWORD (after verifying answer)
+   Body: { phoneNo, newPassword }
+============================================================ */
+export const resetPassword = async (req, res) => {
+  const { phoneNo, newPassword } = req.body;
+
+  if (!phoneNo || !newPassword) {
+    return res.status(400).json({ error: "Phone number and new password are required" });
+  }
+
+  if (!validatePassword(newPassword)) {
+    return res.status(400).json({ error: "Weak password" });
+  }
+
+  try {
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    const updatedParent = await sql`
       UPDATE "Parent"
       SET "password" = ${hashed}
       WHERE "phoneno" = ${phoneNo}
+      RETURNING "parentid"
     `;
+    if (updatedParent.length > 0) {
+      return res.json({ message: "Password reset for Parent" });
+    }
 
-    // In real app: send newPassword via SMS / email / OTP flow
-    return res.json({ message: "Password reset successful" });
+    const updatedChild = await sql`
+      UPDATE "Child"
+      SET "password" = ${hashed}
+      WHERE "phoneno" = ${phoneNo}
+      RETURNING "childid"
+    `;
+    if (updatedChild.length > 0) {
+      return res.json({ message: "Password reset for Child" });
+    }
+
+    return res.status(404).json({ error: "User not found" });
   } catch (err) {
-    console.error("❌ Forgot password error:", err);
-    res.status(500).json({ error: "Internal error" });
+    console.error("❌ Reset password error:", err);
+    res.status(500).json({ error: "Failed to reset password" });
   }
 };
 

@@ -8,11 +8,13 @@ import {
   getNameByPhone,
   loginParent,
   loginChild,
-  forgotPassword,
+  // forgotPassword,
   logout,
   getParentInfo,
   getChildInfo,
   getParentById,
+  verifySecurityAnswer, 
+  resetPassword
 } from "../controllers/authController.js";
 
 import {
@@ -30,8 +32,10 @@ router.post("/register-parent", registerParent);
 router.get("/name/:phoneNo", getNameByPhone);
 router.post("/login-parent", loginParent);
 router.post("/login-child", loginChild);
+router.post("/verify-security-answer", verifySecurityAnswer);
+router.post("/reset-password", resetPassword);
 
-router.post("/forgot-password", forgotPassword);
+// router.post("/forgot-password", forgotPassword);
 router.post("/logout", logout);
 
 // ---------- Parent / Child info ----------
