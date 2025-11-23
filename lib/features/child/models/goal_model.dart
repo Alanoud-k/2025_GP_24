@@ -4,8 +4,9 @@ class Goal {
   final double targetAmount;
   final String goalStatus;
   final double goalBalance;
+  final String description; // NEW
 
-  // حساب التقدم بين 0 و 1
+  // progress between 0 and 1
   double get progress =>
       targetAmount == 0 ? 0 : (goalBalance / targetAmount).clamp(0, 1);
 
@@ -15,9 +16,10 @@ class Goal {
     required this.targetAmount,
     required this.goalStatus,
     required this.goalBalance,
+    required this.description, // NEW
   });
 
-  /// دالة تحويل آمنة لأي قيمة إلى double
+  // safe double conversion
   static double _toDouble(dynamic v) {
     if (v == null) return 0.0;
     if (v is num) return v.toDouble();
@@ -31,7 +33,8 @@ class Goal {
       goalName: j['goalname'] ?? j['goalName'],
       targetAmount: _toDouble(j['targetamount'] ?? j['targetAmount']),
       goalStatus: j['goalstatus'] ?? j['goalStatus'],
-      goalBalance: _toDouble(j['balance'] ?? j['goalBalance']),
+      goalBalance: _toDouble(j['goalbalance'] ?? j['goalBalance'] ?? j['balance']),
+      description: j['description'] ?? "", // NEW
     );
   }
 }

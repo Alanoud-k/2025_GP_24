@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/goals_api.dart';
 
 class ChildAddGoalScreen extends StatefulWidget {
   final int childId;
   final String baseUrl;
-  final String token; // ✅ NEW
+  final String token;
 
   const ChildAddGoalScreen({
     super.key,
     required this.childId,
     required this.baseUrl,
-    required this.token, // ✅ NEW
+    required this.token,
   });
 
   @override
@@ -26,24 +27,39 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
 
   bool _submitting = false;
-  late GoalsApi _api;
+  late final GoalsApi _api;
 
   @override
   void initState() {
     super.initState();
-    _api = GoalsApi(widget.baseUrl, widget.token); // ⬅️ now accepts token
+    _api = GoalsApi(widget.baseUrl, widget.token);
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _amountCtrl.dispose();
+    _descCtrl.dispose();
     super.dispose();
   }
 
+  bool _lettersOnly(String v) {
+    final t = v.trim();
+    if (t.isEmpty) return false;
+    return RegExp(r'^[a-zA-Z\u0600-\u06FF\s]+$').hasMatch(t);
+  }
+
+  bool _amountOnly(String v) {
+    final t = v.trim();
+    return RegExp(r'^\d+(\.\d{1,2})?$').hasMatch(t);
+  }
+
   Future<void> _onSubmit() async {
+    if (_submitting) return;
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _submitting = true);
@@ -51,20 +67,22 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
     try {
       final name = _nameCtrl.text.trim();
       final amount = double.parse(_amountCtrl.text.trim());
+      final description = _descCtrl.text.trim();
 
       await _api.createGoal(
         childId: widget.childId,
         goalName: name,
         targetAmount: amount,
+        description: description,
       );
 
       if (!mounted) return;
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to create goal: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create goal. Please try again.')),
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -74,6 +92,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
+
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(85),
         child: Container(
@@ -99,11 +118,11 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                       size: 20,
                       color: Colors.black87,
                     ),
-                    onPressed: () => Navigator.of(context).maybePop(false),
+                    onPressed: () => Navigator.pop(context, false),
                   ),
                   const Spacer(),
                   const Text(
-                    'Goals',
+                    'Add Goal',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 20,
@@ -118,27 +137,145 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
           ),
         ),
       ),
+
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Align(
-                alignment: Alignment.center,
+              child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
-                    child: _GoalFormCard(
-                      nameCtrl: _nameCtrl,
-                      amountCtrl: _amountCtrl,
-                      formKey: _formKey,
-                      submitting: _submitting,
-                      onSubmit: _onSubmit,
-                      onCancel: () => Navigator.pop(context, false),
+                    child: Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 36),
+                        decoration: BoxDecoration(
+                          color: kCard,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.only(bottom: 20),
+                                  child: Text(
+                                    'Create a new goal',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const Text(
+                                'Goal name',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: kTextSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _field(
+                                controller: _nameCtrl,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                                ],
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) return 'Enter goal name';
+                                  if (!_lettersOnly(v)) return 'Letters only';
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 18),
+
+                              const Text(
+                                'Description',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: kTextSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _field(
+                                controller: _descCtrl,
+                                maxLines: 3,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                                ],
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) return null;
+                                  if (!_lettersOnly(v)) return 'Letters only';
+                                  if (v.trim().length > 200) return 'Max 200 characters';
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 18),
+
+                              const Text(
+                                'Amount to save',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: kTextSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _field(
+                                controller: _amountCtrl,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                ],
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) return 'Enter amount';
+                                  if (!_amountOnly(v)) return 'Numbers only';
+                                  final d = double.tryParse(v.trim());
+                                  if (d == null || d <= 0) return 'Invalid amount';
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 28),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _pill(
+                                    text: _submitting ? 'Saving...' : 'Add',
+                                    bg: kAddBtn,
+                                    onTap: _submitting ? null : _onSubmit,
+                                    loading: _submitting,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  _pill(
+                                    text: 'Cancel',
+                                    bg: Colors.white,
+                                    onTap: _submitting
+                                        ? null
+                                        : () => Navigator.pop(context, false),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -149,137 +286,24 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
       ),
     );
   }
-}
 
-class _GoalFormCard extends StatelessWidget {
-  const _GoalFormCard({
-    required this.nameCtrl,
-    required this.amountCtrl,
-    required this.formKey,
-    required this.submitting,
-    required this.onSubmit,
-    required this.onCancel,
-  });
-
-  final TextEditingController nameCtrl;
-  final TextEditingController amountCtrl;
-  final GlobalKey<FormState> formKey;
-  final bool submitting;
-  final VoidCallback onSubmit;
-  final VoidCallback onCancel;
-
-  static const kCard = Color(0xFF9FE5E2);
-  static const kAddBtn = Color(0xFF75C6C3);
-  static const kTextSecondary = Color(0xFF6E6E6E);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 36),
-        decoration: BoxDecoration(
-          color: kCard,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 20),
-                  child: Text(
-                    'Create a new goal',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ),
-              const Text(
-                'Goal name',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _inputField(
-                controller: nameCtrl,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter goal name' : null,
-              ),
-              const SizedBox(height: 22),
-              const Text(
-                'Amount of money need to save',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _inputField(
-                controller: amountCtrl,
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty)
-                    return 'Enter target amount';
-                  final d = double.tryParse(v);
-                  if (d == null || d <= 0) return 'Invalid amount';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 28),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _flatPillButton(
-                    submitting ? 'Saving...' : 'Add',
-                    bg: kAddBtn,
-                    textColor: Colors.black,
-                    onTap: submitting ? null : onSubmit,
-                    loading: submitting,
-                  ),
-                  const SizedBox(width: 16),
-                  _flatPillButton(
-                    'Cancel',
-                    bg: Colors.white,
-                    textColor: Colors.black,
-                    onTap: submitting ? null : onCancel,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static Widget _inputField({
-    TextEditingController? controller,
+  static Widget _field({
+    required TextEditingController controller,
     TextInputType? keyboardType,
+    int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      maxLines: maxLines,
+      inputFormatters: inputFormatters,
       validator: validator,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -288,38 +312,43 @@ class _GoalFormCard extends StatelessWidget {
     );
   }
 
-  static Widget _flatPillButton(
-    String text, {
+  static Widget _pill({
+    required String text,
     required Color bg,
-    required Color textColor,
     VoidCallback? onTap,
     bool loading = false,
   }) {
+    final disabled = onTap == null;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
-      child: Container(
-        width: 120,
-        height: 44,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Center(
-          child: loading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(
-                  text,
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 160),
+        opacity: disabled ? 0.6 : 1,
+        child: Container(
+          width: 120,
+          height: 44,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Center(
+            child: loading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
                   ),
-                ),
+          ),
         ),
       ),
     );
