@@ -1,5 +1,5 @@
 ## Hassalah 
-
+<img width="385" height="112" alt="حصالة" src="https://github.com/user-attachments/assets/15f73520-c975-4293-b7bb-7e6c4f706f4f" />
 
 ## Introduction  
 **Hassalah** is a mobile fintech application designed to enhance financial literacy and responsibility among Saudi families.  
