@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:my_app/utils/check_auth.dart'; // ✅ ADD THIS
+import 'package:my_app/utils/check_auth.dart';
 
 import 'parent_select_child_screen.dart';
 import 'parent_add_money_screen.dart';
@@ -26,12 +25,20 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   static const String baseUrl = "https://2025gp24-production.up.railway.app";
 
   String firstname = '';
-  String walletBalance = '0.0';
+  String walletBalance = '0.00';
   bool _isLoading = true;
   bool parentHasCard = false;
 
   String get token => widget.token;
   int get parentId => widget.parentId;
+
+  // Unified fintech label style (actions + My Kids)
+  static const TextStyle fintechLabelStyle = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    color: Colors.black87,
+    letterSpacing: 0.2,
+  );
 
   @override
   void initState() {
@@ -41,12 +48,14 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   Future<void> _validateSession() async {
     await checkAuthStatus(context);
-    fetchParentInfo(); // runs only if user is still authenticated
+    if (!mounted) return;
+    await fetchParentInfo();
   }
 
-  // Fetch parent info and wallet balance
+  // Fetch parent info (includes balance) and card status
   Future<void> fetchParentInfo() async {
     if (token.isEmpty) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
       return;
     }
@@ -55,7 +64,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     final cardUrl = Uri.parse("$baseUrl/api/parent/$parentId/card");
 
     try {
-      // Get parent info
+      String newFirstname = firstname;
+      double newBalance = double.tryParse(walletBalance) ?? 0.0;
+      bool newHasCard = parentHasCard;
+
       final parentRes = await http.get(
         parentUrl,
         headers: {
@@ -66,11 +78,15 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
       if (parentRes.statusCode == 200) {
         final data = jsonDecode(parentRes.body);
-        firstname = data['firstname'] ?? data['firstName'] ?? '';
-        walletBalance = data['balance']?.toString() ?? '0.0';
+        newFirstname = data['firstname'] ?? data['firstName'] ?? '';
+
+        final b = data['balance'];
+        if (b != null) {
+          newBalance =
+              (b is num) ? b.toDouble() : double.tryParse(b.toString()) ?? 0.0;
+        }
       }
 
-      // Check card existence
       final cardRes = await http.get(
         cardUrl,
         headers: {
@@ -81,287 +97,330 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
       if (cardRes.statusCode == 200) {
         final cardData = jsonDecode(cardRes.body);
-        parentHasCard = cardData['hasCard'] == true;
+        newHasCard = cardData['hasCard'] == true;
       }
 
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() {
+        firstname = newFirstname;
+        walletBalance = newBalance.toStringAsFixed(2);
+        parentHasCard = newHasCard;
+        _isLoading = false;
+      });
     } catch (_) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
 
-  // Refresh wallet data
-  void _refreshFromDb() {
+  // Refresh wallet after add money
+  Future<void> _refreshFromDb() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    fetchParentInfo();
+    await fetchParentInfo();
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Colors.teal));
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.teal),
+      );
     }
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header icons
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.teal,
-                  child: Icon(Icons.person, color: Colors.white),
-                ),
-                Icon(Icons.notifications_none, size: 28),
-              ],
-            ),
+    final balanceText =
+        double.tryParse(walletBalance)?.toStringAsFixed(2) ?? "0.00";
 
-            const SizedBox(height: 20),
-
-            // Welcome text
-            Text(
-              firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF4F4F4F),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top bar (old parent icon style)
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.teal,
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                  Icon(Icons.notifications_none_rounded, size: 28),
+                ],
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-            // Wallet card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 4),
+              // Welcome
+              Text(
+                firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF3F3F3F),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // Wallet card
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0xFFF0F0F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 14,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      "Parent's Wallet",
+                      style: TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          "assets/icons/Sar.png",
+                          height: 24,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          balanceText,
+                          style: const TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 22),
+
+              // Actions grid
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionCard(
+                      title: "Add Money",
+                      asset: "assets/icons/addMoney.png",
+                      labelStyle: fintechLabelStyle,
+                      onTap: () async {
+                        if (!parentHasCard) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Please add a card first"),
+                            ),
+                          );
+                          return;
+                        }
+
+                        final added = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ParentAddMoneyScreen(
+                              parentId: parentId,
+                              token: token,
+                            ),
+                          ),
+                        );
+
+                        if (added == true) {
+                          await _refreshFromDb();
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionCard(
+                      title: "Transactions",
+                      asset: "assets/icons/transactions.png",
+                      labelStyle: fintechLabelStyle,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text("Transactions page will be added later"),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+
+              const SizedBox(height: 12),
+
+              Row(
                 children: [
-                  const Text(
-                    "Parent's Wallet",
-                    style: TextStyle(
-                      fontSize: 17,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: _ActionCard(
+                      title: parentHasCard ? "My Card" : "Add Card",
+                      asset: "assets/icons/addCard.png",
+                      labelStyle: fintechLabelStyle,
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ParentAddCardScreen(
+                              parentId: parentId,
+                              token: token,
+                            ),
+                          ),
+                        );
+
+                        if (result == true && mounted) {
+                          setState(() => parentHasCard = true);
+                        }
+                      },
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionCard(
+                      title: "Insights",
+                      asset: "assets/icons/insights.png",
+                      labelStyle: fintechLabelStyle,
+                      onTap: () {},
+                    ),
+                  ),
+                ],
+              ),
 
-                  const SizedBox(height: 12),
+              const SizedBox(height: 18),
 
-                  // Balance + SAR icon (aligned perfectly)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // SAR icon on LEFT
-                      Image.asset(
-                        'assets/icons/Sar.png',
-                        height: 26,
-                        fit: BoxFit.contain,
+              // My Kids (white fintech style, no icon circle)
+              InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ParentSelectChildScreen(
+                        parentId: parentId,
+                        token: token,
                       ),
-
-                      const SizedBox(width: 6),
-
-                      // Balance text
-                      Text(
-                        double.tryParse(walletBalance)?.toStringAsFixed(2) ??
-                            "0.00",
-                        style: const TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE6E6E6)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Action buttons
-            Column(
-              children: [
-                Row(
-                  children: [
-                    // Add money
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          if (!parentHasCard) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Please add a card first"),
-                              ),
-                            );
-                            return;
-                          }
-
-                          final added = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ParentAddMoneyScreen(
-                                parentId: parentId,
-                                token: token,
-                              ),
-                            ),
-                          );
-
-                          if (added == true) {
-                            _refreshFromDb();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text("Add Money"),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "assets/icons/myKids.png",
+                        height: 28,
+                        fit: BoxFit.contain,
                       ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Transactions
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Transactions page will be added later",
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.history),
-                        label: const Text("Transactions"),
+                      const SizedBox(width: 10),
+                      const Text(
+                        "My Kids",
+                        style: fintechLabelStyle,
                       ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    // Add card
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ParentAddCardScreen(
-                                parentId: parentId,
-                                token: token,
-                              ),
-                            ),
-                          );
-
-                          if (result == true) {
-                            setState(() => parentHasCard = true);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.credit_card),
-                        label: Text(parentHasCard ? "My Card" : "Add Card"),
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Insights
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          elevation: 2,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.insights),
-                        label: const Text("Insights"),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 30),
-
-            // My Kids button
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ParentSelectChildScreen(
-                      parentId: parentId,
-                      token: token,
-                    ),
+                    ],
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              icon: const Icon(Icons.group),
-              label: const Text("My Kids"),
-            ),
 
-            const SizedBox(height: 30),
-          ],
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  final String title;
+  final String asset;
+  final VoidCallback onTap;
+  final TextStyle labelStyle;
+
+  const _ActionCard({
+    required this.title,
+    required this.asset,
+    required this.onTap,
+    required this.labelStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          // Big card is pure white + subtle border/shadow
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFEDEDED), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon without circle
+              Image.asset(
+                asset,
+                height: 28,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 10),
+              Text(title, style: labelStyle),
+            ],
+          ),
         ),
       ),
     );
