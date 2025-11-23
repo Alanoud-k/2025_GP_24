@@ -33,14 +33,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logger
+// Simple request logger
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
 
 /* -----------------------------------------
-   NORMAL API ROUTES
+   API ROUTES
 ------------------------------------------ */
 
 app.use("/api/auth", authRoutes);
@@ -48,11 +48,11 @@ app.use("/api", parentRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
 
-// ⭐ MAIN ROUTE Flutter calls → CREATE PAYMENT
+// Payment creation endpoint used by Flutter
 app.post("/api/create-payment/:parentId", createPayment);
 
 /* -----------------------------------------
-   MOYASAR WEBHOOK (must be LAST)
+   MOYASAR WEBHOOK HANDLER
 ------------------------------------------ */
 
 app.post(
@@ -68,6 +68,20 @@ app.post(
 );
 
 /* -----------------------------------------
+   PAYMENT REDIRECT ROUTES (for browser)
+------------------------------------------ */
+
+// Shown when Moyasar redirects after success
+app.get("/payment-success", (_req, res) => {
+  res.send("Payment completed successfully.");
+});
+
+// Shown when Moyasar redirects after failure
+app.get("/payment-failed", (_req, res) => {
+  res.send("Payment failed.");
+});
+
+/* -----------------------------------------
    HEALTH CHECK
 ------------------------------------------ */
 
@@ -77,5 +91,5 @@ app.get("/", (_req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+  console.log(`Server running on http://localhost:${PORT}`)
 );

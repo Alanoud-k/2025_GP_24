@@ -35,13 +35,38 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
   }
 
   Future<void> _initialize() async {
-    await checkAuthStatus(context); // <--- NEW
+    await checkAuthStatus(context);
     await _loadToken();
   }
 
   Future<void> _loadToken() async {
     final prefs = await SharedPreferences.getInstance();
-    token = prefs.getString("token");
+    token = prefs.getString("token") ?? widget.token; // fallback من الwidget
+  }
+
+  // ✅ فتح صفحة الدفع بدون canLaunchUrl + fallback
+  Future<void> _openPaymentPage(String redirectUrl) async {
+    final uri = Uri.parse(redirectUrl);
+
+    // 1) افتحيه بمتصفح خارجي
+    final ok = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    // 2) لو ما فتح، افتحيه داخل التطبيق
+    if (!ok) {
+      final ok2 = await launchUrl(
+        uri,
+        mode: LaunchMode.inAppWebView,
+      );
+
+      if (!ok2 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Unable to open payment page")),
+        );
+      }
+    }
   }
 
   Future<void> _addMoney() async {
@@ -49,23 +74,22 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     final amount = double.tryParse(amountText);
 
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Enter a valid amount")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter a valid amount")),
+      );
       return;
     }
 
     if (token == null || token!.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Authentication error")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Authentication error")),
+      );
       return;
     }
 
     setState(() => _loading = true);
 
     try {
-      // Correct endpoint for your server mounting
       final res = await http.post(
         Uri.parse("$backendUrl/api/create-payment/${widget.parentId}"),
         headers: {
@@ -78,34 +102,17 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
       print("Add money status: ${res.statusCode}");
       print("Add money body: ${res.body}");
 
-      final contentType = res.headers["content-type"] ?? "";
-
-      if (contentType.contains("application/json")) {
-        final data = jsonDecode(res.body);
-
-        if (res.statusCode == 200 && data["success"] == true) {
-          final redirectUrl = data["redirectUrl"];
-
-          if (redirectUrl != null) {
-            final url = Uri.parse(redirectUrl);
-
-            if (await canLaunchUrl(url)) {
-              await launchUrl(
-                url,
-                mode: LaunchMode.externalApplication, // Opens Moyasar page
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Unable to open payment page")),
-              );
-            }
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data["message"] ?? "Add money failed")),
-          );
+      if (res.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
         }
-      } else {
+        return;
+      }
+
+      final contentType = res.headers["content-type"] ?? "";
+      if (!contentType.contains("application/json")) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -113,21 +120,31 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
             ),
           ),
         );
-      }
-      if (res.statusCode == 401) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear(); // clear token, ids, role
-        if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
-        }
         return;
       }
+
+      final data = jsonDecode(res.body);
+
+      if (res.statusCode == 200 && data["success"] == true) {
+        final redirectUrl = data["redirectUrl"];
+        if (redirectUrl != null && redirectUrl.toString().isNotEmpty) {
+          await _openPaymentPage(redirectUrl);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Redirect URL missing")),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data["message"] ?? "Add money failed")),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

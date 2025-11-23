@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:my_app/utils/check_auth.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,12 +18,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final password = TextEditingController();
   final securityAnswer = TextEditingController();
 
-  late String phoneNo;
+  // ✅ بدل late عشان ما يصير crash لو ما وصل args
+  String phoneNo = '';
 
   @override
   void initState() {
     super.initState();
-    checkAuthStatus(context); // 🔥 auto-redirect if token expired
+    // ❌ لا تفحصين auth هنا لأن المستخدم جديد وما عنده token
   }
 
   @override
@@ -99,6 +99,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -107,7 +109,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
 
-        Navigator.pushReplacementNamed(context, '/parentLogin');
+        Navigator.pushReplacementNamed(
+          context,
+          '/parentLogin',
+          arguments: {'phoneNo': phoneNo},
+        );
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,6 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -172,49 +179,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         const SizedBox(height: 30),
+
                         _buildTextField(
                           controller: firstName,
                           label: 'First name',
                           validator: (v) {
-                            if (v == null || v.isEmpty)
+                            if (v == null || v.isEmpty) {
                               return 'Enter first name';
+                            }
                             if (!RegExp(r'^[A-Za-z]+$').hasMatch(v.trim())) {
                               return 'First name must contain only letters';
                             }
                             return null;
                           },
                         ),
+
                         const SizedBox(height: 20),
+
                         _buildTextField(
                           controller: lastName,
                           label: 'Last name',
                           validator: (v) {
-                            if (v == null || v.isEmpty)
+                            if (v == null || v.isEmpty) {
                               return 'Enter last name';
+                            }
                             if (!RegExp(r'^[A-Za-z]+$').hasMatch(v.trim())) {
                               return 'Last name must contain only letters';
                             }
                             return null;
                           },
                         ),
+
                         const SizedBox(height: 20),
+
                         _buildTextField(
                           controller: nationalId,
                           label: 'National ID / Iqama',
                           keyboardType: TextInputType.number,
                           validator: (v) {
-                            if (v == null || v.isEmpty)
+                            if (v == null || v.isEmpty) {
                               return 'Enter a National ID';
-                            if (v.length != 10)
+                            }
+                            if (v.length != 10) {
                               return 'National ID must be 10 digits';
-                            if (int.tryParse(v) == null)
+                            }
+                            if (int.tryParse(v) == null) {
                               return 'Must be numeric';
+                            }
                             return null;
                           },
                         ),
+
                         const SizedBox(height: 20),
                         _buildDateField(),
                         const SizedBox(height: 20),
+
                         _buildTextField(
                           controller: password,
                           label: 'Password',
@@ -230,8 +249,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Enter password';
-                            if (v.length < 8)
+                            if (v.length < 8) {
                               return 'Password must be at least 8 characters';
+                            }
                             if (!RegExp(
                               r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$%^&*])',
                             ).hasMatch(v)) {
@@ -240,13 +260,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             return null;
                           },
                         ),
+
                         const SizedBox(height: 20),
+
                         _buildTextField(
                           controller: securityAnswer,
                           label: "Security Question Answer",
                           validator: (v) {
-                            if (v == null || v.isEmpty)
+                            if (v == null || v.isEmpty) {
                               return 'Please answer the security question';
+                            }
                             return null;
                           },
                           suffixIcon: const Icon(
@@ -255,6 +278,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             color: Colors.grey,
                           ),
                         ),
+
                         const Padding(
                           padding: EdgeInsets.only(top: 8.0),
                           child: Text(
@@ -267,17 +291,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
 
                         const SizedBox(height: 40),
+
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: _registerParent,
                             style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                primary,
-                              ),
-                              foregroundColor: MaterialStateProperty.all<Color>(
-                                Colors.white,
-                              ),
+                              backgroundColor:
+                                  MaterialStateProperty.all<Color>(primary),
+                              foregroundColor:
+                                  MaterialStateProperty.all<Color>(Colors.white),
                               elevation: MaterialStateProperty.all<double>(6),
                               shadowColor: MaterialStateProperty.all<Color>(
                                 primary.withOpacity(0.35),
@@ -285,15 +308,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               padding: MaterialStateProperty.all<EdgeInsets>(
                                 const EdgeInsets.symmetric(vertical: 16),
                               ),
-                              shape:
-                                  MaterialStateProperty.all<
-                                    RoundedRectangleBorder
-                                  >(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(22),
-                                    ),
-                                  ),
-                              textStyle: MaterialStateProperty.all<TextStyle>(
+                              shape: MaterialStateProperty.all<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
+                                ),
+                              ),
+                              textStyle:
+                                  MaterialStateProperty.all<TextStyle>(
                                 const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
@@ -303,6 +325,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: const Text("Continue"),
                           ),
                         ),
+
                         const SizedBox(height: 24),
                       ],
                     ),
