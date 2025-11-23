@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
-class ParentGiftsScreen extends StatelessWidget {
+class ParentGiftsScreen extends StatefulWidget {
   final int parentId;
   final String token;
 
@@ -9,6 +11,49 @@ class ParentGiftsScreen extends StatelessWidget {
     required this.parentId,
     required this.token,
   });
+
+  @override
+  State<ParentGiftsScreen> createState() => _ParentGiftsScreenState();
+}
+
+class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
+  String? token;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadToken();
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
+  }
+
+  Future<bool> _checkExpired(http.Response res) async {
+    if (res.statusCode == 401) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _fetchGifts() async {
+    if (token == null) return;
+
+    final res = await http.get(
+      Uri.parse("http://10.0.2.2:3000/api/gifts/${widget.parentId}"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (await _checkExpired(res)) return;
+
+    // When you implement gifts, handle response here
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart'; // <-- Add this
 
 class ParentTransferScreen extends StatefulWidget {
   final int parentId;
@@ -25,6 +27,12 @@ class ParentTransferScreen extends StatefulWidget {
 class _ParentTransferScreenState extends State<ParentTransferScreen> {
   final TextEditingController _amount = TextEditingController();
   double savingPercentage = 50; // default 50/50 split
+
+  @override
+  void initState() {
+    super.initState();
+    checkAuthStatus(context);
+  }
 
   Future<void> _transfer() async {
     if (_amount.text.trim().isEmpty || double.tryParse(_amount.text) == null) {
@@ -70,6 +78,14 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error['error'] ?? 'Transfer failed')),
         );
+      }
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       print("Transfer error: $e");

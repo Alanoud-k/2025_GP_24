@@ -2,6 +2,7 @@
 import express from "express";
 import { sql } from "../config/db.js";
 import { getParentCard, saveParentCard } from "../controllers/parentCardController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -40,8 +41,8 @@ router.get("/parent/:parentId", async (req, res) => {
   }
 });
 
-// Parent card routes (unchanged)
-router.get("/parent/:parentId/card", getParentCard);
-router.post("/parent/:parentId/card", saveParentCard);
+// Parent card routes
+router.get("/parent/:parentId/card", protect, getParentCard);
+router.post("/parent/:parentId/card", protect, saveParentCard);
 
 export default router;

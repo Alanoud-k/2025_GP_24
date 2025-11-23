@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:my_app/core/api_config.dart';
 import 'child_goals_screen.dart';
 import 'child_request_money_screen.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ChildHomePageScreen extends StatefulWidget {
   final int childId;
@@ -36,6 +37,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   void initState() {
     super.initState();
     _fetchChildInfo();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context);
+    });
   }
 
   Future<void> _fetchChildInfo() async {

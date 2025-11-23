@@ -218,11 +218,8 @@ export const loginParent = async (req, res) => {
     }
 
     // CORRECT TOKEN
-    const token = jwt.sign(
-      { id: parent.parentid, role: "Parent" },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = generateToken({ id: parent.parentid, role: "Parent" });
+
 
     return res.json({
       message: "Parent login successful",
@@ -272,11 +269,8 @@ export const loginChild = async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
-    const token = jwt.sign(
-      { id: child.childid, role: "Child" },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+ const token = generateToken({ id: child.childid, role: "Child" });
+
 
     res.json({
       message: "Child login successful",

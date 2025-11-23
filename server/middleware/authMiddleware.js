@@ -1,10 +1,13 @@
+// server/middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 
 export function protect(req, res, next) {
   let token;
 
-  // Expect: Authorization: Bearer xxxxx
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
     token = req.headers.authorization.split(" ")[1];
   }
 
@@ -17,11 +20,7 @@ export function protect(req, res, next) {
     req.user = decoded; // { id, role, iat, exp }
     next();
   } catch (err) {
+    console.error("❌ JWT verify error:", err.message);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 }
-
-app.use((req, res, next) => {
-  console.log("🛰 Incoming Authorization:", req.headers.authorization);
-  next();
-});

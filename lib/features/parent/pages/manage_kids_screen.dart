@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ManageKidsScreen extends StatefulWidget {
   const ManageKidsScreen({super.key});
@@ -23,6 +24,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    checkAuthStatus(context);
+
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     parentId = args?['parentId'] ?? 0;
 
@@ -65,6 +68,14 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         throw Exception(
           "Failed to load children (code ${response.statusCode})",
         );
+      }
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear(); // clear token, ids, role
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       setState(() => _loading = false);

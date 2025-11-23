@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 // Top-level enums & constants
 
@@ -45,10 +46,15 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
 
   String? token;
 
+  Future<void> _init() async {
+    await checkAuthStatus(context);
+    await _loadToken();
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadToken();
+    _init(); // no await here
   }
 
   Future<void> _loadToken() async {
@@ -206,6 +212,14 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Failed to save card')));
+      }
+      if (res.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear(); // clear token, ids, role
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       ScaffoldMessenger.of(

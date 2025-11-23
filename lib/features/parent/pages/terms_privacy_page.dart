@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class TermsPrivacyPage extends StatelessWidget {
   const TermsPrivacyPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    checkAuthStatus(context);
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(

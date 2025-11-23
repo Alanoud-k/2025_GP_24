@@ -1,7 +1,10 @@
 // lib/features/parent/pages/parent_chores_screen.dart
-import 'package:flutter/material.dart';
 
-class ParentChoresScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart'; // ✅ ADD THIS
+
+class ParentChoresScreen extends StatefulWidget {
   final int parentId;
   final String token;
 
@@ -10,6 +13,21 @@ class ParentChoresScreen extends StatelessWidget {
     required this.parentId,
     required this.token,
   });
+
+  @override
+  State<ParentChoresScreen> createState() => _ParentChoresScreenState();
+}
+
+class _ParentChoresScreenState extends State<ParentChoresScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initAuthCheck();
+  }
+
+  Future<void> _initAuthCheck() async {
+    await checkAuthStatus(context); // ✅ same logic as other screens
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ParentMoneyRequestsScreen extends StatefulWidget {
   final int parentId;
   final int childId;
-  final String? token; // <-- ADD IT HERE (nullable if optional)
+  final String? token;
 
   const ParentMoneyRequestsScreen({
     super.key,
@@ -26,7 +28,12 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchRequests();
+
+    // 🔐 AUTH CHECK FIRST
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await checkAuthStatus(context);
+      _fetchRequests();
+    });
   }
 
   Future<void> _fetchRequests() async {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ParentSecuritySettingsPage extends StatefulWidget {
   final int parentId;
@@ -25,6 +27,7 @@ class _ParentSecuritySettingsPageState
   @override
   void initState() {
     super.initState();
+    checkAuthStatus(context);
     fetchChildren();
   }
 
@@ -181,6 +184,14 @@ class _ParentSecuritySettingsPageState
         _showErrorSnackbar('Current password is incorrect');
       } else {
         _showErrorSnackbar('Failed to change password');
+      }
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       _showErrorSnackbar('Error: $e');

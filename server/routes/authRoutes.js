@@ -24,6 +24,9 @@ import {
 
 import { transferMoney } from "../controllers/transferController.js";
 
+import { protect } from "../middleware/authMiddleware.js";
+
+
 const router = express.Router();
 
 // ---------- Auth & user ----------
@@ -39,10 +42,11 @@ router.post("/reset-password", resetPassword);
 router.post("/logout", logout);
 
 // ---------- Parent / Child info ----------
-router.get("/parent/:parentId", getParentInfo);
-router.get("/parent-basic/:parentId", getParentById);
-router.get("/child/info/:childId", getChildInfo);
-router.get("/parent/:parentId/children", getChildrenByParent);
+router.get("/parent/:parentId", protect, getParentInfo);
+router.get("/parent-basic/:parentId", protect, getParentById);
+router.get("/child/info/:childId", protect, getChildInfo);
+router.get("/parent/:parentId/children", protect, getChildrenByParent);
+
 
 router.post("/child/register", registerChild);
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart'; // ✅ ADD THIS
 
 import 'parent_select_child_screen.dart';
 import 'parent_add_money_screen.dart';
@@ -21,8 +23,7 @@ class ParentHomeScreen extends StatefulWidget {
 }
 
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
-  static const String baseUrl =
-      "https://2025gp24-production.up.railway.app";
+  static const String baseUrl = "https://2025gp24-production.up.railway.app";
 
   String firstname = '';
   String walletBalance = '0.0';
@@ -35,7 +36,12 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   @override
   void initState() {
     super.initState();
-    fetchParentInfo();
+    _validateSession();
+  }
+
+  Future<void> _validateSession() async {
+    await checkAuthStatus(context);
+    fetchParentInfo(); // runs only if user is still authenticated
   }
 
   // Fetch parent info and wallet balance
@@ -93,9 +99,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.teal),
-      );
+      return const Center(child: CircularProgressIndicator(color: Colors.teal));
     }
 
     return SafeArea(
@@ -247,8 +251,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content:
-                                  Text("Transactions page will be added later"),
+                              content: Text(
+                                "Transactions page will be added later",
+                              ),
                             ),
                           );
                         },

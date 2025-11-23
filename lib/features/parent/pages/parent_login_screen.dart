@@ -22,6 +22,11 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
   late String phoneNo;
 
   @override
+  void initState() {
+    super.initState(); // 🔥 Auto-redirect if token expired
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Get phone number from previous screen
@@ -103,6 +108,14 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       setState(() => _isLoading = false);

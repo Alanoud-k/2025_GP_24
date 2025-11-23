@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class MorePage extends StatefulWidget {
   final int parentId;
@@ -21,6 +23,11 @@ class _MorePageState extends State<MorePage> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context);
+    });
+
     fetchParentInfo();
   }
 
@@ -52,6 +59,14 @@ class _MorePageState extends State<MorePage> {
           hasError = true;
           isLoading = false;
         });
+      }
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear(); // clear token, ids, role
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       print("Error fetching parent info: $e");
@@ -119,7 +134,10 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  void _performLogout(BuildContext context) {
+  void _performLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // clear token, role, ids
+
     Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'parent_child_overview_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ParentSelectChildScreen extends StatefulWidget {
   final int parentId;
@@ -28,6 +29,7 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
   @override
   void initState() {
     super.initState();
+    checkAuthStatus(context); // ✅ NEW
     _loadToken().then((_) => _fetchChildren());
   }
 
@@ -37,6 +39,7 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
   }
 
   Future<void> _fetchChildren() async {
+    await checkAuthStatus(context);
     if (token == null) {
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,6 +84,14 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
             ),
           ),
         );
+      }
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       if (!mounted) return;

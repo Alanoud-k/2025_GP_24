@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ChildMoreScreen extends StatefulWidget {
   final int childId;
@@ -28,6 +29,9 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   void initState() {
     super.initState();
 
+    // 🔐 Check token immediately
+    checkAuthStatus(context);
+
     // Simulate loading (UI effect)
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) setState(() => isLoading = false);
@@ -37,11 +41,11 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   // -----------------------------
   // LOGOUT FUNCTION
   // -----------------------------
-  Future<void> _performLogout(BuildContext context) async {
+  void _performLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Removes token, ids, role
+    await prefs.clear(); // clear token, role, ids
 
-    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
   }
 
   // -----------------------------

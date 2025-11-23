@@ -7,6 +7,7 @@ import '../models/goal_model.dart';
 import '../widgets/child_bottom_nav_bar.dart';
 import 'child_add_goal_screen.dart';
 import 'child_goal_details_screen.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 const kBg = Color(0xFFF7F8FA);
 const kMint = Color(0xFF9FE5E2);
@@ -38,9 +39,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
   double _savingBalance = 0.0;
 
   Map<String, String> get _headers => {
-        "Authorization": "Bearer ${widget.token}",
-        "Content-Type": "application/json",
-      };
+    "Authorization": "Bearer ${widget.token}",
+    "Content-Type": "application/json",
+  };
 
   @override
   void initState() {
@@ -63,17 +64,16 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load goals: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load goals: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<double> _fetchSavingBalance() async {
-    final url =
-        Uri.parse("${widget.baseUrl}/saving/balance/${widget.childId}");
+    final url = Uri.parse("${widget.baseUrl}/saving/balance/${widget.childId}");
     final res = await http.get(url, headers: _headers);
     if (res.statusCode != 200) return 0.0;
 
@@ -104,14 +104,14 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
           children: [
             Text(
               type == "move-in" ? "Move In" : "Move Out",
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: InputDecoration(
                 hintText: "Amount",
                 filled: true,
@@ -154,10 +154,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       final res = await http.post(
         url,
         headers: _headers,
-        body: jsonEncode({
-          "childId": widget.childId,
-          "amount": amount,
-        }),
+        body: jsonEncode({"childId": widget.childId, "amount": amount}),
       );
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -206,109 +203,121 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBg,
+    return FutureBuilder(
+      future: checkAuthStatus(context),
+      builder: (context, snapshot) {
+        // While checking token → show lightweight loader
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-      // Top bar with line
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: Colors.black87,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "My Goals",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-          ),
-        ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED)),
-        ),
-      ),
+        // After auth check → return actual screen
+        return Scaffold(
+          backgroundColor: kBg,
 
-      body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _bootstrap,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 18),
-
-                      // Saving section
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _SavingSection(
-                          savingBalance: _savingBalance,
-                          onMoveIn: () => _moveInOrOut("move-in"),
-                          onMoveOut: () => _moveInOrOut("move-out"),
-                        ),
-                      ),
-
-                      const SizedBox(height: 18),
-
-                      // Add goal old style
-                      InkWell(
-                        onTap: _openAddGoal,
-                        borderRadius: BorderRadius.circular(40),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            CircleAvatar(
-                              radius: 27,
-                              backgroundColor: kMint,
-                              child:
-                                  Icon(Icons.add, color: Colors.white, size: 30),
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              'Add new goal',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 18),
-
-                      // Goals list card
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _MainGoalsCard(
-                          goals: _goals,
-                          onTapGoal: _openGoalDetails,
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-                    ],
-                  ),
-                ),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                size: 20,
+                color: Colors.black87,
               ),
-      ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              "My Goals",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            bottom: const PreferredSize(
+              preferredSize: Size.fromHeight(1),
+              child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED)),
+            ),
+          ),
 
-      bottomNavigationBar: ChildBottomNavBar(
-        currentIndex: 2,
-        onTap: (i) {
-          if (i == 2) Navigator.of(context).pop(true);
-        },
-      ),
+          body: SafeArea(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _bootstrap,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 18),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _SavingSection(
+                              savingBalance: _savingBalance,
+                              onMoveIn: () => _moveInOrOut("move-in"),
+                              onMoveOut: () => _moveInOrOut("move-out"),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          InkWell(
+                            onTap: _openAddGoal,
+                            borderRadius: BorderRadius.circular(40),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                CircleAvatar(
+                                  radius: 27,
+                                  backgroundColor: kMint,
+                                  child: Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Add new goal',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _MainGoalsCard(
+                              goals: _goals,
+                              onTapGoal: _openGoalDetails,
+                            ),
+                          ),
+
+                          const SizedBox(height: 30),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+
+          bottomNavigationBar: ChildBottomNavBar(
+            currentIndex: 2,
+            onTap: (i) {
+              if (i == 2) Navigator.of(context).pop(true);
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -338,7 +347,7 @@ class _SavingSection extends StatelessWidget {
             color: Colors.black12,
             blurRadius: 10,
             offset: Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -427,10 +436,7 @@ class _MainGoalsCard extends StatelessWidget {
   final List<Goal> goals;
   final void Function(Goal) onTapGoal;
 
-  const _MainGoalsCard({
-    required this.goals,
-    required this.onTapGoal,
-  });
+  const _MainGoalsCard({required this.goals, required this.onTapGoal});
 
   @override
   Widget build(BuildContext context) {
@@ -463,16 +469,13 @@ class _MainGoalsCard extends StatelessWidget {
                 SizedBox(height: 20),
               ]
             : goals
-                .map(
-                  (g) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _GoalTile(
-                      goal: g,
-                      onTap: () => onTapGoal(g),
+                  .map(
+                    (g) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _GoalTile(goal: g, onTap: () => onTapGoal(g)),
                     ),
-                  ),
-                )
-                .toList(),
+                  )
+                  .toList(),
       ),
     );
   }
@@ -545,7 +548,10 @@ class _GoalTile extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: Text(
                 '$pct%',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ParentAddMoneyScreen extends StatefulWidget {
   final int parentId;
@@ -23,14 +24,18 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
   String? token;
 
   // Switch between local and railway when needed
-  static const String backendUrl =
-      "https://2025gp24-production.up.railway.app";
+  static const String backendUrl = "https://2025gp24-production.up.railway.app";
   // static const String backendUrl = "http://10.0.2.2:3000";
 
   @override
   void initState() {
     super.initState();
-    _loadToken();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await checkAuthStatus(context); // <--- NEW
+    await _loadToken();
   }
 
   Future<void> _loadToken() async {
@@ -43,16 +48,16 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     final amount = double.tryParse(amountText);
 
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Enter a valid amount")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Enter a valid amount")));
       return;
     }
 
     if (token == null || token!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Authentication error")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Authentication error")));
       return;
     }
 
@@ -66,10 +71,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({
-          "parentId": widget.parentId,
-          "amount": amount,
-        }),
+        body: jsonEncode({"parentId": widget.parentId, "amount": amount}),
       );
 
       print("Add money status: ${res.statusCode}");
@@ -99,10 +101,18 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
           ),
         );
       }
+      if (res.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear(); // clear token, ids, role
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       setState(() => _loading = false);
     }
@@ -165,10 +175,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text(
-                        "Add Money",
-                        style: TextStyle(fontSize: 16),
-                      ),
+                    : const Text("Add Money", style: TextStyle(fontSize: 16)),
               ),
             ),
           ],

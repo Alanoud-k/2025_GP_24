@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'parent_transfer_screen.dart';
 import 'parent_money_requests_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ParentChildOverviewScreen extends StatefulWidget {
   final int parentId;
@@ -38,7 +39,13 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
   @override
   void initState() {
     super.initState();
-    _loadToken().then((_) => _fetchChildInfo());
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await checkAuthStatus(context);
+    await _loadToken();
+    await _fetchChildInfo();
   }
 
   Future<void> _loadToken() async {
@@ -90,6 +97,14 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
             ),
           ),
         );
+      }
+      if (res.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear(); // clear token, ids, role
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
       }
     } catch (e) {
       if (!mounted) return;

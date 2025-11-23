@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/goals_api.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ChildAddGoalScreen extends StatefulWidget {
   final int childId;
@@ -35,7 +36,12 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   @override
   void initState() {
     super.initState();
+    _checkAuth();
     _api = GoalsApi(widget.baseUrl, widget.token);
+  }
+
+  Future<void> _checkAuth() async {
+    await checkAuthStatus(context);
   }
 
   @override
@@ -81,7 +87,9 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create goal. Please try again.')),
+        const SnackBar(
+          content: Text('Failed to create goal. Please try again.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -145,7 +153,10 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: Card(
@@ -154,7 +165,10 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 36),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 36,
+                        ),
                         decoration: BoxDecoration(
                           color: kCard,
                           borderRadius: BorderRadius.circular(18),
@@ -191,10 +205,13 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                               _field(
                                 controller: _nameCtrl,
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                                  FilteringTextInputFormatter.deny(
+                                    RegExp(r'[0-9]'),
+                                  ),
                                 ],
                                 validator: (v) {
-                                  if (v == null || v.trim().isEmpty) return 'Enter goal name';
+                                  if (v == null || v.trim().isEmpty)
+                                    return 'Enter goal name';
                                   if (!_lettersOnly(v)) return 'Letters only';
                                   return null;
                                 },
@@ -215,12 +232,16 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                                 controller: _descCtrl,
                                 maxLines: 3,
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                                  FilteringTextInputFormatter.deny(
+                                    RegExp(r'[0-9]'),
+                                  ),
                                 ],
                                 validator: (v) {
-                                  if (v == null || v.trim().isEmpty) return null;
+                                  if (v == null || v.trim().isEmpty)
+                                    return null;
                                   if (!_lettersOnly(v)) return 'Letters only';
-                                  if (v.trim().length > 200) return 'Max 200 characters';
+                                  if (v.trim().length > 200)
+                                    return 'Max 200 characters';
                                   return null;
                                 },
                               ),
@@ -238,15 +259,22 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                               const SizedBox(height: 8),
                               _field(
                                 controller: _amountCtrl,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'[0-9.]'),
+                                  ),
                                 ],
                                 validator: (v) {
-                                  if (v == null || v.trim().isEmpty) return 'Enter amount';
+                                  if (v == null || v.trim().isEmpty)
+                                    return 'Enter amount';
                                   if (!_amountOnly(v)) return 'Numbers only';
                                   final d = double.tryParse(v.trim());
-                                  if (d == null || d <= 0) return 'Invalid amount';
+                                  if (d == null || d <= 0)
+                                    return 'Invalid amount';
                                   return null;
                                 },
                               ),
@@ -303,7 +331,10 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
