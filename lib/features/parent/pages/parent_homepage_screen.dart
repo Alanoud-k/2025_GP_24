@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -22,10 +21,8 @@ class ParentHomeScreen extends StatefulWidget {
 }
 
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
-  // Switch baseUrl when needed
   static const String baseUrl =
       "https://2025gp24-production.up.railway.app";
-  // static const String baseUrl = "http://10.0.2.2:3000";
 
   String firstname = '';
   String walletBalance = '0.0';
@@ -41,6 +38,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     fetchParentInfo();
   }
 
+  // Fetch parent info and wallet balance
   Future<void> fetchParentInfo() async {
     if (token.isEmpty) {
       setState(() => _isLoading = false);
@@ -51,7 +49,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     final cardUrl = Uri.parse("$baseUrl/api/parent/$parentId/card");
 
     try {
-      // Parent info
+      // Get parent info
       final parentRes = await http.get(
         parentUrl,
         headers: {
@@ -66,7 +64,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         walletBalance = data['balance']?.toString() ?? '0.0';
       }
 
-      // Card info
+      // Check card existence
       final cardRes = await http.get(
         cardUrl,
         headers: {
@@ -86,6 +84,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     }
   }
 
+  // Refresh wallet data
   void _refreshFromDb() {
     setState(() => _isLoading = true);
     fetchParentInfo();
@@ -105,6 +104,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header icons
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -116,6 +116,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                 Icon(Icons.notifications_none, size: 28),
               ],
             ),
+
             const SizedBox(height: 20),
 
             // Welcome text
@@ -157,13 +158,24 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+
                   const SizedBox(height: 12),
 
-                  // Balance + SAR SVG
+                  // Balance + SAR icon (aligned perfectly)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      // SAR icon on LEFT
+                      Image.asset(
+                        'assets/icons/Sar.png',
+                        height: 26,
+                        fit: BoxFit.contain,
+                      ),
+
+                      const SizedBox(width: 6),
+
+                      // Balance text
                       Text(
                         double.tryParse(walletBalance)?.toStringAsFixed(2) ??
                             "0.00",
@@ -171,18 +183,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           fontSize: 34,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: SvgPicture.asset(
-                            'assets/icons/Sar.svg',
-                            color: Colors.black87,
-                          ),
                         ),
                       ),
                     ],
@@ -193,11 +193,12 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
             const SizedBox(height: 30),
 
+            // Action buttons
             Column(
               children: [
                 Row(
                   children: [
-                    // Add Money
+                    // Add money
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
@@ -237,9 +238,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                         label: const Text("Add Money"),
                       ),
                     ),
+
                     const SizedBox(width: 12),
 
-                    // Transactions placeholder
+                    // Transactions
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
@@ -270,7 +272,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
                 Row(
                   children: [
-                    // Add Card / My Card
+                    // Add card
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
@@ -301,9 +303,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                         label: Text(parentHasCard ? "My Card" : "Add Card"),
                       ),
                     ),
+
                     const SizedBox(width: 12),
 
-                    // Insights placeholder
+                    // Insights
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {},
@@ -327,6 +330,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
             const SizedBox(height: 30),
 
+            // My Kids button
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
