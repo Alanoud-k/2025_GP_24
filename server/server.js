@@ -6,18 +6,20 @@ import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 
+// ROUTES
 import authRoutes from "./routes/authRoutes.js";
 import parentRoutes from "./routes/parentRoutes.js";
-import paymentRoutes from "./routes/paymentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 
+// PAYMENT CONTROLLERS
+import { createPayment } from "./controllers/createPaymentController.js";
+import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 
-// Resolve __dirname in ESM
+// ENV + SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
 dotenv.config({ path: path.join(__dirname, ".env") });
 
 if (!process.env.DATABASE_URL) {
@@ -27,40 +29,53 @@ if (!process.env.DATABASE_URL) {
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/moyasar-webhook", express.urlencoded({ extended: true }));
-app.use("/api/moyasar-webhook", express.json());
-
-
-// Enable CORS
-app.use(cors());
-
-// Parse JSON bodies
-app.use(express.json());
-
-// Log incoming requests
+// Request logger
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
 
-// API routes
+/* -----------------------------------------
+   NORMAL API ROUTES
+------------------------------------------ */
+
 app.use("/api/auth", authRoutes);
 app.use("/api", parentRoutes);
-app.use("/api", paymentRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
 
+// ⭐ MAIN ROUTE Flutter calls → CREATE PAYMENT
+app.post("/api/create-payment/:parentId", createPayment);
 
-// Test route
+/* -----------------------------------------
+   MOYASAR WEBHOOK (must be LAST)
+------------------------------------------ */
+
+app.post(
+  "/api/moyasar-webhook",
+  express.raw({ type: "*/*" }),
+  (req, res, next) => {
+    try {
+      req.body = JSON.parse(req.body.toString("utf8"));
+    } catch (e) {}
+    next();
+  },
+  handleMoyasarWebhook
+);
+
+/* -----------------------------------------
+   HEALTH CHECK
+------------------------------------------ */
+
 app.get("/", (_req, res) => {
-  res.send("API is running.");
+  res.send("Hassalah API is running.");
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
+);

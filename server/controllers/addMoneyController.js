@@ -1,4 +1,4 @@
-import axios from "axios";
+/*import axios from "axios";
 import { sql } from "../config/db.js";
 
 // Add money to parent wallet using Moyasar test card
@@ -96,3 +96,4 @@ export const addMoney = async (req, res) => {
     });
   }
 };
+*/

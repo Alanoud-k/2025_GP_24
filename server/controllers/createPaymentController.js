@@ -18,7 +18,7 @@ export async function createPayment(req, res) {
       amount: Math.round(amount * 100),
       currency: "SAR",
       description: "Wallet Top-Up",
-      callback_url: "https://2025gp24-production.up.railway.app/api/moyasar-webhook",
+      callback_url: "https://2025gp24-production.up.railway.app/payment-success",/////////////////
       metadata: { parentId },
 
       source: {
@@ -49,7 +49,11 @@ export async function createPayment(req, res) {
     });
 
   } catch (err) {
-    console.error("createPayment error:", err.response?.data || err);
-    return res.status(500).json({ message: "Server error" });
+    console.error("🔥 createPayment error:", err.response?.data || err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create payment",
+      error: err.response?.data || err.message
+    });
   }
 }

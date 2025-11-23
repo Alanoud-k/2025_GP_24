@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ParentAddMoneyScreen extends StatefulWidget {
   final int parentId;
@@ -66,7 +67,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     try {
       // Correct endpoint for your server mounting
       final res = await http.post(
-        Uri.parse("$backendUrl/api/add-money"),
+        Uri.parse("$backendUrl/api/create-payment/${widget.parentId}"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -83,10 +84,22 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
         final data = jsonDecode(res.body);
 
         if (res.statusCode == 200 && data["success"] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Amount added successfully")),
-          );
-          Navigator.pop(context, true);
+          final redirectUrl = data["redirectUrl"];
+
+          if (redirectUrl != null) {
+            final url = Uri.parse(redirectUrl);
+
+            if (await canLaunchUrl(url)) {
+              await launchUrl(
+                url,
+                mode: LaunchMode.externalApplication, // Opens Moyasar page
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Unable to open payment page")),
+              );
+            }
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(data["message"] ?? "Add money failed")),
