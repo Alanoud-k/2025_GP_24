@@ -85,7 +85,12 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                 Navigator.pop(context);
                 _performLogout(context);
               },
-              child: const Text('Log Out'),
+              child: const Text(
+                'Log Out',
+              style: TextStyle(color: Color.fromARGB(255, 255, 254, 254), fontSize: 16),
+              ),
+              
+              
             ),
           ],
         );

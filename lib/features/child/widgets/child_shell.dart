@@ -46,6 +46,10 @@ class _ChildShellState extends State<ChildShell> {
     try {
       final response = await http.get(
         Uri.parse('${widget.baseUrl}/api/auth/child/info/${widget.childId}'),
+        headers: {
+        'Authorization': 'Bearer ${widget.token}', // ر
+        'Content-Type': 'application/json',
+      },
       );
 
       if (response.statusCode == 200) {
