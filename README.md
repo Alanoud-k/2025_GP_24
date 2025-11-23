@@ -1,37 +1,45 @@
-## Hassalah 
-<img width="385" height="112" alt="حصالة" src="https://github.com/user-attachments/assets/15f73520-c975-4293-b7bb-7e6c4f706f4f" />
+## 💰 حصّالة – Smart Family Wallet
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/15f73520-c975-4293-b7bb-7e6c4f706f4f" 
+       alt="حصالة" 
+       width="385" 
+       height="112" />
+</p>
 
-## Introduction  
-**Hassalah** is a mobile fintech application designed to enhance financial literacy and responsibility among Saudi families.  
-It enables **parents** to monitor and manage their children’s spending while allowing **children** to learn saving, budgeting, and responsible spending in a fun, gamified way.  
+📖 Introduction
+حصّالة is a Saudi FinTech mobile app designed to build strong financial habits for children and teens under parental guidance.
+The app provides a safe, fun, and educational environment where families can manage allowances, set goals, and learn budgeting together.
 
-The project aligns with **Saudi Vision 2030** goals of promoting financial inclusion, digital transformation, and building financially responsible future generations.  
+Inspired by the idea of a family piggy bank, حصّالة turns daily money practice into a gamified and meaningful experience.
+Our vision aligns with Saudi Vision 2030 by promoting financial literacy, responsible spending, and digital transformation in the next generation.
+
+🚀 Features
+✨ Parent & Child separate experiences
+✨ Parent wallet top-up and balance management
+✨ Transfer money from Parent → Child wallet
+✨ Smart allowance system
+✨ Chore management (weekly / one-time tasks)
+✨ Child goals: create, edit, delete, and track progress
+✨ Request Money feature with instant parent approval/rejection
+✨ AI-powered spending categorization & insights dashboard
+✨ Transaction history for Parent and Child wallets
+---
+🛠️ Technology Stack
+| Category                   | Tools / Technologies                    |
+| -------------------------- | --------------------------------------- |
+| **Frontend / Mobile**      | Flutter (Dart)                          |
+| **Backend**                | Node.js (Express)                       |
+| **Database**               | PostgreSQL – hosted on **Neon**         |
+| **Payments Integration**   | Moyasar (PSP) – Test/Sandbox Mode       |
+| **AI / Data Analysis**     | Python (ML for spending categorization) |
+| **Open Banking**           | SAMA Open Banking Sandbox APIs          |
+| **Design & Collaboration** | Figma                                   |
+| **Project Management**     | Jira                                    |
+| **Version Control**        | GitHub                                  |
 
 ---
 
-### Key Goals  
-- Empower parents to guide their children’s financial habits.  
-- Help children practice saving and responsible spending through interactive tools.  
-- Support **Saudi Vision 2030** in digital innovation and financial literacy.  
-
----
-
-### Technologies Used  
-
-| Category | Tools / Technologies |
-|-----------|----------------------|
-| **Frontend / Mobile** | Flutter (Dart) |
-| **Backend** | Node.js |
-| **Database** | PostgreSQL (hosted on [Neon]) |
-| **AI / Data Analysis** | Python |
-| **Integration** | Open Banking Sandbox APIs, Payment Service Provider (PSP) APIs |
-| **Design & Collaboration** | Figma |
-| **Project Management** | Jira |
-| **Version Control** | GitHub |
-
----
-
-###  Brief Launch Instructions  
+###  ⚡ Launching Instructions
 
 1. Clone the repository  
 2. Install dependencies
