@@ -64,11 +64,11 @@ export const handleMoyasarWebhook = async (req, res) => {
       return res.sendStatus(400);
     }
 
-    // Only process completed payments
-    if (status !== "paid") {
-      console.log(`Ignoring payment with status: ${status}`);
-      return res.sendStatus(200);
-    }
+if (!["paid", "authorized", "captured"].includes(status)) {
+  console.log(`Ignoring irrelevant status: ${status}`);
+  return res.sendStatus(200);
+}
+
 
     const amountSAR = amountHalala / 100;
 
