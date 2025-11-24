@@ -50,7 +50,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   // ---------------------------------------------------------
   // اختيار صورة من الاستديو
   // ---------------------------------------------------------
-  Future<void> _pickAvatar() async {
+  /*Future<void> _pickAvatar() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
 
@@ -58,12 +58,12 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
 
     File file = File(picked.path);
     await _uploadAvatar(file);
-  }
+  }*/
 
   // ---------------------------------------------------------
   // رفع الصورة للسيرفر
   // ---------------------------------------------------------
-  Future<void> _uploadAvatar(File file) async {
+  /* Future<void> _uploadAvatar(File file) async {
     setState(() => uploading = true);
 
     final url = Uri.parse(
@@ -102,7 +102,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
       setState(() => uploading = false);
       debugPrint("Upload error: $body");
     }
-  }
+  }*/
 
   // ---------------------------------------------------------
   // تسجيل الخروج
@@ -182,7 +182,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            if (!uploading) _pickAvatar();
+                            //if (!uploading) _pickAvatar();
                           },
                           child: Stack(
                             alignment: Alignment.center,
@@ -191,18 +191,16 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                               CircleAvatar(
                                 radius: 35,
                                 backgroundColor: Colors.teal,
-                                backgroundImage: (widget.avatarUrl != null)
-                                    ? NetworkImage(
-                                        "${widget.baseUrl}${widget.avatarUrl}",
-                                      )
-                                    : null,
-                                child: (widget.avatarUrl == null)
-                                    ? const Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                        size: 32,
-                                      )
-                                    : null,
+                                // backgroundImage: (widget.avatarUrl != null)
+                                //? NetworkImage(
+                                // "${widget.baseUrl}${widget.avatarUrl}",
+
+                                //: null,
+                                child: const Icon(
+                                  Icons.person,
+                                  size: 32,
+                                  color: Colors.white,
+                                ),
                               ),
 
                               // لودر عند الرفع

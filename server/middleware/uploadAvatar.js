@@ -39,8 +39,8 @@ const fileFilter = (req, file, cb) => {
 
 
 // ---------------- MULTER INSTANCE ----------------
-export const uploadAvatar = multer({
+/*export const uploadAvatar = multer({
   storage,
   fileFilter,
   limits: { fileSize: 3 * 1024 * 1024 }, // 3 MB
-});
+});*/

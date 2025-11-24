@@ -1,7 +1,7 @@
 // server/routes/authRoutes.js  (ESM)
 
 import express from "express";
-import { uploadAvatar } from "../middleware/uploadAvatar.js";
+//import { uploadAvatar } from "../middleware/uploadAvatar.js";
 
 import {
   checkUser,
@@ -20,7 +20,7 @@ import {
   getChildrenByParent,
   registerChild,
   getChildInfo,
-  updateChildAvatar,   // <-- Only declared ONCE
+  //updateChildAvatar,   // <-- Only declared ONCE
 } from "../controllers/childController.js";
 
 import { transferMoney } from "../controllers/transferController.js";
@@ -50,11 +50,11 @@ router.post("/child/register", registerChild);
 router.post("/transfer", protect, transferMoney);
 
 // ---------- Avatar Upload ----------
-router.post(
-  "/child/upload-avatar/:childId",
-  protect,
-  uploadAvatar.single("avatar"),
-  updateChildAvatar
-);
+//router.post(
+  //"/child/upload-avatar/:childId",
+  //protect,
+  //uploadAvatar.single("avatar"),
+  //updateChildAvatar
+//);
 
 export default router;

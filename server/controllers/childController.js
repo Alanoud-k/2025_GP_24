@@ -144,7 +144,6 @@ export const getChildInfo = async (req, res) => {
         "firstname",
         "phoneno",
         "rewardkeys",
-        "avatarurl"  -- CHANGED: include avatarUrl from DB
       FROM "Child"
       WHERE "childid" = ${childId}
       LIMIT 1
@@ -241,7 +240,7 @@ export const getChildInfo = async (req, res) => {
    Route: POST /api/auth/child/upload-avatar/:childId
    File: avatar (image)
 ===================================================== */
-export const updateChildAvatar = async (req, res) => {
+/*export const updateChildAvatar = async (req, res) => {
   const { childId } = req.params;
 
   try {
@@ -281,4 +280,4 @@ export const updateChildAvatar = async (req, res) => {
     console.error("❌ Cloudinary upload error:", err);
     res.status(500).json({ error: "Failed to upload avatar" });
   }
-};
+};*/

@@ -399,7 +399,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           spendBalance = _toDouble(data['spend']);
           savingBalance = _toDouble(data['saving']);
           currentPoints = (data['points'] ?? 0).toInt();
-          avatarUrl = data['avatarUrl']; // CHANGED: store avatar
+          // avatarUrl = data['avatarUrl']; // CHANGED: store avatar
 
           categoryPercentages = Map<String, double>.from(
             data['categories'] ?? categoryPercentages,
