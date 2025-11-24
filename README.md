@@ -1,14 +1,15 @@
-💰 حصّالة – Smart Family Wallet
-<p align="center"> <img src="https://github.com/user-attachments/assets/e29aa7ee-8350-4fdd-bc60-e377ef82f8ce" alt="Hassalah Screenshot" width="90%" /> </p>
-📖 Introduction
+ <h1 align="center">💰 حصّالة – Smart Family Wallet</h1>
+<p align="center"> <img src="https://github.com/user-attachments/assets/e29aa7ee-8350-4fdd-bc60-e377ef82f8ce" alt="Hassalah Screenshot" width="50%" /> </p>
+<h2>📖 Introduction</h2>
+Our project, حصّالة, is an intelligent FinTech application designed to enhance the financial experience of Saudi families and strengthen financial awareness among children and teenagers.
 
-حصّالة is a Saudi FinTech mobile app designed to build strong financial habits for children and teens under parental guidance.
-The app provides a safe, fun, and educational environment where families can manage allowances, set goals, and learn budgeting together.
+The app provides a secure and user-friendly digital environment that enables parents to manage allowances, monitor spending, organize tasks, and promote responsible financial behavior in an engaging and simple way.
 
-Inspired by the idea of a family piggy bank, حصّالة turns daily money practice into a gamified and meaningful experience.
-Our vision aligns with Saudi Vision 2030 by promoting financial literacy, responsible spending, and digital transformation in the next generation.
+It also empowers children to learn essential financial skills—such as saving, goal-setting, and making thoughtful spending decisions supported by AI-driven analytics that provide accurate insights into their financial habits.
 
-🚀 Features
+Our project aligns with the goals of Saudi Vision 2030 by promoting digital empowerment, improving financial literacy, and fostering a financially responsible new generation from an early age.
+
+<h2>🚀 Features</h2>
 
 ✨ Parent & Child separate experiences
 
@@ -27,8 +28,9 @@ Our vision aligns with Saudi Vision 2030 by promoting financial literacy, respon
 ✨ AI-powered spending categorization & insights dashboard
 
 ✨ Transaction history for Parent and Child wallets
----
-🛠️ Technology Stack
+
+<h2>🛠️ Technology Stack</h2>
+
 | Category                   | Tools / Technologies                    |
 | -------------------------- | --------------------------------------- |
 | **Frontend / Mobile**      | Flutter (Dart)                          |
@@ -41,11 +43,13 @@ Our vision aligns with Saudi Vision 2030 by promoting financial literacy, respon
 | **Project Management**     | Jira                                    |
 | **Version Control**        | GitHub                                  |
 
----
 
-###  ⚡ Launching Instructions
+⚡ Launching Instructions
 
-1. Clone the repository  
-2. Install dependencies
-3. Connect to the Neon PostgreSQL database
-4. Run the Flutter app
+Clone the repository
+
+Install dependencies
+
+Connect to the Neon PostgreSQL database
+
+Run the Flutter app
