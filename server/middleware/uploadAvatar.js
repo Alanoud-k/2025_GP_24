@@ -20,13 +20,16 @@ const storage = multer.diskStorage({
 
 // ---------------- FILE FILTER ----------------
 const fileFilter = (req, file, cb) => {
-  const allowed = ["image/jpeg", "image/png", "image/jpg"];
-  if (allowed.includes(file.mimetype)) {
+  console.log("Uploaded mimetype:", file.mimetype);
+
+  // نقبل أي ملف نوعه يبدأ بـ image/
+  if (file.mimetype && file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
     cb(new Error("Only images are allowed"), false);
   }
 };
+
 
 // ---------------- MULTER INSTANCE ----------------
 export const uploadAvatar = multer({
