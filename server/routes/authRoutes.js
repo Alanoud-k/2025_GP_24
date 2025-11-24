@@ -22,10 +22,11 @@ import {
 import {
   getChildrenByParent,
   registerChild,
+  getChildInfo as getChildInfoForChild, // CHANGED: use childController version
+  updateChildAvatar,
 } from "../controllers/childController.js";
 
 import { transferMoney } from "../controllers/transferController.js";
-
 import { protect } from "../middleware/authMiddleware.js";
 
 
@@ -55,13 +56,16 @@ router.post("/child/register", registerChild);
 // ---------- Transfer ----------
 router.post("/transfer", transferMoney);
 
-// ----- ESM default export -----
-export default router;
-
 // ------Avatar ------
 router.post(
   "/child/upload-avatar/:childId",
+  protect,                     // CHANGED: secure avatar upload
   uploadAvatar.single("avatar"),
   updateChildAvatar
 );
+
+// ----- ESM default export -----
+export default router;
+
+
 

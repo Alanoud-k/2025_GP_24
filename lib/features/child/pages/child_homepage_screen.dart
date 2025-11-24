@@ -347,6 +347,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   int currentPoints = 0;
   String childName = '';
   bool _loading = true;
+  String? avatarUrl; // CHANGED: store avatar URL from backend
 
   double spendBalance = 0.0;
   double savingBalance = 0.0;
@@ -398,6 +399,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           spendBalance = _toDouble(data['spend']);
           savingBalance = _toDouble(data['saving']);
           currentPoints = (data['points'] ?? 0).toInt();
+          avatarUrl = data['avatarUrl']; // CHANGED: store avatar
 
           categoryPercentages = Map<String, double>.from(
             data['categories'] ?? categoryPercentages,
@@ -435,7 +437,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -505,10 +510,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           child: _balanceCard(
             title: 'Spend balance',
             amount: spendBalance,
-            gradientColors: const [
-              Color(0xFF37C4BE),
-              Color(0xFF2EA49E),
-            ],
+            gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)],
             leadingIcon: Icons.shopping_bag_outlined,
           ),
         ),
@@ -517,10 +519,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           child: _balanceCard(
             title: 'Save balance',
             amount: savingBalance,
-            gradientColors: const [
-              Color(0xFF7E57C2),
-              Color(0xFF5C6BC0),
-            ],
+            gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)],
             leadingIcon: Icons.account_balance_wallet_rounded,
           ),
         ),
@@ -756,58 +755,57 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox( height: 210, 
-          child: PieChart(
-             PieChartData( 
-              centerSpaceRadius: 40, 
-              sectionsSpace: 3,
-               sections: [
-                 PieChartSectionData( 
-                  value: 30, 
-                  color: Colors.pinkAccent,
-                   radius: 55,
+          SizedBox(
+            height: 210,
+            child: PieChart(
+              PieChartData(
+                centerSpaceRadius: 40,
+                sectionsSpace: 3,
+                sections: [
+                  PieChartSectionData(
+                    value: 30,
+                    color: Colors.pinkAccent,
+                    radius: 55,
                     title: '30%',
-                     titleStyle:
-                      TextStyle( 
-                        color: Colors.white, 
-                        fontWeight: FontWeight.bold,
-                         ), 
-                         ),
-                          PieChartSectionData( 
-                            value: 25,
-                             color: Colors.orangeAccent,
-                              radius: 55,
-                               title: '25%',
-                                titleStyle: 
-                                TextStyle( 
-                                  color: Colors.white,
-                                   fontWeight:
-                                    FontWeight.bold, 
-                                    ),
-                                     ), PieChartSectionData( 
-                                      value: 20, 
-                                      color: Colors.lightBlueAccent, 
-                                      radius: 55, 
-                                      title: '20%',
-                                       titleStyle: 
-                                       TextStyle(
-                                         color: Colors.white,
-                                          fontWeight:
-                                           FontWeight.bold,
-                                            ), ), PieChartSectionData( 
-                                              value: 25,
-                                               color: Colors.greenAccent, 
-                                               radius: 55,
-                                                title: '25%', 
-                                                titleStyle: TextStyle( 
-                                                  color: Colors.white,
-                                                   fontWeight: FontWeight.bold,
-                                                    ),
-                                                     ), 
-                                                     ], 
-                                                     ), 
-                                                     ), 
-                                                     ),
+                    titleStyle: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  PieChartSectionData(
+                    value: 25,
+                    color: Colors.orangeAccent,
+                    radius: 55,
+                    title: '25%',
+                    titleStyle: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  PieChartSectionData(
+                    value: 20,
+                    color: Colors.lightBlueAccent,
+                    radius: 55,
+                    title: '20%',
+                    titleStyle: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  PieChartSectionData(
+                    value: 25,
+                    color: Colors.greenAccent,
+                    radius: 55,
+                    title: '25%',
+                    titleStyle: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 18),
           _legend(),
         ],
@@ -841,14 +839,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               width: 18,
               height: 18,
               padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(shape: BoxShape.circle),
               child: Container(
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
             ),
             const SizedBox(width: 6),
@@ -902,4 +895,3 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     }
   }
 }
-

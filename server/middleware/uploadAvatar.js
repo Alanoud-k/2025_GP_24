@@ -1,15 +1,22 @@
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
-// ⬇️ لتحديد مسار الملفات في ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ---------------- CONFIG STORAGE ----------------
+const uploadDir = path.join(__dirname, "..", "uploads", "avatars");
+
+// CHANGED: ensure directory exists so multer doesn't crash
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "..", "uploads", "avatars"));
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
@@ -22,7 +29,7 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   console.log("Uploaded mimetype:", file.mimetype);
 
-  // نقبل أي ملف نوعه يبدأ بـ image/
+  // CHANGED: same logic, but clear comment
   if (file.mimetype && file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {

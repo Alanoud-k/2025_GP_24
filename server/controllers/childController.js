@@ -140,7 +140,11 @@ export const getChildInfo = async (req, res) => {
   try {
     // Basic child profile
     const childRows = await sql`
-      SELECT "firstname","phoneno","rewardkeys"
+      SELECT 
+        "firstname",
+        "phoneno",
+        "rewardkeys",
+        "avatarurl"  -- CHANGED: include avatarUrl from DB
       FROM "Child"
       WHERE "childid" = ${childId}
       LIMIT 1
@@ -219,6 +223,7 @@ export const getChildInfo = async (req, res) => {
     return res.json({
       firstName: child.firstname,
       phoneNo: child.phoneno,
+      avatarUrl: child.avatarurl ?? null, // CHANGED: send avatarUrl to client
       balance,
       saving,
       spend,
@@ -264,6 +269,13 @@ export const updateChildAvatar = async (req, res) => {
       message: "Avatar updated successfully",
       avatarUrl,
     });
+
+    const childRows = await sql`
+  SELECT "firstname","phoneno","rewardkeys","avatarurl"
+  FROM "Child"
+  WHERE "childid" = ${childId}
+  LIMIT 1
+`;
 
   } catch (err) {
     console.error("❌ Cloudinary upload error:", err);

@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 
 class ChildMoreScreen extends StatefulWidget {
   final int childId;
@@ -73,7 +75,18 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     // لو عندك Authorization
     request.headers['Authorization'] = "Bearer ${widget.token}";
 
-    request.files.add(await http.MultipartFile.fromPath("avatar", file.path));
+    // CHANGED: set correct MIME type so multer sees image/jpeg or image/png
+    final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+    final parts = mimeType.split('/');
+    final mediaType = MediaType(parts[0], parts[1]);
+
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        "avatar",
+        file.path,
+        contentType: mediaType,
+      ),
+    );
 
     final res = await request.send();
     final body = await res.stream.bytesToString();
@@ -82,12 +95,12 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
       final data = jsonDecode(body);
 
       setState(() {
-        widget.avatarUrl = data['avatarUrl'];
+        widget.avatarUrl = data['avatarUrl']; // CHANGED: full Cloudinary URL
         uploading = false;
       });
     } else {
       setState(() => uploading = false);
-      print("Upload error: $body");
+      debugPrint("Upload error: $body");
     }
   }
 
@@ -149,7 +162,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   @override
   Widget build(BuildContext context) {
     print("BASE URL = ${widget.baseUrl}");
-print("AVATAR URL = ${widget.avatarUrl}");
+    print("AVATAR URL = ${widget.avatarUrl}");
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: isLoading
