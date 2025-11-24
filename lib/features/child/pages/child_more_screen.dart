@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 
@@ -8,14 +12,16 @@ class ChildMoreScreen extends StatefulWidget {
   final String username;
   final String phoneNo;
   final String token;
+  String? avatarUrl; // ← الصورة القادمة من السيرفر
 
-  const ChildMoreScreen({
+  ChildMoreScreen({
     super.key,
     required this.childId,
     required this.baseUrl,
     required this.username,
     required this.phoneNo,
     required this.token,
+    this.avatarUrl,
   });
 
   @override
@@ -24,33 +30,77 @@ class ChildMoreScreen extends StatefulWidget {
 
 class _ChildMoreScreenState extends State<ChildMoreScreen> {
   bool isLoading = true;
+  bool uploading = false;
 
   @override
   void initState() {
     super.initState();
 
-    // 🔐 Check token immediately
+    // Check token
     checkAuthStatus(context);
 
-    // Simulate loading (UI effect)
+    // Smooth loading
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) setState(() => isLoading = false);
     });
   }
 
-  // -----------------------------
-  // LOGOUT FUNCTION
-  // -----------------------------
-  void _performLogout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // clear token, role, ids
+  // ---------------------------------------------------------
+  // اختيار صورة من الاستديو
+  // ---------------------------------------------------------
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
 
-    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
+    if (picked == null) return; // المستخدم ألغى
+
+    File file = File(picked.path);
+    await _uploadAvatar(file);
   }
 
-  // -----------------------------
-  // LOGOUT POPUP
-  // -----------------------------
+  // ---------------------------------------------------------
+  // رفع الصورة للسيرفر
+  // ---------------------------------------------------------
+  Future<void> _uploadAvatar(File file) async {
+    setState(() => uploading = true);
+
+    final url = Uri.parse(
+      "${widget.baseUrl}/api/auth/child/upload-avatar/${widget.childId}",
+    );
+
+    final request = http.MultipartRequest("POST", url);
+
+    // لو عندك Authorization
+    request.headers['Authorization'] = "Bearer ${widget.token}";
+
+    request.files.add(await http.MultipartFile.fromPath("avatar", file.path));
+
+    final res = await request.send();
+    final body = await res.stream.bytesToString();
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(body);
+
+      setState(() {
+        widget.avatarUrl = data['avatarUrl'];
+        uploading = false;
+      });
+    } else {
+      setState(() => uploading = false);
+      print("Upload error: $body");
+    }
+  }
+
+  // ---------------------------------------------------------
+  // تسجيل الخروج
+  // ---------------------------------------------------------
+  void _performLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+  }
+
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
@@ -74,10 +124,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-              ),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -87,10 +134,8 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
               },
               child: const Text(
                 'Log Out',
-              style: TextStyle(color: Color.fromARGB(255, 255, 254, 254), fontSize: 16),
+                style: TextStyle(color: Colors.white),
               ),
-              
-              
             ),
           ],
         );
@@ -98,11 +143,13 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     );
   }
 
-  // -----------------------------
+  // ---------------------------------------------------------
   // BUILD
-  // -----------------------------
+  // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
+    print("BASE URL = ${widget.baseUrl}");
+print("AVATAR URL = ${widget.avatarUrl}");
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: isLoading
@@ -115,19 +162,65 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                   children: [
                     const SizedBox(height: 20),
 
-                    // USER PROFILE
+                    // ---------------------------------------------------------
+                    //  ملف الطفل الشخصي
+                    // ---------------------------------------------------------
                     Row(
                       children: [
-                        const CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.teal,
-                          child: Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 28,
+                        GestureDetector(
+                          onTap: () {
+                            if (!uploading) _pickAvatar();
+                          },
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // صورة الطفل أو placeholder
+                              CircleAvatar(
+                                radius: 35,
+                                backgroundColor: Colors.teal,
+                                backgroundImage: (widget.avatarUrl != null)
+                                    ? NetworkImage(
+                                        "${widget.baseUrl}${widget.avatarUrl}",
+                                      )
+                                    : null,
+                                child: (widget.avatarUrl == null)
+                                    ? const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 32,
+                                      )
+                                    : null,
+                              ),
+
+                              // لودر عند الرفع
+                              if (uploading)
+                                const CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+
+                              // زر تعديل صغير (دائري)
+                              Positioned(
+                                bottom: -2,
+                                right: -2,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Icon(
+                                    Icons.add_a_photo,
+                                    size: 18,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+
                         const SizedBox(width: 16),
+
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -172,7 +265,6 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
 
                     const SizedBox(height: 18),
 
-                    // TERMS
                     _buildMenuItem(
                       icon: Icons.privacy_tip_outlined,
                       title: "Terms & privacy policy",
@@ -182,7 +274,6 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
 
                     const SizedBox(height: 18),
 
-                    // LOGOUT
                     _buildMenuItem(
                       icon: Icons.logout,
                       title: "Log out",
@@ -199,9 +290,9 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     );
   }
 
-  // -----------------------------
-  // MENU ITEM WIDGET
-  // -----------------------------
+  // ---------------------------------------------------------
+  // عنصر القائمة
+  // ---------------------------------------------------------
   Widget _buildMenuItem({
     required IconData icon,
     required String title,

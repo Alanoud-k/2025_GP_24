@@ -2,6 +2,7 @@
 
 import bcrypt from "bcrypt";
 import { sql } from "../config/db.js";
+import cloudinary from "../config/cloudinary.js";
 
 /* =====================================================
    Get Children by Parent
@@ -227,5 +228,45 @@ export const getChildInfo = async (req, res) => {
   } catch (err) {
     console.error("❌ Error fetching child info:", err);
     res.status(500).json({ error: "Failed to fetch child info" });
+  }
+};
+
+/* =====================================================
+   UPDATE CHILD AVATAR
+   Route: POST /api/auth/child/upload-avatar/:childId
+   File: avatar (image)
+===================================================== */
+export const updateChildAvatar = async (req, res) => {
+  const { childId } = req.params;
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    // 1) Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "hassala/avatars",
+      transformation: [{ width: 300, height: 300, crop: "fill" }],
+    });
+
+    // 2) secure URL
+    const avatarUrl = result.secure_url;
+
+    // 3) Save into Neon DB
+    await sql`
+      UPDATE "Child"
+      SET "avatarurl" = ${avatarUrl}
+      WHERE "childid" = ${childId}
+    `;
+
+    res.json({
+      message: "Avatar updated successfully",
+      avatarUrl,
+    });
+
+  } catch (err) {
+    console.error("❌ Cloudinary upload error:", err);
+    res.status(500).json({ error: "Failed to upload avatar" });
   }
 };

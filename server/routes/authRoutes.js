@@ -1,6 +1,8 @@
 // server/routes/authRoutes.js  (ESM)
 
 import express from "express";
+import { uploadAvatar } from "../middleware/uploadAvatar.js";
+import { updateChildAvatar } from "../controllers/childController.js";
 
 import {
   checkUser,
@@ -55,3 +57,11 @@ router.post("/transfer", transferMoney);
 
 // ----- ESM default export -----
 export default router;
+
+// ------Avatar ------
+router.post(
+  "/child/upload-avatar/:childId",
+  uploadAvatar.single("avatar"),
+  updateChildAvatar
+);
+

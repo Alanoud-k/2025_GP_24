@@ -435,7 +435,7 @@ export const getChildInfo = async (req, res) => {
 
   try {
     const result = await sql`
-      SELECT "firstname","phoneno","rewardkeys"
+      SELECT "firstname","phoneno","rewardkeys","avatarurl"
       FROM "Child"
       WHERE "childid" = ${childId}
       LIMIT 1
@@ -488,6 +488,8 @@ export const getChildInfo = async (req, res) => {
       saving,
       spend,
       rewardKeys: result[0].rewardkeys ?? 0,
+      avatarUrl: result[0].avatarurl ?? null
+
     });
   } catch (err) {
     console.error("❌ Error fetching child info:", err);

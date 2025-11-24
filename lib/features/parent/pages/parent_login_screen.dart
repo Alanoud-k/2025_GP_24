@@ -390,7 +390,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
           ),
         );
       }
-
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context)
@@ -410,174 +409,186 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 26),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 10),
+          child: Column(
+            children: [
+              // ← زر الرجوع
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black, size: 28),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
 
-                        /// Logo
-                        Image.asset(
-                          'assets/logo/hassalaLogo5.png',
-                          width: MediaQuery.of(context).size.width * 0.90,
-                          fit: BoxFit.contain,
-                        ),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 380),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 26),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 10),
 
-                        const SizedBox(height: 10),
+                              Image.asset(
+                                'assets/logo/hassalaLogo5.png',
+                                width: MediaQuery.of(context).size.width * 0.90,
+                                fit: BoxFit.contain,
+                              ),
 
-                        Text(
-                          "Welcome Back",
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                          ),
-                        ),
+                              const SizedBox(height: 10),
 
-                        const SizedBox(height: 10),
+                              const Text(
+                                "Welcome Back",
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
 
-                        Text(
-                          firstName.isNotEmpty ? firstName : phoneNo,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2C3E50),
-                          ),
-                        ),
+                              const SizedBox(height: 10),
 
-                        const SizedBox(height: 25),
+                              Text(
+                                firstName.isNotEmpty ? firstName : phoneNo,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
 
-                        const Text(
-                          'Enter your password',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF333333),
-                          ),
-                        ),
+                              const SizedBox(height: 25),
 
-                        const SizedBox(height: 30),
+                              const Text(
+                                'Enter your password',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF333333),
+                                ),
+                              ),
 
-                        /// Password
-                        Material(
-                          elevation: 10,
-                          shadowColor: Colors.black12,
-                          borderRadius: BorderRadius.circular(20),
-                          child: TextFormField(
-                            controller: passwordController,
-                            obscureText: _obscure,
-                            decoration: InputDecoration(
-                              hintText: "Password",
-                              hintStyle: const TextStyle(color: Colors.black38),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 18),
+                              const SizedBox(height: 30),
 
-                              /// Show/Hide Password
-                              suffixIcon: GestureDetector(
-                                onTap: () {
-                                  setState(() => _obscure = !_obscure);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: Icon(
-                                    _obscure
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.black54,
-                                    size: 26,
+                              Material(
+                                elevation: 10,
+                                shadowColor: Colors.black12,
+                                borderRadius: BorderRadius.circular(20),
+                                child: TextFormField(
+                                  controller: passwordController,
+                                  obscureText: _obscure,
+                                  decoration: InputDecoration(
+                                    hintText: "Password",
+                                    hintStyle: const TextStyle(color: Colors.black38),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 18),
+                                    suffixIcon: GestureDetector(
+                                      onTap: () {
+                                        setState(() => _obscure = !_obscure);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: Icon(
+                                          _obscure
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: Colors.black54,
+                                          size: 26,
+                                        ),
+                                      ),
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  validator: (v) =>
+                                      v == null || v.isEmpty ? 'Enter password' : null,
+                                ),
+                              ),
+
+                              const SizedBox(height: 15),
+
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const ForgetPasswordScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    "Forgot password?",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF2EA49E),
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                    ),
                                   ),
                                 ),
                               ),
 
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            validator: (v) =>
-                                v == null || v.isEmpty ? 'Enter password' : null,
-                          ),
-                        ),
+                              const SizedBox(height: 40),
 
-                        const SizedBox(height: 15),
-
-                        /// Forgot password
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ForgetPasswordScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Forgot password?",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF2EA49E),
-                                fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        /// Continue Button (gradient)
-                        SizedBox(
-                          width: double.infinity,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF37C4BE), Color(0xFF2EA49E)],
-                              ),
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _loginParent,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 18),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : const Text(
-                                      "Continue",
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                              SizedBox(
+                                width: double.infinity,
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF37C4BE),
+                                        Color(0xFF2EA49E)
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(22),
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _loginParent,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      padding: const EdgeInsets.symmetric(vertical: 18),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(22),
                                       ),
                                     ),
-                            ),
+                                    child: _isLoading
+                                        ? const CircularProgressIndicator(
+                                            color: Colors.white,
+                                          )
+                                        : const Text(
+                                            "Continue",
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 40),
+                            ],
                           ),
                         ),
-
-                        const SizedBox(height: 40),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),

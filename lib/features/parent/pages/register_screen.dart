@@ -563,182 +563,191 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 26),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
+          child: Column(
+            children: [
+              /// ← زر الرجوع
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black, size: 28),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
 
-                        /// Logo (أصغر + منخفض)
-                        Transform.translate(
-                          offset: const Offset(
-                            0,
-                            70,
-                          ), // ← نزول 35px تحت (زِوّد إذا تبيه أكثر)
-                          child: Image.asset(
-                            'assets/logo/hassalaLogo5.png',
-                            width: MediaQuery.of(context).size.width * 0.70,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 380),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 26),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 20),
 
-                        const SizedBox(height: 10),
-
-                        /// Title
-                        const Text(
-                          "Create Your Account",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2C3E50),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        _field(firstName, "First Name"),
-                        const SizedBox(height: 15),
-
-                        _field(lastName, "Last Name"),
-                        const SizedBox(height: 15),
-
-                        _field(
-                          nationalId,
-                          "National ID / Iqama",
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 15),
-
-                        _buildDateField(),
-                        const SizedBox(height: 15),
-
-                        /// Password
-                        Material(
-                          elevation: 10,
-                          shadowColor: Colors.black12,
-                          borderRadius: BorderRadius.circular(20),
-                          child: TextFormField(
-                            controller: password,
-                            obscureText: _obscure,
-                            decoration: InputDecoration(
-                              hintText: "Password",
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 18,
+                              Transform.translate(
+                                offset: const Offset(0, 70),
+                                child: Image.asset(
+                                  'assets/logo/hassalaLogo5.png',
+                                  width: MediaQuery.of(context).size.width * 0.70,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
-                              suffixIcon: GestureDetector(
-                                onTap: () =>
-                                    setState(() => _obscure = !_obscure),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: Icon(
-                                    _obscure
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    size: 26,
+
+                              const SizedBox(height: 10),
+
+                              const Text(
+                                "Create Your Account",
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              _field(firstName, "First Name"),
+                              const SizedBox(height: 15),
+
+                              _field(lastName, "Last Name"),
+                              const SizedBox(height: 15),
+
+                              _field(
+                                nationalId,
+                                "National ID / Iqama",
+                                keyboardType: TextInputType.number,
+                              ),
+                              const SizedBox(height: 15),
+
+                              _buildDateField(),
+                              const SizedBox(height: 15),
+
+                              Material(
+                                elevation: 10,
+                                shadowColor: Colors.black12,
+                                borderRadius: BorderRadius.circular(20),
+                                child: TextFormField(
+                                  controller: password,
+                                  obscureText: _obscure,
+                                  decoration: InputDecoration(
+                                    hintText: "Password",
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 18,
+                                    ),
+                                    suffixIcon: GestureDetector(
+                                      onTap: () =>
+                                          setState(() => _obscure = !_obscure),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: Icon(
+                                          _obscure
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          size: 26,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  validator: (v) {
+                                    if (v == null || v.isEmpty)
+                                      return "Enter password";
+                                    if (v.length < 8) return "At least 8 characters";
+                                    if (!RegExp(
+                                      r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$%^&*])',
+                                    ).hasMatch(v)) {
+                                      return "Must include upper/lower/number/special";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+
+                              const SizedBox(height: 15),
+
+                              _field(
+                                securityAnswer,
+                                "Security Question Answer",
+                                suffix: const Icon(
+                                  Icons.lock_outline,
+                                  color: Colors.grey,
+                                ),
+                              ),
+
+                              const Padding(
+                                padding: EdgeInsets.only(top: 5),
+                                child: Text(
+                                  "What’s the name of the street where you lived as a child?",
+                                  style: TextStyle(
+                                    fontSize: 13,
                                     color: Colors.black54,
                                   ),
                                 ),
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            validator: (v) {
-                              if (v == null || v.isEmpty)
-                                return "Enter password";
-                              if (v.length < 8) return "At least 8 characters";
-                              if (!RegExp(
-                                r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$%^&*])',
-                              ).hasMatch(v)) {
-                                return "Must include upper/lower/number/special";
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
 
-                        const SizedBox(height: 15),
+                              const SizedBox(height: 25),
 
-                        _field(
-                          securityAnswer,
-                          "Security Question Answer",
-                          suffix: const Icon(
-                            Icons.lock_outline,
-                            color: Colors.grey,
-                          ),
-                        ),
-
-                        const Padding(
-                          padding: EdgeInsets.only(top: 5),
-                          child: Text(
-                            "What’s the name of the street where you lived as a child?",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        /// Continue Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF37C4BE), Color(0xFF2EA49E)],
-                              ),
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _registerParent,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
+                              SizedBox(
+                                width: double.infinity,
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF37C4BE), Color(0xFF2EA49E)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(22),
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: _registerParent,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 18,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(22),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "Continue",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: const Text(
-                                "Continue",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
-
-                        const SizedBox(height: 20),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  /// Generic Field Builder
   Widget _field(
     controller,
     String hint, {
@@ -767,14 +776,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             borderSide: BorderSide.none,
           ),
         ),
-        validator:
-            validator ??
+        validator: validator ??
             (v) => v == null || v.isEmpty ? "Required field" : null,
       ),
     );
   }
 
-  /// Date Picker Field
   Widget _buildDateField() {
     return Material(
       elevation: 10,

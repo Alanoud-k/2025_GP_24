@@ -13,6 +13,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   http: ^1.2.0
   cupertino_icons: ^1.0.8
   crypto: ^3.0.6
@@ -21,6 +22,11 @@ dependencies:
   flutter_svg: ^2.0.7
   moyasar: ^2.1.1
   shared_preferences: ^2.2.0
+
+  # ↓↓↓ أضف هذه ↓↓↓
+  image_picker: ^1.0.7
+
+  
 
 
 dev_dependencies:
@@ -43,6 +49,9 @@ flutter:
   - assets/
   - assets/logo/
   - assets/icons/
+
+
+
 
   #   - images/a_dot_ham.jpeg
 
