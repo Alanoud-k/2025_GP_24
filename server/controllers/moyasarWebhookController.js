@@ -1,12 +1,12 @@
 // server/controllers/moyasarWebhookController.js
-import crypto from "crypto";
+
 import { sql } from "../config/db.js";
 
 export const handleMoyasarWebhook = async (req, res) => {
   try {
     const signature = req.headers["x-moyasar-signature"];
 
-    // Step 0 — Handle dashboard validation pings
+    // Validation ping from dashboard (no signature)
     if (!signature) {
       console.log("Moyasar validation ping received");
       return res.sendStatus(200);
@@ -14,38 +14,32 @@ export const handleMoyasarWebhook = async (req, res) => {
 
     const secret = process.env.MOYASAR_WEBHOOK_SECRET;
     if (!secret) {
-      console.error("Webhook secret missing");
+      console.error("Webhook secret missing in environment");
       return res.sendStatus(500);
     }
 
-    // Step 1 — Validate signature
-    const rawBody = req.rawBody;
-    if (!rawBody) {
-      console.error("Missing raw body");
-      return res.sendStatus(400);
-    }
-
-    const computed = crypto
-      .createHmac("sha256", secret)
-      .update(rawBody)
-      .digest("hex");
-
-    if (computed !== signature) {
-      console.error("Invalid signature");
+    // Simple comparison: Moyasar sends the secret token as is
+    if (signature !== secret) {
+      console.error("Invalid webhook signature");
       return res.sendStatus(401);
     }
 
     console.log("Webhook signature verified");
 
-    // Step 2 — Parse event
+    // Payment event payload
     const event = req.body;
+    console.log("Webhook event body:", JSON.stringify(event));
+
     const payment = event?.data ?? event;
 
-    const status = payment.status;
-    const validStatuses = ["paid", "authorized", "captured", "verified"];
+    if (!payment || typeof payment !== "object") {
+      console.error("Webhook missing payment object");
+      return res.sendStatus(400);
+    }
 
-    if (!validStatuses.includes(status)) {
-      console.log("Ignoring irrelevant status:", status);
+    const status = payment.status;
+    if (status !== "paid") {
+      console.log("Ignoring non-paid status:", status);
       return res.sendStatus(200);
     }
 
@@ -53,68 +47,80 @@ export const handleMoyasarWebhook = async (req, res) => {
     const paymentId = payment.id;
     const amountHalala = Number(payment.amount);
 
+    if (!parentId || !paymentId || Number.isNaN(amountHalala)) {
+      console.error("Missing parentId, id, or amount in payment");
+      return res.sendStatus(400);
+    }
+
     const amountSAR = amountHalala / 100;
 
-    // Step 3 — Prevent duplicate insert
-    const dup = await sql`
-      SELECT 1 FROM "Transaction"
+    // Prevent duplicate processing
+    const exists = await sql`
+      SELECT 1
+      FROM "Transaction"
       WHERE "gatewayPaymentId" = ${paymentId}
       LIMIT 1
     `;
 
-    if (dup.length > 0) {
+    if (exists.length > 0) {
       console.log("Duplicate payment ignored");
       return res.sendStatus(200);
     }
 
-    // Step 4 — Update balances & create transaction
+    // Update wallet, account, and insert transaction
     await sql.begin(async (trx) => {
-      let wallet = await trx`
+      // Ensure wallet exists
+      let walletRows = await trx`
         SELECT "walletid"
         FROM "Wallet"
         WHERE "parentid" = ${parentId}
-        LIMIT 1
         FOR UPDATE
+        LIMIT 1
       `;
 
-      let walletId = wallet.length ? wallet[0].walletid : null;
-
-      if (!walletId) {
+      let walletId;
+      if (walletRows.length === 0) {
         const newWallet = await trx`
           INSERT INTO "Wallet" ("parentid", "childid", "walletstatus")
           VALUES (${parentId}, NULL, 'Active')
           RETURNING "walletid"
         `;
         walletId = newWallet[0].walletid;
+      } else {
+        walletId = walletRows[0].walletid;
       }
 
-      let account = await trx`
+      // Ensure ParentAccount exists
+      let accountRows = await trx`
         SELECT "accountid"
         FROM "Account"
         WHERE "walletid" = ${walletId}
           AND "accounttype" = 'ParentAccount'
-        LIMIT 1
         FOR UPDATE
+        LIMIT 1
       `;
 
-      let accountId = account.length ? account[0].accountid : null;
-
-      if (!accountId) {
-        const newAcc = await trx`
+      let accountId;
+      if (accountRows.length === 0) {
+        const newAccount = await trx`
           INSERT INTO "Account"
-            ("walletid","accounttype","currency","balance","limitamount")
-          VALUES (${walletId}, 'ParentAccount','SAR',0,0)
+            ("walletid", "accounttype", "currency", "balance", "limitamount")
+          VALUES (${walletId}, 'ParentAccount', 'SAR', 0, 0)
           RETURNING "accountid"
         `;
-        accountId = newAcc[0].accountid;
+        accountId = newAccount[0].accountid;
+      } else {
+        accountId = accountRows[0].accountid;
       }
 
+      // Update balance
       await trx`
         UPDATE "Account"
         SET "balance" = "balance" + ${amountSAR}
         WHERE "accountid" = ${accountId}
       `;
 
+      // Insert transaction
       await trx`
         INSERT INTO "Transaction"
           ("transactiontype", "amount", "transactiondate", "transactionstatus",

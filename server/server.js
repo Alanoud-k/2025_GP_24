@@ -23,22 +23,30 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 
-// Required for all normal endpoints
+// CORS for all normal endpoints
 app.use(cors());
 
 /* ---------------------------------------------------------
    1) MOYASAR WEBHOOK — MUST COME BEFORE express.json()
 --------------------------------------------------------- */
+
 app.post(
   "/api/moyasar-webhook",
-  express.raw({ type: "application/json" }), // keep raw body
+  // Keep raw body so signature check works even if JSON is invalid
+  express.raw({ type: "*/*" }),
   (req, res, next) => {
+    // Debug logging so we see what Moyasar actually sends
+    console.log("Webhook hit /api/moyasar-webhook");
+    console.log("Headers:", req.headers);
+
     req.rawBody = req.body;
 
     try {
-      req.body = JSON.parse(req.body.toString("utf8"));
+      const asString = req.body.toString("utf8");
+      console.log("Raw webhook body:", asString);
+      req.body = JSON.parse(asString || "{}");
     } catch (err) {
-      console.error("Invalid JSON in webhook");
+      console.error("Invalid JSON in webhook:", err.message);
       return res.sendStatus(400);
     }
 
@@ -50,10 +58,11 @@ app.post(
 /* ---------------------------------------------------------
    2) NORMAL EXPRESS JSON HANDLING — AFTER WEBHOOK
 --------------------------------------------------------- */
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logger
+// Request logger for all other routes
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
@@ -62,6 +71,7 @@ app.use((req, _res, next) => {
 /* ---------------------------------------------------------
    OTHER ROUTES
 --------------------------------------------------------- */
+
 app.use("/api/auth", authRoutes);
 app.use("/api", parentRoutes);
 app.use("/api", goalRoutes);
@@ -73,6 +83,7 @@ app.post("/api/create-payment/:parentId", createPayment);
 /* ---------------------------------------------------------
    REDIRECT PAGES
 --------------------------------------------------------- */
+
 app.get("/payment-success", (_req, res) => {
   res.send("Payment completed successfully.");
 });
@@ -84,6 +95,7 @@ app.get("/payment-failed", (_req, res) => {
 /* ---------------------------------------------------------
    HEALTH CHECK
 --------------------------------------------------------- */
+
 app.get("/", (_req, res) => {
   res.send("Hassalah API is running.");
 });
