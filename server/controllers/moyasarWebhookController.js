@@ -4,44 +4,42 @@ import { sql } from "../config/db.js";
 
 export const handleMoyasarWebhook = async (req, res) => {
   try {
-const signature =
-  req.headers["x-event-secret"] ||
-  req.headers["x-moyasar-signature"] ||
-  req.headers["x-moyasar-signature-v2"];
+    console.log("Webhook received");
 
-if (!signature) {
-  console.log("No signature header found");
-  return res.sendStatus(400);
-}
+    const signature = req.headers["x-event-secret"];
 
-const secret = process.env.MOYASAR_WEBHOOK_SECRET;
-if (!secret) {
-  console.error("Webhook secret missing in .env");
-  return res.sendStatus(500);
-}
+    // Validation pings (no secret header)
+    if (!signature) {
+      console.log("Moyasar validation ping received");
+      return res.sendStatus(200);
+    }
 
-if (signature !== secret) {
-  console.error("Invalid webhook signature");
-  return res.sendStatus(401);
-}
+    const secret = process.env.MOYASAR_WEBHOOK_SECRET;
+    if (!secret) {
+      console.error("Webhook secret missing");
+      return res.sendStatus(500);
+    }
 
+    // Compare signature directly
+    if (signature !== secret) {
+      console.error("Invalid webhook signature");
+      return res.sendStatus(401);
+    }
 
     console.log("Webhook signature verified");
 
-    // Payment event payload
+    // Parse event body
     const event = req.body;
-    console.log("Webhook event body:", JSON.stringify(event));
+    console.log("Webhook event body:", event);
 
     const payment = event?.data ?? event;
-
     if (!payment || typeof payment !== "object") {
-      console.error("Webhook missing payment object");
+      console.error("Invalid webhook payment object");
       return res.sendStatus(400);
     }
 
-    const status = payment.status;
-    if (status !== "paid") {
-      console.log("Ignoring non-paid status:", status);
+    if (payment.status !== "paid") {
+      console.log("Ignoring non-paid status:", payment.status);
       return res.sendStatus(200);
     }
 
@@ -49,17 +47,16 @@ if (signature !== secret) {
     const paymentId = payment.id;
     const amountHalala = Number(payment.amount);
 
-    if (!parentId || !paymentId || Number.isNaN(amountHalala)) {
-      console.error("Missing parentId, id, or amount in payment");
+    if (!parentId || !paymentId || isNaN(amountHalala)) {
+      console.error("Missing payment info in webhook");
       return res.sendStatus(400);
     }
 
     const amountSAR = amountHalala / 100;
 
-    // Prevent duplicate processing
+    // Prevent duplicates
     const exists = await sql`
-      SELECT 1
-      FROM "Transaction"
+      SELECT 1 FROM "Transaction"
       WHERE "gatewayPaymentId" = ${paymentId}
       LIMIT 1
     `;
@@ -69,10 +66,14 @@ if (signature !== secret) {
       return res.sendStatus(200);
     }
 
-    // Update wallet, account, and insert transaction
-    await sql.begin(async (trx) => {
-      // Ensure wallet exists
-      let walletRows = await trx`
+    //
+    // ⭐ BEGIN TRANSACTION (Neon-compatible)
+    //
+    await sql`BEGIN`;
+
+    try {
+      // 🔐 Lock wallet
+      let walletRows = await sql`
         SELECT "walletid"
         FROM "Wallet"
         WHERE "parentid" = ${parentId}
@@ -80,20 +81,20 @@ if (signature !== secret) {
         LIMIT 1
       `;
 
-      let walletId;
-      if (walletRows.length === 0) {
-        const newWallet = await trx`
+      let walletId = walletRows.length ? walletRows[0].walletid : null;
+
+      // Create wallet if none exists
+      if (!walletId) {
+        const newWallet = await sql`
           INSERT INTO "Wallet" ("parentid", "childid", "walletstatus")
           VALUES (${parentId}, NULL, 'Active')
           RETURNING "walletid"
         `;
         walletId = newWallet[0].walletid;
-      } else {
-        walletId = walletRows[0].walletid;
       }
 
-      // Ensure ParentAccount exists
-      let accountRows = await trx`
+      // 🔐 Lock ParentAccount
+      let accountRows = await sql`
         SELECT "accountid"
         FROM "Account"
         WHERE "walletid" = ${walletId}
@@ -102,28 +103,28 @@ if (signature !== secret) {
         LIMIT 1
       `;
 
-      let accountId;
-      if (accountRows.length === 0) {
-        const newAccount = await trx`
+      let accountId = accountRows.length ? accountRows[0].accountid : null;
+
+      // Create ParentAccount if missing
+      if (!accountId) {
+        const newAcc = await sql`
           INSERT INTO "Account"
             ("walletid", "accounttype", "currency", "balance", "limitamount")
           VALUES (${walletId}, 'ParentAccount', 'SAR', 0, 0)
           RETURNING "accountid"
         `;
-        accountId = newAccount[0].accountid;
-      } else {
-        accountId = accountRows[0].accountid;
+        accountId = newAcc[0].accountid;
       }
 
       // Update balance
-      await trx`
+      await sql`
         UPDATE "Account"
         SET "balance" = "balance" + ${amountSAR}
         WHERE "accountid" = ${accountId}
       `;
 
       // Insert transaction
-      await trx`
+      await sql`
         INSERT INTO "Transaction"
           ("transactiontype", "amount", "transactiondate", "transactionstatus",
            "merchantname", "sourcetype", "transactioncategory",
@@ -141,10 +142,20 @@ if (signature !== secret) {
           ${paymentId}
         )
       `;
-    });
 
-    console.log("Wallet updated successfully");
+      await sql`COMMIT`;
+      console.log("Wallet updated successfully");
+
+    } catch (innerErr) {
+
+      await sql`ROLLBACK`;
+      console.error("Transaction failed:", innerErr);
+      return res.sendStatus(500);
+
+    }
+
     return res.sendStatus(200);
+
   } catch (err) {
     console.error("Webhook error:", err);
     return res.sendStatus(500);
