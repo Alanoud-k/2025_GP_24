@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/goal_model.dart';
 import '../services/goals_api.dart';
+import 'package:my_app/utils/check_auth.dart'; // <<--- ADDED
 
 const kBg = Color(0xFFF7F8FA);
 const kMint = Color(0xFF9FE5E2);
@@ -52,8 +53,9 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   Future<void> _openEditSheet() async {
     final nameCtrl = TextEditingController(text: _goal.goalName);
     final descCtrl = TextEditingController(text: _goal.description);
-    final targetCtrl =
-        TextEditingController(text: _goal.targetAmount.toStringAsFixed(2));
+    final targetCtrl = TextEditingController(
+      text: _goal.targetAmount.toStringAsFixed(2),
+    );
 
     final formKey = GlobalKey<FormState>();
 
@@ -139,8 +141,9 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
               const SizedBox(height: 6),
               TextFormField(
                 controller: targetCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: _fieldDeco(),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return "Enter target";
@@ -217,15 +220,15 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
 
       await _refreshGoal();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Goal updated")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Goal updated")));
       Navigator.pop(context, true); // refresh parent list
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Update failed: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Update failed: $e")));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -251,15 +254,14 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
           children: [
             Text(
               isAdd ? "Add money" : "Move money",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: InputDecoration(
                 hintText: "Amount",
                 filled: true,
@@ -315,15 +317,15 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
 
       await _refreshGoal();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(isAdd ? "Added" : "Moved")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(isAdd ? "Added" : "Moved")));
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed: $e")));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -332,8 +334,7 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final pct = (_goal.progress * 100).clamp(0, 100).toStringAsFixed(0);
-    final remaining =
-        (_goal.targetAmount - _goal.goalBalance).clamp(0, 999999);
+    final remaining = (_goal.targetAmount - _goal.goalBalance).clamp(0, 999999);
 
     return Scaffold(
       backgroundColor: kBg,
@@ -376,10 +377,7 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
                 child: Column(
                   children: [
-                    _ProgressRing(
-                      percent: _goal.progress,
-                      label: "$pct%",
-                    ),
+                    _ProgressRing(percent: _goal.progress, label: "$pct%"),
 
                     const SizedBox(height: 10),
 
@@ -475,24 +473,20 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
 
 // Field decoration
 InputDecoration _fieldDeco() => InputDecoration(
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-    );
+  filled: true,
+  fillColor: Colors.white,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide.none,
+  ),
+);
 
 class _ProgressRing extends StatelessWidget {
   final double percent;
   final String label;
 
-  const _ProgressRing({
-    required this.percent,
-    required this.label,
-  });
+  const _ProgressRing({required this.percent, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -571,8 +565,7 @@ class _DetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remaining =
-        (goal.targetAmount - goal.goalBalance).clamp(0, 999999);
+    final remaining = (goal.targetAmount - goal.goalBalance).clamp(0, 999999);
 
     return Container(
       width: double.infinity,
@@ -581,11 +574,7 @@ class _DetailsCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          )
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       child: Column(

@@ -54,7 +54,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
   @override
   void initState() {
     super.initState();
-    _init(); // no await here
+    _init();
   }
 
   Future<void> _loadToken() async {

@@ -16,7 +16,7 @@ import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 
-// ENV + SETUP
+// ENV AND SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -29,6 +29,11 @@ if (!process.env.DATABASE_URL) {
 
 const app = express();
 
+// CORS and JSON for all normal routes
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Simple request logger
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -36,7 +41,7 @@ app.use((req, _res, next) => {
 });
 
 /* -----------------------------------------
-   API ROUTES
+   NORMAL API ROUTES
 ------------------------------------------ */
 
 app.use("/api/auth", authRoutes);
@@ -44,45 +49,51 @@ app.use("/api", parentRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
 
-// Payment creation endpoint used by Flutter
+/* -----------------------------------------
+   PAYMENT ROUTES
+------------------------------------------ */
+
+// Payment creation endpoint for Flutter
 app.post("/api/create-payment/:parentId", createPayment);
 
+// Deprecated payment endpoints (no longer used)
+// import { addMoney, confirmPayment } from "./controllers/addMoneyController.js";
+// app.post("/api/add-money", addMoney);
+// app.post("/api/confirm-payment", confirmPayment);
+
 /* -----------------------------------------
-   MOYASAR WEBHOOK HANDLER
+   MOYASAR WEBHOOK ROUTE
+   Must use express.raw and be placed after JSON middleware
 ------------------------------------------ */
 
 app.post(
   "/api/moyasar-webhook",
   express.raw({ type: "application/json" }),
+
   (req, res, next) => {
-    req.rawBody = req.body; // Buffer containing the REAL raw payload
+    req.rawBody = req.body;
+
     try {
       req.body = JSON.parse(req.body.toString("utf8"));
     } catch (e) {
+      console.error("Invalid JSON in webhook");
       return res.sendStatus(400);
     }
+
     next();
   },
+
   handleMoyasarWebhook
 );
 
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-
-
 /* -----------------------------------------
-   PAYMENT REDIRECT ROUTES (for browser)
+   PAYMENT REDIRECT ROUTES
 ------------------------------------------ */
 
-// Shown when Moyasar redirects after success
 app.get("/payment-success", (_req, res) => {
   res.send("Payment completed successfully.");
 });
 
-// Shown when Moyasar redirects after failure
 app.get("/payment-failed", (_req, res) => {
   res.send("Payment failed.");
 });
@@ -96,6 +107,6 @@ app.get("/", (_req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

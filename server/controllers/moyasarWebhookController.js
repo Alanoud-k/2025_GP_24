@@ -5,58 +5,53 @@ import { sql } from "../config/db.js";
 
 export const handleMoyasarWebhook = async (req, res) => {
   try {
+    // Allow Moyasar's initial test ping (no signature)
     if (!req.headers["x-moyasar-signature"]) {
-  console.log("Moyasar validation ping");
-  return res.sendStatus(200);
-}
+      console.log("Moyasar validation ping received");
+      return res.sendStatus(200);
+    }
 
-    /* ---------------------------------------------------------
-       STEP 1 — GET SIGNATURE + SECRET
-    --------------------------------------------------------- */
+    // Step 1: Read signature and secret
     const receivedSignature = req.headers["x-moyasar-signature"];
     const webhookSecret = process.env.MOYASAR_WEBHOOK_SECRET;
 
     if (!receivedSignature || !webhookSecret) {
-      console.error("Missing signature or secret");
+      console.log("Missing signature or webhook secret");
       return res.sendStatus(401);
     }
 
-    /* ---------------------------------------------------------
-       STEP 2 — GET RAW BODY TO COMPUTE HMAC
-    --------------------------------------------------------- */
+    // Step 2: Validate raw body is available
     const rawBody = req.rawBody;
-
     if (!rawBody) {
-      console.error("Missing rawBody");
+      console.log("Missing rawBody");
       return res.sendStatus(400);
     }
 
+    // Step 3: Compute HMAC signature
     const computedSignature = crypto
       .createHmac("sha256", webhookSecret)
       .update(rawBody)
       .digest("hex");
 
     if (computedSignature !== receivedSignature) {
-      console.error("❌ Invalid webhook signature");
+      console.log("Invalid webhook signature");
       return res.sendStatus(401);
     }
 
-    console.log("✔ Webhook signature verified");
+    console.log("Webhook signature verified");
 
-    /* ---------------------------------------------------------
-       STEP 3 — PARSE BODY & EXTRACT PAYMENT DATA
-    --------------------------------------------------------- */
+    // Step 4: Extract payload
     const event = req.body;
     const payment = event?.data ?? event;
 
     if (!payment || typeof payment !== "object") {
-      console.error("Webhook missing payment data");
+      console.log("Missing payment object");
       return res.sendStatus(400);
     }
 
     const parentId = Number(payment.metadata?.parentId);
     if (!parentId) {
-      console.error("Missing parentId in metadata");
+      console.log("Missing parentId");
       return res.sendStatus(400);
     }
 
@@ -65,36 +60,31 @@ export const handleMoyasarWebhook = async (req, res) => {
     const amountHalala = Number(payment.amount);
 
     if (!paymentId || Number.isNaN(amountHalala)) {
-      console.error("Missing id or amount");
+      console.log("Missing id or amount");
       return res.sendStatus(400);
     }
 
-    // Moyasar sends failed, paid, authorized... we only process "paid"
+    // Only process completed payments
     if (status !== "paid") {
-      console.log(`Ignoring non-paid status: ${status}`);
+      console.log(`Ignoring payment with status: ${status}`);
       return res.sendStatus(200);
     }
 
     const amountSAR = amountHalala / 100;
 
-    /* ---------------------------------------------------------
-       STEP 4 — PREVENT DUPLICATES
-    --------------------------------------------------------- */
+    // Step 5: Prevent duplicate transactions
     const exists = await sql`
       SELECT 1 FROM "Transaction"
       WHERE "gatewayPaymentId" = ${paymentId}
       LIMIT 1
     `;
     if (exists.length > 0) {
-      console.log("Duplicate webhook ignored");
+      console.log("Duplicate payment ignored");
       return res.sendStatus(200);
     }
 
-    /* ---------------------------------------------------------
-       STEP 5 — PROCESS TOP-UP
-    --------------------------------------------------------- */
+    // Step 6: Update database in transaction
     await sql.begin(async (trx) => {
-      // 1) Ensure wallet exists
       let walletRows = await trx`
         SELECT "walletid"
         FROM "Wallet"
@@ -115,7 +105,6 @@ export const handleMoyasarWebhook = async (req, res) => {
         walletId = walletRows[0].walletid;
       }
 
-      // 2) Ensure ParentAccount exists
       let accountRows = await trx`
         SELECT "accountid"
         FROM "Account"
@@ -138,14 +127,12 @@ export const handleMoyasarWebhook = async (req, res) => {
         receiverAccountId = accountRows[0].accountid;
       }
 
-      // 3) Update balance
       await trx`
         UPDATE "Account"
         SET "balance" = "balance" + ${amountSAR}
         WHERE "accountid" = ${receiverAccountId}
       `;
 
-      // 4) Insert transaction
       await trx`
         INSERT INTO "Transaction"
           ("transactiontype", "amount", "transactiondate", "transactionstatus",
@@ -166,16 +153,11 @@ export const handleMoyasarWebhook = async (req, res) => {
       `;
     });
 
-    console.log("✔ Wallet updated successfully");
-
+    console.log("Wallet updated successfully");
     return res.sendStatus(200);
+
   } catch (err) {
     console.error("Webhook error:", err);
     return res.sendStatus(500);
   }
-  console.log("RAW BODY (hex):", req.rawBody.toString("hex"));
-console.log("RECEIVED SIGNATURE:", receivedSignature);
-console.log("COMPUTED SIGNATURE:", computedSignature);
-
 };
-

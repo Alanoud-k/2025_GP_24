@@ -1,4 +1,5 @@
 // server/controllers/createPaymentController.js
+
 import axios from "axios";
 
 const MOYASAR_API_URL = "https://api.moyasar.com/v1/payments";
@@ -7,13 +8,17 @@ const APP_URL = "https://2025gp24-production.up.railway.app";
 
 export async function createPayment(req, res) {
   try {
+    // Validate input
     const parentId = Number(req.params.parentId);
     const amount = Number(req.body.amount);
 
     if (!parentId || !amount || amount <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid parentId or amount" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid parentId or amount" });
     }
 
+    // Payment request body
     const paymentBody = {
       amount: Math.round(amount * 100),
       currency: "SAR",
@@ -31,11 +36,13 @@ export async function createPayment(req, res) {
       }
     };
 
+    // Create payment
     const response = await axios.post(MOYASAR_API_URL, paymentBody, {
       auth: { username: MOYASAR_SECRET, password: "" },
       headers: { "Content-Type": "application/json" }
     });
 
+    // Transaction URL for redirect
     const redirectUrl = response.data?.source?.transaction_url;
 
     return res.status(200).json({

@@ -85,14 +85,6 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
           ),
         );
       }
-      if (response.statusCode == 401) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-        if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
-        }
-        return;
-      }
     } catch (e) {
       if (!mounted) return;
 
