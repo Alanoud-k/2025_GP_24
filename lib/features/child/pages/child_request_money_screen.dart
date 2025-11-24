@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -22,17 +23,26 @@ class ChildRequestMoneyScreen extends StatefulWidget {
 class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
   final _amountController = TextEditingController();
   final _messageController = TextEditingController();
-
   bool _submitting = false;
 
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _submitRequest() async {
-    final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+    final amountText = _amountController.text.trim();
     final message = _messageController.text.trim();
+    final amount = double.tryParse(amountText) ?? 0.0;
 
     if (amount <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
+      _showSnack('Enter a valid amount');
+      return;
+    }
+    if (message.isEmpty) {
+      _showSnack('Please enter a message');
       return;
     }
 
@@ -54,20 +64,127 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
         }),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
-        Navigator.pushNamed(context, '/childRequestSuccess');
+        await _showSuccessDialog(amount, message);
+        if (!mounted) return;
+        Navigator.pop(context); // Back to previous page
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed: ${response.body}')));
+        final serverMsg = _tryReadServerMessage(response.body);
+        _showSnack(serverMsg ?? 'Request failed');
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (!mounted) return;
+      _showSnack('Error: $e');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
+  }
 
-    setState(() => _submitting = false);
+  String? _tryReadServerMessage(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] is String) {
+        return decoded['message'] as String;
+      }
+      return body.isNotEmpty ? body : null;
+    } catch (_) {
+      return body.isNotEmpty ? body : null;
+    }
+  }
+
+  void _showSnack(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Future<void> _showSuccessDialog(double amount, String message) {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  size: 36,
+                  color: Colors.teal,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Request Sent',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your request for ﷼ ${amount.toStringAsFixed(2)} was sent successfully.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  height: 1.4,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xffF7F8FA),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -88,6 +205,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            // Amount field
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
@@ -102,7 +220,11 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
               ),
               child: TextField(
                 controller: _amountController,
-                keyboardType: TextInputType.number,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const [
+                  DecimalTextInputFormatter(decimalRange: 2),
+                ],
                 decoration: const InputDecoration(
                   hintText: "﷼ 50.00",
                   border: InputBorder.none,
@@ -111,7 +233,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
             ),
             const SizedBox(height: 20),
 
-            // message
+            // Message field
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
@@ -126,6 +248,12 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
               ),
               child: TextField(
                 controller: _messageController,
+                keyboardType: TextInputType.text,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                    RegExp(r"[a-zA-Z\u0600-\u06FF\s]"),
+                  ),
+                ],
                 decoration: const InputDecoration(
                   hintText: "Add a message",
                   border: InputBorder.none,
@@ -135,7 +263,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
 
             const SizedBox(height: 40),
 
-            // Request Button
+            // Submit button
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -149,7 +277,14 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
                   ),
                 ),
                 child: _submitting
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text("Request", style: TextStyle(fontSize: 18)),
               ),
             ),
@@ -157,5 +292,33 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
         ),
       ),
     );
+  }
+}
+
+// Allows digits and one dot with fixed decimals.
+class DecimalTextInputFormatter extends TextInputFormatter {
+  final int decimalRange;
+  const DecimalTextInputFormatter({required this.decimalRange});
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+
+    if (text.isEmpty) return newValue;
+
+    if (!RegExp(r'^\d*\.?\d*$').hasMatch(text)) {
+      return oldValue;
+    }
+
+    if (text.contains('.')) {
+      final parts = text.split('.');
+      if (parts.length > 2) return oldValue;
+      if (parts[1].length > decimalRange) return oldValue;
+    }
+
+    return newValue;
   }
 }

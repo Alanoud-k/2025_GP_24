@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:my_app/core/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Core / Auth
+// Auth / Onboarding
 import 'package:my_app/features/auth/pages/mobile_input_screen.dart';
 import 'package:my_app/features/auth/pages/opening.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // Parent
 import 'package:my_app/features/parent/pages/register_screen.dart';
@@ -19,7 +18,6 @@ import 'package:my_app/features/parent/widgets/parent_shell.dart';
 import 'package:my_app/features/child/pages/child_login_screen.dart';
 import 'package:my_app/features/child/widgets/child_shell.dart';
 import 'package:my_app/features/child/pages/child_request_money_screen.dart';
-import 'package:my_app/features/child/pages/child_request_success.dart';
 import 'package:my_app/features/child/pages/child_security_settings_page.dart';
 
 void main() async {
@@ -31,30 +29,18 @@ void main() async {
   final childId = prefs.getInt("childId");
   final parentId = prefs.getInt("parentId");
 
-  Widget startPage;
+  Widget startPage = const SplashView();
 
-  if (token != null) {
-    if (role == "Parent") {
-      if (parentId != null) {
-        startPage = ParentShell(parentId: parentId!, token: token!);
-      } else {
-        startPage = const SplashView();
-      }
-    } else if (role == "Child") {
-      if (childId != null) {
-        startPage = ChildShell(
-          childId: childId!,
-          token: token!,
-          baseUrl: ApiConfig.baseUrl,
-        );
-      } else {
-        startPage = const SplashView();
-      }
-    } else {
-      startPage = const SplashView();
+  if (token != null && role != null) {
+    if (role == "Parent" && parentId != null) {
+      startPage = ParentShell(parentId: parentId, token: token);
+    } else if (role == "Child" && childId != null) {
+      startPage = ChildShell(
+        childId: childId,
+        token: token,
+        baseUrl: ApiConfig.baseUrl,
+      );
     }
-  } else {
-    startPage = const SplashView();
   }
 
   runApp(MyApp(startPage: startPage));
@@ -70,86 +56,105 @@ class MyApp extends StatelessWidget {
       title: 'Hassalah App',
       debugShowCheckedModeBanner: false,
       home: startPage,
-
       routes: {
-        // --------------------------
-        // Auth & Onboarding
-        // --------------------------
+        // Auth
         '/mobile': (context) => const MobileInputScreen(),
 
-        // --------------------------
-        // Parent Routes
-        // --------------------------
+        // Parent
         '/register': (context) => const RegisterScreen(),
         '/parentLogin': (context) => const ParentLoginScreen(),
 
-        // Parent main shell (with bottom nav)
         '/parentHome': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map?;
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
 
-          return ParentShell(
-            parentId: args?['parentId'],
-            token: args?['token'],
-          );
+          final int? parentId = args?['parentId'] as int?;
+          final String? token = args?['token'] as String?;
+
+          if (parentId == null || token == null) return const SplashView();
+
+          return ParentShell(parentId: parentId, token: token);
         },
 
         '/manageKids': (context) => const ManageKidsScreen(),
 
         '/parentSecuritySettings': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+
+          final int? parentId = args?['parentId'] as int?;
+          final String? token = args?['token'] as String?;
+
+          if (parentId == null || token == null) return const SplashView();
+
           return ParentSecuritySettingsPage(
-            parentId: args['parentId'],
-            token: args['token'],
+            parentId: parentId,
+            token: token,
           );
         },
 
         '/termsPrivacy': (context) => const TermsPrivacyPage(),
 
-        // --------------------------
-        // Child Login Only
-        // --------------------------
+        // Child login
         '/childLogin': (context) => const ChildLoginScreen(),
 
-        // --------------------------
-        // Child main shell
-        // --------------------------
+        // Child shell
         '/childShell': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+
+          final int? childId = args?['childId'] as int?;
+          final String? token = args?['token'] as String?;
+          final String? baseUrl = args?['baseUrl'] as String?;
+
+          if (childId == null || token == null || baseUrl == null) {
+            return const SplashView();
+          }
+
           return ChildShell(
-            childId: args['childId'],
-            token: args['token'],
-            baseUrl: args['baseUrl'],
+            childId: childId,
+            token: token,
+            baseUrl: baseUrl,
           );
         },
 
-        // --------------------------
-        // Child Requests (Money)
-        // --------------------------
+        // Child request money
         '/childRequestMoney': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+
+          final int? childId = args?['childId'] as int?;
+          final String? token = args?['token'] as String?;
+          final String? baseUrl = args?['baseUrl'] as String?;
+
+          if (childId == null || token == null || baseUrl == null) {
+            return const SplashView();
+          }
+
           return ChildRequestMoneyScreen(
-            childId: args['childId'],
-            baseUrl: args['baseUrl'],
-            token: args['token'],
+            childId: childId,
+            baseUrl: baseUrl,
+            token: token,
           );
         },
 
-        '/childRequestSuccess': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map;
-
-          return ChildRequestSuccessScreen(
-            childId: args['childId'],
-            token: args['token'],
-            baseUrl: args['baseUrl'],
-          );
-        },
-
+        // Child security settings
         '/childSecuritySettings': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          final args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>?;
+
+          final int? childId = args?['childId'] as int?;
+          final String? token = args?['token'] as String?;
+          final String? baseUrl = args?['baseUrl'] as String?;
+
+          if (childId == null || token == null || baseUrl == null) {
+            return const SplashView();
+          }
+
           return ChildSecuritySettingsPage(
-            childId: args['childId'],
-            baseUrl: args['baseUrl'],
-            token: args['token'],
+            childId: childId,
+            baseUrl: baseUrl,
+            token: token,
           );
         },
       },
