@@ -1,12 +1,7 @@
-## 💰 حصّالة – Smart Family Wallet
-<p align="center">
-  <img src="/mnt/data/A_flat_vector_digital_illustration_of_a_piggy_bank.png" 
-       alt="image"
-       width="1377"
-       height="512" />
-</p>
-
+💰 حصّالة – Smart Family Wallet
+<p align="center"> <img src="https://github.com/user-attachments/assets/e29aa7ee-8350-4fdd-bc60-e377ef82f8ce" alt="Hassalah Screenshot" width="90%" /> </p>
 📖 Introduction
+
 حصّالة is a Saudi FinTech mobile app designed to build strong financial habits for children and teens under parental guidance.
 The app provides a safe, fun, and educational environment where families can manage allowances, set goals, and learn budgeting together.
 
