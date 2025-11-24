@@ -1,9 +1,9 @@
 ## 💰 حصّالة – Smart Family Wallet
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/15f73520-c975-4293-b7bb-7e6c4f706f4f" 
-       alt="حصالة" 
-       width="385" 
-       height="112" />
+  <img src="/mnt/data/A_flat_vector_digital_illustration_of_a_piggy_bank.png" 
+       alt="image"
+       width="1377"
+       height="512" />
 </p>
 
 📖 Introduction
@@ -14,14 +14,23 @@ Inspired by the idea of a family piggy bank, حصّالة turns daily money prac
 Our vision aligns with Saudi Vision 2030 by promoting financial literacy, responsible spending, and digital transformation in the next generation.
 
 🚀 Features
+
 ✨ Parent & Child separate experiences
+
 ✨ Parent wallet top-up and balance management
+
 ✨ Transfer money from Parent → Child wallet
+
 ✨ Smart allowance system
+
 ✨ Chore management (weekly / one-time tasks)
+
 ✨ Child goals: create, edit, delete, and track progress
+
 ✨ Request Money feature with instant parent approval/rejection
+
 ✨ AI-powered spending categorization & insights dashboard
+
 ✨ Transaction history for Parent and Child wallets
 ---
 🛠️ Technology Stack
