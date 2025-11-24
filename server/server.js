@@ -29,10 +29,6 @@ if (!process.env.DATABASE_URL) {
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Simple request logger
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -57,15 +53,25 @@ app.post("/api/create-payment/:parentId", createPayment);
 
 app.post(
   "/api/moyasar-webhook",
-  express.raw({ type: "*/*" }),
+  express.raw({ type: "application/json" }),
   (req, res, next) => {
+    req.rawBody = req.body; // Buffer containing the REAL raw payload
     try {
       req.body = JSON.parse(req.body.toString("utf8"));
-    } catch (e) {}
+    } catch (e) {
+      return res.sendStatus(400);
+    }
     next();
   },
   handleMoyasarWebhook
 );
+
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
 
 /* -----------------------------------------
    PAYMENT REDIRECT ROUTES (for browser)
