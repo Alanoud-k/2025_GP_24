@@ -12,84 +12,67 @@ import parentRoutes from "./routes/parentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 
-// PAYMENT CONTROLLERS
+// PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 
-// ENV AND SETUP
+// ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 dotenv.config({ path: path.join(__dirname, ".env") });
-
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL is missing in .env");
-  process.exit(1);
-}
 
 const app = express();
 
-// CORS and JSON for all normal routes
+// Required for all normal endpoints
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Simple request logger
-app.use((req, _res, next) => {
-  console.log(`${req.method} ${req.url}`);
-  next();
-});
-
-/* -----------------------------------------
-   NORMAL API ROUTES
------------------------------------------- */
-
-app.use("/api/auth", authRoutes);
-app.use("/api", parentRoutes);
-app.use("/api", goalRoutes);
-app.use("/api", moneyRequestRoutes);
-
-/* -----------------------------------------
-   PAYMENT ROUTES
------------------------------------------- */
-
-// Payment creation endpoint for Flutter
-app.post("/api/create-payment/:parentId", createPayment);
-
-// Deprecated payment endpoints (no longer used)
-// import { addMoney, confirmPayment } from "./controllers/addMoneyController.js";
-// app.post("/api/add-money", addMoney);
-// app.post("/api/confirm-payment", confirmPayment);
-
-/* -----------------------------------------
-   MOYASAR WEBHOOK ROUTE
-   Must use express.raw and be placed after JSON middleware
------------------------------------------- */
-
+/* ---------------------------------------------------------
+   1) MOYASAR WEBHOOK — MUST COME BEFORE express.json()
+--------------------------------------------------------- */
 app.post(
   "/api/moyasar-webhook",
-  express.raw({ type: "application/json" }),
-
+  express.raw({ type: "application/json" }), // keep raw body
   (req, res, next) => {
     req.rawBody = req.body;
 
     try {
       req.body = JSON.parse(req.body.toString("utf8"));
-    } catch (e) {
+    } catch (err) {
       console.error("Invalid JSON in webhook");
       return res.sendStatus(400);
     }
 
     next();
   },
-
   handleMoyasarWebhook
 );
 
-/* -----------------------------------------
-   PAYMENT REDIRECT ROUTES
------------------------------------------- */
+/* ---------------------------------------------------------
+   2) NORMAL EXPRESS JSON HANDLING — AFTER WEBHOOK
+--------------------------------------------------------- */
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Request logger
+app.use((req, _res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+/* ---------------------------------------------------------
+   OTHER ROUTES
+--------------------------------------------------------- */
+app.use("/api/auth", authRoutes);
+app.use("/api", parentRoutes);
+app.use("/api", goalRoutes);
+app.use("/api", moneyRequestRoutes);
+
+// Create payment
+app.post("/api/create-payment/:parentId", createPayment);
+
+/* ---------------------------------------------------------
+   REDIRECT PAGES
+--------------------------------------------------------- */
 app.get("/payment-success", (_req, res) => {
   res.send("Payment completed successfully.");
 });
@@ -98,10 +81,9 @@ app.get("/payment-failed", (_req, res) => {
   res.send("Payment failed.");
 });
 
-/* -----------------------------------------
+/* ---------------------------------------------------------
    HEALTH CHECK
------------------------------------------- */
-
+--------------------------------------------------------- */
 app.get("/", (_req, res) => {
   res.send("Hassalah API is running.");
 });
