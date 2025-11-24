@@ -1,3 +1,322 @@
+// import 'package:flutter/material.dart';
+// import 'dart:convert';
+// import 'package:http/http.dart' as http;
+// import 'package:fl_chart/fl_chart.dart';
+// import 'package:my_app/core/api_config.dart';
+// import 'child_goals_screen.dart';
+// import 'child_request_money_screen.dart';
+// import 'package:my_app/utils/check_auth.dart';
+
+// class ChildHomePageScreen extends StatefulWidget {
+//   final int childId;
+//   final String baseUrl;
+//   final String token;
+
+//   const ChildHomePageScreen({
+//     super.key,
+//     required this.childId,
+//     required this.baseUrl,
+//     required this.token,
+//   });
+
+//   @override
+//   State<ChildHomePageScreen> createState() => _ChildHomePageScreenState();
+// }
+
+// class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
+//   double currentBalance = 0.0;
+//   int currentPoints = 0;
+//   String childName = '';
+//   bool _loading = true;
+
+//   double spendBalance = 0.0;
+//   double savingBalance = 0.0;
+//   Map<String, double> categoryPercentages = {};
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _fetchChildInfo();
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       checkAuthStatus(context);
+//     });
+//   }
+
+//   Future<void> _fetchChildInfo() async {
+//     setState(() => _loading = true);
+
+//     final url = Uri.parse(
+//       '${widget.baseUrl}/api/auth/child/info/${widget.childId}',
+//     );
+
+//     try {
+//       final response = await http.get(
+//         url,
+//         headers: {
+//           "Authorization": "Bearer ${widget.token}",
+//           "Content-Type": "application/json",
+//         },
+//       );
+//       if (response.statusCode == 200) {
+//         final data = jsonDecode(response.body);
+
+//         double _toDouble(dynamic v) =>
+//             (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
+
+//         setState(() {
+//           childName = data['firstName'] ?? '';
+//           currentBalance = _toDouble(data['balance']);
+//           spendBalance = _toDouble(data['spend']);
+//           savingBalance = _toDouble(data['saving']);
+//           currentPoints = (data['points'] ?? 0).toInt();
+
+//           categoryPercentages = Map<String, double>.from(
+//             data['categories'] ??
+//                 {'Food': 25, 'Shopping': 55, 'Gifts': 10, 'Others': 10},
+//           );
+
+//           _loading = false;
+//         });
+//       } else {
+//         setState(() => _loading = false);
+//       }
+//     } catch (e) {
+//       setState(() => _loading = false);
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     if (_loading) {
+//       return const Center(child: CircularProgressIndicator());
+//     }
+
+//     return SingleChildScrollView(
+//       padding: const EdgeInsets.all(16),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // Header
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               Row(
+//                 children: [
+//                   const CircleAvatar(
+//                     radius: 22,
+//                     backgroundImage: AssetImage(
+//                       'assets/images/child_avatar.png',
+//                     ),
+//                   ),
+//                   const SizedBox(width: 10),
+//                   Text(
+//                     childName.isNotEmpty ? childName : 'Child',
+//                     style: const TextStyle(
+//                       fontSize: 18,
+//                       fontWeight: FontWeight.w600,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//               const Icon(Icons.notifications_none, color: Colors.black),
+//             ],
+//           ),
+
+//           const SizedBox(height: 25),
+
+//           // Balance Cards
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               _balanceCard(
+//                 'spend balance',
+//                 '﷼ ${spendBalance.toStringAsFixed(2)}',
+//               ),
+//               _balanceCard(
+//                 'saving balance',
+//                 '﷼ ${savingBalance.toStringAsFixed(2)}',
+//               ),
+//             ],
+//           ),
+
+//           const SizedBox(height: 25),
+
+//           // Buttons
+//           GridView.count(
+//             shrinkWrap: true,
+//             physics: const NeverScrollableScrollPhysics(),
+//             crossAxisCount: 2,
+//             crossAxisSpacing: 12,
+//             mainAxisSpacing: 12,
+//             childAspectRatio: 1.8,
+//             children: [
+//               _actionButton('Chores', () {}),
+//               _actionButton('Goals', () async {
+//                 final needRefresh = await Navigator.push(
+//                   context,
+//                   MaterialPageRoute(
+//                     builder: (_) => ChildGoalsScreen(
+//                       childId: widget.childId,
+//                       baseUrl: widget.baseUrl,
+//                       token: widget.token,
+//                     ),
+//                   ),
+//                 );
+
+//                 if (needRefresh == true) {
+//                   _fetchChildInfo();
+//                 }
+//               }),
+//               _actionButton('Transaction', () {}),
+//               _actionButton('Request Money', () {
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(
+//                     builder: (_) => ChildRequestMoneyScreen(
+//                       childId: widget.childId,
+//                       baseUrl: widget.baseUrl,
+//                       token: widget.token,
+//                     ),
+//                   ),
+//                 );
+//               }),
+//             ],
+//           ),
+
+//           const SizedBox(height: 35),
+
+//           // Pie Chart
+//           Center(
+//             child: Column(
+//               children: [
+//                 const Text(
+//                   'Spending Breakdown',
+//                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+//                 ),
+//                 const SizedBox(height: 16),
+//                 SizedBox(
+//                   height: 220,
+//                   width: 220,
+//                   child: PieChart(
+//                     PieChartData(
+//                       sectionsSpace: 3,
+//                       centerSpaceRadius: 40,
+//                       borderData: FlBorderData(show: false),
+//                       sections: _buildPieSections(),
+//                     ),
+//                   ),
+//                 ),
+//                 const SizedBox(height: 20),
+
+//                 // Legend
+//                 Wrap(
+//                   alignment: WrapAlignment.center,
+//                   spacing: 16,
+//                   runSpacing: 8,
+//                   children: categoryPercentages.keys.map((key) {
+//                     return _legendItem(_getColorForCategory(key), key);
+//                   }).toList(),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   // ---------------------------------------------------------
+//   // Widgets
+//   Widget _balanceCard(String title, String value) {
+//     return Expanded(
+//       child: Container(
+//         margin: const EdgeInsets.symmetric(horizontal: 5),
+//         padding: const EdgeInsets.symmetric(vertical: 18),
+//         decoration: BoxDecoration(
+//           color: Colors.white,
+//           borderRadius: BorderRadius.circular(14),
+//           boxShadow: [
+//             BoxShadow(
+//               color: Colors.black12.withOpacity(0.05),
+//               blurRadius: 4,
+//               offset: const Offset(0, 2),
+//             ),
+//           ],
+//         ),
+//         child: Column(
+//           children: [
+//             Text(
+//               title,
+//               style: const TextStyle(fontSize: 13, color: Colors.grey),
+//             ),
+//             const SizedBox(height: 6),
+//             Text(
+//               value,
+//               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _actionButton(String text, VoidCallback onTap) {
+//     return ElevatedButton(
+//       style: ElevatedButton.styleFrom(
+//         backgroundColor: Colors.white,
+//         foregroundColor: Colors.black,
+//         elevation: 2,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       ),
+//       onPressed: onTap,
+//       child: Text(text, style: const TextStyle(fontWeight: FontWeight.w500)),
+//     );
+//   }
+
+//   List<PieChartSectionData> _buildPieSections() {
+//     return categoryPercentages.entries.map((entry) {
+//       return PieChartSectionData(
+//         value: entry.value,
+//         color: _getColorForCategory(entry.key),
+//         title: '${entry.value.toStringAsFixed(0)}%',
+//         radius: 55,
+//         titleStyle: const TextStyle(
+//           fontWeight: FontWeight.bold,
+//           color: Colors.white,
+//           fontSize: 14,
+//         ),
+//       );
+//     }).toList();
+//   }
+
+//   Color _getColorForCategory(String category) {
+//     switch (category) {
+//       case 'Food':
+//         return Colors.teal;
+//       case 'Shopping':
+//         return Colors.orange;
+//       case 'Gifts':
+//         return Colors.purple;
+//       default:
+//         return Colors.blueGrey;
+//     }
+//   }
+
+//   Widget _legendItem(Color color, String text) {
+//     return Row(
+//       mainAxisSize: MainAxisSize.min,
+//       children: [
+//         Container(
+//           width: 14,
+//           height: 14,
+//           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+//         ),
+//         const SizedBox(width: 6),
+//         Text(text, style: const TextStyle(fontSize: 13)),
+//       ],
+//     );
+//   }
+// }
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -31,7 +350,17 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
   double spendBalance = 0.0;
   double savingBalance = 0.0;
-  Map<String, double> categoryPercentages = {};
+
+  Map<String, double> categoryPercentages = {
+    'Food': 25,
+    'Education': 10,
+    'Entertainment': 25,
+    'Shopping': 30,
+    'Gifts': 5,
+    'Others': 5,
+  };
+
+  static const String _sarIconPath = 'assets/icons/riyal.png';
 
   @override
   void initState() {
@@ -57,6 +386,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           "Content-Type": "application/json",
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
@@ -65,14 +395,12 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
         setState(() {
           childName = data['firstName'] ?? '';
-          currentBalance = _toDouble(data['balance']);
           spendBalance = _toDouble(data['spend']);
           savingBalance = _toDouble(data['saving']);
           currentPoints = (data['points'] ?? 0).toInt();
 
           categoryPercentages = Map<String, double>.from(
-            data['categories'] ??
-                {'Food': 25, 'Shopping': 55, 'Gifts': 10, 'Others': 10},
+            data['categories'] ?? categoryPercentages,
           );
 
           _loading = false;
@@ -85,74 +413,240 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     }
   }
 
+  // ---------------------------------------------------------
+  // UI
+  // ---------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    const bg1 = Color(0xFFF7FAFC);
+    const bg2 = Color(0xFFE6F4F3);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [bg1, bg2],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _header(),
+                      const SizedBox(height: 20),
+                      _balancesRow(),
+                      const SizedBox(height: 10),
+                      _keysBadge(),
+                      const SizedBox(height: 24),
+                      _actionsGrid(),
+                      const SizedBox(height: 28),
+                      _breakdownCard(),
+                    ],
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // Header
+  // ---------------------------------------------------------
+  Widget _header() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            const CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.grey,
+              child: Icon(Icons.person, size: 26, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Welcome back,",
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+                Text(
+                  childName.isNotEmpty ? childName : 'Child',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const Icon(Icons.notifications_none, color: Colors.black87),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------
+  // Balance Cards
+  // ---------------------------------------------------------
+  Widget _balancesRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _balanceCard(
+            title: 'Spend balance',
+            amount: spendBalance,
+            gradientColors: const [
+              Color(0xFF37C4BE),
+              Color(0xFF2EA49E),
+            ],
+            leadingIcon: Icons.shopping_bag_outlined,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _balanceCard(
+            title: 'Save balance',
+            amount: savingBalance,
+            gradientColors: const [
+              Color(0xFF7E57C2),
+              Color(0xFF5C6BC0),
+            ],
+            leadingIcon: Icons.account_balance_wallet_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _balanceCard({
+    required String title,
+    required double amount,
+    required List<Color> gradientColors,
+    required IconData leadingIcon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12.withOpacity(0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 22,
-                    backgroundImage: AssetImage(
-                      'assets/images/child_avatar.png',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    childName.isNotEmpty ? childName : 'Child',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const Icon(Icons.notifications_none, color: Colors.black),
-            ],
-          ),
-
-          const SizedBox(height: 25),
-
-          // Balance Cards
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _balanceCard(
-                'spend balance',
-                '﷼ ${spendBalance.toStringAsFixed(2)}',
-              ),
-              _balanceCard(
-                'saving balance',
-                '﷼ ${savingBalance.toStringAsFixed(2)}',
+              Icon(leadingIcon, size: 20, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 13, color: Colors.white70),
               ),
             ],
           ),
-
-          const SizedBox(height: 25),
-
-          // Buttons
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.8,
+          const SizedBox(height: 10),
+          Row(
             children: [
-              _actionButton('Chores', () {}),
-              _actionButton('Goals', () async {
-                final needRefresh = await Navigator.push(
+              Image.asset(_sarIconPath, height: 20),
+              const SizedBox(width: 4),
+              Text(
+                amount.toStringAsFixed(2),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // Keys Badge
+  // ---------------------------------------------------------
+  Widget _keysBadge() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12.withOpacity(0.15),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.vpn_key_rounded,
+              size: 18,
+              color: Colors.amber.shade800, // ← الذهبي
+            ),
+            const SizedBox(width: 6),
+            Text(
+              "$currentPoints Keys",
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // Actions Grid
+  // ---------------------------------------------------------
+  Widget _actionsGrid() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              _actionButton('Chores', Icons.checklist_rounded, () {}),
+              const SizedBox(height: 12),
+              _actionButton('Transaction', Icons.receipt_long_outlined, () {}),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            children: [
+              _actionButton('Goals', Icons.flag_rounded, () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => ChildGoalsScreen(
@@ -162,13 +656,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     ),
                   ),
                 );
-
-                if (needRefresh == true) {
-                  _fetchChildInfo();
-                }
               }),
-              _actionButton('Transaction', () {}),
-              _actionButton('Request Money', () {
+              const SizedBox(height: 12),
+              _actionButton('Request Money', Icons.payments_rounded, () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -182,97 +672,203 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               }),
             ],
           ),
+        ),
+      ],
+    );
+  }
 
-          const SizedBox(height: 35),
-
-          // Pie Chart
-          Center(
-            child: Column(
-              children: [
-                const Text(
-                  'Spending Breakdown',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 220,
-                  width: 220,
-                  child: PieChart(
-                    PieChartData(
-                      sectionsSpace: 3,
-                      centerSpaceRadius: 40,
-                      borderData: FlBorderData(show: false),
-                      sections: _buildPieSections(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Legend
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 16,
-                  runSpacing: 8,
-                  children: categoryPercentages.keys.map((key) {
-                    return _legendItem(_getColorForCategory(key), key);
-                  }).toList(),
-                ),
-              ],
+  Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2EA49E).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 22, color: const Color(0xFF2EA49E)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // Breakdown Card
+  // ---------------------------------------------------------
+  Widget _breakdownCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12.withOpacity(0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
+              SizedBox(width: 6),
+              Text(
+                'Spending Breakdown',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox( height: 210, 
+          child: PieChart(
+             PieChartData( 
+              centerSpaceRadius: 40, 
+              sectionsSpace: 3,
+               sections: [
+                 PieChartSectionData( 
+                  value: 30, 
+                  color: Colors.pinkAccent,
+                   radius: 55,
+                    title: '30%',
+                     titleStyle:
+                      TextStyle( 
+                        color: Colors.white, 
+                        fontWeight: FontWeight.bold,
+                         ), 
+                         ),
+                          PieChartSectionData( 
+                            value: 25,
+                             color: Colors.orangeAccent,
+                              radius: 55,
+                               title: '25%',
+                                titleStyle: 
+                                TextStyle( 
+                                  color: Colors.white,
+                                   fontWeight:
+                                    FontWeight.bold, 
+                                    ),
+                                     ), PieChartSectionData( 
+                                      value: 20, 
+                                      color: Colors.lightBlueAccent, 
+                                      radius: 55, 
+                                      title: '20%',
+                                       titleStyle: 
+                                       TextStyle(
+                                         color: Colors.white,
+                                          fontWeight:
+                                           FontWeight.bold,
+                                            ), ), PieChartSectionData( 
+                                              value: 25,
+                                               color: Colors.greenAccent, 
+                                               radius: 55,
+                                                title: '25%', 
+                                                titleStyle: TextStyle( 
+                                                  color: Colors.white,
+                                                   fontWeight: FontWeight.bold,
+                                                    ),
+                                                     ), 
+                                                     ], 
+                                                     ), 
+                                                     ), 
+                                                     ),
+          const SizedBox(height: 18),
+          _legend(),
         ],
       ),
     );
   }
 
   // ---------------------------------------------------------
-  // Widgets
-  Widget _balanceCard(String title, String value) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5),
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
+  // Legend (ترتيب ثابت + لون داخلي)
+  // ---------------------------------------------------------
+  Widget _legend() {
+    final List<String> ordered = [
+      'Food',
+      'Education',
+      'Entertainment',
+      'Shopping',
+      'Gifts',
+      'Others',
+    ];
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 24,
+      runSpacing: 12,
+      children: ordered.map((cat) {
+        final color = _getColorForCategory(cat);
+        return Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            Container(
+              width: 18,
+              height: 18,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(width: 6),
             Text(
-              value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              cat,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2C3E50),
+              ),
             ),
           ],
-        ),
-      ),
+        );
+      }).toList(),
     );
   }
 
-  Widget _actionButton(String text, VoidCallback onTap) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onPressed: onTap,
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w500)),
-    );
-  }
-
+  // ---------------------------------------------------------
+  // Pie Chart sections
+  // ---------------------------------------------------------
   List<PieChartSectionData> _buildPieSections() {
     return categoryPercentages.entries.map((entry) {
       return PieChartSectionData(
@@ -292,28 +888,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Color _getColorForCategory(String category) {
     switch (category) {
       case 'Food':
-        return Colors.teal;
+        return Colors.orangeAccent;
+      case 'Education':
+        return Colors.greenAccent;
+      case 'Entertainment':
+        return Colors.lightBlueAccent;
       case 'Shopping':
-        return Colors.orange;
+        return Colors.pinkAccent;
       case 'Gifts':
-        return Colors.purple;
+        return Colors.purpleAccent;
       default:
         return Colors.blueGrey;
     }
   }
-
-  Widget _legendItem(Color color, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontSize: 13)),
-      ],
-    );
-  }
 }
+
