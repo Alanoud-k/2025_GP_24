@@ -1,4 +1,5 @@
 // server/routes/parentRoutes.js
+
 import express from "express";
 import { sql } from "../config/db.js";
 import { getParentCard, saveParentCard } from "../controllers/parentCardController.js";
@@ -6,10 +7,13 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// GET /api/parent/:parentId
-// Returns parent basic info + walletbalance from Account (ParentAccount)
+/* ---------------------------------------------------------
+   GET /api/parent/:parentId
+   Returns parent info + wallet balance
+--------------------------------------------------------- */
 router.get("/parent/:parentId", async (req, res) => {
   const parentId = Number(req.params.parentId);
+
   if (!parentId) {
     return res.status(400).json({ message: "Invalid parentId" });
   }
@@ -41,8 +45,14 @@ router.get("/parent/:parentId", async (req, res) => {
   }
 });
 
-// Parent card routes
+/* ---------------------------------------------------------
+   Parent Card Endpoints
+--------------------------------------------------------- */
+
+// GET saved card
 router.get("/parent/:parentId/card", protect, getParentCard);
+
+// POST save/replace card
 router.post("/parent/:parentId/card", protect, saveParentCard);
 
 export default router;

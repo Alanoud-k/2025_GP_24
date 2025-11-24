@@ -1,9 +1,14 @@
 // server/controllers/parentCardController.js
+
 import { sql } from "../config/db.js";
 
-// GET /api/parent/:parentId/card
+/* ---------------------------------------------------------
+   GET /api/parent/:parentId/card
+   Returns saved card for the parent
+--------------------------------------------------------- */
 export async function getParentCard(req, res) {
   const parentId = Number(req.params.parentId);
+
   if (!parentId) {
     return res.status(400).json({ message: "Invalid parentId" });
   }
@@ -31,13 +36,19 @@ export async function getParentCard(req, res) {
     });
   } catch (err) {
     console.error("getParentCard error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 }
 
-// POST /api/parent/:parentId/card
+/* ---------------------------------------------------------
+   POST /api/parent/:parentId/card
+   Saves or replaces parent’s saved card
+--------------------------------------------------------- */
 export async function saveParentCard(req, res) {
   const parentId = Number(req.params.parentId);
+
+  // Flutter sends camelCase fields:
+  // brand, last4, expMonth, expYear
   const { brand, last4, expMonth, expYear } = req.body;
 
   if (!parentId || !brand || !last4 || !expMonth || !expYear) {
@@ -45,13 +56,13 @@ export async function saveParentCard(req, res) {
   }
 
   try {
-    // Delete old card (only one allowed)
+    // Remove any existing saved card (only one per parent)
     await sql`
       DELETE FROM "PaymentMethod"
       WHERE "parentid" = ${parentId}
     `;
 
-    // Insert new card
+    // Insert new card — map camelCase → snake_case
     const rows = await sql`
       INSERT INTO "PaymentMethod"
         ("parentid", "brand", "last4", "exp_month", "exp_year")
@@ -67,6 +78,6 @@ export async function saveParentCard(req, res) {
     });
   } catch (err) {
     console.error("saveParentCard error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 }

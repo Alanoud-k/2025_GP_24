@@ -4,25 +4,27 @@ import { sql } from "../config/db.js";
 
 export const handleMoyasarWebhook = async (req, res) => {
   try {
-    const signature = req.headers["x-moyasar-signature"];
+const signature =
+  req.headers["x-event-secret"] ||
+  req.headers["x-moyasar-signature"] ||
+  req.headers["x-moyasar-signature-v2"];
 
-    // Validation ping from dashboard (no signature)
-    if (!signature) {
-      console.log("Moyasar validation ping received");
-      return res.sendStatus(200);
-    }
+if (!signature) {
+  console.log("No signature header found");
+  return res.sendStatus(400);
+}
 
-    const secret = process.env.MOYASAR_WEBHOOK_SECRET;
-    if (!secret) {
-      console.error("Webhook secret missing in environment");
-      return res.sendStatus(500);
-    }
+const secret = process.env.MOYASAR_WEBHOOK_SECRET;
+if (!secret) {
+  console.error("Webhook secret missing in .env");
+  return res.sendStatus(500);
+}
 
-    // Simple comparison: Moyasar sends the secret token as is
-    if (signature !== secret) {
-      console.error("Invalid webhook signature");
-      return res.sendStatus(401);
-    }
+if (signature !== secret) {
+  console.error("Invalid webhook signature");
+  return res.sendStatus(401);
+}
+
 
     console.log("Webhook signature verified");
 
