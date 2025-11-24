@@ -11,23 +11,21 @@ Our project aligns with the goals of Saudi Vision 2030 by promoting digital empo
 
 <h2>🚀 Features</h2>
 
-✨ Parent & Child separate experiences
+✨ Full parental control over all financial and behavioral aspects, including allowances, spending, goals, tasks, and approvals.
 
-✨ Parent wallet top-up and balance management
+✨ Smooth and secure Parent → Child wallet transfers with real-time tracking.
 
-✨ Transfer money from Parent → Child wallet
+✨ Instant payment approval system, allowing parents to approve or reject a child’s money request immediately.
 
-✨ Smart allowance system
+✨ Smart rewards system with gamification, encouraging positive financial behavior and motivating children consistently.
 
-✨ Chore management (weekly / one-time tasks)
+✨ Daily and weekly chore management, linking completed tasks to earnings and rewards.
 
-✨ Child goals: create, edit, delete, and track progress
+✨ Intelligent saving goals for children, enabling them to create personalized financial goals with clear and simple progress tracking.
 
-✨ Request Money feature with instant parent approval/rejection
+✨ AI-powered smart reports, providing parents with accurate insights into their children’s financial behavior and spending patterns.
 
-✨ AI-powered spending categorization & insights dashboard
-
-✨ Transaction history for Parent and Child wallets
+✨ Comprehensive and categorized transaction history for children’s wallets, featuring intelligent auto-classification for an organized, easy-to-navigate view.
 
 <h2>🛠️ Technology Stack</h2>
 
