@@ -19,18 +19,47 @@ class ParentChoresScreen extends StatefulWidget {
 }
 
 class _ParentChoresScreenState extends State<ParentChoresScreen> {
+  bool _loading = true;
+  String? token;
+
   @override
   void initState() {
     super.initState();
-    _initAuthCheck();
+    _initializeAuthCheck();
   }
 
-  Future<void> _initAuthCheck() async {
-    await checkAuthStatus(context); // ✅ same logic as other screens
+  Future<void> _initializeAuthCheck() async {
+    await checkAuthStatus(context);
+
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+
+    if (token == null || token!.isEmpty) {
+      _forceLogout();
+      return;
+    }
+
+    if (mounted) setState(() => _loading = false);
+  }
+
+  void _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF7F8FA),
+        body: Center(child: CircularProgressIndicator(color: Colors.teal)),
+      );
+    }
+
     return SafeArea(
       child: Container(
         color: const Color(0xFFF7F8FA),

@@ -24,16 +24,39 @@ class ParentMoneyRequestsScreen extends StatefulWidget {
 class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
   bool _loading = true;
   List<dynamic> _requests = [];
+  String? token;
 
   @override
   void initState() {
     super.initState();
+    _initializeFlow();
+  }
 
-    // 🔐 AUTH CHECK FIRST
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await checkAuthStatus(context);
-      _fetchRequests();
-    });
+  Future<void> _initializeFlow() async {
+    // 1) Check expired
+    await checkAuthStatus(context);
+
+    // 2) Load token
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+
+    // 3) Token missing → logout
+    if (token == null || token!.isEmpty) {
+      _forceLogout();
+      return;
+    }
+
+    // 4) Fetch requests
+    await _fetchRequests();
+  }
+
+  void _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+    }
   }
 
   Future<void> _fetchRequests() async {
@@ -49,6 +72,10 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
           "Authorization": "Bearer ${widget.token}",
         },
       );
+      if (response.statusCode == 401) {
+        _forceLogout();
+        return;
+      }
 
       if (response.statusCode == 200) {
         setState(() {
@@ -76,10 +103,15 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
         body: jsonEncode({"requestId": requestId, "status": newStatus}),
       );
 
+      if (response.statusCode == 401) {
+        _forceLogout();
+        return;
+      }
+
       if (response.statusCode == 200) {
         _fetchRequests();
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   @override

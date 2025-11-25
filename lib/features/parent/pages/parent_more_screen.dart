@@ -5,16 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/core/api_config.dart';
 
 class MorePage extends StatefulWidget {
   final int parentId;
   final String token;
 
-  const MorePage({
-    super.key,
-    required this.parentId,
-    required this.token,
-  });
+  const MorePage({super.key, required this.parentId, required this.token});
 
   @override
   State<MorePage> createState() => _MorePageState();
@@ -23,21 +20,41 @@ class MorePage extends StatefulWidget {
 class _MorePageState extends State<MorePage> {
   String fullName = '';
   String phoneNo = '';
-
+  String? token;
   bool isLoading = true;
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _initAuth();
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.token.isEmpty) {
-        checkAuthStatus(context);
-      }
-    });
+  Future<void> _initAuth() async {
+    // Step 1 — check expired
+    await checkAuthStatus(context);
 
-    fetchParentInfo();
+    // Step 2 — load token
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+
+    // Step 3 — if missing → logout
+    if (token == null || token!.isEmpty) {
+      _forceLogout();
+      return;
+    }
+
+    // Step 4 — load info
+    await fetchParentInfo();
+  }
+
+  Future<void> _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+    }
   }
 
   Future<void> fetchParentInfo() async {
@@ -50,9 +67,7 @@ class _MorePageState extends State<MorePage> {
       return;
     }
 
-    final url = Uri.parse(
-      'http://10.0.2.2:3000/api/parent/${widget.parentId}',
-    );
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/parent/${widget.parentId}');
     print("Fetching parent info from $url");
 
     try {
@@ -70,11 +85,7 @@ class _MorePageState extends State<MorePage> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
         if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            '/mobile',
-            (_) => false,
-          );
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
         }
         return;
       }
@@ -84,8 +95,8 @@ class _MorePageState extends State<MorePage> {
 
         if (!mounted) return;
         setState(() {
-          fullName =
-              "${data['firstname'] ?? ''} ${data['lastname'] ?? ''}".trim();
+          fullName = "${data['firstname'] ?? ''} ${data['lastname'] ?? ''}"
+              .trim();
           phoneNo = data['phoneno'] ?? '';
           isLoading = false;
           errorMessage = null;
@@ -150,18 +161,22 @@ class _MorePageState extends State<MorePage> {
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 255, 255, 255)),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color.fromARGB(255, 255, 255, 255),
+                ),
               ),
-             style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(200, 152, 152, 152),
-             shape: RoundedRectangleBorder(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(200, 152, 152, 152),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                ),),
-
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                _performLogout(context);
+                _performLogout();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -180,17 +195,8 @@ class _MorePageState extends State<MorePage> {
     );
   }
 
-  void _performLogout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    if (context.mounted) {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/mobile',
-        (route) => false,
-      );
-    }
+  Future<void> _performLogout() async {
+    await _forceLogout();
   }
 
   @override
@@ -206,10 +212,7 @@ class _MorePageState extends State<MorePage> {
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFFF7FAFC),
-              Color(0xFFE6F4F3),
-            ],
+            colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),

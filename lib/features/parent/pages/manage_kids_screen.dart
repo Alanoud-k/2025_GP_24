@@ -373,6 +373,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/core/api_config.dart';
 
 class ManageKidsScreen extends StatefulWidget {
   const ManageKidsScreen({super.key});
@@ -389,12 +390,12 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
   final TextEditingController password = TextEditingController();
 
   String? token;
-  static const String baseUrl = "http://10.0.2.2:3000";
+  final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    checkAuthStatus(context);
+    //checkAuthStatus(context);
 
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
     parentId = args?['parentId'] ?? 0;
@@ -418,7 +419,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
     setState(() => _loading = true);
 
-    final url = Uri.parse("$baseUrl/api/auth/parent/$parentId/children");
+    final url = Uri.parse("${baseUrl}/api/auth/parent/$parentId/children");
 
     try {
       final response = await http.get(
@@ -435,9 +436,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       } else if (response.statusCode == 401) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-        if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
-        }
+        Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
         return;
       } else {
         throw Exception(
@@ -652,13 +651,13 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       return;
     }
 
-    final url = Uri.parse("$baseUrl/api/auth/child/register");
+    final url = Uri.parse("${baseUrl}/api/auth/child/register");
 
     final body = {
       "parentId": parentId,
       "firstName": firstName,
       "nationalId": int.tryParse(nationalId),
-      "phoneNo": phoneNo,
+      "phoneno": phoneNo,
       "dob": dob,
       "password": password,
       "limitAmount": double.tryParse(limitAmount),

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:my_app/core/api_config.dart';
 
 class ParentAddMoneyScreen extends StatefulWidget {
   final int parentId;
@@ -23,9 +24,10 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool _loading = false;
   String? token;
+  final String baseUrl = ApiConfig.baseUrl;
 
   // Switch between local and railway when needed
-  static const String backendUrl = "https://2025gp24-production.up.railway.app";
+  //static const String backendUrl = "https://2025gp24-production.up.railway.app";
   // static const String backendUrl = "http://10.0.2.2:3000";
 
   @override
@@ -36,7 +38,22 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
   Future<void> _initialize() async {
     await checkAuthStatus(context);
-    await _loadToken();
+
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+
+    if (token == null || token!.isEmpty) {
+      _forceLogout();
+    }
+  }
+
+  void _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
+    }
   }
 
   Future<void> _loadToken() async {
@@ -49,17 +66,11 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     final uri = Uri.parse(redirectUrl);
 
     // 1) افتحيه بمتصفح خارجي
-    final ok = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
     // 2) لو ما فتح، افتحيه داخل التطبيق
     if (!ok) {
-      final ok2 = await launchUrl(
-        uri,
-        mode: LaunchMode.inAppWebView,
-      );
+      final ok2 = await launchUrl(uri, mode: LaunchMode.inAppWebView);
 
       if (!ok2 && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,16 +85,16 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     final amount = double.tryParse(amountText);
 
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Enter a valid amount")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Enter a valid amount")));
       return;
     }
 
     if (token == null || token!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Authentication error")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Authentication error")));
       return;
     }
 
@@ -91,7 +102,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
     try {
       final res = await http.post(
-        Uri.parse("$backendUrl/api/create-payment/${widget.parentId}"),
+        Uri.parse("$baseUrl/api/create-payment/${widget.parentId}"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -130,9 +141,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
         if (redirectUrl != null && redirectUrl.toString().isNotEmpty) {
           await _openPaymentPage(redirectUrl);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Redirect URL missing")),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("Redirect URL missing")));
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -140,9 +151,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

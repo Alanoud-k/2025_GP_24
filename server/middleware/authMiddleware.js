@@ -20,7 +20,13 @@ export function protect(req, res, next) {
     req.user = decoded; // { id, role, iat, exp }
     next();
   } catch (err) {
-    console.error("❌ JWT verify error:", err.message);
-    return res.status(401).json({ error: "Invalid or expired token" });
+  console.error("❌ JWT verify error:", err.message);
+
+  if (err.name === "TokenExpiredError") {
+    return res.status(401).json({ error: "Token expired" });
   }
+
+  return res.status(401).json({ error: "Invalid token" });
+}
+
 }

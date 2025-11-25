@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/core/api_config.dart';
 
 // Top-level enums & constants
 
@@ -15,7 +16,7 @@ const kPrimaryDark = Color(0xFF4B8F8C);
 const kCard = Color(0xFF9FE5E2);
 const kTextSecondary = Color(0xFF6E6E6E);
 
-const String kBaseUrl = 'http://10.0.2.2:3000';
+//const String kBaseUrl = 'http://10.0.2.2:3000';
 
 // Screen
 
@@ -45,6 +46,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
   bool _isSaving = false;
 
   String? token;
+  final String baseUrl = ApiConfig.baseUrl;
 
   Future<void> _init() async {
     await checkAuthStatus(context);
@@ -54,7 +56,26 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
   @override
   void initState() {
     super.initState();
-    _init();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await checkAuthStatus(context);
+
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+
+    if (token == null || token!.isEmpty) {
+      _forceLogout();
+    }
+  }
+
+  void _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
+    }
   }
 
   Future<void> _loadToken() async {
@@ -167,9 +188,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Authentication error: Missing token")),
-      );
+      _forceLogout();
       return;
     }
 
@@ -189,7 +208,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     final expMonth = int.parse(parts[0]);
     final expYear = 2000 + int.parse(parts[1]); // "27" → 2027
 
-    final url = Uri.parse('$kBaseUrl/api/parent/${widget.parentId}/card');
+    final url = Uri.parse("$baseUrl/api/parent/${widget.parentId}/card");
 
     try {
       final res = await http.post(
@@ -205,21 +224,16 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
           'expYear': expYear,
         }),
       );
-
+      if (res.statusCode == 401) {
+        _forceLogout();
+        return;
+      }
       if (res.statusCode == 201) {
-        Navigator.pop(context, true);
+        if (mounted) Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to save card')));
-      }
-      if (res.statusCode == 401) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear(); // clear token, ids, role
-        if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
-        }
-        return;
+        ).showSnackBar(const SnackBar(content: Text("Failed to save card")));
       }
     } catch (e) {
       ScaffoldMessenger.of(
@@ -506,7 +520,8 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                       _isSaving ? 'Saving...' : 'Add Card',
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
                     ),
                   ),

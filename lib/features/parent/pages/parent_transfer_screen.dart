@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart'; // <-- Add this
+import 'package:my_app/core/api_config.dart';
 
 class ParentTransferScreen extends StatefulWidget {
   final int parentId;
@@ -27,11 +28,35 @@ class ParentTransferScreen extends StatefulWidget {
 class _ParentTransferScreenState extends State<ParentTransferScreen> {
   final TextEditingController _amount = TextEditingController();
   double savingPercentage = 50; // default 50/50 split
+  String? token;
+  late final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void initState() {
     super.initState();
-    checkAuthStatus(context);
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await checkAuthStatus(context);
+    await _loadToken();
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+  }
+
+  Future<bool> _handleExpired(int statusCode) async {
+    if (statusCode == 401) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (!mounted) return true;
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+      return true;
+    }
+    return false;
   }
 
   Future<void> _transfer() async {
@@ -42,7 +67,7 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
       return;
     }
 
-    final url = Uri.parse('http://10.0.2.2:3000/api/auth/transfer');
+    final url = Uri.parse('$baseUrl/api/auth/transfer');
     final amount = double.parse(_amount.text);
 
     print(
@@ -121,8 +146,8 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
     );
 
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context);
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     });
   }
 

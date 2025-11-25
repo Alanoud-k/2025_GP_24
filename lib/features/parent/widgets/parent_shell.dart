@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'package:my_app/utils/check_auth.dart';
+
 import '../pages/parent_homepage_screen.dart';
 import '../pages/parent_chores_screen.dart';
 import '../pages/parent_allowance_screen.dart';
@@ -38,10 +40,10 @@ class _ParentShellState extends State<ParentShell> {
     super.didChangeDependencies();
     if (!_initialized) {
       final args = ModalRoute.of(context)?.settings.arguments as Map?;
-
-      parentId = args?['parentId'] ?? parentId;
-      token = args?['token'] ?? token;
-
+      if (args != null) {
+        parentId = args['parentId'] ?? parentId;
+        token = args['token'] ?? token;
+      }
       _initialized = true;
     }
   }
@@ -56,11 +58,14 @@ class _ParentShellState extends State<ParentShell> {
 
     // Pages order must match nav indexes
     final pages = [
-      ParentHomeScreen(parentId: parentId, token: token),       // 0
-      ParentChoresScreen(parentId: parentId, token: token),     // 1
-      ParentAllowanceScreen(parentId: parentId, token: token),  // 2 (placeholder)
-      ParentGiftsScreen(parentId: parentId, token: token),      // 3
-      MorePage(parentId: parentId, token: token),               // 4
+      ParentHomeScreen(parentId: parentId, token: token), // 0
+      ParentChoresScreen(parentId: parentId, token: token), // 1
+      ParentAllowanceScreen(
+        parentId: parentId,
+        token: token,
+      ), // 2 (placeholder)
+      ParentGiftsScreen(parentId: parentId, token: token), // 3
+      MorePage(parentId: parentId, token: token), // 4
     ];
 
     return Scaffold(
@@ -197,7 +202,9 @@ class ParentBottomNavBar extends StatelessWidget {
                     width: homeInner,
                     height: homeInner,
                     decoration: BoxDecoration(
-                      color: currentIndex == 0 ? kPrimary : const Color(0xFFCCCCCC),
+                      color: currentIndex == 0
+                          ? kPrimary
+                          : const Color(0xFFCCCCCC),
                       shape: BoxShape.circle,
                     ),
                     child: Center(

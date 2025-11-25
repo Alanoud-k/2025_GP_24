@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/core/api_config.dart';
 
 class ParentSecuritySettingsPage extends StatefulWidget {
   final int parentId;
@@ -23,19 +24,48 @@ class _ParentSecuritySettingsPageState
     extends State<ParentSecuritySettingsPage> {
   List<dynamic> children = [];
   bool isLoadingChildren = false;
+  String? token;
 
   @override
   void initState() {
     super.initState();
-    checkAuthStatus(context);
-    fetchChildren();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await checkAuthStatus(context);
+    await _loadToken();
+    await fetchChildren();
+  }
+
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+  }
+
+  Future<bool> _handleExpired(int statusCode) async {
+    if (statusCode == 401) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (!mounted) return true;
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+      return true;
+    }
+    return false;
   }
 
   Future<void> fetchChildren() async {
     setState(() => isLoadingChildren = true);
 
+    if (token == null) {
+      _showErrorSnackbar("Missing token — please log in again");
+      setState(() => isLoadingChildren = false);
+      return;
+    }
+
     final url = Uri.parse(
-      'http://10.0.2.2:3000/api/auth/parent/${widget.parentId}/children',
+      '${ApiConfig.baseUrl}/api/auth/parent/${widget.parentId}/children',
     );
 
     try {
@@ -161,8 +191,10 @@ class _ParentSecuritySettingsPageState
     String currentPassword,
     String newPassword,
   ) async {
+    if (token == null) return _forceLogout();
+
     final url = Uri.parse(
-      'http://10.0.2.2:3000/api/parent/${widget.parentId}/password',
+      '${ApiConfig.baseUrl}/api/parent/${widget.parentId}/password',
     );
 
     try {
@@ -170,7 +202,7 @@ class _ParentSecuritySettingsPageState
         url,
         headers: {
           'Content-Type': 'application/json',
-          "Authorization": "Bearer ${widget.token}", // ✅ JWT added
+          "Authorization": "Bearer $token",
         },
         body: jsonEncode({
           'currentPassword': currentPassword,
@@ -178,20 +210,14 @@ class _ParentSecuritySettingsPageState
         }),
       );
 
+      if (await _handleExpired(response.statusCode)) return;
+
       if (response.statusCode == 200) {
         _showSuccessSnackbar('Password changed successfully');
       } else if (response.statusCode == 401) {
         _showErrorSnackbar('Current password is incorrect');
       } else {
         _showErrorSnackbar('Failed to change password');
-      }
-      if (response.statusCode == 401) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-        if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
-        }
-        return;
       }
     } catch (e) {
       _showErrorSnackbar('Error: $e');
@@ -316,7 +342,9 @@ class _ParentSecuritySettingsPageState
   }
 
   Future<void> _changeChildPassword(int childId, String newPassword) async {
-    final url = Uri.parse('http://10.0.2.2:3000/api/child/$childId/password');
+    if (token == null) return _forceLogout();
+
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/child/$childId/password');
 
     try {
       final response = await http.put(
@@ -327,6 +355,7 @@ class _ParentSecuritySettingsPageState
         },
         body: jsonEncode({'newPassword': newPassword}),
       );
+      if (await _handleExpired(response.statusCode)) return;
 
       if (response.statusCode == 200) {
         _showSuccessSnackbar('Child password changed successfully');
@@ -338,7 +367,17 @@ class _ParentSecuritySettingsPageState
       _showErrorSnackbar('Error: $e');
     }
   }
+  // --------------------- FORCE LOGOUT ---------------------
 
+  Future<void> _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+  }
+
+  //------------------------------------------------------------
   void _showSuccessSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),

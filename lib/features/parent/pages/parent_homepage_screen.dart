@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:my_app/utils/check_auth.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'parent_select_child_screen.dart';
 import 'parent_add_money_screen.dart';
 import 'parent_add_card_screen.dart';
+import 'package:my_app/core/api_config.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -24,7 +25,6 @@ class ParentHomeScreen extends StatefulWidget {
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
   static const String baseUrl = "https://2025gp24-production.up.railway.app";
 
-
   String firstname = '';
   String walletBalance = '0.00';
   bool _isLoading = true;
@@ -41,34 +41,62 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     letterSpacing: 0.2,
   );
 
-  @override
+  /*@override
   void initState() {
     super.initState();
     _validateSession();
+  }*/
+  @override
+  void initState() {
+    super.initState();
+    // Delay auth check until after first frame to ensure context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialize();
+    });
   }
 
-  Future<void> _validateSession() async {
+  Future<void> _initialize() async {
     await checkAuthStatus(context);
     if (!mounted) return;
     await fetchParentInfo();
+  }
+  /*Future<void> _validateSession() async {
+    await checkAuthStatus(context);
+    if (!mounted) return;
+    await fetchParentInfo();
+  }*/
+
+  Future<void> _handleUnauthorized() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (!mounted) return;
+
+    // TODO: replace '/mobile-entry' with your actual route name for mobile entry page
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/mobile',
+      (Route<dynamic> route) => false,
+    );
   }
 
   // Fetch parent info (includes balance) and card status
   Future<void> fetchParentInfo() async {
     if (token.isEmpty) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+      await _handleUnauthorized();
       return;
     }
+    setState(() => _isLoading = true);
 
-    final parentUrl = Uri.parse("$baseUrl/api/parent/$parentId");
-    final cardUrl = Uri.parse("$baseUrl/api/parent/$parentId/card");
+    final parentUrl = Uri.parse("${ApiConfig.baseUrl}/api/parent/$parentId");
+    final cardUrl = Uri.parse("${ApiConfig.baseUrl}/api/parent/$parentId/card");
 
     try {
       String newFirstname = firstname;
       double newBalance = double.tryParse(walletBalance) ?? 0.0;
       bool newHasCard = parentHasCard;
 
+      // ---- Parent info request ----
       final parentRes = await http.get(
         parentUrl,
         headers: {
@@ -76,6 +104,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           "Content-Type": "application/json",
         },
       );
+
+      if (parentRes.statusCode == 401) {
+        await _handleUnauthorized();
+        return;
+      }
 
       if (parentRes.statusCode == 200) {
         final data = jsonDecode(parentRes.body);
@@ -87,8 +120,15 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
               ? b.toDouble()
               : double.tryParse(b.toString()) ?? 0.0;
         }
+      } else {
+        // Optional: show an error snackbar for non-200/401
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load parent info')),
+        );
       }
 
+      // ---- Card status request ----
       final cardRes = await http.get(
         cardUrl,
         headers: {
@@ -96,6 +136,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           "Content-Type": "application/json",
         },
       );
+
+      if (cardRes.statusCode == 401) {
+        await _handleUnauthorized();
+        return;
+      }
 
       if (cardRes.statusCode == 200) {
         final cardData = jsonDecode(cardRes.body);
@@ -112,6 +157,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error loading parent data')),
+      );
     }
   }
 
@@ -137,7 +185,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
       body: Container(
         width: double.infinity,
-    height: double.infinity, 
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],

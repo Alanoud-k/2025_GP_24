@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/utils/check_auth.dart';
 
-class TermsPrivacyPage extends StatelessWidget {
+class TermsPrivacyPage extends StatefulWidget {
   const TermsPrivacyPage({super.key});
+
+  @override
+  State<TermsPrivacyPage> createState() => _TermsPrivacyPageState();
+}
+
+class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    /// 🔒 Check token validity AFTER the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await checkAuthStatus(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

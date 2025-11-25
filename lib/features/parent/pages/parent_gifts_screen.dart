@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/utils/check_auth.dart';
 
 class ParentGiftsScreen extends StatefulWidget {
   final int parentId;
@@ -22,7 +23,34 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadToken();
+    _initializeAuth();
+  }
+
+  Future<void> _initializeAuth() async {
+    // Step 1 — check if expired
+    await checkAuthStatus(context);
+
+    // Step 2 — load token
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? widget.token;
+
+    // Step 3 — if missing → logout
+    if (token == null || token!.isEmpty) {
+      _forceLogout();
+      return;
+    }
+
+    // Step 4 — load gifts (later)
+    // await _fetchGifts();
+  }
+
+  void _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+    }
   }
 
   Future<void> _loadToken() async {
