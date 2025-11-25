@@ -36,7 +36,6 @@ Our project aligns with the goals of Saudi Vision 2030 by promoting digital empo
 | **Database**               | PostgreSQL – hosted on **Neon**         |
 | **Payments Integration**   | Moyasar (PSP) – Test/Sandbox Mode       |
 | **AI / Data Analysis**     | Python (ML for spending categorization) |
-| **Open Banking**           | SAMA Open Banking Sandbox APIs          |
 | **Design & Collaboration** | Figma                                   |
 | **Project Management**     | Jira                                    |
 | **Version Control**        | GitHub                                  |
