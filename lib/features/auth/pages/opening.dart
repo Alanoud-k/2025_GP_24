@@ -81,7 +81,7 @@ class _SplashViewState extends State<SplashView>
   late Animation<double> _coinScale;
 
   // Typing effect
-  String slogan = "For Smarter Kids...";
+  String slogan = "For Smarter Children...";
   String displayedText = "";
   int index = 0;
 

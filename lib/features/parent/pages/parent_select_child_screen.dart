@@ -96,73 +96,213 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Select Child"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+Widget build(BuildContext context) {
+  const bg1 = Color(0xFFF7FAFC);
+  const bg2 = Color(0xFFE6F4F3);
+  const hassalaGreen = Color(0xFF2EA49E);
+
+  return Scaffold(
+    body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [bg1, bg2],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _kids.isEmpty
-          ? const Center(child: Text("No children found"))
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: ListView.separated(
-                itemCount: _kids.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final kid = _kids[index];
-                  return Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// --- Back Button + Title ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      // decoration: BoxDecoration(
+                      //   color: Colors.white,
+                      //   shape: BoxShape.circle,
+                      //   boxShadow: [
+                      //     BoxShadow(
+                      //       color: Colors.black12.withOpacity(0.08),
+                      //       blurRadius: 6,
+                      //     ),
+                      //   ],
+                      // ),
+                      child: const Icon(Icons.arrow_back,
+                          color: Colors.black87, size: 24),
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(14),
-                      leading: CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Colors.teal.shade300,
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                      title: Text(
-                        kid["name"],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        "Balance: ${kid["balance"].toStringAsFixed(2)} SAR",
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 18),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ParentChildOverviewScreen(
-                              parentId: widget.parentId,
-                              childId:
-                                  kid["id"], // ✅ ensure this is a valid number
-                              childName: kid["name"],
-                              token: widget.token,
-                            ),
-                          ),
-                        );
-                      },
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    "Select Child",
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2C3E50),
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
-    );
-  }
+
+            const SizedBox(height: 10),
+
+            /// --- Section Tag ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12.withOpacity(0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.family_restroom,
+                        size: 20, color: hassalaGreen),
+                    SizedBox(width: 6),
+                    Text(
+                      "Your Children",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// --- Children List ---
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _kids.isEmpty
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.child_care,
+                                size: 90, color: Colors.grey),
+                            SizedBox(height: 20),
+                            Text("No children found",
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.grey)),
+                          ],
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _kids.length,
+                          itemBuilder: (context, index) {
+                            final kid = _kids[index];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ParentChildOverviewScreen(
+                                      parentId: widget.parentId,
+                                      childId: kid["id"],
+                                      childName: kid["name"],
+                                      token: widget.token,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 14),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(22),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: hassalaGreen.withOpacity(0.15),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 28,
+                                        color: hassalaGreen,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+
+                                    /// --- Child Info ---
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            kid["name"],
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF2C3E50),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Image.asset(
+                                                "assets/icons/riyal.png",
+                                                height: 16,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                kid["balance"]
+                                                    .toStringAsFixed(2),
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const Icon(Icons.arrow_forward_ios,
+                                        size: 18, color: Colors.black54),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 }

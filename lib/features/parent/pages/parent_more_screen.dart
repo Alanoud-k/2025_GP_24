@@ -25,13 +25,12 @@ class _MorePageState extends State<MorePage> {
   String phoneNo = '';
 
   bool isLoading = true;
-  String? errorMessage; // بدل hasError العشوائي
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ لا تسوين checkAuthStatus إذا الـ token جايك جاهز
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.token.isEmpty) {
         checkAuthStatus(context);
@@ -42,7 +41,6 @@ class _MorePageState extends State<MorePage> {
   }
 
   Future<void> fetchParentInfo() async {
-    // ✅ Guard: إذا ما فيه parentId
     if (widget.parentId == 0) {
       if (!mounted) return;
       setState(() {
@@ -68,7 +66,6 @@ class _MorePageState extends State<MorePage> {
 
       print("Response: ${response.body}");
 
-      // ✅ 401: توكن منتهي → طلّعيه فورًا بدون ما تعرضين Failed to load
       if (response.statusCode == 401) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
@@ -82,7 +79,6 @@ class _MorePageState extends State<MorePage> {
         return;
       }
 
-      // ✅ 200: تمام
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
@@ -97,7 +93,6 @@ class _MorePageState extends State<MorePage> {
         return;
       }
 
-      // ✅ 404 / Parent not found
       if (response.statusCode == 404 ||
           response.body.contains("Parent not found")) {
         if (!mounted) return;
@@ -108,7 +103,6 @@ class _MorePageState extends State<MorePage> {
         return;
       }
 
-      // ✅ أي خطأ ثاني
       if (!mounted) return;
       setState(() {
         errorMessage = "صار خطأ في تحميل البيانات.";
@@ -156,8 +150,13 @@ class _MorePageState extends State<MorePage> {
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 255, 255, 255)),
               ),
+             style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(200, 152, 152, 152),
+             shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),),
+
             ),
             ElevatedButton(
               onPressed: () {
@@ -198,132 +197,143 @@ class _MorePageState extends State<MorePage> {
   Widget build(BuildContext context) {
     final showProfile = errorMessage == null;
 
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: fetchParentInfo,
-        child: Container(
-          color: Colors.grey[100],
-          padding: const EdgeInsets.all(20),
-          child: isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: Colors.teal),
-                )
-              : ListView(
-                  children: [
-                    const SizedBox(height: 10),
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: Colors.transparent,
 
-                    // ✅ لو فيه خطأ (مثل حساب محذوف) اعرضي رسالة بس لا توقفي الصفحة
-                    if (errorMessage != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          errorMessage!,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w600,
-                          ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFF7FAFC),
+              Color(0xFFE6F4F3),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: fetchParentInfo,
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                const SizedBox(height: 10),
+
+                if (errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                if (showProfile)
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.teal,
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 30,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    // ✅ كرت البروفايل (إذا البيانات موجودة)
-                    if (showProfile)
-                      Row(
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.teal,
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 30,
+                          Text(
+                            fullName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fullName,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                phoneNo,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 4),
+                          Text(
+                            phoneNo,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-                    _buildMenuItem(
-                      icon: Icons.lock_outline,
-                      title: 'Security settings',
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/parentSecuritySettings',
-                          arguments: {
-                            'parentId': widget.parentId,
-                            'token': widget.token,
-                          },
-                        );
+                _buildMenuItem(
+                  icon: Icons.lock_outline,
+                  title: 'Security settings',
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/parentSecuritySettings',
+                      arguments: {
+                        'parentId': widget.parentId,
+                        'token': widget.token,
                       },
-                    ),
-
-                    const SizedBox(height: 16),
-                    _buildMenuItem(
-                      icon: Icons.family_restroom_outlined,
-                      title: 'Manage Kids',
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/manageKids',
-                          arguments: {
-                            'parentId': widget.parentId,
-                            'token': widget.token,
-                          },
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-                    _buildMenuItem(
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'Terms & privacy policy',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/termsPrivacy');
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-                    _buildMenuItem(
-                      icon: Icons.logout,
-                      title: 'Log out',
-                      titleColor: Colors.red,
-                      iconColor: Colors.red,
-                      onTap: () {
-                        _showLogoutConfirmation(context);
-                      },
-                    ),
-                  ],
+                    );
+                  },
                 ),
+
+                const SizedBox(height: 16),
+                _buildMenuItem(
+                  icon: Icons.family_restroom_outlined,
+                  title: 'Manage Kids',
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/manageKids',
+                      arguments: {
+                        'parentId': widget.parentId,
+                        'token': widget.token,
+                      },
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+                _buildMenuItem(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Terms & privacy policy',
+                  onTap: () {
+                    Navigator.pushNamed(context, '/termsPrivacy');
+                  },
+                ),
+
+                const SizedBox(height: 16),
+                _buildMenuItem(
+                  icon: Icons.logout,
+                  title: 'Log out',
+                  titleColor: Colors.red,
+                  iconColor: Colors.red,
+                  onTap: () {
+                    _showLogoutConfirmation(context);
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

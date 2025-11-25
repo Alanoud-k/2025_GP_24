@@ -89,6 +89,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     final amount = await showModalBottomSheet<double>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -138,7 +139,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                 ),
                 child: const Text(
                   "Confirm",
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600,color: Color.fromARGB(255, 255, 255, 255),),
                 ),
               ),
             ),

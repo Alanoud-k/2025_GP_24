@@ -463,6 +463,8 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                       const SizedBox(height: 12),
                       CheckboxListTile(
                         value: _saveSecurely,
+                        checkColor: Colors.white,
+                        activeColor: const Color.fromARGB(255, 54, 184, 154),
                         onChanged: (v) {
                           setState(() => _saveSecurely = v ?? true);
                         },
@@ -504,7 +506,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                       _isSaving ? 'Saving...' : 'Add Card',
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w600,color: Colors.white,
                       ),
                     ),
                   ),

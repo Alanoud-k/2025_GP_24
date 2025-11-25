@@ -111,6 +111,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
       barrierDismissible: false,
       builder: (_) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+         backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(22),
           child: Column(
@@ -139,7 +140,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Your request for ﷼ ${amount.toStringAsFixed(2)} was sent successfully.',
+                'Your request for SR ${amount.toStringAsFixed(2)} was sent successfully.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14.5,
@@ -226,7 +227,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
                   DecimalTextInputFormatter(decimalRange: 2),
                 ],
                 decoration: const InputDecoration(
-                  hintText: "﷼ 50.00",
+                  hintText: "e.g. SR 50.00",
                   border: InputBorder.none,
                 ),
               ),

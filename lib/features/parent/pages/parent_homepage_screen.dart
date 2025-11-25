@@ -24,6 +24,7 @@ class ParentHomeScreen extends StatefulWidget {
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
   static const String baseUrl = "https://2025gp24-production.up.railway.app";
 
+
   String firstname = '';
   String walletBalance = '0.00';
   bool _isLoading = true;
@@ -32,7 +33,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   String get token => widget.token;
   int get parentId => widget.parentId;
 
-  // Unified fintech label style (actions + My Kids)
+  // Unified fintech label style (actions + My Children)
   static const TextStyle fintechLabelStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,
@@ -82,8 +83,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
         final b = data['balance'];
         if (b != null) {
-          newBalance =
-              (b is num) ? b.toDouble() : double.tryParse(b.toString()) ?? 0.0;
+          newBalance = (b is num)
+              ? b.toDouble()
+              : double.tryParse(b.toString()) ?? 0.0;
         }
       }
 
@@ -123,248 +125,261 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.teal),
-      );
+      return const Center(child: CircularProgressIndicator(color: Colors.teal));
     }
 
     final balanceText =
         double.tryParse(walletBalance)?.toStringAsFixed(2) ?? "0.00";
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top bar (old parent icon style)
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.teal,
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
-                  Icon(Icons.notifications_none_rounded, size: 28),
-                ],
-              ),
+      extendBody: true,
+      backgroundColor: Colors.transparent,
 
-              const SizedBox(height: 18),
+      body: Container(
+        width: double.infinity,
+    height: double.infinity, 
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
 
-              // Welcome
-              Text(
-                firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF3F3F3F),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // Wallet card
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFF0F0F0)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 14,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top bar
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Parent's Wallet",
-                      style: TextStyle(
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.teal,
+                      child: Icon(Icons.person, color: Colors.white),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          "assets/icons/Sar.png",
-                          height: 24,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          balanceText,
-                          style: const TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
+                    Icon(Icons.notifications_none_rounded, size: 28),
                   ],
                 ),
-              ),
 
-              const SizedBox(height: 22),
+                const SizedBox(height: 18),
 
-              // Actions grid
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionCard(
-                      title: "Add Money",
-                      asset: "assets/icons/addMoney.png",
-                      labelStyle: fintechLabelStyle,
-                      onTap: () async {
-                        if (!parentHasCard) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Please add a card first"),
-                            ),
-                          );
-                          return;
-                        }
-
-                        final added = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ParentAddMoneyScreen(
-                              parentId: parentId,
-                              token: token,
-                            ),
-                          ),
-                        );
-
-                        if (added == true) {
-                          await _refreshFromDb();
-                        }
-                      },
-                    ),
+                // Welcome
+                Text(
+                  firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF3F3F3F),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ActionCard(
-                      title: "Transactions",
-                      asset: "assets/icons/transactions.png",
-                      labelStyle: fintechLabelStyle,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text("Transactions page will be added later"),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionCard(
-                      title: parentHasCard ? "My Card" : "Add Card",
-                      asset: "assets/icons/addCard.png",
-                      labelStyle: fintechLabelStyle,
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ParentAddCardScreen(
-                              parentId: parentId,
-                              token: token,
-                            ),
-                          ),
-                        );
-
-                        if (result == true && mounted) {
-                          setState(() => parentHasCard = true);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ActionCard(
-                      title: "Insights",
-                      asset: "assets/icons/insights.png",
-                      labelStyle: fintechLabelStyle,
-                      onTap: () {},
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 18),
-
-              // My Kids (white fintech style, no icon circle)
-              InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ParentSelectChildScreen(
-                        parentId: parentId,
-                        token: token,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
+                // Wallet card
+                Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
+                    horizontal: 20,
                     vertical: 18,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE6E6E6)),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFF0F0F0)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 14,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
                     children: [
-                      Image.asset(
-                        "assets/icons/myKids.png",
-                        height: 28,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(width: 10),
                       const Text(
-                        "My Kids",
-                        style: fintechLabelStyle,
+                        "Parent's Wallet",
+                        style: TextStyle(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            "assets/icons/Sar.png",
+                            height: 24,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            balanceText,
+                            style: const TextStyle(
+                              fontSize: 34,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 30),
-            ],
+                const SizedBox(height: 22),
+
+                // Actions grid row 1
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionCard(
+                        title: "Add Money",
+                        asset: "assets/icons/addMoney.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () async {
+                          if (!parentHasCard) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Please add a card first"),
+                              ),
+                            );
+                            return;
+                          }
+
+                          final added = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentAddMoneyScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
+                            ),
+                          );
+
+                          if (added == true) {
+                            await _refreshFromDb();
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ActionCard(
+                        title: "Transactions",
+                        asset: "assets/icons/transactions.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Transactions page will be added later",
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Actions grid row 2
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionCard(
+                        title: parentHasCard ? "My Card" : "Add Card",
+                        asset: "assets/icons/addCard.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentAddCardScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
+                            ),
+                          );
+
+                          if (result == true && mounted) {
+                            setState(() => parentHasCard = true);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ActionCard(
+                        title: "Insights",
+                        asset: "assets/icons/insights.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () {},
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 18),
+
+                // My Children
+                InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ParentSelectChildScreen(
+                          parentId: parentId,
+                          token: token,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 255, 255, 255),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE6E6E6)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          "assets/icons/myKids.png",
+                          height: 28,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text("My Children", style: fintechLabelStyle),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+              ],
+            ),
           ),
         ),
       ),
@@ -412,11 +427,7 @@ class _ActionCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Icon without circle
-              Image.asset(
-                asset,
-                height: 28,
-                fit: BoxFit.contain,
-              ),
+              Image.asset(asset, height: 28, fit: BoxFit.contain),
               const SizedBox(height: 10),
               Text(title, style: labelStyle),
             ],

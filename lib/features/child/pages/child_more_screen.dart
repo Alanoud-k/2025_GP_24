@@ -137,10 +137,16 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: const Text('Cancel', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
+             style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(200, 152, 152, 152),shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),),
+
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red,shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),),
               onPressed: () {
                 Navigator.pop(context);
                 _performLogout(context);
@@ -156,17 +162,34 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // BUILD
-  // ---------------------------------------------------------
-  @override
-  Widget build(BuildContext context) {
-    print("BASE URL = ${widget.baseUrl}");
-    // print("AVATAR URL = ${widget.avatarUrl}");
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+ // ---------------------------------------------------------
+// BUILD
+// ---------------------------------------------------------
+@override
+Widget build(BuildContext context) {
+  print("BASE URL = ${widget.baseUrl}");
+  // print("AVATAR URL = ${widget.avatarUrl}");
+
+  return Scaffold(
+    extendBody: true,
+    backgroundColor: Colors.transparent,
+
+    body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFFF7FAFC),
+            Color(0xFFE6F4F3),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+
+      child: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.teal),
+            )
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -192,10 +215,8 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                                 radius: 35,
                                 backgroundColor: Colors.teal,
                                 // backgroundImage: (widget.avatarUrl != null)
-                                //? NetworkImage(
-                                // "${widget.baseUrl}${widget.avatarUrl}",
-
-                                //: null,
+                                // ? NetworkImage("${widget.baseUrl}${widget.avatarUrl}")
+                                // : null,
                                 child: const Icon(
                                   Icons.person,
                                   size: 32,
@@ -279,8 +300,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                     _buildMenuItem(
                       icon: Icons.privacy_tip_outlined,
                       title: "Terms & privacy policy",
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/termsPrivacy'),
+                      onTap: () => Navigator.pushNamed(context, '/termsPrivacy'),
                     ),
 
                     const SizedBox(height: 18),
@@ -298,8 +318,10 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                 ),
               ),
             ),
-    );
-  }
+    ),
+  );
+}
+
 
   // ---------------------------------------------------------
   // عنصر القائمة
