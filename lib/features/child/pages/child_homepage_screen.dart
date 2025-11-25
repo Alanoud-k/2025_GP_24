@@ -379,7 +379,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       '${widget.baseUrl}/api/auth/child/info/${widget.childId}',
     );
 
+
+
     try {
+      
       final response = await http.get(
         url,
         headers: {
@@ -389,7 +392,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       );
 
       if (response.statusCode == 200) {
+
         final data = jsonDecode(response.body);
+        print(data);
+
+
+
+
 
         double _toDouble(dynamic v) =>
             (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
@@ -398,7 +407,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           childName = data['firstName'] ?? '';
           spendBalance = _toDouble(data['spend']);
           savingBalance = _toDouble(data['saving']);
-          currentPoints = (data['points'] ?? 0).toInt();
+          currentPoints = data['rewardKeys'] ?? 0.toInt();
           // avatarUrl = data['avatarUrl']; // CHANGED: store avatar
 
           categoryPercentages = Map<String, double>.from(

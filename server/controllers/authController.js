@@ -432,10 +432,11 @@ export const resetPassword = async (req, res) => {
 ============================================================ */
 export const getChildInfo = async (req, res) => {
   const { childId } = req.params;
+console.log("🔥 AUTH CONTROLLER CHILD INFO");
 
   try {
     const result = await sql`
-      SELECT "firstname","phoneno","rewardkeys","avatarurl"
+      SELECT "firstname","phoneno","rewardkeys"
       FROM "Child"
       WHERE "childid" = ${childId}
       LIMIT 1

@@ -136,6 +136,7 @@ await sql`
 ===================================================== */
 export const getChildInfo = async (req, res) => {
   const { childId } = req.params;
+console.log("💚 CHILD CONTROLLER CHILD INFO");
 
   try {
     // Basic child profile
@@ -143,7 +144,7 @@ export const getChildInfo = async (req, res) => {
       SELECT 
         "firstname",
         "phoneno",
-        "rewardkeys",
+        "rewardkeys"
       FROM "Child"
       WHERE "childid" = ${childId}
       LIMIT 1
@@ -222,7 +223,7 @@ export const getChildInfo = async (req, res) => {
     return res.json({
       firstName: child.firstname,
       phoneNo: child.phoneno,
-      avatarUrl: child.avatarurl ?? null, // CHANGED: send avatarUrl to client
+      //avatarUrl: child.avatarurl ?? null, // CHANGED: send avatarUrl to client
       balance,
       saving,
       spend,

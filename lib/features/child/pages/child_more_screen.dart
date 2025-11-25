@@ -14,7 +14,7 @@ class ChildMoreScreen extends StatefulWidget {
   final String username;
   final String phoneNo;
   final String token;
-  String? avatarUrl; // ← الصورة القادمة من السيرفر
+  //String? avatarUrl; // ← الصورة القادمة من السيرفر
 
   ChildMoreScreen({
     super.key,
@@ -23,7 +23,7 @@ class ChildMoreScreen extends StatefulWidget {
     required this.username,
     required this.phoneNo,
     required this.token,
-    this.avatarUrl,
+   // this.avatarUrl,
   });
 
   @override
@@ -162,7 +162,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   @override
   Widget build(BuildContext context) {
     print("BASE URL = ${widget.baseUrl}");
-    print("AVATAR URL = ${widget.avatarUrl}");
+    // print("AVATAR URL = ${widget.avatarUrl}");
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: isLoading
