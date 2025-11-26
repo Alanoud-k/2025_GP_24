@@ -1,12 +1,12 @@
-import 'dart:io';
-import 'dart:convert';
+//import 'dart:io';
+//import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
+//import 'package:image_picker/image_picker.dart';
+//import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
-import 'package:mime/mime.dart';
-import 'package:http_parser/http_parser.dart';
+//import 'package:mime/mime.dart';
+//import 'package:http_parser/http_parser.dart';
 
 class ChildMoreScreen extends StatefulWidget {
   final int childId;
@@ -14,7 +14,6 @@ class ChildMoreScreen extends StatefulWidget {
   final String username;
   final String phoneNo;
   final String token;
-  //String? avatarUrl; // ← الصورة القادمة من السيرفر
 
   ChildMoreScreen({
     super.key,
@@ -23,7 +22,6 @@ class ChildMoreScreen extends StatefulWidget {
     required this.username,
     required this.phoneNo,
     required this.token,
-   // this.avatarUrl,
   });
 
   @override
@@ -32,16 +30,18 @@ class ChildMoreScreen extends StatefulWidget {
 
 class _ChildMoreScreenState extends State<ChildMoreScreen> {
   bool isLoading = true;
-  bool uploading = false;
+  //bool uploading = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Check token
-    checkAuthStatus(context);
+    // Ensure token is still valid
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context);
+    });
 
-    // Smooth loading
+    // Smooth page entry
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) setState(() => isLoading = false);
     });
@@ -105,12 +105,13 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   }*/
 
   // ---------------------------------------------------------
-  // تسجيل الخروج
+  //Logout
   // ---------------------------------------------------------
   void _performLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
 
+    if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
   }
 
@@ -137,16 +138,24 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Color.fromARGB(255, 255, 255, 255))),
-             style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(200, 152, 152, 152),shape: RoundedRectangleBorder(
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(200, 152, 152, 152),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                ),),
-
+                ),
+              ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red,shape: RoundedRectangleBorder(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                ),),
+                ),
+              ),
               onPressed: () {
                 Navigator.pop(context);
                 _performLogout(context);
@@ -162,166 +171,161 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     );
   }
 
- // ---------------------------------------------------------
-// BUILD
-// ---------------------------------------------------------
-@override
-Widget build(BuildContext context) {
-  print("BASE URL = ${widget.baseUrl}");
-  // print("AVATAR URL = ${widget.avatarUrl}");
+  // ---------------------------------------------------------
+  // BUILD
+  // ---------------------------------------------------------
+  @override
+  Widget build(BuildContext context) {
+    print("BASE URL = ${widget.baseUrl}");
+    // print("AVATAR URL = ${widget.avatarUrl}");
 
-  return Scaffold(
-    extendBody: true,
-    backgroundColor: Colors.transparent,
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: Colors.transparent,
 
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFF7FAFC),
-            Color(0xFFE6F4F3),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-      ),
 
-      child: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.teal),
-            )
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
 
-                    // ---------------------------------------------------------
-                    //  ملف الطفل الشخصي
-                    // ---------------------------------------------------------
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            //if (!uploading) _pickAvatar();
-                          },
-                          child: Stack(
-                            alignment: Alignment.center,
+                      // ---------------------------------------------------------
+                      //  ملف الطفل الشخصي
+                      // ---------------------------------------------------------
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              //if (!uploading) _pickAvatar();
+                            },
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // صورة الطفل أو placeholder
+                                CircleAvatar(
+                                  radius: 35,
+                                  backgroundColor: Colors.teal,
+                                  // backgroundImage: (widget.avatarUrl != null)
+                                  // ? NetworkImage("${widget.baseUrl}${widget.avatarUrl}")
+                                  // : null,
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 32,
+                                    color: Colors.white,
+                                  ),
+                                ),
+
+                                // لودر عند الرفع
+                                /*if (uploading)
+                                  const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+*/
+                                // زر تعديل صغير (دائري)
+                                Positioned(
+                                  bottom: -2,
+                                  right: -2,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(3),
+                                    child: const Icon(
+                                      Icons.add_a_photo,
+                                      size: 18,
+                                      color: Colors.teal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // صورة الطفل أو placeholder
-                              CircleAvatar(
-                                radius: 35,
-                                backgroundColor: Colors.teal,
-                                // backgroundImage: (widget.avatarUrl != null)
-                                // ? NetworkImage("${widget.baseUrl}${widget.avatarUrl}")
-                                // : null,
-                                child: const Icon(
-                                  Icons.person,
-                                  size: 32,
-                                  color: Colors.white,
+                              Text(
+                                widget.username,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-
-                              // لودر عند الرفع
-                              if (uploading)
-                                const CircularProgressIndicator(
-                                  color: Colors.white,
-                                ),
-
-                              // زر تعديل صغير (دائري)
-                              Positioned(
-                                bottom: -2,
-                                right: -2,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: const EdgeInsets.all(3),
-                                  child: const Icon(
-                                    Icons.add_a_photo,
-                                    size: 18,
-                                    color: Colors.teal,
-                                  ),
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.phoneNo,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
                                 ),
                               ),
                             ],
                           ),
-                        ),
+                        ],
+                      ),
 
-                        const SizedBox(width: 16),
+                      const SizedBox(height: 40),
 
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.username,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.phoneNo,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      // SECURITY SETTINGS
+                      _buildMenuItem(
+                        icon: Icons.lock_outline,
+                        title: "Security settings",
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/childSecuritySettings',
+                            arguments: {
+                              'childId': widget.childId,
+                              'token': widget.token,
+                              'baseUrl': widget.baseUrl,
+                            },
+                          );
+                        },
+                      ),
 
-                    const SizedBox(height: 40),
+                      const SizedBox(height: 18),
 
-                    // SECURITY SETTINGS
-                    _buildMenuItem(
-                      icon: Icons.lock_outline,
-                      title: "Security settings",
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/childSecuritySettings',
-                          arguments: {
-                            'childId': widget.childId,
-                            'token': widget.token,
-                            'baseUrl': widget.baseUrl,
-                          },
-                        );
-                      },
-                    ),
+                      _buildMenuItem(
+                        icon: Icons.privacy_tip_outlined,
+                        title: "Terms & privacy policy",
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/termsPrivacy'),
+                      ),
 
-                    const SizedBox(height: 18),
+                      const SizedBox(height: 18),
 
-                    _buildMenuItem(
-                      icon: Icons.privacy_tip_outlined,
-                      title: "Terms & privacy policy",
-                      onTap: () => Navigator.pushNamed(context, '/termsPrivacy'),
-                    ),
+                      _buildMenuItem(
+                        icon: Icons.logout,
+                        title: "Log out",
+                        titleColor: Colors.red,
+                        iconColor: Colors.red,
+                        onTap: _showLogoutConfirmation,
+                      ),
 
-                    const SizedBox(height: 18),
-
-                    _buildMenuItem(
-                      icon: Icons.logout,
-                      title: "Log out",
-                      titleColor: Colors.red,
-                      iconColor: Colors.red,
-                      onTap: _showLogoutConfirmation,
-                    ),
-
-                    const Spacer(),
-                  ],
+                      const Spacer(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-    ),
-  );
-}
-
+      ),
+    );
+  }
 
   // ---------------------------------------------------------
   // عنصر القائمة

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/utils/check_auth.dart';
 
 class ChildSecuritySettingsPage extends StatefulWidget {
   final int childId;
@@ -11,7 +13,7 @@ class ChildSecuritySettingsPage extends StatefulWidget {
     super.key,
     required this.childId,
     required this.baseUrl,
-    required this.token, // <-- ADD TOKEN
+    required this.token,
   });
 
   @override
@@ -20,6 +22,15 @@ class ChildSecuritySettingsPage extends StatefulWidget {
 }
 
 class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context);
+    });
+  }
+
   void _showChangePasswordDialog(BuildContext context) {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
@@ -119,9 +130,12 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     String currentPassword,
     String newPassword,
   ) async {
+    final url = Uri.parse(
+      '${widget.baseUrl}/api/child/${widget.childId}/password',
+    );
     try {
       final response = await http.put(
-        Uri.parse('${widget.baseUrl}/api/child/${widget.childId}/password'),
+        url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -131,6 +145,16 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
           'newPassword': newPassword,
         }),
       );
+
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
+      }
 
       if (response.statusCode == 200) {
         _showSuccessSnackbar('Password changed successfully');
@@ -156,7 +180,6 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     );
   }
 
-  // دالة التحقق من شروط كلمة المرور
   bool _validatePassword(String password) {
     if (password.length < 8) {
       return false;
@@ -169,7 +192,6 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     return true;
   }
 
-  // دالة لعرض رسالة الخطأ
   void _showPasswordRequirementsDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -243,7 +265,6 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                 ),
               ),
 
-              // Change Password Card - فقط هذا العنصر
               _buildSecurityCard(
                 icon: Icons.lock_outline,
                 title: 'Change password',

@@ -46,6 +46,11 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context);
+    });
+
     _api = GoalsApi(widget.baseUrl, widget.token);
     _bootstrap();
   }
@@ -75,6 +80,11 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
   Future<double> _fetchSavingBalance() async {
     final url = Uri.parse("${widget.baseUrl}/saving/balance/${widget.childId}");
     final res = await http.get(url, headers: _headers);
+
+    if (res.statusCode == 401) {
+      await checkAuthStatus(context);
+      return 0.0;
+    }
     if (res.statusCode != 200) return 0.0;
 
     final data = jsonDecode(res.body);
@@ -139,7 +149,10 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                 ),
                 child: const Text(
                   "Confirm",
-                  style: TextStyle(fontWeight: FontWeight.w600,color: Color.fromARGB(255, 255, 255, 255),),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color.fromARGB(255, 255, 255, 255),
+                  ),
                 ),
               ),
             ),
@@ -157,6 +170,11 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
         headers: _headers,
         body: jsonEncode({"childId": widget.childId, "amount": amount}),
       );
+
+      if (res.statusCode == 401) {
+        await checkAuthStatus(context);
+        return;
+      }
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
         _bootstrap();

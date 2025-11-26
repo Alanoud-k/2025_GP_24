@@ -84,13 +84,11 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
 
       if (!mounted) return;
       Navigator.pop(context, true);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to create goal. Please try again.'),
-        ),
-      );
+    } catch (e) {
+      if (e.toString().contains("401")) {
+        await checkAuthStatus(context);
+        return;
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

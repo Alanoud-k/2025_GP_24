@@ -49,9 +49,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
           firstName = data['firstName'] ?? '';
         });
       }
-    } catch (_) {
-      // Silent fail – optional: show snackbar if you want
-    }
+    } catch (_) {}
   }
 
   Future<void> _loginParent() async {

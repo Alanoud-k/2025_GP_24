@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:my_app/utils/check_auth.dart';
 
 class ChildRequestMoneyScreen extends StatefulWidget {
   final int childId;
@@ -24,6 +25,14 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
   final _amountController = TextEditingController();
   final _messageController = TextEditingController();
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context); // 🔐 Check before doing anything
+    });
+  }
 
   @override
   void dispose() {
@@ -65,7 +74,10 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
       );
 
       if (!mounted) return;
-
+      if (response.statusCode == 401) {
+        await checkAuthStatus(context);
+        return;
+      }
       if (response.statusCode == 200) {
         await _showSuccessDialog(amount, message);
         if (!mounted) return;
@@ -111,7 +123,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
       barrierDismissible: false,
       builder: (_) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-         backgroundColor: Colors.white,
+        backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(22),
           child: Column(
@@ -133,10 +145,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
               const SizedBox(height: 14),
               const Text(
                 'Request Sent',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               Text(
@@ -175,10 +184,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Continue', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -221,8 +227,9 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen> {
               ),
               child: TextField(
                 controller: _amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: const [
                   DecimalTextInputFormatter(decimalRange: 2),
                 ],

@@ -37,6 +37,11 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context); // 🔐 check token validity
+    });
+
     _api = GoalsApi(widget.baseUrl, widget.token);
     _goal = widget.goal;
   }
@@ -217,20 +222,11 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
         targetAmount: double.parse(targetCtrl.text.trim()),
         description: descCtrl.text.trim(),
       );
-
-      await _refreshGoal();
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Goal updated")));
-      Navigator.pop(context, true); // refresh parent list
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Update failed: $e")));
-    } finally {
-      if (mounted) setState(() => _busy = false);
+      if (e.toString().contains("401")) {
+        await checkAuthStatus(context);
+        return;
+      }
     }
   }
 
@@ -322,10 +318,10 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
       ).showSnackBar(SnackBar(content: Text(isAdd ? "Added" : "Moved")));
       Navigator.pop(context, true);
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed: $e")));
+      if (e.toString().contains("401")) {
+        await checkAuthStatus(context);
+        return;
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

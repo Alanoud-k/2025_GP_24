@@ -19,18 +19,23 @@ class ChildCardScreen extends StatefulWidget {
 }
 
 class _ChildCardScreenState extends State<ChildCardScreen> {
+  bool _checking = true;
+
   @override
   void initState() {
     super.initState();
-    _checkAuth();
-  }
-
-  Future<void> _checkAuth() async {
-    await checkAuthStatus(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await checkAuthStatus(context);
+      if (mounted) setState(() => _checking = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_checking) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return const Center(
       child: Text('Card Screen', style: TextStyle(fontSize: 18)),
     );

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/core/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Pages
 import '../pages/child_homepage_screen.dart';
@@ -39,6 +42,9 @@ class _ChildShellState extends State<ChildShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context); // ✅ token auto-logout
+    });
     _fetchChildData();
   }
 
@@ -47,11 +53,18 @@ class _ChildShellState extends State<ChildShell> {
       final response = await http.get(
         Uri.parse('${widget.baseUrl}/api/auth/child/info/${widget.childId}'),
         headers: {
-        'Authorization': 'Bearer ${widget.token}', // ر
-        'Content-Type': 'application/json',
-      },
+          'Authorization': 'Bearer ${widget.token}', // ر
+          'Content-Type': 'application/json',
+        },
       );
-
+      if (response.statusCode == 401) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
+        return;
+      }
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
