@@ -1,27 +1,21 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:my_app/utils/check_auth.dart';
 import 'package:my_app/core/api_config.dart';
 
-// Top-level enums & constants
+enum CardBrand { visa, mastercard, mada }
 
-enum CardBrand { visa, mastercard, other }
-
-// Hassalah colors
 const kBg = Color(0xFFF7F8FA);
 const kPrimary = Color(0xFF67AFAC);
-const kPrimaryDark = Color(0xFF4B8F8C);
-const kCard = Color(0xFF9FE5E2);
 const kTextSecondary = Color(0xFF6E6E6E);
 
-//const String kBaseUrl = 'http://10.0.2.2:3000';
-
-// Screen
-
 class ParentAddCardScreen extends StatefulWidget {
-  final int parentId; // parent id from home page
+  final int parentId;
   final String token;
 
   const ParentAddCardScreen({
@@ -44,19 +38,26 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
 
   bool _saveSecurely = true;
   bool _isSaving = false;
+  bool _isEditingExpiry = false;
+  bool _canSubmit = false;
 
   String? token;
   final String baseUrl = ApiConfig.baseUrl;
-
-  Future<void> _init() async {
-    await checkAuthStatus(context);
-    await _loadToken();
-  }
 
   @override
   void initState() {
     super.initState();
     _initialize();
+
+    _cardNumberCtrl.addListener(_onFieldChanged);
+    _expiryCtrl.addListener(_onFieldChanged);
+    _cvvCtrl.addListener(_onFieldChanged);
+    _nameCtrl.addListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() {
+    _recheckForm();
+    setState(() {});
   }
 
   Future<void> _initialize() async {
@@ -74,13 +75,12 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/mobile',
+        (route) => false,
+      );
     }
-  }
-
-  Future<void> _loadToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    token = prefs.getString("token");
   }
 
   @override
@@ -92,16 +92,14 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     super.dispose();
   }
 
-  // Card brand detection logic
+  // -------- Brand detection --------
 
   CardBrand _detectBrand(String input) {
     final digits = input.replaceAll(' ', '');
-    if (digits.isEmpty) return CardBrand.other;
+    if (digits.isEmpty) return CardBrand.mada;
 
-    // Visa: starts with 4
     if (digits.startsWith('4')) return CardBrand.visa;
 
-    // Mastercard: 51–55 or 2221–2720
     if (digits.length >= 2) {
       final firstTwo = int.tryParse(digits.substring(0, 2)) ?? 0;
       if (firstTwo >= 51 && firstTwo <= 55) return CardBrand.mastercard;
@@ -113,57 +111,29 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
       }
     }
 
-    return CardBrand.other;
+    return CardBrand.mada;
   }
 
-  Widget _buildBrandChip(CardBrand brand) {
+  Widget _buildBrandLogo(CardBrand brand) {
     switch (brand) {
       case CardBrand.visa:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Text(
-            'VISA',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.blueAccent,
-            ),
-          ),
+        return Image.asset(
+          'assets/icons/visa.png',
+          height: 50,
+          fit: BoxFit.contain,
         );
       case CardBrand.mastercard:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Text(
-            'Mastercard',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.deepOrange,
-            ),
-          ),
+        return Image.asset(
+          'assets/icons/mastercard.png',
+          height: 50,
+          fit: BoxFit.contain,
         );
-      case CardBrand.other:
+      case CardBrand.mada:
       default:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.credit_card, size: 16),
-              SizedBox(width: 4),
-              Text('Card', style: TextStyle(fontWeight: FontWeight.w500)),
-            ],
-          ),
+        return SvgPicture.asset(
+          'assets/icons/mada.svg',
+          height: 70,
+          fit: BoxFit.contain,
         );
     }
   }
@@ -171,21 +141,121 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
   String _maskedCardNumber(String input) {
     final digits = input.replaceAll(' ', '');
     if (digits.isEmpty) return '•••• •••• •••• ••••';
-    if (digits.length <= 8) return '•••• •••• •••• ••••';
+    if (digits.length <= 4) return '•••• •••• •••• ••••';
 
-    final first4 = digits.substring(0, 4);
     final last4 = digits.substring(digits.length - 4);
-    return '$first4 •••• $last4';
+    return '•••• •••• •••• $last4';
   }
 
-  String _last4(String input) {
-    final digits = input.replaceAll(' ', '');
-    if (digits.length < 4) return '••••';
-    return digits.substring(digits.length - 4);
+  // -------- Validation helpers --------
+
+  String? _validateCardNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Card number is required';
+    }
+    final cleaned = value.replaceAll(' ', '');
+    if (!RegExp(r'^\d+$').hasMatch(cleaned)) {
+      return 'Card number must contain digits only';
+    }
+    if (cleaned.length != 16) {
+      return 'Card number must be 16 digits';
+    }
+    return null;
   }
+
+  String? _validateExpiry(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Expiry date is required';
+    }
+    final text = value.trim();
+    final regex = RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$');
+    if (!regex.hasMatch(text)) {
+      return 'Enter a valid expiry date (MM/YY)';
+    }
+
+    // extra checks: month <= 12 and year >= 26
+    final parts = text.split('/');
+    final month = int.tryParse(parts[0]);
+    final year = int.tryParse(parts[1]);
+
+    if (month == null || year == null) {
+      return 'Enter a valid expiry date';
+    }
+    if (month < 1 || month > 12) {
+      return 'Enter a valid month';
+    }
+    if (year < 26) {
+      return 'Expiry year must be 26 or later';
+    }
+
+    return null;
+  }
+
+  String? _validateCVV(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'CVV is required';
+    }
+    if (!RegExp(r'^\d+$').hasMatch(value)) {
+      return 'CVV must contain digits only';
+    }
+    if (value.length != 3) {
+      return 'CVV must be 3 digits';
+    }
+    return null;
+  }
+
+  String? _validateName(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return 'Name on card is required';
+    }
+
+    if (!RegExp(r'^[A-Za-z ]+$').hasMatch(text)) {
+      return 'Name must contain English letters only';
+    }
+
+    if (text.contains('  ')) {
+      return 'Use only one space between first and last name';
+    }
+
+    final firstSpace = text.indexOf(' ');
+    final lastSpace = text.lastIndexOf(' ');
+    if (firstSpace == -1 || firstSpace != lastSpace) {
+      return 'Enter first and last name with one space only';
+    }
+
+    final parts = text.split(' ').where((p) => p.isNotEmpty).toList();
+    if (parts.length != 2) {
+      return 'Enter first and last name only';
+    }
+
+    if (parts.any((p) => p.length < 3)) {
+      return 'Each name must be at least 3 letters';
+    }
+
+    return null;
+  }
+
+  void _recheckForm() {
+    final valid = _validateCardNumber(_cardNumberCtrl.text) == null &&
+        _validateName(_nameCtrl.text) == null &&
+        _validateExpiry(_expiryCtrl.text) == null &&
+        _validateCVV(_cvvCtrl.text) == null;
+
+    if (valid != _canSubmit && mounted) {
+      _canSubmit = valid;
+    }
+  }
+
+  // -------- Submit to backend --------
 
   Future<void> _onAddCard() async {
-    if (!_formKey.currentState!.validate()) return;
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) {
+      _recheckForm();
+      setState(() {});
+      return;
+    }
 
     if (token == null) {
       _forceLogout();
@@ -201,12 +271,12 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     final cardBrand = brandEnum == CardBrand.visa
         ? 'visa'
         : brandEnum == CardBrand.mastercard
-        ? 'mastercard'
-        : 'other';
+            ? 'mastercard'
+            : 'mada';
 
     final parts = _expiryCtrl.text.split('/');
     final expMonth = int.parse(parts[0]);
-    final expYear = 2000 + int.parse(parts[1]); // "27" → 2027
+    final expYear = 2000 + int.parse(parts[1]);
 
     final url = Uri.parse("$baseUrl/api/parent/${widget.parentId}/card");
 
@@ -235,7 +305,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text("Failed to save card")));
       }
-    } catch (e) {
+    } catch (_) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Error while saving card')));
@@ -252,283 +322,366 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
 
     return Scaffold(
       backgroundColor: kBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header + preview card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [kPrimary, kCard],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
-                ),
-              ),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 20,
+            color: Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Add New Card",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFEDEDED),
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // back + title
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Color.fromARGB(255, 0, 0, 0),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Add New Card',
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 0, 0, 0),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // card preview
+                  // preview card
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    height: 220,
+                    margin: const EdgeInsets.only(bottom: 24),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: kPrimaryDark,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF37C4BE),
+                          Color(0xFF2EA49E),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.16),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // brand + expiry + last4
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: _buildBrandLogo(brand),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _maskedCardNumber(_cardNumberCtrl.text),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildBrandChip(brand),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'CARD HOLDER',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _nameCtrl.text,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
+                                const Text(
+                                  'EXPIRY DATE',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
                                 Text(
                                   _expiryCtrl.text.isEmpty
                                       ? 'MM/YY'
                                       : _expiryCtrl.text,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _last4(_cardNumberCtrl.text),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _maskedCardNumber(_cardNumberCtrl.text),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            letterSpacing: 2,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _nameCtrl.text.isEmpty
-                              ? 'Cardholder Name'
-                              : _nameCtrl.text,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
+                      ],
+                    ),
+                  ),
+
+                  // form
+                  Form(
+                    key: _formKey,
+                    autovalidateMode: AutovalidateMode.disabled,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         const Text(
-                          'Debit Card',
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                          'Card Number',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _cardNumberCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: _inputDecoration(),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(16),
+                          ],
+                          validator: _validateCardNumber,
+                        ),
+                        const SizedBox(height: 20),
+
+                        const Text(
+                          'Card Holder Name',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _nameCtrl,
+                          keyboardType: TextInputType.name,
+                          decoration: _inputDecoration(),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[A-Za-z ]'),
+                            ),
+                          ],
+                          validator: _validateName,
+                        ),
+                        const SizedBox(height: 20),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Expiry Date',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  TextFormField(
+                                    controller: _expiryCtrl,
+                                    keyboardType: TextInputType.number,
+                                    decoration: _inputDecoration(
+                                      hint: 'MM/YY',
+                                    ),
+                                    inputFormatters: [
+                                      LengthLimitingTextInputFormatter(5),
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'[\d/]'),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      if (_isEditingExpiry) return;
+                                      _isEditingExpiry = true;
+
+                                      String text = value.replaceAll(' ', '');
+                                      if (text.length == 2 &&
+                                          !text.contains('/')) {
+                                        text = '$text/';
+                                      }
+
+                                      _expiryCtrl.value = TextEditingValue(
+                                        text: text,
+                                        selection:
+                                            TextSelection.collapsed(
+                                          offset: text.length,
+                                        ),
+                                      );
+
+                                      _isEditingExpiry = false;
+                                      _recheckForm();
+                                      setState(() {});
+                                    },
+                                    validator: _validateExpiry,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'CVV',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  TextFormField(
+                                    controller: _cvvCtrl,
+                                    keyboardType: TextInputType.number,
+                                    obscureText: true,
+                                    decoration: _inputDecoration(),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(3),
+                                    ],
+                                    validator: _validateCVV,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
+          ),
 
-            // Form
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
+          // switch + button
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Card number
-                      TextFormField(
-                        controller: _cardNumberCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Card Number',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: _buildBrandChip(brand),
-                          ),
-                          suffixIconConstraints: const BoxConstraints(
-                            minWidth: 0,
-                            minHeight: 0,
+                      const Expanded(
+                        child: Text(
+                          'Save card details for future payments',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: kTextSecondary,
                           ),
                         ),
-                        onChanged: (_) => setState(() {}),
-                        validator: (v) {
-                          if (v == null || v.isEmpty) {
-                            return 'Required';
-                          }
-                          final cleaned = v.replaceAll(' ', '');
-                          if (cleaned.length < 12) {
-                            return 'Enter a valid card number';
-                          }
-                          return null;
-                        },
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _expiryCtrl,
-                              keyboardType: TextInputType.datetime,
-                              decoration: InputDecoration(
-                                labelText: 'Expiry Date',
-                                hintText: 'MM/YY',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return 'Required';
-
-                                // must be exactly MM/YY
-                                if (!RegExp(r'^\d\d/\d\d$').hasMatch(v)) {
-                                  return 'Invalid format (MM/YY)';
-                                }
-
-                                final parts = v.split('/');
-                                final m = int.tryParse(parts[0]);
-                                final y = int.tryParse(parts[1]);
-
-                                if (m == null || m < 1 || m > 12)
-                                  return 'Invalid month';
-                                if (y == null) return 'Invalid year';
-
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _cvvCtrl,
-                              keyboardType: TextInputType.number,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: 'CVV',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              validator: (v) =>
-                                  v == null || v.isEmpty ? 'Required' : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _nameCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'Name on Card',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onChanged: (_) => setState(() {}),
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      CheckboxListTile(
+                      Switch(
                         value: _saveSecurely,
-                        checkColor: Colors.white,
-                        activeColor: const Color.fromARGB(255, 54, 184, 154),
+                        activeColor: kPrimary,
                         onChanged: (v) {
-                          setState(() => _saveSecurely = v ?? true);
+                          setState(() => _saveSecurely = v);
                         },
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text(
-                          'Securely save card and details (demo only)',
-                          style: TextStyle(fontSize: 13, color: kTextSecondary),
-                        ),
                       ),
-                      const SizedBox(height: 80),
                     ],
                   ),
-                ),
-              ),
-            ),
-
-            // Bottom button
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _onAddCard,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed:
+                          (!_canSubmit || _isSaving) ? null : _onAddCard,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade200,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      _isSaving ? 'Saving...' : 'Add Card',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              "Add Card",
+                              style: TextStyle(fontSize: 18),
+                            ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({String? hint}) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: kPrimary,
+          width: 1.8,
         ),
       ),
     );

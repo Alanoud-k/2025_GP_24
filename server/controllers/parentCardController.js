@@ -81,3 +81,33 @@ export async function saveParentCard(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
+/* ---------------------------------------------------------
+   DELETE /api/parent/:parentId/card
+   Removes parent card completely
+--------------------------------------------------------- */
+export async function deleteParentCard(req, res) {
+  const parentId = Number(req.params.parentId);
+
+  if (!parentId) {
+    return res.status(400).json({ message: "Invalid parentId" });
+  }
+
+  try {
+    const result = await sql`
+      DELETE FROM "PaymentMethod"
+      WHERE "parentid" = ${parentId}
+      RETURNING "paymentmethodid"
+    `;
+
+    if (!result.length) {
+      // no card found, but هذا مو خطأ بالنسبة لنا
+      return res.status(404).json({ message: "No card found for this parent" });
+    }
+
+    return res.status(200).json({ message: "Card deleted successfully" });
+  } catch (err) {
+    console.error("deleteParentCard error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}

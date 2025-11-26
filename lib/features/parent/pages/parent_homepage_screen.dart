@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'parent_select_child_screen.dart';
 import 'parent_add_money_screen.dart';
 import 'parent_add_card_screen.dart';
+import 'parent_my_card_screen.dart';
 import 'package:my_app/core/api_config.dart';
 
 class ParentHomeScreen extends StatefulWidget {
@@ -23,8 +24,6 @@ class ParentHomeScreen extends StatefulWidget {
 }
 
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
-  static const String baseUrl = "https://2025gp24-production.up.railway.app";
-
   String firstname = '';
   String walletBalance = '0.00';
   bool _isLoading = true;
@@ -33,7 +32,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   String get token => widget.token;
   int get parentId => widget.parentId;
 
-  // Unified fintech label style (actions + My Children)
   static const TextStyle fintechLabelStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,
@@ -41,15 +39,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     letterSpacing: 0.2,
   );
 
-  /*@override
-  void initState() {
-    super.initState();
-    _validateSession();
-  }*/
   @override
   void initState() {
     super.initState();
-    // Delay auth check until after first frame to ensure context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initialize();
     });
@@ -60,11 +52,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     if (!mounted) return;
     await fetchParentInfo();
   }
-  /*Future<void> _validateSession() async {
-    await checkAuthStatus(context);
-    if (!mounted) return;
-    await fetchParentInfo();
-  }*/
 
   Future<void> _handleUnauthorized() async {
     final prefs = await SharedPreferences.getInstance();
@@ -72,7 +59,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
     if (!mounted) return;
 
-    // TODO: replace '/mobile-entry' with your actual route name for mobile entry page
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/mobile',
@@ -80,7 +66,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     );
   }
 
-  // Fetch parent info (includes balance) and card status
+  // Fetch parent info and card status
   Future<void> fetchParentInfo() async {
     if (token.isEmpty) {
       await _handleUnauthorized();
@@ -94,9 +80,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     try {
       String newFirstname = firstname;
       double newBalance = double.tryParse(walletBalance) ?? 0.0;
-      bool newHasCard = parentHasCard;
+      bool newHasCard = false;
 
-      // ---- Parent info request ----
+      // Parent info
       final parentRes = await http.get(
         parentUrl,
         headers: {
@@ -116,19 +102,16 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
         final b = data['balance'];
         if (b != null) {
-          newBalance = (b is num)
-              ? b.toDouble()
-              : double.tryParse(b.toString()) ?? 0.0;
+          newBalance =
+              (b is num) ? b.toDouble() : double.tryParse(b.toString()) ?? 0.0;
         }
       } else {
-        // Optional: show an error snackbar for non-200/401
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to load parent info')),
         );
       }
 
-      // ---- Card status request ----
+      // Card status
       final cardRes = await http.get(
         cardUrl,
         headers: {
@@ -144,7 +127,12 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
       if (cardRes.statusCode == 200) {
         final cardData = jsonDecode(cardRes.body);
-        newHasCard = cardData['hasCard'] == true;
+        final hasLast4 =
+            cardData['last4'] != null && cardData['last4'].toString().isNotEmpty;
+        final hasFlag = cardData['hasCard'] == true;
+        newHasCard = hasLast4 || hasFlag;
+      } else if (cardRes.statusCode == 404) {
+        newHasCard = false;
       }
 
       if (!mounted) return;
@@ -163,7 +151,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     }
   }
 
-  // Refresh wallet after add money
   Future<void> _refreshFromDb() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -182,7 +169,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
-
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -193,7 +179,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -283,7 +268,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
                 const SizedBox(height: 22),
 
-                // Actions grid row 1
+                // Actions row 1
                 Row(
                   children: [
                     Expanded(
@@ -339,27 +324,43 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
                 const SizedBox(height: 12),
 
-                // Actions grid row 2
+                // Actions row 2
                 Row(
                   children: [
                     Expanded(
                       child: _ActionCard(
                         title: parentHasCard ? "My Card" : "Add Card",
-                        asset: "assets/icons/addCard.png",
+                        asset: parentHasCard
+                            ? "assets/icons/myCard.png"
+                            : "assets/icons/addCard.png",
                         labelStyle: fintechLabelStyle,
                         onTap: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ParentAddCardScreen(
-                                parentId: parentId,
-                                token: token,
+                          if (parentHasCard) {
+                            final updated = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ParentMyCardScreen(
+                                  parentId: parentId,
+                                  token: token,
+                                ),
                               ),
-                            ),
-                          );
-
-                          if (result == true && mounted) {
-                            setState(() => parentHasCard = true);
+                            );
+                            if (updated == true) {
+                              await _refreshFromDb();
+                            }
+                          } else {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ParentAddCardScreen(
+                                  parentId: parentId,
+                                  token: token,
+                                ),
+                              ),
+                            );
+                            if (result == true) {
+                              await _refreshFromDb();
+                            }
                           }
                         },
                       ),
@@ -457,7 +458,6 @@ class _ActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
-          // Big card is pure white + subtle border/shadow
           padding: const EdgeInsets.symmetric(vertical: 18),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -474,7 +474,6 @@ class _ActionCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon without circle
               Image.asset(asset, height: 28, fit: BoxFit.contain),
               const SizedBox(height: 10),
               Text(title, style: labelStyle),

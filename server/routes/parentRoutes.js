@@ -2,7 +2,11 @@
 
 import express from "express";
 import { sql } from "../config/db.js";
-import { getParentCard, saveParentCard } from "../controllers/parentCardController.js";
+import {
+  getParentCard,
+  saveParentCard,
+  deleteParentCard,
+} from "../controllers/parentCardController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -54,5 +58,8 @@ router.get("/parent/:parentId/card", protect, getParentCard);
 
 // POST save/replace card
 router.post("/parent/:parentId/card", protect, saveParentCard);
+
+// DELETE remove card
+router.delete("/parent/:parentId/card", protect, deleteParentCard);
 
 export default router;
