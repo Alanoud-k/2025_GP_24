@@ -68,6 +68,13 @@ export const registerParent = async (req, res) => {
   if (!validatePassword(password)) {
     return res.status(400).json({ error: "Weak password" });
   }
+  if (!validateName(firstName)) {
+  return res.status(400).json({ error: "Invalid first name" });
+  }
+  if (!validateName(lastName)) {
+  return res.status(400).json({ error: "Invalid last name" });
+  }
+
 
   // Age check (>= 18)
   const birthDate = new Date(DoB);

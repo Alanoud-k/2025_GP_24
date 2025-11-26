@@ -41,14 +41,23 @@ export const getChildrenByParent = async (req, res) => {
 export const registerChild = async (req, res) => {
   const { parentId, firstName, nationalId, phoneNo, dob, password, limitAmount  } = req.body;
 
+  // 1) Basic required field checks
   if (!parentId || !firstName || !nationalId || !phoneNo || !dob || !password) {
     return res.status(400).json({ error: "All fields are required" });
   }
+
+  // 2) First name letters only (English + Arabic + spaces allowed)
   if (!/^[A-Za-zأ-يء\s]+$/.test(firstName)) {
-    return res.status(400).json({ error: "First name must contain only letters" });
+    return res
+      .status(400)
+      .json({ error: "First name must contain only letters" });
   }
+
+  // 3) Phone format validation (must start with 05 and be 10 digits)
   if (!/^05\d{8}$/.test(phoneNo)) {
-    return res.status(400).json({ error: "Invalid phone number format" });
+    return res.status(400).json({
+      error: "Phone number must start with 05 and be 10 digits (e.g., 05XXXXXXXX)",
+    });
   }
 
   // Age must be < 18
@@ -72,13 +81,21 @@ export const registerChild = async (req, res) => {
       return res.status(400).json({ error: "Invalid or already used National ID" });
     }
 
-    // Unique phone for Child
-    const existing = await sql`
-      SELECT 1 FROM "Child" WHERE "phoneno" = ${phoneNo} LIMIT 1
-    `;
-    if (existing.length > 0) {
-      return res.status(400).json({ error: "Phone number already in use" });
-    }
+// Phone number must not exist in Parent or Child
+const phoneUsedByParent = await sql`
+  SELECT 1 FROM "Parent" WHERE "phoneno" = ${phoneNo} LIMIT 1
+`;
+if (phoneUsedByParent.length > 0) {
+  return res.status(400).json({ error: "Phone number already belongs to a parent" });
+}
+
+const phoneUsedByChild = await sql`
+  SELECT 1 FROM "Child" WHERE "phoneno" = ${phoneNo} LIMIT 1
+`;
+if (phoneUsedByChild.length > 0) {
+  return res.status(400).json({ error: "Phone number already belongs to another child" });
+}
+
 
     // Hash password
     const hashed = await bcrypt.hash(password, 10);

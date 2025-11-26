@@ -7,3 +7,8 @@ export const validatePassword = (password) => {
     /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
   return pattern.test(password);
 };
+
+export function validateName(name) {
+  return /^[A-Za-z]{2,}$/.test(name.trim());
+}
+

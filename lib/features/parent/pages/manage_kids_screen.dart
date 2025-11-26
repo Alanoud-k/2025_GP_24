@@ -1,373 +1,3 @@
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:my_app/utils/check_auth.dart';
-
-// class ManageKidsScreen extends StatefulWidget {
-//   const ManageKidsScreen({super.key});
-
-//   @override
-//   State<ManageKidsScreen> createState() => _ManageKidsScreenState();
-// }
-
-// class _ManageKidsScreenState extends State<ManageKidsScreen> {
-//   List children = [];
-//   bool _loading = true;
-//   late int parentId;
-
-//   final TextEditingController password = TextEditingController();
-
-//   String? token;
-//   static const String baseUrl = "http://10.0.2.2:3000";
-
-//   @override
-//   void didChangeDependencies() {
-//     super.didChangeDependencies();
-//     checkAuthStatus(context);
-
-//     final args = ModalRoute.of(context)?.settings.arguments as Map?;
-//     parentId = args?['parentId'] ?? 0;
-
-//     print('📱 ManageKidsScreen received parentId: $parentId');
-
-//     _loadToken().then((_) => fetchChildren());
-//   }
-
-//   Future<void> _loadToken() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     token = prefs.getString("token");
-//   }
-
-//   Future<void> fetchChildren() async {
-//     if (token == null) {
-//       setState(() => _loading = false);
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text("Missing token — please log in again.")),
-//       );
-//       return;
-//     }
-
-//     setState(() => _loading = true);
-
-//     final url = Uri.parse("$baseUrl/api/auth/parent/$parentId/children");
-
-//     try {
-//       final response = await http.get(
-//         url,
-//         headers: {"Authorization": "Bearer $token"},
-//       );
-
-//       if (response.statusCode == 200) {
-//         final decoded = jsonDecode(response.body);
-//         setState(() {
-//           children = decoded is List ? decoded : [];
-//           _loading = false;
-//         });
-//       } else {
-//         throw Exception(
-//           "Failed to load children (code ${response.statusCode})",
-//         );
-//       }
-//       if (response.statusCode == 401) {
-//         final prefs = await SharedPreferences.getInstance();
-//         await prefs.clear(); // clear token, ids, role
-//         if (context.mounted) {
-//           Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
-//         }
-//         return;
-//       }
-//     } catch (e) {
-//       setState(() => _loading = false);
-//       ScaffoldMessenger.of(
-//         context,
-//       ).showSnackBar(SnackBar(content: Text("Error fetching children: $e")));
-//     }
-//   }
-
-//   void _openAddChildDialog() {
-//     final _formKey = GlobalKey<FormState>();
-//     final firstName = TextEditingController();
-//     final nationalId = TextEditingController();
-//     final phoneNo = TextEditingController();
-//     final dob = TextEditingController();
-//     final limitAmount = TextEditingController();
-
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: const Text("Add Child"),
-//           content: SingleChildScrollView(
-//             child: Form(
-//               key: _formKey,
-//               child: Column(
-//                 children: [
-//                   _buildValidatedField(
-//                     controller: firstName,
-//                     label: "First Name",
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) return 'Enter first name';
-//                       if (!RegExp(r'^[a-zA-Z]+$').hasMatch(v)) {
-//                         return 'Letters only';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 10),
-
-//                   _buildValidatedField(
-//                     controller: nationalId,
-//                     label: "National ID",
-//                     keyboardType: TextInputType.number,
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) return 'Enter National ID';
-//                       if (v.length != 10) return 'Must be 10 digits';
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 10),
-
-//                   _buildValidatedField(
-//                     controller: phoneNo,
-//                     label: "Phone Number",
-//                     keyboardType: TextInputType.phone,
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) return 'Enter phone number';
-//                       if (!RegExp(r'^05\d{8}$').hasMatch(v)) {
-//                         return 'Invalid format (must start with 05)';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 10),
-
-//                   // 🎯 Date Picker
-//                   TextFormField(
-//                     controller: dob,
-//                     readOnly: true,
-//                     decoration: const InputDecoration(
-//                       labelText: "Date of Birth",
-//                       border: OutlineInputBorder(),
-//                       suffixIcon: Icon(Icons.calendar_today),
-//                     ),
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) {
-//                         return 'Select date of birth';
-//                       }
-//                       return null;
-//                     },
-//                     onTap: () async {
-//                       FocusScope.of(context).unfocus();
-//                       final pickedDate = await showDatePicker(
-//                         context: context,
-//                         initialDate: DateTime(2010),
-//                         firstDate: DateTime(2007),
-//                         lastDate: DateTime.now(),
-//                       );
-//                       if (pickedDate != null) {
-//                         dob.text = pickedDate
-//                             .toIso8601String()
-//                             .split("T")
-//                             .first;
-//                       }
-//                     },
-//                   ),
-//                   const SizedBox(height: 10),
-
-//                   _buildValidatedField(
-//                     controller: password,
-//                     label: "Password",
-//                     obscureText: true,
-//                     keyboardType: TextInputType.number,
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) return 'Enter password';
-//                       if (v.length < 8) return 'Must be at least 8 characters';
-//                       if (!RegExp(
-//                         r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
-//                       ).hasMatch(v)) {
-//                         return 'Use upper, lower, number & special character';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 10),
-
-//                   TextFormField(
-//                     controller: limitAmount,
-//                     keyboardType: TextInputType.number,
-//                     decoration: const InputDecoration(
-//                       labelText: "Spending Limit Amount (SAR)",
-//                       border: OutlineInputBorder(),
-//                     ),
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty)
-//                         return 'Enter a spending limit';
-//                       final value = double.tryParse(v);
-//                       if (value == null || value <= 0)
-//                         return 'Enter a valid amount';
-//                       return null;
-//                     },
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () => Navigator.pop(context),
-//               child: const Text("Cancel"),
-//             ),
-//             ElevatedButton(
-//               onPressed: () async {
-//                 if (!_formKey.currentState!.validate()) return;
-
-//                 await registerChild(
-//                   firstName.text.trim(),
-//                   nationalId.text.trim(),
-//                   phoneNo.text.trim(),
-//                   dob.text.trim(),
-//                   password.text.trim(),
-//                   limitAmount.text.trim(),
-//                 );
-
-//                 if (context.mounted) Navigator.pop(context);
-//               },
-//               child: const Text("Add"),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   Future<void> registerChild(
-//     String firstName,
-//     String nationalId,
-//     String phoneNo,
-//     String dob,
-//     String password,
-//     String limitAmount,
-//   ) async {
-//     if (token == null) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text("Missing token — please log in again.")),
-//       );
-//       return;
-//     }
-
-//     final url = Uri.parse("$baseUrl/api/auth/child/register");
-
-//     final body = {
-//       "parentId": parentId,
-//       "firstName": firstName,
-//       "nationalId": int.tryParse(nationalId),
-//       "phoneNo": phoneNo,
-//       "dob": dob,
-//       "password": password,
-//       "limitAmount": double.tryParse(limitAmount),
-//     };
-
-//     try {
-//       final response = await http.post(
-//         url,
-//         headers: {
-//           'Content-Type': 'application/json',
-//           "Authorization": "Bearer $token",
-//         },
-//         body: jsonEncode(body),
-//       );
-
-//       if (response.statusCode == 200) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(content: Text("Child added successfully!")),
-//         );
-//         fetchChildren(); // Refresh
-//       } else {
-//         final data = jsonDecode(response.body);
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(content: Text(data['error'] ?? 'Failed to add child')),
-//         );
-//       }
-//     } catch (e) {
-//       ScaffoldMessenger.of(
-//         context,
-//       ).showSnackBar(SnackBar(content: Text('Error: $e')));
-//     }
-//   }
-
-//   Widget _buildValidatedField({
-//     required TextEditingController controller,
-//     required String label,
-//     bool obscureText = false,
-//     TextInputType? keyboardType,
-//     String? Function(String?)? validator,
-//   }) {
-//     return TextFormField(
-//       controller: controller,
-//       obscureText: obscureText,
-//       keyboardType: keyboardType,
-//       decoration: InputDecoration(
-//         labelText: label,
-//         border: const OutlineInputBorder(),
-//       ),
-//       validator: validator,
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     const primary = Color(0xFF1ABC9C);
-
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Manage Kids"),
-//         backgroundColor: primary,
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         backgroundColor: primary,
-//         onPressed: _openAddChildDialog,
-//         child: const Icon(Icons.add),
-//       ),
-//       body: _loading
-//           ? const Center(child: CircularProgressIndicator())
-//           : children.isEmpty
-//           ? Center(
-//               child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: const [
-//                   Icon(Icons.family_restroom, size: 80, color: Colors.grey),
-//                   SizedBox(height: 20),
-//                   Text(
-//                     "No children added yet",
-//                     style: TextStyle(fontSize: 18, color: Colors.grey),
-//                   ),
-//                 ],
-//               ),
-//             )
-//           : RefreshIndicator(
-//               onRefresh: fetchChildren,
-//               child: ListView.builder(
-//                 itemCount: children.length,
-//                 itemBuilder: (context, index) {
-//                   final kid = children[index];
-//                   return Card(
-//                     margin: const EdgeInsets.symmetric(
-//                       horizontal: 16,
-//                       vertical: 8,
-//                     ),
-//                     child: ListTile(
-//                       leading: const Icon(Icons.person_outline),
-//                       title: Text(kid['firstName'] ?? 'Unnamed'),
-//                       subtitle: Text('Phone: ${kid['phoneNo'] ?? '—'}'),
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//     );
-//   }
-// }
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -510,13 +140,24 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     label: "Phone Number",
                     keyboardType: TextInputType.phone,
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Enter phone number';
-                      if (!RegExp(r'^05\d{8}$').hasMatch(v)) {
-                        return 'Invalid format (must start with 05)';
+                      // Trim spaces so " 0512345678 " is treated correctly
+                      final value = v?.trim() ?? '';
+
+                      // 1) Required check
+                      if (value.isEmpty) {
+                        return 'Enter phone number';
                       }
-                      return null;
+
+                      // 2) Must start with 05 and be exactly 10 digits
+                      //    Example of a valid number: 0512345678
+                      if (!RegExp(r'^05\d{8}$').hasMatch(value)) {
+                        return 'Phone must start with 05 and be 10 digits (e.g., 05XXXXXXXX)';
+                      }
+
+                      return null; // ✅ valid
                     },
                   ),
+
                   const SizedBox(height: 12),
 
                   // Date of Birth
@@ -615,19 +256,43 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                 ),
               ),
               onPressed: () async {
+                // 1) Validate the form fields (first name, national ID, phone, etc.)
                 if (!_formKey.currentState!.validate()) return;
 
-                await registerChild(
+                final enteredPhone = phoneNo.text.trim();
+
+                // 2) Ask backend if this phone is already linked to any user
+                final exists = await phoneExists(enteredPhone);
+
+                if (exists) {
+                  // 3) If phone already exists, show clear message & keep dialog open
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "This phone number is already linked to an existing user.",
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                // 4) Try to register the child on backend
+                final success = await registerChild(
                   firstName.text.trim(),
                   nationalId.text.trim(),
-                  phoneNo.text.trim(),
+                  enteredPhone,
                   dob.text.trim(),
                   password.text.trim(),
                   limitAmount.text.trim(),
                 );
 
-                if (context.mounted) Navigator.pop(context);
+                // 5) Only close the dialog if registration actually succeeded
+                if (success && context.mounted) {
+                  Navigator.pop(context);
+                }
               },
+
               child: const Text("Add"),
             ),
           ],
@@ -636,7 +301,34 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     );
   }
 
-  Future<void> registerChild(
+  Future<bool> phoneExists(String phone) async {
+    final url = Uri.parse("${baseUrl}/api/auth/check-user");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          if (token != null) "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({"phoneNo": phone}),
+      );
+
+      // Backend returns: { exists: true/false }
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["exists"] == true;
+      }
+    } catch (e) {
+      // If something fails, assume phone does NOT exist
+      // (We don't want to block the user because of network issues)
+      debugPrint("Phone check failed: $e");
+    }
+
+    return false;
+  }
+
+  Future<bool> registerChild(
     String firstName,
     String nationalId,
     String phoneNo,
@@ -648,7 +340,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Missing token — please log in again.")),
       );
-      return;
+      return false;
     }
 
     final url = Uri.parse("${baseUrl}/api/auth/child/register");
@@ -657,7 +349,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       "parentId": parentId,
       "firstName": firstName,
       "nationalId": int.tryParse(nationalId),
-      "phoneno": phoneNo,
+      "phoneNo": phoneNo,
       "dob": dob,
       "password": password,
       "limitAmount": double.tryParse(limitAmount),
@@ -674,20 +366,37 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       );
 
       if (response.statusCode == 200) {
+        // ✅ Child created successfully
+        if (!mounted) return true;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Child added successfully!")),
+          const SnackBar(
+            content: Text("Child added successfully!"),
+            backgroundColor: Colors.green,
+          ),
         );
-        fetchChildren();
+
+        // Refresh children list in UI
+        await fetchChildren();
+        return true;
       } else {
+        // ❌ Backend validation error or other failure
         final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? 'Failed to add child')),
-        );
+        final message = data['error'] ?? 'Failed to add child';
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: Colors.red),
+          );
+        }
+        return false;
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+      return false;
     }
   }
 
