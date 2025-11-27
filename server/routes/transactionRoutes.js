@@ -1,6 +1,6 @@
 // server/routes/transactionRoutes.js
 import express from "express";
-import { simulateCardPayment } from "../controllers/transactionController.js";
+import { simulateCardPayment } from "../controllers/transactionsController.js";
 
 const router = express.Router();
 
