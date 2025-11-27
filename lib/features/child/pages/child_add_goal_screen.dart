@@ -22,7 +22,7 @@ class ChildAddGoalScreen extends StatefulWidget {
 class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
   static const kBg = Color(0xFFF7F8FA);
   static const kCard = Color(0xFF9FE5E2);
-  static const kAddBtn = Color(0xFF75C6C3);
+  static const kAddBtn = Color(0xFF37C4BE);
   static const kTextSecondary = Color(0xFF6E6E6E);
 
   final _formKey = GlobalKey<FormState>();

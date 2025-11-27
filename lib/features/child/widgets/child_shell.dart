@@ -113,8 +113,10 @@ class _ChildShellState extends State<ChildShell> {
     ];
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: const Color(0xffF7F8FA),
       body: SafeArea(
+        bottom: false,
         child: isLoadingData
             ? const Center(child: CircularProgressIndicator(color: Colors.teal))
             : pages[currentIndex],

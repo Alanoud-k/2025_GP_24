@@ -58,7 +58,7 @@ class ChildBottomNavBar extends StatelessWidget {
                       children: [
                         _NavItem(
                           asset: "assets/icons/Reward.svg",
-                          label: "Rewards",
+                          label: "Prizes",
                           isSelected: currentIndex == 0,
                           iconSize: iconSize,
                           onTap: () => onTap(0),

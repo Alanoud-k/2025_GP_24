@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../services/goals_api.dart';
 import '../models/goal_model.dart';
-import '../widgets/child_bottom_nav_bar.dart';
+//import '../widgets/child_bottom_nav_bar.dart';
 import 'child_add_goal_screen.dart';
 import 'child_goal_details_screen.dart';
 import 'package:my_app/utils/check_auth.dart';
@@ -222,6 +222,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+        const hassalaGreen1 = Color(0xFF37C4BE);
     return FutureBuilder(
       future: checkAuthStatus(context),
       builder: (context, snapshot) {
@@ -292,7 +293,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                               children: const [
                                 CircleAvatar(
                                   radius: 27,
-                                  backgroundColor: kMint,
+                                  backgroundColor: hassalaGreen1,
                                   child: Icon(
                                     Icons.add,
                                     color: Colors.white,
@@ -329,12 +330,12 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                   ),
           ),
 
-          bottomNavigationBar: ChildBottomNavBar(
-            currentIndex: 2,
-            onTap: (i) {
-              if (i == 2) Navigator.of(context).pop(true);
-            },
-          ),
+          // bottomNavigationBar: ChildBottomNavBar(
+          //   currentIndex: 2,
+          //   onTap: (i) {
+          //     if (i == 2) Navigator.of(context).pop(true);
+          //   },
+          // ),
         );
       },
     );

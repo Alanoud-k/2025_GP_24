@@ -69,6 +69,7 @@ class _ParentShellState extends State<ParentShell> {
     ];
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: const Color(0xFFF7F8FA),
       body: pages[_index],
       bottomNavigationBar: ParentBottomNavBar(
@@ -157,7 +158,7 @@ class ParentBottomNavBar extends StatelessWidget {
                       children: [
                         _NavItem(
                           asset: "assets/icons/Gift.svg",
-                          label: "Gifts",
+                          label: "Rewards",
                           isSelected: currentIndex == 3,
                           iconSize: iconSize,
                           onTap: () => onTap(3),

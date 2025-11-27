@@ -290,7 +290,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 _balanceTile(
-                                  "Saving",
+                                  "Save",
                                   _saving,
                                   Icons.account_balance_wallet_rounded,
                                 ),

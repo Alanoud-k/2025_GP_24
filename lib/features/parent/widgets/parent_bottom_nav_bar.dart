@@ -59,7 +59,7 @@ class ParentBottomNavBar extends StatelessWidget {
 
             _NavItem(
               asset: "assets/icons/Gift.svg",
-              label: "Gifts",
+              label: "Rewards",
               isSelected: currentIndex == 2,
               iconSize: iconSize,
               onTap: () => onTap(2),
@@ -135,3 +135,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+//
