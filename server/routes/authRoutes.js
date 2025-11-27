@@ -25,6 +25,7 @@ import {
 
 import { transferMoney } from "../controllers/transferController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { updateChildLimit } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ router.get("/child/info/:childId", protect, getChildInfo);
 router.get("/parent/:parentId/children", protect, getChildrenByParent);
 
 router.post("/child/register", registerChild);
+router.put("/child/update-limit/:childId", protect, updateChildLimit);
 
 // ---------- Transfer ----------
 router.post("/transfer", protect, transferMoney);

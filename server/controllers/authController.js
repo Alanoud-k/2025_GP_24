@@ -2,9 +2,11 @@
 
 import bcrypt from "bcrypt";
 import { sql } from "../config/db.js";
-import { validatePhone, validatePassword } from "../utils/validators.js";
-
-
+import {
+  validatePhone,
+  validatePassword,
+  validateName,
+} from "../utils/validators.js";
 
 import jwt from "jsonwebtoken";
 
@@ -14,13 +16,9 @@ function generateToken(payload) {
   });
 }
 
-
-
-
 /* ============================================================
    CHECK USER (by phone)
    Body: { phoneNo }
-   Returns: { exists: boolean, role?: 'Parent'|'Child' }
 ============================================================ */
 export const checkUser = async (req, res) => {
   const { phoneNo } = req.body;
@@ -47,19 +45,33 @@ export const checkUser = async (req, res) => {
     return res.json({ exists: false });
   } catch (err) {
     console.error("Error checking user:", err);
-    res.status(500).json({ error: "Error checking user" });
+    return res.status(500).json({ error: "Error checking user" });
   }
 };
 
 /* ============================================================
    PARENT REGISTRATION
-   Body: { firstName, lastName, nationalId, DoB, phoneNo, password }
 ============================================================ */
 export const registerParent = async (req, res) => {
-  const { firstName, lastName, nationalId, DoB, phoneNo, password, securityAnswer } = req.body;
+  const {
+    firstName,
+    lastName,
+    nationalId,
+    DoB,
+    phoneNo,
+    password,
+    securityAnswer,
+  } = req.body;
 
-  // Basic validations
-  if (!firstName || !lastName || !nationalId || !DoB || !phoneNo || !password) {
+  if (
+    !firstName ||
+    !lastName ||
+    !nationalId ||
+    !DoB ||
+    !phoneNo ||
+    !password ||
+    !securityAnswer
+  ) {
     return res.status(400).json({ error: "All fields are required" });
   }
   if (!validatePhone(phoneNo)) {
@@ -69,12 +81,11 @@ export const registerParent = async (req, res) => {
     return res.status(400).json({ error: "Weak password" });
   }
   if (!validateName(firstName)) {
-  return res.status(400).json({ error: "Invalid first name" });
+    return res.status(400).json({ error: "Invalid first name" });
   }
   if (!validateName(lastName)) {
-  return res.status(400).json({ error: "Invalid last name" });
+    return res.status(400).json({ error: "Invalid last name" });
   }
-
 
   // Age check (>= 18)
   const birthDate = new Date(DoB);
@@ -96,7 +107,9 @@ export const registerParent = async (req, res) => {
       LIMIT 1
     `;
     if (existing.length > 0) {
-      return res.status(400).json({ error: "Phone number already registered" });
+      return res
+        .status(400)
+        .json({ error: "Phone number already registered" });
     }
 
     // National Id valid?
@@ -113,35 +126,43 @@ export const registerParent = async (req, res) => {
         .json({ error: "National ID not found or already used" });
     }
 
-    // Hash password and security answer
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const hashedAnswer = await bcrypt.hash(securityAnswer, saltRounds);
 
-    // Insert parent with security answer hash
     const inserted = await sql`
-  INSERT INTO "Parent" (
-    "nationalid", "phoneno", "firstname", "lastname", "DoB", "password", "securityanswerhash"
-  )
-  VALUES (
-    ${nationalId}, ${phoneNo}, ${firstName}, ${lastName}, ${DoB}, ${hashedPassword}, ${hashedAnswer}
-  )
-  RETURNING "parentid"
-`;
+      INSERT INTO "Parent" (
+        "nationalid",
+        "phoneno",
+        "firstname",
+        "lastname",
+        "DoB",
+        "password",
+        "securityanswerhash"
+      )
+      VALUES (
+        ${nationalId},
+        ${phoneNo},
+        ${firstName},
+        ${lastName},
+        ${DoB},
+        ${hashedPassword},
+        ${hashedAnswer}
+      )
+      RETURNING "parentid"
+    `;
     const newParentId = inserted[0].parentid;
 
-
-    // Create wallet row for parent
+    // Create wallet + ParentAccount
     const parentWallet = await sql`
-  INSERT INTO "Wallet"("parentid","childid","walletstatus")
-  VALUES (${newParentId}, NULL, 'Active')
-  RETURNING walletid
-`;
-
+      INSERT INTO "Wallet"("parentid","childid","walletstatus")
+      VALUES (${newParentId}, NULL, 'Active')
+      RETURNING "walletid"
+    `;
     await sql`
-  INSERT INTO "Account"("walletid","accounttype","currency","balance","limitamount")
-  VALUES (${parentWallet[0].walletid}, 'ParentAccount', 'SAR', 0, 0)
-`;
+      INSERT INTO "Account"("walletid","accounttype","currency","balance","limitamount")
+      VALUES (${parentWallet[0].walletid}, 'ParentAccount', 'SAR', 0, 0)
+    `;
 
     // Mark national id as used
     await sql`
@@ -150,19 +171,18 @@ export const registerParent = async (req, res) => {
       WHERE "nationalid" = ${nationalId}
     `;
 
-    res.json({
+    return res.json({
       message: "Parent registered successfully",
       parentId: newParentId,
     });
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ error: "Failed to register parent" });
+    return res.status(500).json({ error: "Failed to register parent" });
   }
 };
 
 /* ============================================================
    GET NAME BY PHONE
-   Route param: :phoneNo
 ============================================================ */
 export const getNameByPhone = async (req, res) => {
   const { phoneNo } = req.params;
@@ -190,13 +210,12 @@ export const getNameByPhone = async (req, res) => {
     return res.status(404).json({ error: "User not found" });
   } catch (err) {
     console.error("Error fetching firstName:", err);
-    res.status(500).json({ error: "Failed to fetch name" });
+    return res.status(500).json({ error: "Failed to fetch name" });
   }
 };
 
 /* ============================================================
    PARENT LOGIN
-   Body: { phoneNo, password }
 ============================================================ */
 export const loginParent = async (req, res) => {
   const { phoneNo, password } = req.body;
@@ -207,9 +226,9 @@ export const loginParent = async (req, res) => {
 
   try {
     const result = await sql`
-      SELECT parentid, password
+      SELECT "parentid","password"
       FROM "Parent"
-      WHERE phoneno = ${phoneNo}
+      WHERE "phoneno" = ${phoneNo}
       LIMIT 1
     `;
 
@@ -224,29 +243,22 @@ export const loginParent = async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
-    // CORRECT TOKEN
     const token = generateToken({ id: parent.parentid, role: "Parent" });
-
 
     return res.json({
       message: "Parent login successful",
       parentId: parent.parentid,
       token,
     });
-
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ error: "Failed to login" });
   }
 };
 
-
 /* ============================================================
    CHILD LOGIN
-   Body: { phoneNo, password }
 ============================================================ */
-
-
 export const loginChild = async (req, res) => {
   const { phoneNo, password } = req.body;
 
@@ -276,25 +288,21 @@ export const loginChild = async (req, res) => {
       return res.status(401).json({ message: "Incorrect password" });
     }
 
- const token = generateToken({ id: child.childid, role: "Child" });
+    const token = generateToken({ id: child.childid, role: "Child" });
 
-
-    res.json({
+    return res.json({
       message: "Child login successful",
       childId: child.childid,
-      token
+      token,
     });
-
-
   } catch (err) {
     console.error("❌ Child login error:", err);
-    res.status(500).json({ error: "Failed to login child" });
+    return res.status(500).json({ error: "Failed to login child" });
   }
 };
 
 /* ============================================================
-   GET PARENT INFO BY ID (with wallet total balance)
-   Params: :parentId
+   PARENT INFO WITH WALLET TOTAL (auth version)
 ============================================================ */
 export const getParentInfo = async (req, res) => {
   const { parentId } = req.params;
@@ -310,7 +318,6 @@ export const getParentInfo = async (req, res) => {
       return res.status(404).json({ error: "Parent not found" });
     }
 
-    // Find wallet (if exists)
     const wallet = await sql`
       SELECT "walletid"
       FROM "Wallet"
@@ -329,7 +336,7 @@ export const getParentInfo = async (req, res) => {
       balance = Number(sum[0]?.total ?? 0);
     }
 
-    res.json({
+    return res.json({
       firstName: result[0].firstname,
       lastName: result[0].lastname,
       phoneNo: result[0].phoneno,
@@ -337,19 +344,20 @@ export const getParentInfo = async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching parent info:", err);
-    res.status(500).json({ error: "Failed to fetch parent info" });
+    return res.status(500).json({ error: "Failed to fetch parent info" });
   }
 };
 
 /* ============================================================
    VERIFY SECURITY QUESTION ANSWER
-   Body: { phoneNo, answer }
 ============================================================ */
 export const verifySecurityAnswer = async (req, res) => {
   const { phoneNo, answer } = req.body;
 
   if (!phoneNo || !answer) {
-    return res.status(400).json({ error: "Phone number and answer are required" });
+    return res
+      .status(400)
+      .json({ error: "Phone number and answer are required" });
   }
 
   try {
@@ -361,7 +369,10 @@ export const verifySecurityAnswer = async (req, res) => {
     `;
 
     if (parent.length > 0) {
-      const isMatch = await bcrypt.compare(answer, parent[0].securityanswerhash);
+      const isMatch = await bcrypt.compare(
+        answer,
+        parent[0].securityanswerhash
+      );
       return isMatch
         ? res.json({ verified: true, role: "Parent" })
         : res.status(401).json({ error: "Incorrect answer" });
@@ -375,7 +386,10 @@ export const verifySecurityAnswer = async (req, res) => {
     `;
 
     if (child.length > 0) {
-      const isMatch = await bcrypt.compare(answer, child[0].securityanswerhash);
+      const isMatch = await bcrypt.compare(
+        answer,
+        child[0].securityanswerhash
+      );
       return isMatch
         ? res.json({ verified: true, role: "Child" })
         : res.status(401).json({ error: "Incorrect answer" });
@@ -384,19 +398,20 @@ export const verifySecurityAnswer = async (req, res) => {
     return res.status(404).json({ error: "User not found" });
   } catch (err) {
     console.error("❌ Error verifying security answer:", err);
-    res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal error" });
   }
 };
 
 /* ============================================================
    RESET PASSWORD (after verifying answer)
-   Body: { phoneNo, newPassword }
 ============================================================ */
 export const resetPassword = async (req, res) => {
   const { phoneNo, newPassword } = req.body;
 
   if (!phoneNo || !newPassword) {
-    return res.status(400).json({ error: "Phone number and new password are required" });
+    return res
+      .status(400)
+      .json({ error: "Phone number and new password are required" });
   }
 
   if (!validatePassword(newPassword)) {
@@ -429,79 +444,7 @@ export const resetPassword = async (req, res) => {
     return res.status(404).json({ error: "User not found" });
   } catch (err) {
     console.error("❌ Reset password error:", err);
-    res.status(500).json({ error: "Failed to reset password" });
-  }
-};
-
-/* ============================================================
-   GET CHILD INFO BY ID (with wallet + saving/spending split)
-   Params: :childId
-============================================================ */
-export const getChildInfo = async (req, res) => {
-  const { childId } = req.params;
-console.log("🔥 AUTH CONTROLLER CHILD INFO");
-
-  try {
-    const result = await sql`
-      SELECT "firstname","phoneno","rewardkeys"
-      FROM "Child"
-      WHERE "childid" = ${childId}
-      LIMIT 1
-    `;
-    if (result.length === 0) {
-      return res.status(404).json({ error: "Child not found" });
-    }
-
-    // Child wallet
-    const w = await sql`
-      SELECT "walletid"
-      FROM "Wallet"
-      WHERE "childid" = ${childId}
-      LIMIT 1
-    `;
-
-    let balance = 0;
-    let saving = 0;
-    let spend = 0;
-
-    if (w.length > 0) {
-      const walletId = w[0].walletid;
-
-      // Total wallet balance
-      const total = await sql`
-        SELECT COALESCE(SUM("balance"), 0) AS total
-        FROM "Account"
-        WHERE "walletid" = ${walletId}
-      `;
-      balance = Number(total[0]?.total ?? 0);
-
-      // Split by account type
-      const rows = await sql`
-        SELECT "accounttype", COALESCE(SUM("balance"),0) AS amt
-        FROM "Account"
-        WHERE "walletid" = ${walletId}
-          AND "accounttype" IN ('SavingAccount','SpendingAccount')
-        GROUP BY "accounttype"
-      `;
-      for (const r of rows) {
-        if (r.accounttype === "SavingAccount") saving = Number(r.amt);
-        if (r.accounttype === "SpendingAccount") spend = Number(r.amt);
-      }
-    }
-
-    res.json({
-      firstName: result[0].firstname,
-      phoneNo: result[0].phoneno,
-      balance,
-      saving,
-      spend,
-      rewardKeys: result[0].rewardkeys ?? 0,
-      avatarUrl: result[0].avatarurl ?? null
-
-    });
-  } catch (err) {
-    console.error("❌ Error fetching child info:", err);
-    res.status(500).json({ error: "Failed to fetch child info" });
+    return res.status(500).json({ error: "Failed to reset password" });
   }
 };
 
@@ -510,12 +453,11 @@ console.log("🔥 AUTH CONTROLLER CHILD INFO");
 ============================================================ */
 export const logout = (_req, res) => {
   console.log("✅ Logout endpoint hit");
-  res.json({ message: "Logged out successfully" });
+  return res.json({ message: "Logged out successfully" });
 };
 
 /* ============================================================
    GET PARENT BY ID (basic profile)
-   Params: :parentId
 ============================================================ */
 export const getParentById = async (req, res) => {
   try {
@@ -532,9 +474,118 @@ export const getParentById = async (req, res) => {
       return res.status(404).json({ error: "Parent not found" });
     }
 
-    res.json(result[0]);
+    return res.json(result[0]);
   } catch (err) {
     console.error("❌ Error fetching parent:", err);
-    res.status(500).json({ error: "Failed to fetch parent" });
+    return res.status(500).json({ error: "Failed to fetch parent" });
   }
 };
+
+/* ============================================================
+   FIXED: Get Children by Parent (correct balance & limit logic)
+   Used by: /api/auth/parent/:parentId/children
+============================================================ */
+export const getChildrenByParent = async (req, res) => {
+  const { parentId } = req.params;
+
+  try {
+    const children = await sql`
+      SELECT 
+        c."childid"   AS "childId",
+        c."firstname" AS "firstName",
+        c."phoneno"   AS "phoneNo",
+
+        /* Total wallet balance */
+        COALESCE((
+          SELECT SUM(a."balance")
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+        ), 0)::float AS "balance",
+
+        /* Spending limit */
+        COALESCE((
+          SELECT a."limitamount"
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+            AND a."accounttype" = 'SpendingAccount'
+          LIMIT 1
+        ), 0)::float AS "limitAmount",
+
+        /* Saving balance */
+        COALESCE((
+          SELECT SUM(a."balance")
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+            AND a."accounttype" = 'SavingAccount'
+        ), 0)::float AS "saving",
+
+        /* Spending balance */
+        COALESCE((
+          SELECT SUM(a."balance")
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+            AND a."accounttype" = 'SpendingAccount'
+        ), 0)::float AS "spend"
+
+      FROM "Child" c
+      LEFT JOIN "Wallet" w 
+        ON w."childid" = c."childid"
+      WHERE c."parentid" = ${parentId}
+      ORDER BY c."childid" DESC
+    `;
+
+    return res.status(200).json(children);
+
+  } catch (err) {
+    console.error("❌ Error fetching children:", err);
+    return res.status(500).json({
+      error: "Failed to fetch children",
+      details: err.message,
+    });
+  }
+};
+/* ============================================================
+   UPDATE CHILD SPENDING LIMIT
+   Route: PUT /api/auth/child/update-limit/:childId
+============================================================ */
+export const updateChildLimit = async (req, res) => {
+  const { childId } = req.params;
+  const { limitAmount } = req.body;
+
+  const newLimit = Number(limitAmount);
+
+  if (!Number.isFinite(newLimit) || newLimit <= 0) {
+    return res.status(400).json({ error: "Limit amount must be a positive number" });
+  }
+
+  try {
+    // 1) Get child's wallet
+    const wallet = await sql`
+      SELECT "walletid"
+      FROM "Wallet"
+      WHERE "childid" = ${childId}
+      LIMIT 1
+    `;
+
+    if (wallet.length === 0) {
+      return res.status(404).json({ error: "Wallet not found for this child" });
+    }
+
+    const walletId = wallet[0].walletid;
+
+    // 2) Update limitamount in SpendingAccount
+    await sql`
+      UPDATE "Account"
+      SET "limitamount" = ${newLimit}
+      WHERE "walletid" = ${walletId}
+        AND "accounttype" = 'SpendingAccount'
+    `;
+
+    return res.json({ message: "Child spending limit updated", limitAmount: newLimit });
+
+  } catch (err) {
+    console.error("❌ Error updating limit:", err);
+    return res.status(500).json({ error: "Failed to update limit", details: err.message });
+  }
+};
+
