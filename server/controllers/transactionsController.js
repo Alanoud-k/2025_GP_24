@@ -1,3 +1,4 @@
+// server/controllers/transactionController.js
 import axios from "axios";
 import { sql } from "../config/db.js";
 
@@ -6,39 +7,39 @@ export const simulateCardPayment = async (req, res) => {
     const { childId, amount, merchantName, mcc } = req.body;
 
     if (!childId || !amount || !merchantName || !mcc) {
-      return res.status(400).json({ message: "Missing fields" });
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
     // Call ML service
     const mlRes = await axios.post(
-      "https://hassalah-ai.up.railway.app/predict",
+      `${process.env.ML_URL}/classify`,
       {
         merchant_name: merchantName,
-        mcc: mcc
+        mcc: mcc,
       }
     );
 
-    const category = mlRes.data.data.transactioncategory;
+    const category = mlRes.data?.category ?? "Uncategorized";
 
-    // Save to DB
-    const saved = await sql`
-      INSERT INTO Transaction (
-        amount,
-        merchantname,
-        transactioncategory,
-        receiverAccountId
-      )
-      VALUES (${amount}, ${merchantName}, ${category}, ${childId})
+    // Insert fake transaction into DB
+    const rows = await sql`
+      INSERT INTO "Transaction"
+        (transactiontype, amount, transactionstatus,
+         merchantname, sourcetype, transactioncategory,
+         senderAccountId, receiverAccountId, mcc)
+      VALUES
+        ('Debit', ${amount}, 'Completed',
+         ${merchantName}, 'Payment', ${category},
+         NULL, ${childId}, ${mcc})
       RETURNING *;
     `;
 
-    res.json({
-      message: "Transaction simulated",
-      data: saved[0]
+    return res.json({
+      status: "success",
+      data: rows[0],
     });
-
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("simulateCardPayment error:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
