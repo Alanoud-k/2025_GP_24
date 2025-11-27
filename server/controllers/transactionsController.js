@@ -14,7 +14,7 @@ export const simulateCardPayment = async (req, res) => {
 
     const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
 
-    // Call ML service (notice /classify)
+    // Call ML service
     const mlRes = await fetch(`${mlUrl}/classify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,25 +43,24 @@ export const simulateCardPayment = async (req, res) => {
       "Uncategorized";
 
     // Insert fake transaction into DB
-    // Note: we do NOT use senderAccountId at all
     const rows = await sql`
       INSERT INTO "Transaction" (
-        transactiontype,
-        amount,
-        transactionstatus,
-        merchantname,
-        sourcetype,
-        transactioncategory,
+        "transactiontype",
+        "amount",
+        "transactionstatus",
+        "merchantname",
+        "sourcetype",
+        "transactioncategory",
         "receiverAccountId"
       )
       VALUES (
-        'Card',                 -- or any value valid in transaction_type enum
+        'Transfer',          -- valid value in transaction_type enum
         ${amount},
         'Completed',
         ${merchantName},
-        'Payment',              -- must match sourcetype CHECK constraint
+        'Payment',           -- valid value in sourcetype CHECK constraint
         ${category},
-        ${childId}              -- temporarily using childId as receiverAccountId
+        ${childId}           -- temporarily using childId as receiverAccountId
       )
       RETURNING *;
     `;
