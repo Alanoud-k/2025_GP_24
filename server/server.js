@@ -11,6 +11,7 @@ import authRoutes from "./routes/authRoutes.js";
 import parentRoutes from "./routes/parentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
+import transactionRoutes from "./routes/transactionRoutes.js";
 
 // PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
@@ -81,6 +82,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api", parentRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
+app.use("/api/transaction", transactionRoutes);
+
 
 // Create payment
 app.post("/api/create-payment/:parentId", createPayment);

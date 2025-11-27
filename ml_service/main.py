@@ -1,27 +1,23 @@
-# ml_service/main.py
-import joblib
-import pandas as pd
 from fastapi import FastAPI
-from pydantic import BaseModel
+import joblib
+import numpy as np
+import pandas as pd
 
 app = FastAPI()
 
-# load model (the pipeline you trained)
+# Load model
 model = joblib.load("hassalah_ml_model.joblib")
 
-class TransactionInput(BaseModel):
-    merchant_name: str
-    mcc: int
-
-@app.get("/")
-def root():
-    return {"message": "Hassalah ML Service is running"}
-
 @app.post("/predict")
-def predict_category(data: TransactionInput):
+def predict(data: dict):
+    merchant = data["merchant_name"]
+    mcc = data["mcc"]
+
     df = pd.DataFrame([{
-        "merchant_name": data.merchant_name,
-        "mcc": data.mcc
+        "merchant_name": merchant,
+        "mcc": mcc
     }])
-    pred = model.predict(df)[0]
-    return {"category": str(pred)}
+
+    prediction = model.predict(df)[0]
+
+    return {"category": prediction}
