@@ -104,7 +104,7 @@ export const changeParentPassword = async (req, res) => {
 export const changeChildPassword = async (req, res) => {
   try {
     const { childId } = req.params;
-    const { newPassword } = req.body;
+const { currentPassword, newPassword } = req.body;
 
     if (!newPassword) {
       return res.status(400).json({ error: "New password is required" });

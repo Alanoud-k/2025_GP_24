@@ -243,8 +243,8 @@ class _ParentSecuritySettingsPageState
                   value: selectedChild,
                   items: children.map((c) {
                     return DropdownMenuItem<String>(
-                      value: c["id"].toString(),
-                      child: Text(c["firstName"]),
+                      value: c['childId'].toString(),
+                      child: Text(c['firstName'] ?? 'Child'),
                     );
                   }).toList(),
                   onChanged: (v) {

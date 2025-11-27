@@ -27,7 +27,6 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       checkAuthStatus(context);
     });
@@ -37,18 +36,18 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
   // Show Change Password Dialog
   // -------------------------------------------------------------------
   void _showChangePasswordDialog() {
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
 
-    bool obscureNew = true;
-    bool obscureConfirm = true;
+    bool hideNew = true;
+    bool hideConfirm = true;
 
     showDialog(
       context: context,
-      barrierDismissible: false, // prevent accidental close
+      barrierDismissible: false,
       builder: (_) {
         return StatefulBuilder(
-          builder: (context, setStateDialog) {
+          builder: (context, setDialogState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -57,13 +56,14 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                 'Change Password',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
+
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // NEW PASSWORD
                   TextField(
-                    controller: newPasswordController,
-                    obscureText: obscureNew,
+                    controller: newController,
+                    obscureText: hideNew,
                     decoration: InputDecoration(
                       labelText: 'New Password',
                       border: OutlineInputBorder(
@@ -71,14 +71,11 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          obscureNew ? Icons.visibility_off : Icons.visibility,
-                          size: 20,
+                          hideNew ? Icons.visibility_off : Icons.visibility,
                         ),
-                        onPressed: () {
-                          setStateDialog(() {
-                            obscureNew = !obscureNew;
-                          });
-                        },
+                        onPressed: () => setDialogState(() {
+                          hideNew = !hideNew;
+                        }),
                       ),
                     ),
                   ),
@@ -86,8 +83,8 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
 
                   // CONFIRM PASSWORD
                   TextField(
-                    controller: confirmPasswordController,
-                    obscureText: obscureConfirm,
+                    controller: confirmController,
+                    obscureText: hideConfirm,
                     decoration: InputDecoration(
                       labelText: 'Confirm New Password',
                       border: OutlineInputBorder(
@@ -95,16 +92,11 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          obscureConfirm
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          size: 20,
+                          hideConfirm ? Icons.visibility_off : Icons.visibility,
                         ),
-                        onPressed: () {
-                          setStateDialog(() {
-                            obscureConfirm = !obscureConfirm;
-                          });
-                        },
+                        onPressed: () => setDialogState(() {
+                          hideConfirm = !hideConfirm;
+                        }),
                       ),
                     ),
                   ),
@@ -118,32 +110,29 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                 ),
 
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                  child: const Text('Change'),
                   onPressed: () async {
-                    final newPass = newPasswordController.text.trim();
-                    final confirmPass = confirmPasswordController.text.trim();
+                    final newPass = newController.text.trim();
+                    final confirmPass = confirmController.text.trim();
 
-                    // -------- VALIDATION --------
+                    // VALIDATION
                     if (newPass != confirmPass) {
-                      _showErrorSnackbar('Passwords do not match');
+                      _showError('Passwords do not match');
                       return;
                     }
-
                     if (!_validatePassword(newPass)) {
-                      _showErrorSnackbar(
-                        'Password must have upper, lower, number & special character',
+                      _showError(
+                        'Password must include upper, lower, number & symbol.',
                       );
                       return;
                     }
 
-                    // TRY CHANGE PASSWORD
-                    final success = await _changeChildPassword(newPass);
+                    // Attempt update
+                    final ok = await _changeChildPassword(newPass);
 
-                    if (success && mounted) {
-                      Navigator.pop(context); // close dialog only on success
-                    }
+                    if (ok && mounted) Navigator.pop(context);
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                  child: const Text('Change'),
                 ),
               ],
             );
@@ -154,11 +143,10 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
   }
 
   // -------------------------------------------------------------------
-  // CALL BACKEND TO CHANGE CHILD PASSWORD
+  // Send Change Password Request
   // -------------------------------------------------------------------
   Future<bool> _changeChildPassword(String newPassword) async {
     if (_isUpdating) return false;
-
     setState(() => _isUpdating = true);
 
     final url = Uri.parse(
@@ -173,14 +161,15 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
           'Authorization': 'Bearer ${widget.token}',
         },
         body: jsonEncode({
-          'newPassword': newPassword, // ONLY this key is expected by backend
+          // Only new password is required for child → backend accepts this
+          'newPassword': newPassword,
         }),
       );
 
       setState(() => _isUpdating = false);
 
+      // TOKEN EXPIRED?
       if (response.statusCode == 401) {
-        // token expired → logout
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
         if (mounted) {
@@ -189,50 +178,60 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
         return false;
       }
 
+      // SUCCESS
       if (response.statusCode == 200) {
-        _showSuccessSnackbar('Password changed successfully');
+        _showSuccess('Password changed successfully');
         return true;
-      } else {
-        final body = jsonDecode(response.body);
-        _showErrorSnackbar(body["error"] ?? "Failed to change password");
+      }
+
+      // ERROR — try decode JSON
+      dynamic body;
+      try {
+        body = jsonDecode(response.body);
+      } catch (_) {
+        _showError("Unexpected server error (${response.statusCode})");
         return false;
       }
+
+      _showError(body['error'] ?? 'Failed to change password');
+      return false;
     } catch (e) {
       setState(() => _isUpdating = false);
-      _showErrorSnackbar('Error: $e');
+      _showError('Error: $e');
       return false;
     }
   }
 
   // -------------------------------------------------------------------
-  // UI + Shared Helpers
+  // Helpers
   // -------------------------------------------------------------------
-  bool _validatePassword(String password) {
-    if (password.length < 8) return false;
+  bool _validatePassword(String p) {
+    if (p.length < 8) return false;
     return RegExp(
       r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
-    ).hasMatch(password);
+    ).hasMatch(p);
   }
 
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
-    );
+  void _showSuccess(String msg) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
   }
 
-  void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+  void _showError(String msg) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   // -------------------------------------------------------------------
-  // BUILD UI
+  // UI
   // -------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
+
       appBar: AppBar(
         title: const Text(
           'Security settings',
@@ -272,7 +271,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
               _buildSecurityCard(
                 icon: Icons.lock_outline,
                 title: 'Change password',
-                onTap: () => _showChangePasswordDialog(),
+                onTap: _showChangePasswordDialog,
               ),
 
               if (_isUpdating)
