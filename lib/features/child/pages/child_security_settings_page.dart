@@ -22,6 +22,8 @@ class ChildSecuritySettingsPage extends StatefulWidget {
 }
 
 class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
+  bool _isUpdating = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,108 +33,138 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     });
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final currentPasswordController = TextEditingController();
+  // -------------------------------------------------------------------
+  // Show Change Password Dialog
+  // -------------------------------------------------------------------
+  void _showChangePasswordDialog() {
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
 
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text(
-            'Change Password',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: currentPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Current Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                obscureText: true,
+      barrierDismissible: false, // prevent accidental close
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'New Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.info_outline, size: 18),
-                    onPressed: () => _showPasswordRequirementsDialog(context),
-                  ),
-                ),
-                obscureText: true,
+              title: const Text(
+                'Change Password',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Confirm New Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // NEW PASSWORD
+                  TextField(
+                    controller: newPasswordController,
+                    obscureText: obscureNew,
+                    decoration: InputDecoration(
+                      labelText: 'New Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureNew ? Icons.visibility_off : Icons.visibility,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            obscureNew = !obscureNew;
+                          });
+                        },
+                      ),
+                    ),
                   ),
-                ),
-                obscureText: true,
+                  const SizedBox(height: 12),
+
+                  // CONFIRM PASSWORD
+                  TextField(
+                    controller: confirmPasswordController,
+                    obscureText: obscureConfirm,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm New Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureConfirm
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            obscureConfirm = !obscureConfirm;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final newPassword = newPasswordController.text;
 
-                // التحقق من تطابق كلمات المرور
-                if (newPassword != confirmPasswordController.text) {
-                  _showErrorSnackbar('Passwords do not match');
-                  return;
-                }
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
 
-                // التحقق من شروط كلمة المرور
-                if (!_validatePassword(newPassword)) {
-                  _showErrorSnackbar(
-                    'Password does not meet requirements. Tap the info icon for details.',
-                  );
-                  return;
-                }
+                ElevatedButton(
+                  onPressed: () async {
+                    final newPass = newPasswordController.text.trim();
+                    final confirmPass = confirmPasswordController.text.trim();
 
-                await _changeChildPassword(
-                  currentPasswordController.text,
-                  newPassword,
-                );
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-              child: const Text('Change'),
-            ),
-          ],
+                    // -------- VALIDATION --------
+                    if (newPass != confirmPass) {
+                      _showErrorSnackbar('Passwords do not match');
+                      return;
+                    }
+
+                    if (!_validatePassword(newPass)) {
+                      _showErrorSnackbar(
+                        'Password must have upper, lower, number & special character',
+                      );
+                      return;
+                    }
+
+                    // TRY CHANGE PASSWORD
+                    final success = await _changeChildPassword(newPass);
+
+                    if (success && mounted) {
+                      Navigator.pop(context); // close dialog only on success
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                  child: const Text('Change'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  Future<void> _changeChildPassword(
-    String currentPassword,
-    String newPassword,
-  ) async {
+  // -------------------------------------------------------------------
+  // CALL BACKEND TO CHANGE CHILD PASSWORD
+  // -------------------------------------------------------------------
+  Future<bool> _changeChildPassword(String newPassword) async {
+    if (_isUpdating) return false;
+
+    setState(() => _isUpdating = true);
+
     final url = Uri.parse(
       '${widget.baseUrl}/api/child/${widget.childId}/password',
     );
+
     try {
       final response = await http.put(
         url,
@@ -141,31 +173,45 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
           'Authorization': 'Bearer ${widget.token}',
         },
         body: jsonEncode({
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
+          'newPassword': newPassword, // ONLY this key is expected by backend
         }),
       );
 
+      setState(() => _isUpdating = false);
+
       if (response.statusCode == 401) {
+        // token expired → logout
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-
         if (mounted) {
           Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
         }
-        return;
+        return false;
       }
 
       if (response.statusCode == 200) {
         _showSuccessSnackbar('Password changed successfully');
-      } else if (response.statusCode == 401) {
-        _showErrorSnackbar('Current password is incorrect');
+        return true;
       } else {
-        _showErrorSnackbar('Failed to change password');
+        final body = jsonDecode(response.body);
+        _showErrorSnackbar(body["error"] ?? "Failed to change password");
+        return false;
       }
     } catch (e) {
+      setState(() => _isUpdating = false);
       _showErrorSnackbar('Error: $e');
+      return false;
     }
+  }
+
+  // -------------------------------------------------------------------
+  // UI + Shared Helpers
+  // -------------------------------------------------------------------
+  bool _validatePassword(String password) {
+    if (password.length < 8) return false;
+    return RegExp(
+      r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
+    ).hasMatch(password);
   }
 
   void _showSuccessSnackbar(String message) {
@@ -180,52 +226,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     );
   }
 
-  bool _validatePassword(String password) {
-    if (password.length < 8) {
-      return false;
-    }
-    if (!RegExp(
-      r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
-    ).hasMatch(password)) {
-      return false;
-    }
-    return true;
-  }
-
-  void _showPasswordRequirementsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text(
-            'Password Requirements',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('• At least 8 characters'),
-              Text('• One uppercase letter (A-Z)'),
-              Text('• One lowercase letter (a-z)'),
-              Text('• One number (0-9)'),
-              Text('• One special character (!@#\$%^&*)'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
+  // -------------------------------------------------------------------
+  // BUILD UI
+  // -------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -247,6 +250,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -254,7 +258,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Padding(
-                padding: EdgeInsets.only(left: 8, bottom: 8, top: 8),
+                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 child: Text(
                   'Security',
                   style: TextStyle(
@@ -268,8 +272,14 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
               _buildSecurityCard(
                 icon: Icons.lock_outline,
                 title: 'Change password',
-                onTap: () => _showChangePasswordDialog(context),
+                onTap: () => _showChangePasswordDialog(),
               ),
+
+              if (_isUpdating)
+                const Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
 
               const Spacer(),
             ],
@@ -315,11 +325,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
             color: Colors.black,
           ),
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Colors.grey,
-        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),
     );

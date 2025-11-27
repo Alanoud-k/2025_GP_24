@@ -7,7 +7,7 @@ import 'package:my_app/core/api_config.dart';
 
 class ParentSecuritySettingsPage extends StatefulWidget {
   final int parentId;
-  final String token; // ✅ JWT added
+  final String token;
 
   const ParentSecuritySettingsPage({
     super.key,
@@ -47,7 +47,6 @@ class _ParentSecuritySettingsPageState
     if (statusCode == 401) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-
       if (!mounted) return true;
       Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
       return true;
@@ -59,8 +58,7 @@ class _ParentSecuritySettingsPageState
     setState(() => isLoadingChildren = true);
 
     if (token == null) {
-      _showErrorSnackbar("Missing token — please log in again");
-      setState(() => isLoadingChildren = false);
+      _showError("Missing token — please log in again");
       return;
     }
 
@@ -71,10 +69,7 @@ class _ParentSecuritySettingsPageState
     try {
       final response = await http.get(
         url,
-        headers: {
-          "Authorization": "Bearer ${widget.token}", // ✅ JWT included
-          "Content-Type": "application/json",
-        },
+        headers: {"Authorization": "Bearer $token"},
       );
 
       if (response.statusCode == 200) {
@@ -83,255 +78,96 @@ class _ParentSecuritySettingsPageState
           children = data is List ? data : data["children"] ?? [];
         });
       } else {
-        _showErrorSnackbar('Failed to load children');
+        _showError("Failed to load children");
       }
     } catch (e) {
-      _showErrorSnackbar('Error: $e');
+      _showError("Error: $e");
     } finally {
       setState(() => isLoadingChildren = false);
     }
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
+  // -------------------------------------------------------------
+  // CHANGE PARENT PASSWORD
+  // -------------------------------------------------------------
+  void _showChangeParentPasswordDialog() {
+    final currentPassword = TextEditingController();
+    final newPassword = TextEditingController();
+    final confirmPassword = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text(
-            'Change Password',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: currentPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Current Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'New Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.info_outline, size: 18),
-                    onPressed: () => _showPasswordRequirementsDialog(context),
-                  ),
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Confirm New Password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                obscureText: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final newPassword = newPasswordController.text;
-
-                // التحقق من تطابق كلمات المرور
-                if (newPassword != confirmPasswordController.text) {
-                  _showErrorSnackbar('Passwords do not match');
-                  return;
-                }
-
-                // التحقق من شروط كلمة المرور
-                if (!_validatePassword(newPassword)) {
-                  _showErrorSnackbar(
-                    'Password does not meet requirements. Tap the info icon for details.',
-                  );
-                  return;
-                }
-
-                await _changeParentPassword(
-                  currentPasswordController.text,
-                  newPassword,
-                );
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-              child: const Text('Change'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _changeParentPassword(
-    String currentPassword,
-    String newPassword,
-  ) async {
-    if (token == null) return _forceLogout();
-
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}/api/parent/${widget.parentId}/password',
-    );
-
-    try {
-      final response = await http.put(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-        }),
-      );
-
-      if (await _handleExpired(response.statusCode)) return;
-
-      if (response.statusCode == 200) {
-        _showSuccessSnackbar('Password changed successfully');
-      } else if (response.statusCode == 401) {
-        _showErrorSnackbar('Current password is incorrect');
-      } else {
-        _showErrorSnackbar('Failed to change password');
-      }
-    } catch (e) {
-      _showErrorSnackbar('Error: $e');
-    }
-  }
-
-  void _showChangeChildPasswordDialog(BuildContext context) {
-    String? selectedChildId;
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
+      builder: (_) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (context, setStateDialog) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              title: const Text(
-                'Change Child Password',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              title: const Text('Change Password'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Child Selection Dropdown
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Select Child',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                  TextField(
+                    controller: currentPassword,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: "Current Password",
+                      border: OutlineInputBorder(),
                     ),
-                    value: selectedChildId,
-                    items: children.map<DropdownMenuItem<String>>((child) {
-                      return DropdownMenuItem<String>(
-                        value: child['id'].toString(),
-                        child: Text(child['firstName']),
-                      );
-                    }).toList(),
-                    onChanged: (String? value) {
-                      setDialogState(() {
-                        selectedChildId = value;
-                      });
-                    },
                   ),
                   const SizedBox(height: 12),
                   TextField(
-                    controller: newPasswordController,
+                    controller: newPassword,
+                    obscureText: true,
                     decoration: InputDecoration(
-                      labelText: 'New Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      labelText: "New Password",
+                      border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.info_outline, size: 18),
-                        onPressed: () =>
-                            _showPasswordRequirementsDialog(context),
+                        icon: const Icon(Icons.info_outline),
+                        onPressed: () => _showPasswordRequirements(context),
                       ),
                     ),
-                    obscureText: true,
                   ),
                   const SizedBox(height: 12),
                   TextField(
-                    controller: confirmPasswordController,
-                    decoration: InputDecoration(
-                      labelText: 'Confirm New Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                    controller: confirmPassword,
                     obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: "Confirm New Password",
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ],
               ),
               actions: [
                 TextButton(
+                  child: const Text("Cancel"),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: selectedChildId == null
-                      ? null
-                      : () async {
-                          final newPassword = newPasswordController.text;
-
-                          if (newPassword.isEmpty) {
-                            _showErrorSnackbar('Please enter new password');
-                            return;
-                          }
-
-                          if (newPassword != confirmPasswordController.text) {
-                            _showErrorSnackbar('Passwords do not match');
-                            return;
-                          }
-
-                          // التحقق من شروط كلمة المرور
-                          if (!_validatePassword(newPassword)) {
-                            _showErrorSnackbar(
-                              'Password does not meet requirements. Tap the info icon for details.',
-                            );
-                            return;
-                          }
-
-                          await _changeChildPassword(
-                            int.parse(selectedChildId!),
-                            newPassword,
-                          );
-                          Navigator.pop(context);
-                        },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                  child: const Text('Change'),
+                  child: const Text("Change"),
+                  onPressed: () async {
+                    final newPass = newPassword.text.trim();
+
+                    if (newPass != confirmPassword.text.trim()) {
+                      _showError("Passwords do not match");
+                      return;
+                    }
+
+                    if (!_validatePassword(newPass)) {
+                      _showError("Password does not meet requirements");
+                      return;
+                    }
+
+                    final success = await _changeParentPassword(
+                      currentPassword.text.trim(),
+                      newPass,
+                    );
+
+                    if (success && mounted) Navigator.pop(context);
+                  },
                 ),
               ],
             );
@@ -341,220 +177,302 @@ class _ParentSecuritySettingsPageState
     );
   }
 
-  Future<void> _changeChildPassword(int childId, String newPassword) async {
-    if (token == null) return _forceLogout();
-
-    final url = Uri.parse('${ApiConfig.baseUrl}/api/child/$childId/password');
+  Future<bool> _changeParentPassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/auth/parent/${widget.parentId}/password",
+    );
 
     try {
       final response = await http.put(
         url,
         headers: {
-          'Content-Type': 'application/json',
-          "Authorization": "Bearer ${widget.token}", // ✅ JWT added
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
         },
-        body: jsonEncode({'newPassword': newPassword}),
+        body: jsonEncode({
+          "currentPassword": currentPassword,
+          "newPassword": newPassword,
+        }),
       );
-      if (await _handleExpired(response.statusCode)) return;
+
+      if (await _handleExpired(response.statusCode)) return false;
+
+      final body = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        _showSuccessSnackbar('Child password changed successfully');
+        _showSuccess("Password changed successfully");
+        return true;
       } else {
-        final errorData = jsonDecode(response.body);
-        _showErrorSnackbar('Failed: ${errorData['error'] ?? 'Unknown error'}');
+        _showError(body["error"] ?? "Failed to change password");
+        return false;
       }
     } catch (e) {
-      _showErrorSnackbar('Error: $e');
+      _showError("Error: $e");
+      return false;
     }
   }
-  // --------------------- FORCE LOGOUT ---------------------
 
-  Future<void> _forceLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+  // -------------------------------------------------------------
+  // CHANGE CHILD PASSWORD
+  // -------------------------------------------------------------
+  void _showChangeChildPasswordDialog() {
+    String? selectedChild;
+    final newPassword = TextEditingController();
+    final confirmPassword = TextEditingController();
 
-    if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
-  }
-
-  //------------------------------------------------------------
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
-    );
-  }
-
-  void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Security settings'),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 8, bottom: 8, top: 8),
-                child: Text(
-                  'Security',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text("Change Child Password"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: "Select Child",
+                    border: OutlineInputBorder(),
                   ),
+                  value: selectedChild,
+                  items: children.map((c) {
+                    return DropdownMenuItem<String>(
+                      value: c["id"].toString(),
+                      child: Text(c["firstName"]),
+                    );
+                  }).toList(),
+                  onChanged: (v) {
+                    setStateDialog(() => selectedChild = v);
+                  },
                 ),
-              ),
-
-              // Change Password Card
-              _buildSecurityCard(
-                icon: Icons.lock_outline,
-                title: 'Change password',
-                onTap: () => _showChangePasswordDialog(context),
-              ),
-              const SizedBox(height: 16),
-
-              // Change Child Password Card
-              _buildSecurityCard(
-                icon: Icons.child_care_outlined,
-                title: 'Change child password',
-                onTap: isLoadingChildren || children.isEmpty
-                    ? null
-                    : () => _showChangeChildPasswordDialog(context),
-              ),
-
-              // Show loading or empty state
-              if (isLoadingChildren)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (children.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(
-                    child: Text(
-                      'No children found',
-                      style: TextStyle(color: Colors.grey),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newPassword,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: "New Password",
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.info_outline),
+                      onPressed: () => _showPasswordRequirements(context),
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmPassword,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: "Confirm Password",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.pop(context),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                child: const Text("Change"),
+                onPressed: selectedChild == null
+                    ? null
+                    : () async {
+                        final newPass = newPassword.text.trim();
+
+                        if (newPass != confirmPassword.text.trim()) {
+                          _showError("Passwords do not match");
+                          return;
+                        }
+
+                        if (!_validatePassword(newPass)) {
+                          _showError("Password does not meet requirements");
+                          return;
+                        }
+
+                        final success = await _changeChildPassword(
+                          int.parse(selectedChild!),
+                          newPass,
+                        );
+
+                        if (success && mounted) Navigator.pop(context);
+                      },
+              ),
             ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool> _changeChildPassword(int childId, String newPassword) async {
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/auth/child/$childId/password",
+    );
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({"newPassword": newPassword}),
+      );
+
+      if (await _handleExpired(response.statusCode)) return false;
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        _showSuccess("Child password changed successfully");
+        return true;
+      } else {
+        _showError(body["error"] ?? "Failed to change password");
+        return false;
+      }
+    } catch (e) {
+      _showError("Error: $e");
+      return false;
+    }
+  }
+
+  // -------------------------------------------------------------
+  // UI
+  // -------------------------------------------------------------
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Security Settings'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          _sectionTitle("Security"),
+
+          _securityCard(
+            icon: Icons.lock_outline,
+            title: "Change password",
+            onTap: () => _showChangeParentPasswordDialog(),
           ),
+
+          const SizedBox(height: 14),
+
+          _securityCard(
+            icon: Icons.child_care_outlined,
+            title: "Change child password",
+            onTap: children.isEmpty
+                ? null
+                : () => _showChangeChildPasswordDialog(),
+          ),
+
+          if (children.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text(
+                "No children found",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
         ),
       ),
     );
   }
 
-  Widget _buildSecurityCard({
+  Widget _securityCard({
     required IconData icon,
     required String title,
     required VoidCallback? onTap,
   }) {
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 5),
         ],
       ),
       child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.teal.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: onTap == null ? Colors.grey : Colors.teal,
-            size: 20,
-          ),
+        leading: CircleAvatar(
+          backgroundColor: Colors.teal.withOpacity(0.15),
+          child: Icon(icon, color: Colors.teal),
         ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: onTap == null ? Colors.grey : Colors.black,
-          ),
-        ),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: onTap == null ? Colors.grey : Colors.grey,
-        ),
+        title: Text(title),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),
     );
   }
-}
 
-// دالة التحقق من شروط كلمة المرور
-bool _validatePassword(String password) {
-  if (password.length < 8) {
-    return false;
+  // -------------------------------------------------------------
+  // SNACKBARS
+  // -------------------------------------------------------------
+  void _showSuccess(String msg) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
   }
-  if (!RegExp(
-    r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
-  ).hasMatch(password)) {
-    return false;
-  }
-  return true;
-}
 
-// دالة لعرض رسالة الخطأ
-void _showPasswordRequirementsDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          'Password Requirements',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('• At least 8 characters'),
-            Text('• One uppercase letter (A-Z)'),
-            Text('• One lowercase letter (a-z)'),
-            Text('• One number (0-9)'),
-            Text('• One special character (!@#\$%^&*)'),
-          ],
+  void _showError(String msg) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+  }
+
+  // -------------------------------------------------------------
+  // PASSWORD REQUIREMENTS + VALIDATION
+  // -------------------------------------------------------------
+  bool _validatePassword(String pass) {
+    return RegExp(
+      r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$%^&*]).{8,}$',
+    ).hasMatch(pass);
+  }
+
+  void _showPasswordRequirements(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Password Requirements"),
+        content: const Text(
+          "• At least 8 characters\n"
+          "• One uppercase letter\n"
+          "• One lowercase letter\n"
+          "• One number\n"
+          "• One special character (!@#\$%^&*)",
         ),
         actions: [
           TextButton(
+            child: const Text("OK"),
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
           ),
         ],
-      );
-    },
-  );
+      ),
+    );
+  }
 }
