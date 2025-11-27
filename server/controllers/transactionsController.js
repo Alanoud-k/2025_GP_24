@@ -3,18 +3,23 @@ import { sql } from "../config/db.js";
 // Simulate child card payment using ML service
 export const simulateCardPayment = async (req, res) => {
   try {
-    const { childId, amount, merchantName, mcc } = req.body;
+    const {
+      childId,
+      amount,
+      merchantName,
+      mcc,
+      receiverAccountId, // <-- important
+    } = req.body;
 
-    if (!childId || !amount || !merchantName || !mcc) {
+    if (!childId || !amount || !merchantName || !mcc || !receiverAccountId) {
       return res.status(400).json({
         message: "Missing required fields",
-        details: { childId, amount, merchantName, mcc },
+        details: { childId, amount, merchantName, mcc, receiverAccountId },
       });
     }
 
     const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
 
-    // Call ML service
     const mlRes = await fetch(`${mlUrl}/classify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -42,7 +47,6 @@ export const simulateCardPayment = async (req, res) => {
       mlData?.category ??
       "Uncategorized";
 
-    // Insert fake transaction into DB
     const rows = await sql`
       INSERT INTO "Transaction" (
         "transactiontype",
@@ -54,13 +58,13 @@ export const simulateCardPayment = async (req, res) => {
         "receiverAccountId"
       )
       VALUES (
-        'Transfer',          -- valid value in transaction_type enum
+        'Transfer',
         ${amount},
         'Completed',
         ${merchantName},
-        'Payment',           -- valid value in sourcetype CHECK constraint
+        'Payment',
         ${category},
-        ${childId}           -- temporarily using childId as receiverAccountId
+        ${receiverAccountId}
       )
       RETURNING *;
     `;
