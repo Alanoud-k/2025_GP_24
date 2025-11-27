@@ -74,9 +74,7 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
 
       final response = await http.get(
         url,
-        headers: {
-          "Authorization": "Bearer $token", // 🔥 JWT applied
-        },
+        headers: {"Authorization": "Bearer $token"},
       );
 
       if (!mounted) return;
@@ -90,7 +88,9 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
             return {
               "id": child["childId"],
               "name": child["firstName"] ?? "Unnamed",
-              "balance": double.tryParse(child["balance"].toString()) ?? 0.0,
+              "saving": child["saving"] ?? 0.0,
+              "spend": child["spend"] ?? 0.0,
+              "balance": child["balance"] ?? 0.0,
             };
           }).toList();
           _loading = false;
@@ -300,18 +300,35 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                                             color: Color(0xFF2C3E50),
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 6),
                                         Row(
                                           children: [
+                                            // Riyal icon – Saving balance
                                             Image.asset(
                                               "assets/icons/riyal.png",
                                               height: 16,
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
-                                              kid["balance"].toStringAsFixed(2),
+                                              kid["saving"].toStringAsFixed(2),
                                               style: const TextStyle(
-                                                fontSize: 14,
+                                                fontSize: 13,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+
+                                            const SizedBox(width: 14),
+
+                                            // Riyal icon – Spending balance
+                                            Image.asset(
+                                              "assets/icons/riyal.png",
+                                              height: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              kid["spend"].toStringAsFixed(2),
+                                              style: const TextStyle(
+                                                fontSize: 13,
                                                 color: Colors.grey,
                                               ),
                                             ),
