@@ -309,8 +309,8 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                             child: _actionButton(
                               "Transfer Money",
                               Icons.send_rounded,
-                              () {
-                                Navigator.push(
+                              () async {
+                                final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ParentTransferScreen(
@@ -322,6 +322,11 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                                     ),
                                   ),
                                 );
+
+                                if (result == true) {
+                                  await _fetchChildInfo(); // 🔧 Refresh balances
+                                  setState(() {}); // 🔄 Update UI
+                                }
                               },
                             ),
                           ),

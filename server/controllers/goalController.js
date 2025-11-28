@@ -254,3 +254,190 @@ export async function contributeToGoal(req, res) {
     res.status(500).json({ error: 'contribution_failed' });
   }
 }
+export async function moveIn(req, res) {
+  try {
+    const { childId, amount } = req.body;
+    const amt = Number(amount);
+
+    if (!childId || !amt || amt <= 0)
+      return res.status(400).json({ error: "invalid_fields" });
+
+    // Get wallet
+    const w = await sql`
+      SELECT walletid FROM "Wallet"
+      WHERE childid = ${childId}
+      LIMIT 1
+    `;
+    if (!w.length) return res.json({ error: "wallet_not_found" });
+    const walletId = w[0].walletid;
+
+    // Spending account
+    const spendAcc = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SpendingAccount'
+      LIMIT 1
+    `;
+    if (!spendAcc.length) return res.json({ error: "spending_missing" });
+
+    // Saving account
+    const saveAcc = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SavingAccount'
+      LIMIT 1
+    `;
+    if (!saveAcc.length) return res.json({ error: "saving_missing" });
+
+    if (Number(spendAcc[0].balance) < amt)
+      return res.status(400).json({ error: "insufficient_spending" });
+
+    // Transfer
+    await sql`
+      UPDATE "Account"
+      SET balance = balance - ${amt}
+      WHERE accountid = ${spendAcc[0].accountid}
+    `;
+
+    await sql`
+      UPDATE "Account"
+      SET balance = balance + ${amt}
+      WHERE accountid = ${saveAcc[0].accountid}
+    `;
+
+    // Transaction record
+    await sql`
+      INSERT INTO "Transaction"(
+        transactiontype, amount, transactiondate, transactionstatus,
+        merchantname, sourcetype, transactioncategory,
+        senderAccountId, receiverAccountId
+      )
+      VALUES (
+        'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
+        'Move In', 'Internal', 'internal',
+        ${spendAcc[0].accountid}, ${saveAcc[0].accountid}
+      )
+    `;
+
+    res.status(200).json({
+      ok: true,
+      newSaving: Number(saveAcc[0].balance) + amt,
+    });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "move_in_failed" });
+  }
+}
+
+export async function moveOut(req, res) {
+  try {
+    const { childId, amount } = req.body;
+    const amt = Number(amount);
+
+    if (!childId || !amt || amt <= 0)
+      return res.status(400).json({ error: "invalid_fields" });
+
+    const w = await sql`
+      SELECT walletid FROM "Wallet"
+      WHERE childid = ${childId}
+      LIMIT 1
+    `;
+    if (!w.length) return res.json({ error: "wallet_not_found" });
+    const walletId = w[0].walletid;
+
+    const saveAcc = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SavingAccount'
+      LIMIT 1
+    `;
+    if (!saveAcc.length) return res.json({ error: "saving_missing" });
+
+    const spendAcc = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SpendingAccount'
+      LIMIT 1
+    `;
+    if (!spendAcc.length) return res.json({ error: "spending_missing" });
+
+    if (Number(saveAcc[0].balance) < amt)
+      return res.status(400).json({ error: "insufficient_saving" });
+
+    // Transfer
+    await sql`
+      UPDATE "Account"
+      SET balance = balance - ${amt}
+      WHERE accountid = ${saveAcc[0].accountid}
+    `;
+
+    await sql`
+      UPDATE "Account"
+      SET balance = balance + ${amt}
+      WHERE accountid = ${spendAcc[0].accountid}
+    `;
+
+    // Transaction record
+    await sql`
+      INSERT INTO "Transaction"(
+        transactiontype, amount, transactiondate, transactionstatus,
+        merchantname, sourcetype, transactioncategory,
+        senderAccountId, receiverAccountId
+      )
+      VALUES (
+        'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
+        'Move Out', 'Internal', 'internal',
+        ${saveAcc[0].accountid}, ${spendAcc[0].accountid}
+      )
+    `;
+
+    res.status(200).json({
+      ok: true,
+      newSaving: Number(saveAcc[0].balance) - amt,
+    });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "move_out_failed" });
+  }
+}
+
+export async function getChildWalletBalances(req, res) {
+  try {
+    const childId = Number(req.params.childId);
+
+    const wallet = await sql`
+      SELECT walletid
+      FROM "Wallet"
+      WHERE childid = ${childId}
+      LIMIT 1
+    `;
+
+    if (!wallet.length) {
+      return res.json({ saving: 0, spending: 0, total: 0 });
+    }
+
+    const walletId = wallet[0].walletid;
+
+    const sav = await sql`
+      SELECT COALESCE(SUM(balance), 0)::float AS saving
+      FROM "Account"
+      WHERE walletid = ${walletId}
+        AND accounttype = 'SavingAccount'
+    `;
+
+    const spend = await sql`
+      SELECT COALESCE(SUM(balance), 0)::float AS spending
+      FROM "Account"
+      WHERE walletid = ${walletId}
+        AND accounttype = 'SpendingAccount'
+    `;
+
+    return res.json({
+      saving: Number(sav[0].saving),
+      spending: Number(spend[0].spending),
+      total: Number(sav[0].saving) + Number(spend[0].spending)
+    });
+
+  } catch (err) {
+    console.error("❌ Error fetching balances:", err);
+    return res.status(500).json({ error: "failed_to_fetch_balances" });
+  }
+}

@@ -7,6 +7,8 @@ import {
   createGoal,
   contributeToGoal,
 } from '../controllers/goalController.js';
+import { moveIn, moveOut } from '../controllers/goalController.js';
+import { getChildWalletBalances } from '../controllers/goalController.js';
 
 const router = Router();
 
@@ -24,5 +26,9 @@ router.post('/goals', createGoal);
 
 //  /api/goals/:goalId/contributions
 router.post('/goals/:goalId/contributions', contributeToGoal);
+
+router.post('/saving/move-in', moveIn);
+router.post('/saving/move-out', moveOut);
+router.get('/children/:childId/wallet/balances', getChildWalletBalances);
 
 export default router;

@@ -146,8 +146,10 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
     );
 
     Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) Navigator.pop(context);
-      if (mounted) Navigator.pop(context);
+      if (!mounted) return;
+
+      Navigator.pop(context); // close dialog
+      Navigator.pop(context, true); // return success to previous page
     });
   }
 
