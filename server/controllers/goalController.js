@@ -181,85 +181,147 @@ export async function updateGoal(req, res) {
   }
 }
 
-// ADD MONEY (Saving → Goal)
+/* -------------------------------------------------
+   ADD MONEY TO GOAL  (Saving → Goal)
+--------------------------------------------------*/
 export async function addMoneyToGoal(req, res) {
   try {
     const goalId = Number(req.params.goalId);
     const { childId, amount } = req.body;
     const amt = Number(amount);
 
+    if (!amt || amt <= 0)
+      return res.status(400).json({ error: "invalid_amount" });
+
+    // Fetch goal + accounts
     const g = await sql`
-      SELECT ga.accountid AS goalaccountid, ga.savingaccountid
+      SELECT g.targetamount, a.accountid AS goalaccountid, a.savingaccountid
       FROM "Goal" g
-      JOIN "Account" ga ON ga.accountid = g.accountid
+      JOIN "Account" a ON a.accountid = g.accountid
       WHERE g.goalid = ${goalId} AND g.childid = ${childId}
       LIMIT 1
     `;
+
     if (!g.length) return res.status(404).json({ error: "goal_not_found" });
 
+    const targetAmount = Number(g[0].targetamount);
     const goalAcc = g[0].goalaccountid;
     const saveAcc = g[0].savingaccountid;
 
-    const sBal = await sql`
+    // Get current goal balance
+    const [goalBalRow] = await sql`
+      SELECT balance FROM "Account" WHERE accountid = ${goalAcc}
+    `;
+    const currentGoalBalance = Number(goalBalRow.balance);
+    const remaining = targetAmount - currentGoalBalance;
+
+    // Do not allow adding more than needed
+    if (amt > remaining) {
+      return res.status(400).json({
+        error: "exceeds_goal_limit",
+        message: `Goal only needs ${remaining} SAR to complete.`,
+      });
+    }
+
+    // Check saving balance
+    const [sBal] = await sql`
       SELECT balance FROM "Account" WHERE accountid = ${saveAcc}
     `;
-    if (Number(sBal[0].balance) < amt)
-      return res.status(400).json({ error: "insufficient_saving" });
+    if (Number(sBal.balance) < amt) {
+      return res.status(400).json({
+        error: "insufficient_saving",
+        message: "Not enough money in Saving balance.",
+      });
+    }
 
-    // Update balances
-    await sql`UPDATE "Account" SET balance = balance - ${amt} WHERE accountid = ${saveAcc}`;
-    const upd = await sql`
+    // Withdraw from saving
+    await sql`
+      UPDATE "Account" SET balance = balance - ${amt}
+      WHERE accountid = ${saveAcc}
+    `;
+
+    // Deposit into goal
+    const [updated] = await sql`
       UPDATE "Account" SET balance = balance + ${amt}
       WHERE accountid = ${goalAcc}
       RETURNING balance
     `;
 
-    return res.json({ ok: true, newGoalBalance: upd[0].balance });
+    const newGoalBalance = Number(updated.balance);
+
+    // If completed → update status
+    if (newGoalBalance >= targetAmount) {
+      await sql`
+        UPDATE "Goal" SET goalstatus = 'Achieved'
+        WHERE goalid = ${goalId}
+      `;
+    }
+
+    return res.json({
+      ok: true,
+      message: "Money added to goal",
+      newGoalBalance,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("goal_move_in_failed:", err);
     return res.status(500).json({ error: "goal_move_in_failed" });
   }
 }
 
-// MOVE MONEY OUT (Goal → Saving)
+/* -------------------------------------------------
+   MOVE MONEY OUT OF GOAL (Goal → Saving)
+--------------------------------------------------*/
 export async function moveMoneyFromGoal(req, res) {
   try {
     const goalId = Number(req.params.goalId);
     const { childId, amount } = req.body;
     const amt = Number(amount);
 
+    if (!amt || amt <= 0)
+      return res.status(400).json({ error: "invalid_amount" });
+
     const g = await sql`
-      SELECT ga.accountid AS goalaccountid, ga.savingaccountid
+      SELECT a.accountid AS goalaccountid, a.savingaccountid
       FROM "Goal" g
-      JOIN "Account" ga ON ga.accountid = g.accountid
+      JOIN "Account" a ON a.accountid = g.accountid
       WHERE g.goalid = ${goalId} AND g.childid = ${childId}
       LIMIT 1
     `;
+
     if (!g.length) return res.status(404).json({ error: "goal_not_found" });
 
     const goalAcc = g[0].goalaccountid;
     const saveAcc = g[0].savingaccountid;
 
-    const gBal = await sql`
+    const [goalBal] = await sql`
       SELECT balance FROM "Account" WHERE accountid = ${goalAcc}
     `;
-    if (Number(gBal[0].balance) < amt)
-      return res.status(400).json({ error: "insufficient_goal_balance" });
 
-    // Update balances
+    if (Number(goalBal.balance) < amt) {
+      return res.status(400).json({
+        error: "insufficient_goal_balance",
+        message: "Not enough money inside this goal.",
+      });
+    }
+
+    // Move money out
     await sql`UPDATE "Account" SET balance = balance - ${amt} WHERE accountid = ${goalAcc}`;
-    const upd = await sql`
+    const [newSave] = await sql`
       UPDATE "Account" SET balance = balance + ${amt}
       WHERE accountid = ${saveAcc}
       RETURNING balance
     `;
 
-    return res.json({ ok: true, newSavingBalance: upd[0].balance });
+    return res.json({
+      ok: true,
+      newSavingBalance: newSave.balance,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("goal_move_out_failed:", err);
     return res.status(500).json({ error: "goal_move_out_failed" });
   }
 }
+
 
 // DELETE GOAL
 export async function deleteGoal(req, res) {
@@ -432,3 +494,65 @@ export async function moveOutSaving(req, res) {
   }
 }
 
+/* -------------------------------------------------
+   NEW: REDEEM COMPLETED GOAL → TRANSFER TO SPENDING
+--------------------------------------------------*/
+export async function redeemGoal(req, res) {
+  try {
+    const goalId = Number(req.params.goalId);
+    const { childId } = req.body;
+
+    // Load goal + account
+    const g = await sql`
+      SELECT g.goalstatus, a.accountid AS goalaccountid, a.savingaccountid, a.walletid
+      FROM "Goal" g
+      JOIN "Account" a ON a.accountid = g.accountid
+      WHERE g.goalid = ${goalId} AND g.childid = ${childId}
+      LIMIT 1
+    `;
+
+    if (!g.length) return res.status(404).json({ error: "goal_not_found" });
+
+    if (g[0].goalstatus !== "Achieved") {
+      return res.status(400).json({ error: "goal_not_completed" });
+    }
+
+    const walletId = g[0].walletid;
+
+    const [spending] = await sql`
+      SELECT accountid FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SpendingAccount'
+      LIMIT 1
+    `;
+
+    const goalAcc = g[0].goalaccountid;
+
+    const [goalBal] = await sql`
+      SELECT balance FROM "Account" WHERE accountid = ${goalAcc}
+    `;
+
+    const amt = Number(goalBal.balance);
+
+    // Empty goal balance
+    await sql`
+      UPDATE "Account" SET balance = 0 WHERE accountid = ${goalAcc}
+    `;
+
+    // Add into spending account
+    const [newSpend] = await sql`
+      UPDATE "Account"
+      SET balance = balance + ${amt}
+      WHERE accountid = ${spending.accountid}
+      RETURNING balance
+    `;
+
+    return res.json({
+      ok: true,
+      transferred: amt,
+      newSpendingBalance: newSpend.balance,
+    });
+  } catch (err) {
+    console.error("redeem_goal_failed:", err);
+    return res.status(500).json({ error: "redeem_goal_failed" });
+  }
+}

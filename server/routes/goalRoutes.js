@@ -30,4 +30,6 @@ router.post("/goals/:goalId/move-out", moveMoneyFromGoal);
 
 router.post("/saving/move-in", moveInSaving);     // Spending → Saving
 router.post("/saving/move-out", moveOutSaving); 
+router.post("/goals/:goalId/redeem", redeemGoal);
+
 export default router;
