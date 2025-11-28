@@ -56,7 +56,14 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     _bootstrap();
   }
 
+  /* ---------------------------------------------------------
+     MAIN REFRESH FUNCTION
+     Always reloads goals + balances
+  ---------------------------------------------------------- */
+
   Future<void> _bootstrap() async {
+    if (!mounted) return;
+
     setState(() => _loading = true);
 
     try {
@@ -64,6 +71,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       final balances = await _fetchBalances();
 
       if (!mounted) return;
+
       setState(() {
         _goals = goals;
         _savingBalance = balances['saving'] ?? 0.0;
@@ -72,34 +80,34 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load goals/balances: $e')),
+        SnackBar(content: Text("Failed to load goals/balances: $e")),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  /* ---------------------------------------------------------
+     LOAD BALANCES
+  ---------------------------------------------------------- */
+
   Future<Map<String, double>> _fetchBalances() async {
     final url = Uri.parse(
       "${widget.baseUrl}/api/children/${widget.childId}/wallet/balances",
     );
-    print("BALANCES URL => $url");
 
     final res = await http.get(
       url,
       headers: {"Authorization": "Bearer ${widget.token}"},
     );
 
-    print("BALANCES STATUS => ${res.statusCode}");
-    print("BALANCES BODY   => ${res.body}");
-
     if (res.statusCode == 401) {
-      // token issue
       await checkAuthStatus(context);
-      throw Exception("Unauthorized (401) while loading balances");
+      return {"saving": 0.0, "spending": 0.0};
     }
+
     if (res.statusCode != 200) {
-      throw Exception("Failed to load balances: ${res.statusCode} ${res.body}");
+      return {"saving": 0.0, "spending": 0.0};
     }
 
     final data = jsonDecode(res.body);
@@ -110,22 +118,15 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       return double.tryParse(v.toString()) ?? 0.0;
     }
 
-    final saving = _toDouble(
-      data['saving'] ??
-          data['savingBalance'] ??
-          data['save'] ??
-          data['saving_balance'],
-    );
-
-    final spending = _toDouble(
-      data['spending'] ??
-          data['spend'] ??
-          data['spendingBalance'] ??
-          data['spend_balance'],
-    );
-
-    return {"saving": saving, "spending": spending};
+    return {
+      "saving": _toDouble(data["saving"] ?? data["savingBalance"]),
+      "spending": _toDouble(data["spending"] ?? data["spendingBalance"]),
+    };
   }
+
+  /* ---------------------------------------------------------
+     MOVE SPENDING <--> SAVING
+  ---------------------------------------------------------- */
 
   Future<void> _moveAmount(String type) async {
     final ctrl = TextEditingController();
@@ -161,7 +162,6 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
               decoration: InputDecoration(
                 hintText: "Amount",
                 filled: true,
-                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -207,13 +207,18 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
         throw Exception("Request failed (${res.statusCode})");
       }
 
+      /// ⭐⭐⭐ ALWAYS REFRESH AFTER MOVING MONEY
       await _bootstrap();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Failed: $e")));
+      ).showSnackBar(SnackBar(content: Text("Move failed: $e")));
     }
   }
+
+  /* ---------------------------------------------------------
+     OPEN ADD GOAL SCREEN
+  ---------------------------------------------------------- */
 
   Future<void> _openAddGoal() async {
     final created = await Navigator.push(
@@ -227,8 +232,13 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       ),
     );
 
+    /// ⭐⭐⭐ ALWAYS REFRESH AFTER RETURNING
     if (created == true) _bootstrap();
   }
+
+  /* ---------------------------------------------------------
+     OPEN GOAL DETAILS SCREEN
+  ---------------------------------------------------------- */
 
   Future<void> _openGoalDetails(Goal g) async {
     final changed = await Navigator.push(
@@ -243,8 +253,13 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       ),
     );
 
+    /// ⭐⭐⭐ ALWAYS REFRESH AFTER RETURNING
     if (changed == true) _bootstrap();
   }
+
+  /* ---------------------------------------------------------
+     BUILD
+  ---------------------------------------------------------- */
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +295,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                   children: [
                     const SizedBox(height: 18),
 
-                    /// --- Balance Panel ---
+                    // BALANCE PANEL
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: _SavingPanel(
@@ -293,7 +308,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
                     const SizedBox(height: 20),
 
-                    /// --- Add Goal ---
+                    // ADD GOAL
                     InkWell(
                       borderRadius: BorderRadius.circular(50),
                       onTap: _openAddGoal,
@@ -324,7 +339,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
                     const SizedBox(height: 20),
 
-                    /// --- Goals List ---
+                    // GOALS LIST
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: _GoalsList(goals: _goals, onTap: _openGoalDetails),
@@ -339,7 +354,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
   }
 }
 
-/* ===================== BALANCES PANEL ===================== */
+/* =====================================================
+   SAVING / SPENDING PANEL
+====================================================== */
 
 class _SavingPanel extends StatelessWidget {
   final double saving;
@@ -457,7 +474,9 @@ class _SavingPanel extends StatelessWidget {
   }
 }
 
-/* ===================== GOALS LIST ===================== */
+/* =====================================================
+   GOALS LIST
+====================================================== */
 
 class _GoalsList extends StatelessWidget {
   final List<Goal> goals;
@@ -505,6 +524,10 @@ class _GoalsList extends StatelessWidget {
   }
 }
 
+/* =====================================================
+   GOAL TILE
+====================================================== */
+
 class _GoalCard extends StatelessWidget {
   final Goal goal;
   final VoidCallback onTap;
@@ -528,7 +551,6 @@ class _GoalCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Title + Target
             Row(
               children: [
                 Expanded(
