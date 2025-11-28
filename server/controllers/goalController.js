@@ -304,18 +304,19 @@ export async function moveIn(req, res) {
     `;
 
     // Transaction record
-    await sql`
-      INSERT INTO "Transaction"(
-        transactiontype, amount, transactiondate, transactionstatus,
-        merchantname, sourcetype, transactioncategory,
-        senderAccountId, receiverAccountId
-      )
-      VALUES (
-        'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
-        'Move In', 'Internal', 'internal',
-        ${spendAcc[0].accountid}, ${saveAcc[0].accountid}
-      )
-    `;
+   await sql`
+  INSERT INTO "Transaction"(
+    transactiontype, amount, transactiondate, transactionstatus,
+    merchantname, sourcetype, transactioncategory,
+    senderaccountid, receiveraccountid
+  )
+  VALUES (
+    'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
+    'Move In', 'Internal', 'internal',
+    ${spendAcc[0].accountid}, ${saveAcc[0].accountid}
+  )
+`;
+
 
     res.status(200).json({
       ok: true,
@@ -375,18 +376,19 @@ export async function moveOut(req, res) {
     `;
 
     // Transaction record
-    await sql`
-      INSERT INTO "Transaction"(
-        transactiontype, amount, transactiondate, transactionstatus,
-        merchantname, sourcetype, transactioncategory,
-        senderAccountId, receiverAccountId
-      )
-      VALUES (
-        'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
-        'Move Out', 'Internal', 'internal',
-        ${saveAcc[0].accountid}, ${spendAcc[0].accountid}
-      )
-    `;
+await sql`
+  INSERT INTO "Transaction"(
+    transactiontype, amount, transactiondate, transactionstatus,
+    merchantname, sourcetype, transactioncategory,
+    senderaccountid, receiveraccountid
+  )
+  VALUES (
+    'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
+    'Move Out', 'Internal', 'internal',
+    ${saveAcc[0].accountid}, ${spendAcc[0].accountid}
+  )
+`;
+
 
     res.status(200).json({
       ok: true,
