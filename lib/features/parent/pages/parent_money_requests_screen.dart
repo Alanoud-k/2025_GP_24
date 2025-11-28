@@ -1,8 +1,11 @@
+// 
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/core/api_config.dart'; // Ensure correct import for baseUrl if needed, or use hardcoded if preferred.
+import 'parent_transfer_screen.dart'; // Import transfer screen
 
 class ParentMoneyRequestsScreen extends StatefulWidget {
   final int parentId;
@@ -25,6 +28,8 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
   bool _loading = true;
   List<dynamic> _requests = [];
   String? token;
+  // Use config or hardcode as per your original file
+  final String baseUrl = 'http://10.0.2.2:3000'; 
 
   @override
   void initState() {
@@ -62,14 +67,14 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
   Future<void> _fetchRequests() async {
     try {
       final url = Uri.parse(
-        'http://10.0.2.2:3000/api/money-requests/${widget.childId}',
+        '$baseUrl/api/money-requests/${widget.childId}',
       );
 
       final response = await http.get(
         url,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${widget.token}",
+          "Authorization": "Bearer ${token}",
         },
       );
       if (response.statusCode == 401) {
@@ -91,14 +96,14 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
   }
 
   Future<void> _updateRequestStatus(int requestId, String newStatus) async {
-    final url = Uri.parse('http://10.0.2.2:3000/api/money-requests/update');
+    final url = Uri.parse('$baseUrl/api/money-requests/update');
 
     try {
       final response = await http.post(
         url,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${widget.token}",
+          "Authorization": "Bearer ${token}",
         },
         body: jsonEncode({"requestId": requestId, "status": newStatus}),
       );
@@ -114,6 +119,73 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
     } catch (_) {}
   }
 
+  // --- Confirmation Dialog for Decline ---
+  void _confirmDecline(int requestId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20), // زوايا دائرية ناعمة
+        ),
+        backgroundColor: Colors.white,
+        title: const Text(
+          "Decline Request?",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800, // خط عريض للعناوين
+            color: Color(0xFF2C3E50), // لون النص الغامق الموحد
+          ),
+        ),
+        content: const Text(
+          "Are you sure you want to decline this request?",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.black54, // لون رمادي للنص الفرعي
+            height: 1.4,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        actionsAlignment: MainAxisAlignment.center, // توسيط الأزرار
+        actions: [
+          // زر الإلغاء (بسيط)
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey,
+            ),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // زر الرفض (مميز بلون أحمر)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx); // إغلاق النافذة
+              _updateRequestStatus(requestId, "Declined"); // تنفيذ الرفض
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent, // خلفية حمراء للتحذير
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            ),
+            child: const Text(
+              "Decline",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -124,6 +196,8 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         elevation: 0,
+        backgroundColor: Colors.white, // Keep your style
+        foregroundColor: Colors.black,
       ),
       backgroundColor: const Color(0xffF7F8FA),
 
@@ -188,16 +262,15 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
 
                       const SizedBox(height: 12),
 
+                      // Status Handling
                       if (req["requestStatus"] == "Pending")
                         Row(
                           children: [
+                            // 1. Decline Button (with Confirmation)
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: () {
-                                  _updateRequestStatus(
-                                    req['requestId'],
-                                    "Declined",
-                                  );
+                                  _confirmDecline(req['requestId']);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
@@ -213,19 +286,32 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
+                            
+                            // 2. Approve Button (Go to Transfer Screen)
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(
+                                onPressed: () async {
+                                  // Navigate to Transfer Screen with pre-filled data
+                                  final result = await Navigator.push(
                                     context,
-                                    "/parentTransfer",
-                                    arguments: {
-                                      "childId": widget.childId,
-                                      "childName": req["childName"],
-                                      "amount": req["amount"],
-                                      "requestId": req["requestId"],
-                                    },
+                                    MaterialPageRoute(
+                                      builder: (context) => ParentTransferScreen(
+                                        parentId: widget.parentId,
+                                        childId: widget.childId,
+                                        childName: req["childName"] ?? "Child",
+                                        childBalance: "0.00", // Fetch real balance if needed
+                                        token: token!,
+                                        // Pass request details
+                                        initialAmount: double.tryParse(req["amount"].toString()),
+                                        requestId: req["requestId"],
+                                      ),
+                                    ),
                                   );
+
+                                  // Refresh list if transfer was successful
+                                  if (result == true) {
+                                    _fetchRequests();
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,

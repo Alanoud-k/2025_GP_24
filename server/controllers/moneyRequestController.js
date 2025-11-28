@@ -69,6 +69,35 @@ export const getRequestsByChild = async (req, res) => {
 // =============================================
 // Update request status (Approve or Decline)
 // =============================================
+// export const updateRequestStatus = async (req, res) => {
+//   const { requestId, status } = req.body;
+
+//   const allowed = ["Approved", "Declined"];
+//   if (!allowed.includes(status)) {
+//     return res.status(400).json({ error: "Invalid status" });
+//   }
+
+//   try {
+//     const result = await sql`
+//       UPDATE "MoneyRequest"
+//       SET requeststatus = ${status}
+//       WHERE requestid = ${requestId}
+//       RETURNING *;
+//     `;
+
+//     if (result.length === 0) {
+//       return res.status(404).json({ error: "Request not found" });
+//     }
+
+//     res.status(200).json({ message: "Status updated", request: result[0] });
+//   } catch (err) {
+//     console.error("❌ Error updating request:", err);
+//     res.status(500).json({ error: "Failed to update request" });
+//   }
+// };
+// =============================================
+// Update request status (Used for Decline OR marking Approved after transfer)
+// =============================================
 export const updateRequestStatus = async (req, res) => {
   const { requestId, status } = req.body;
 
@@ -78,6 +107,7 @@ export const updateRequestStatus = async (req, res) => {
   }
 
   try {
+    // Just update the status tag
     const result = await sql`
       UPDATE "MoneyRequest"
       SET requeststatus = ${status}

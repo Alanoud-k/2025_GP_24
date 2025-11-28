@@ -104,11 +104,11 @@ class _MorePageState extends State<MorePage> {
         return;
       }
 
-      if (response.statusCode == 404 ||
+     if (response.statusCode == 404 ||
           response.body.contains("Parent not found")) {
         if (!mounted) return;
         setState(() {
-          errorMessage = "هذا الحساب محذوف أو غير موجود.";
+          errorMessage = "This account was deleted or does not exist.";
           isLoading = false;
         });
         return;
@@ -116,14 +116,14 @@ class _MorePageState extends State<MorePage> {
 
       if (!mounted) return;
       setState(() {
-        errorMessage = "صار خطأ في تحميل البيانات.";
+        errorMessage = "An error occurred while loading data.";
         isLoading = false;
       });
     } catch (e) {
       print("Error fetching parent info: $e");
       if (!mounted) return;
       setState(() {
-        errorMessage = "تعذّر الاتصال بالسيرفر.";
+        errorMessage = "Failed to connect to the server.";
         isLoading = false;
       });
     }
