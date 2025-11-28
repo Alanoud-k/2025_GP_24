@@ -338,3 +338,97 @@ export async function getChildWalletBalances(req, res) {
   }
 }
 
+/* -------------------------------------------------
+   SPENDING → SAVING   (move-in)
+--------------------------------------------------*/
+
+export async function moveInSaving(req, res) {
+  try {
+    const { childId, amount } = req.body;
+    const amt = Number(amount);
+
+    const walletId = await ensureWallet(childId);
+    await ensureCoreAccounts(walletId);
+
+    const [spending] = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SpendingAccount'
+    `;
+
+    const [saving] = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SavingAccount'
+    `;
+
+    if (!spending || !saving)
+      return res.status(400).json({ error: "accounts_missing" });
+
+    if (Number(spending.balance) < amt)
+      return res.status(400).json({ error: "insufficient_spending" });
+
+    await sql`
+      UPDATE "Account"
+      SET balance = balance - ${amt}
+      WHERE accountid = ${spending.accountid}
+    `;
+
+    await sql`
+      UPDATE "Account"
+      SET balance = balance + ${amt}
+      WHERE accountid = ${saving.accountid}
+    `;
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("move_in_failed:", err);
+    return res.status(500).json({ error: "move_in_failed" });
+  }
+}
+
+/* -------------------------------------------------
+   SAVING → SPENDING  (move-out)
+--------------------------------------------------*/
+
+export async function moveOutSaving(req, res) {
+  try {
+    const { childId, amount } = req.body;
+    const amt = Number(amount);
+
+    const walletId = await ensureWallet(childId);
+    await ensureCoreAccounts(walletId);
+
+    const [saving] = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SavingAccount'
+    `;
+
+    const [spending] = await sql`
+      SELECT accountid, balance FROM "Account"
+      WHERE walletid = ${walletId} AND accounttype = 'SpendingAccount'
+    `;
+
+    if (!saving || !spending)
+      return res.status(400).json({ error: "accounts_missing" });
+
+    if (Number(saving.balance) < amt)
+      return res.status(400).json({ error: "insufficient_saving" });
+
+    await sql`
+      UPDATE "Account"
+      SET balance = balance - ${amt}
+      WHERE accountid = ${saving.accountid}
+    `;
+
+    await sql`
+      UPDATE "Account"
+      SET balance = balance + ${amt}
+      WHERE accountid = ${spending.accountid}
+    `;
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("move_out_failed:", err);
+    return res.status(500).json({ error: "move_out_failed" });
+  }
+}
+

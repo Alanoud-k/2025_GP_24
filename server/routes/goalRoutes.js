@@ -8,7 +8,9 @@ import {
   addMoneyToGoal,
   moveMoneyFromGoal,
   deleteGoal,
-  getChildWalletBalances
+  getChildWalletBalances,
+  moveInSaving,
+  moveOutSaving,
 } from "../controllers/goalController.js";
 
 const router = Router();
@@ -26,4 +28,6 @@ router.delete("/goals/:goalId", deleteGoal);
 router.post("/goals/:goalId/move-in", addMoneyToGoal);
 router.post("/goals/:goalId/move-out", moveMoneyFromGoal);
 
+router.post("/saving/move-in", moveInSaving);     // Spending → Saving
+router.post("/saving/move-out", moveOutSaving); 
 export default router;
