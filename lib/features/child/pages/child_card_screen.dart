@@ -4,12 +4,14 @@ import 'package:http/http.dart' as http;
 
 class ChildCardScreen extends StatefulWidget {
   final int childId;
+  final int receiverAccountId; // child spending account id
   final String token;
   final String baseUrl;
 
   const ChildCardScreen({
     super.key,
     required this.childId,
+    required this.receiverAccountId,
     required this.token,
     required this.baseUrl,
   });
@@ -25,6 +27,8 @@ class _ChildCardScreenState extends State<ChildCardScreen> {
 
   bool isLoading = false;
   String? lastCategory;
+  double? lastAmount;
+  String? lastMerchant;
 
   Future<void> _simulatePayment() async {
     final amountText = amountController.text.trim();
@@ -61,11 +65,12 @@ class _ChildCardScreenState extends State<ChildCardScreen> {
         uri,
         headers: {
           "Content-Type": "application/json",
-          // إذا API عندكم يحتاج توكن:
+          // Add token header if backend requires it
           // "Authorization": "Bearer ${widget.token}",
         },
         body: jsonEncode({
           "childId": widget.childId,
+          "receiverAccountId": widget.receiverAccountId,
           "amount": amount,
           "merchantName": merchant,
           "mcc": mcc,
@@ -81,11 +86,18 @@ class _ChildCardScreenState extends State<ChildCardScreen> {
 
       setState(() {
         lastCategory = category;
+        lastAmount = amount;
+        lastMerchant = merchant;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Transaction saved. Category: $category")),
       );
+
+      // Optional: clear fields after success
+      amountController.clear();
+      merchantController.clear();
+      mccController.clear();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -107,48 +119,184 @@ class _ChildCardScreenState extends State<ChildCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const bgColor = Color(0xffF7F8FA);
+    const cardColor = Colors.white;
+    const primary = Color(0xFF67AFAC);
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text("Card"),
+        elevation: 0,
+        backgroundColor: bgColor,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          "Virtual Card",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: merchantController,
-              decoration: const InputDecoration(
-                labelText: "Merchant name",
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: mccController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "MCC",
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Amount",
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
+            // Top info card
+            Container(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isLoading ? null : _simulatePayment,
-                child: Text(isLoading ? "Processing..." : "Simulate payment"),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    color: Colors.black.withOpacity(0.05),
+                  ),
+                ],
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Test card payment",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "This is a fake payment used only to classify the transaction and save it to the wallet.",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+
+            // Form card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    color: Colors.black.withOpacity(0.05),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: merchantController,
+                    decoration: const InputDecoration(
+                      labelText: "Merchant name",
+                      hintText: "e.g. STARBUCKS RIYADH",
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: mccController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "MCC",
+                      hintText: "e.g. 5814",
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: amountController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: "Amount (SAR)",
+                      hintText: "e.g. 30.50",
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _simulatePayment,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        isLoading ? "Processing..." : "Simulate payment",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
             if (lastCategory != null)
-              Text("Last category: $lastCategory"),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                      color: Colors.black.withOpacity(0.05),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Last simulated transaction",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (lastMerchant != null)
+                      Text(
+                        "Merchant: $lastMerchant",
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    if (lastAmount != null)
+                      Text(
+                        "Amount: ${lastAmount!.toStringAsFixed(2)} SAR",
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    Text(
+                      "Category: $lastCategory",
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

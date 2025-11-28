@@ -5,7 +5,7 @@ import { sql } from "../config/db.js";
 import cloudinary from "../config/cloudinary.js";
 
 /* =====================================================
-   Get Children by Parent  (Option A)
+   Get Children by Parent
    Route: GET /api/child/parent/:parentId/children
    Returns: array of children with wallet aggregates
 ===================================================== */
@@ -60,7 +60,7 @@ export const getChildrenByParent = async (req, res) => {
 
     return res.status(200).json(children);
   } catch (err) {
-    console.error("❌ Error fetching children:", err);
+    console.error("Error fetching children:", err);
     return res.status(500).json({ error: "Failed to fetch children" });
   }
 };
@@ -80,7 +80,6 @@ export const registerChild = async (req, res) => {
     limitAmount,
   } = req.body;
 
-  // Basic required field checks
   if (!parentId || !firstName || !nationalId || !phoneNo || !dob || !password) {
     return res.status(400).json({ error: "All fields are required" });
   }
@@ -109,7 +108,6 @@ export const registerChild = async (req, res) => {
     return res.status(400).json({ error: "Child must be under 18 years old" });
   }
 
-  // Validate limit amount
   const limitNumeric = Number(limitAmount);
   if (!Number.isFinite(limitNumeric) || limitNumeric <= 0) {
     return res
@@ -150,10 +148,8 @@ export const registerChild = async (req, res) => {
         .json({ error: "Phone number already belongs to another child" });
     }
 
-    // Hash password
     const hashed = await bcrypt.hash(password, 10);
 
-    // Insert child
     const inserted = await sql`
       INSERT INTO "Child" ("parentid","firstname","nationalid","phoneno","dob","password")
       VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${dob}, ${hashed})
@@ -161,7 +157,6 @@ export const registerChild = async (req, res) => {
     `;
     const childId = inserted[0].childid;
 
-    // Create wallet (Active)
     const walletInsert = await sql`
       INSERT INTO "Wallet" ("parentid","childid","walletstatus")
       VALUES (NULL, ${childId}, 'Active')
@@ -169,19 +164,18 @@ export const registerChild = async (req, res) => {
     `;
     const walletId = walletInsert[0].walletid;
 
-    // Create saving account (no limit)
+    // Saving account
     await sql`
       INSERT INTO "Account" ("walletid", "accounttype", "balance", "currency")
       VALUES (${walletId}, 'SavingAccount', 0, 'SAR')
     `;
 
-    // Create spending account with limitAmount
+    // Spending account with limitAmount
     await sql`
       INSERT INTO "Account" ("walletid", "accounttype", "balance", "currency", "limitamount")
       VALUES (${walletId}, 'SpendingAccount', 0, 'SAR', ${limitNumeric})
     `;
 
-    // Mark national id as used
     await sql`
       UPDATE "National_Id"
       SET "valid" = false
@@ -190,18 +184,18 @@ export const registerChild = async (req, res) => {
 
     return res.json({ message: "Child registered successfully", childId });
   } catch (err) {
-    console.error("❌ Error registering child:", err);
+    console.error("Error registering child:", err);
     return res.status(500).json({ error: "Failed to register child" });
   }
 };
 
 /* =====================================================
-   Get Child Info (for ChildHomePage)
+   Get Child Info (for ChildHomePage + spendingAccountId)
    Route: GET /api/child/:childId/info
 ===================================================== */
 export const getChildInfo = async (req, res) => {
   const { childId } = req.params;
-  console.log("💚 CHILD CONTROLLER CHILD INFO", childId);
+  console.log("CHILD CONTROLLER CHILD INFO", childId);
 
   try {
     const childRows = await sql`
@@ -219,7 +213,6 @@ export const getChildInfo = async (req, res) => {
     }
     const child = childRows[0];
 
-    // Get wallet
     const w = await sql`
       SELECT "walletid"
       FROM "Wallet"
@@ -231,11 +224,11 @@ export const getChildInfo = async (req, res) => {
     let saving = 0;
     let spend = 0;
     let categories = {};
+    let spendingAccountId = null;
 
     if (w.length > 0) {
       const walletId = w[0].walletid;
 
-      // Total balance
       const total = await sql`
         SELECT COALESCE(SUM("balance"), 0) AS total
         FROM "Account"
@@ -243,7 +236,6 @@ export const getChildInfo = async (req, res) => {
       `;
       balance = Number(total[0]?.total ?? 0);
 
-      // Split by account type
       const splits = await sql`
         SELECT "accounttype", COALESCE(SUM("balance"),0) AS amt
         FROM "Account"
@@ -256,7 +248,6 @@ export const getChildInfo = async (req, res) => {
         if (r.accounttype === "SpendingAccount") spend = Number(r.amt);
       }
 
-      // Categories from transactions landing in the SpendingAccount
       const spAcc = await sql`
         SELECT "accountid"
         FROM "Account"
@@ -265,7 +256,7 @@ export const getChildInfo = async (req, res) => {
         LIMIT 1
       `;
       if (spAcc.length > 0) {
-        const spendingAccountId = spAcc[0].accountid;
+        spendingAccountId = spAcc[0].accountid;
 
         const catRows = await sql`
           SELECT "transactioncategory" AS category,
@@ -299,9 +290,10 @@ export const getChildInfo = async (req, res) => {
       spend,
       rewardKeys: child.rewardkeys ?? 0,
       categories,
+      spendingAccountId, // used by Flutter for card ML transactions
     });
   } catch (err) {
-    console.error("❌ Error fetching child info:", err);
+    console.error("Error fetching child info:", err);
     return res.status(500).json({ error: "Failed to fetch child info" });
   }
 };
@@ -336,7 +328,7 @@ export const updateChildAvatar = async (req, res) => {
       avatarUrl,
     });
   } catch (err) {
-    console.error("❌ Cloudinary upload error:", err);
+    console.error("Cloudinary upload error:", err);
     res.status(500).json({ error: "Failed to upload avatar" });
   }
 };

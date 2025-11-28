@@ -8,7 +8,7 @@ export const simulateCardPayment = async (req, res) => {
       amount,
       merchantName,
       mcc,
-      receiverAccountId, // <-- important
+      receiverAccountId, // child account id (spend account)
     } = req.body;
 
     if (!childId || !amount || !merchantName || !mcc || !receiverAccountId) {
@@ -55,16 +55,18 @@ export const simulateCardPayment = async (req, res) => {
         "merchantname",
         "sourcetype",
         "transactioncategory",
-        "receiverAccountId"
+        "receiverAccountId",
+        "mcc"
       )
       VALUES (
-        'Transfer',
+        'Spend',              -- card spending transaction
         ${amount},
         'Completed',
         ${merchantName},
-        'Payment',
-        ${category},
-        ${receiverAccountId}
+        'Payment',            -- external payment
+        ${category},          -- ML category
+        ${receiverAccountId},
+        ${mcc}
       )
       RETURNING *;
     `;
