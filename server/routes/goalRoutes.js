@@ -11,6 +11,7 @@ import {
   getChildWalletBalances,
   moveInSaving,
   moveOutSaving,
+  redeemGoal
 } from "../controllers/goalController.js";
 
 const router = Router();
