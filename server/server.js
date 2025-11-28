@@ -99,43 +99,49 @@ app.get("/payment-success", (_req, res) => {
         <title>Payment Successful</title>
         <style>
           body {
-            background: #F7F8FA;
+            background: linear-gradient(#F7FAFC, #E6F4F3);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
             font-family: 'Segoe UI', Tahoma, sans-serif;
-            color: #333;
+            color: #1A3C40;
           }
+
           .card {
             background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 55px 40px;
+            border-radius: 26px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
             text-align: center;
-            max-width: 350px;
-            width: 90%;
+            max-width: 420px;
+            width: 92%;
           }
+
           .check {
-            font-size: 60px;
+            font-size: 70px;
             color: #37C4BE;
-            margin-bottom: 10px;
+            margin-bottom: 18px;
           }
+
           .title {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
-            color: #2C3E50;
-            margin-bottom: 6px;
+            margin-bottom: 10px;
+            color: #1A3C40;
           }
+
           .msg {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 18px;
+            line-height: 1.4;
           }
+
           .closing {
-            font-size: 12px;
-            color: #999;
+            font-size: 14px;
+            color: #888;
           }
         </style>
       </head>
@@ -144,19 +150,23 @@ app.get("/payment-success", (_req, res) => {
         <div class="card">
           <div class="check">✔</div>
           <div class="title">Payment Successful</div>
-          <div class="msg">Your payment has been processed successfully.</div>
-          <div class="closing">This window will close automatically…</div>
+          <div class="msg">
+            Your payment was completed successfully.<br>
+            You can safely close this page.
+          </div>
+          <div class="closing">(This window will close automatically)</div>
         </div>
 
         <script>
           setTimeout(() => {
             window.close();
-          }, 3000); // 3 seconds
+          }, 3000);
         </script>
       </body>
     </html>
   `);
 });
+
 
 
 app.get("/payment-failed", (_req, res) => {

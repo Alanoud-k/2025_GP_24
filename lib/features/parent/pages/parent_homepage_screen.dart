@@ -121,7 +121,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
         final data = jsonDecode(parentRes.body);
         newFirstname = data['firstname'] ?? data['firstName'] ?? '';
 
-        final b = data['balance'];
+        final b = data['walletbalance'] ?? data['balance'];
         if (b != null) {
           newBalance = (b is num)
               ? b.toDouble()
