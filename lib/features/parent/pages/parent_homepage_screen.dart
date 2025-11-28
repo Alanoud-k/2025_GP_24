@@ -8,6 +8,7 @@ import 'parent_add_money_screen.dart';
 import 'parent_add_card_screen.dart';
 import 'parent_my_card_screen.dart';
 import 'package:my_app/core/api_config.dart';
+import 'parent_insights_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -394,7 +395,17 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                         title: "Insights",
                         asset: "assets/icons/insights.png",
                         labelStyle: fintechLabelStyle,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentInsightsScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],

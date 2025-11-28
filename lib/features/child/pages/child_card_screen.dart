@@ -17,7 +17,7 @@ class ChildCardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color kPrimary = Color(0xFF67AFAC);
+    const Color kPrimary = Color(0xFF37C4BE);
     const Color kBg = Color(0xFFF7F8FA);
 
     return Scaffold(

@@ -523,7 +523,7 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     const hassalaGreen1 = Color(0xFF37C4BE);
     const hassalaGreen2 = Color(0xFF2EA49E);
@@ -536,11 +536,18 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
     }
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showChoreDialog(),
-        backgroundColor: hassalaGreen1,
-        child: const Icon(Icons.add, color: Colors.white, size: 30),
+      backgroundColor: const Color(0xFFF7F8FA), // تأكيد لون الخلفية
+      
+      // ✅ التعديل هنا: رفع الزر للأعلى
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 90.0), // رفع الزر 90 بيكسل
+        child: FloatingActionButton(
+          onPressed: () => _showChoreDialog(),
+          backgroundColor: hassalaGreen1,
+          child: const Icon(Icons.add, color: Colors.white, size: 30),
+        ),
       ),
+
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -553,6 +560,7 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ... (باقي كود الهيدر والتاب بار كما هو)
               // ====== HEADER ======
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
