@@ -14,41 +14,39 @@ class GoalsApi {
     "Content-Type": "application/json",
   };
 
-  /* ============================================================
-     GET: List all goals for the child
-     GET /api/children/:childId/goals
-  ============================================================ */
+  // ---------- LIST GOALS ----------
   Future<List<Goal>> listGoals(int childId) async {
-    final url = Uri.parse("$baseUrl/api/children/$childId/goals");
-    print("📌 LIST GOALS => $url");
+    final url = Uri.parse('$baseUrl/api/children/$childId/goals');
+    print("LIST GOALS URL => $url");
 
-    final res = await http.get(url, headers: _headers);
+    final r = await http.get(url, headers: _headers);
 
-    print("STATUS: ${res.statusCode}");
-    if (res.statusCode != 200) {
-      throw Exception("Failed to list goals: ${res.body}");
+    print("LIST GOALS STATUS => ${r.statusCode}");
+    print("LIST GOALS BODY   => ${r.body}");
+
+    if (r.statusCode != 200) {
+      throw Exception("List goals failed: ${r.body}");
     }
 
-    final data = jsonDecode(res.body) as List;
-    return data.map((j) => Goal.fromJson(j)).toList();
+    final data = jsonDecode(r.body) as List;
+    return data.map((e) => Goal.fromJson(e)).toList();
   }
 
-  /* ============================================================
-     POST: Create a new goal
-     POST /api/goals
-  ============================================================ */
+  // ---------- CREATE GOAL ----------
   Future<void> createGoal({
     required int childId,
     required String goalName,
     required double targetAmount,
     String description = "",
   }) async {
-    final url = Uri.parse("$baseUrl/api/goals");
+    final url = Uri.parse('$baseUrl/api/goals');
 
-    print("📌 CREATE GOAL => $url");
-    print("BODY => {childId:$childId, name:$goalName, target:$targetAmount}");
+    print("CREATE GOAL URL  => $url");
+    print(
+      "CREATE GOAL BODY => {childId:$childId, goalName:$goalName, targetAmount:$targetAmount, description:$description}",
+    );
 
-    final res = await http.post(
+    final r = await http.post(
       url,
       headers: _headers,
       body: jsonEncode({
@@ -59,98 +57,96 @@ class GoalsApi {
       }),
     );
 
-    print("STATUS: ${res.statusCode}");
-    print("RESPONSE: ${res.body}");
+    print("CREATE GOAL STATUS => ${r.statusCode}");
+    print("CREATE GOAL RESP   => ${r.body}");
 
-    if (res.statusCode != 201) {
-      throw Exception("Create goal failed: ${res.body}");
+    if (r.statusCode != 201) {
+      throw Exception("Create goal failed: ${r.body}");
     }
   }
 
-  /* ============================================================
-     GET: retrieve single goal
-     GET /api/goals/:goalId
-     (optional for details screen)
-  ============================================================ */
+  // ---------- GET ONE GOAL ----------
   Future<Goal> getGoalById(int goalId) async {
-    final url = Uri.parse("$baseUrl/api/goals/$goalId");
-    print("📌 GET GOAL => $url");
+    final url = Uri.parse('$baseUrl/api/goals/$goalId');
+    print("GET GOAL URL => $url");
 
-    final res = await http.get(url, headers: _headers);
+    final r = await http.get(url, headers: _headers);
 
-    if (res.statusCode != 200) {
-      throw Exception("Failed to fetch goal: ${res.body}");
+    print("GET GOAL STATUS => ${r.statusCode}");
+    print("GET GOAL BODY   => ${r.body}");
+
+    if (r.statusCode != 200) {
+      throw Exception("Get goal failed: ${r.body}");
     }
 
-    return Goal.fromJson(jsonDecode(res.body));
+    final data = jsonDecode(r.body);
+    return Goal.fromJson(data);
   }
 
-  /* ============================================================
-     POST: Add money to a goal (Saving → GoalAccount)
-     POST /api/goals/:goalId/add-money
-  ============================================================ */
+  // ---------- ADD MONEY TO GOAL (Saving → Goal) ----------
   Future<void> addMoneyToGoal({
     required int childId,
     required int goalId,
     required double amount,
   }) async {
-    final url = Uri.parse("$baseUrl/api/goals/$goalId/add-money");
-    print("📌 ADD MONEY => $url");
-    print("BODY => {childId:$childId, amount:$amount}");
+    // IMPORTANT: this MUST match backend: /goals/:goalId/move-in
+    final url = Uri.parse('$baseUrl/api/goals/$goalId/move-in');
+    print("ADD MONEY URL  => $url");
+    print("ADD MONEY BODY => {childId:$childId, amount:$amount}");
 
-    final res = await http.post(
+    final r = await http.post(
       url,
       headers: _headers,
       body: jsonEncode({"childId": childId, "amount": amount}),
     );
 
-    print("STATUS: ${res.statusCode}");
+    print("ADD MONEY STATUS => ${r.statusCode}");
+    print("ADD MONEY RESP   => ${r.body}");
 
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception("Add money failed: ${res.body}");
+    if (r.statusCode < 200 || r.statusCode >= 300) {
+      throw Exception("Add money to goal failed: ${r.body}");
     }
   }
 
-  /* ============================================================
-     POST: Move money from goal to saving (Goal → Saving)
-     POST /api/goals/:goalId/move-money
-  ============================================================ */
+  // ---------- MOVE MONEY FROM GOAL (Goal → Saving) ----------
   Future<void> moveMoneyFromGoal({
     required int childId,
     required int goalId,
     required double amount,
   }) async {
-    final url = Uri.parse("$baseUrl/api/goals/$goalId/move-money");
-    print("📌 MOVE MONEY FROM GOAL => $url");
+    // IMPORTANT: this MUST match backend: /goals/:goalId/move-out
+    final url = Uri.parse('$baseUrl/api/goals/$goalId/move-out');
+    print("MOVE MONEY URL  => $url");
+    print("MOVE MONEY BODY => {childId:$childId, amount:$amount}");
 
-    final res = await http.post(
+    final r = await http.post(
       url,
       headers: _headers,
       body: jsonEncode({"childId": childId, "amount": amount}),
     );
 
-    print("STATUS: ${res.statusCode}");
+    print("MOVE MONEY STATUS => ${r.statusCode}");
+    print("MOVE MONEY RESP   => ${r.body}");
 
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception("Move money failed: ${res.body}");
+    if (r.statusCode < 200 || r.statusCode >= 300) {
+      throw Exception("Move money from goal failed: ${r.body}");
     }
   }
 
-  /* ============================================================
-     PUT: Update goal details
-     PUT /api/goals/:goalId
-  ============================================================ */
+  // ---------- UPDATE GOAL ----------
   Future<void> updateGoal({
     required int goalId,
     required String goalName,
     required double targetAmount,
     String description = "",
   }) async {
-    final url = Uri.parse("$baseUrl/api/goals/$goalId");
+    final url = Uri.parse('$baseUrl/api/goals/$goalId');
+    print("UPDATE GOAL URL  => $url");
+    print(
+      "UPDATE GOAL BODY => {goalName:$goalName, targetAmount:$targetAmount, description:$description}",
+    );
 
-    print("📌 UPDATE GOAL => $url");
-
-    final res = await http.put(
+    final r = await http.put(
       url,
       headers: _headers,
       body: jsonEncode({
@@ -160,30 +156,26 @@ class GoalsApi {
       }),
     );
 
-    print("STATUS: ${res.statusCode}");
-    print("RESPONSE: ${res.body}");
+    print("UPDATE GOAL STATUS => ${r.statusCode}");
+    print("UPDATE GOAL RESP   => ${r.body}");
 
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception("Update goal failed: ${res.body}");
+    if (r.statusCode < 200 || r.statusCode >= 300) {
+      throw Exception("Update goal failed: ${r.body}");
     }
   }
 
-  /* ============================================================
-     DELETE: Delete a goal (ONLY if balance = 0)
-     DELETE /api/goals/:goalId
-  ============================================================ */
+  // ---------- DELETE GOAL ----------
   Future<void> deleteGoal(int goalId) async {
-    final url = Uri.parse("$baseUrl/api/goals/$goalId");
+    final url = Uri.parse('$baseUrl/api/goals/$goalId');
+    print("DELETE GOAL URL => $url");
 
-    print("📌 DELETE GOAL => $url");
+    final r = await http.delete(url, headers: _headers);
 
-    final res = await http.delete(url, headers: _headers);
+    print("DELETE GOAL STATUS => ${r.statusCode}");
+    print("DELETE GOAL RESP   => ${r.body}");
 
-    print("STATUS: ${res.statusCode}");
-    print("RESPONSE: ${res.body}");
-
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception("Delete goal failed: ${res.body}");
+    if (r.statusCode < 200 || r.statusCode >= 300) {
+      throw Exception("Delete goal failed: ${r.body}");
     }
   }
 }

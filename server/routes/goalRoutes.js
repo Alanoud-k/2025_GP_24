@@ -7,12 +7,15 @@ import {
   updateGoal,
   addMoneyToGoal,
   moveMoneyFromGoal,
-  deleteGoal
+  deleteGoal,
+  getChildWalletBalances
 } from "../controllers/goalController.js";
 
 const router = Router();
 
 router.post("/children/:childId/wallet/setup", setupChildWallet);
+router.get("/children/:childId/wallet/balances", getChildWalletBalances);
+
 router.get("/children/:childId/goals", listChildGoals);
 
 router.post("/goals", createGoal);

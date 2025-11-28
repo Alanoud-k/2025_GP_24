@@ -289,3 +289,52 @@ export async function deleteGoal(req, res) {
     return res.status(500).json({ error: "delete_goal_failed" });
   }
 }
+
+// GET WALLET BALANCES (Saving + Spending)
+export async function getChildWalletBalances(req, res) {
+  try {
+    const childId = Number(req.params.childId);
+    if (!childId) {
+      return res.status(400).json({ error: "invalid_child" });
+    }
+
+    console.log("➡ Fetching balances for child", childId);
+
+    // 1) Ensure wallet exists
+    const walletId = await ensureWallet(childId);
+    await ensureCoreAccounts(walletId);
+
+    console.log("   walletId =", walletId);
+
+    // 2) Get Saving balance
+    const [sav] = await sql`
+      SELECT COALESCE(SUM(balance), 0)::float AS saving
+      FROM "Account"
+      WHERE walletid = ${walletId}
+        AND accounttype = 'SavingAccount'
+    `;
+
+    // 3) Get Spending balance
+    const [sp] = await sql`
+      SELECT COALESCE(SUM(balance), 0)::float AS spending
+      FROM "Account"
+      WHERE walletid = ${walletId}
+        AND accounttype = 'SpendingAccount'
+    `;
+
+    const saving = Number(sav?.saving ?? 0);
+    const spending = Number(sp?.spending ?? 0);
+
+    console.log("   saving =", saving, "| spending =", spending);
+
+    return res.json({
+      saving,
+      spending,
+      total: saving + spending,
+    });
+  } catch (err) {
+    console.error("❌ balance_fetch_failed:", err);
+    return res.status(500).json({ error: "balance_fetch_failed" });
+  }
+}
+

@@ -64,17 +64,16 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       final balances = await _fetchBalances();
 
       if (!mounted) return;
-
       setState(() {
         _goals = goals;
-        _savingBalance = balances['saving']!;
-        _spendingBalance = balances['spending']!;
+        _savingBalance = balances['saving'] ?? 0.0;
+        _spendingBalance = balances['spending'] ?? 0.0;
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to load data: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load goals/balances: $e')),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -84,30 +83,48 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     final url = Uri.parse(
       "${widget.baseUrl}/api/children/${widget.childId}/wallet/balances",
     );
+    print("BALANCES URL => $url");
 
-    final res = await http.get(url, headers: _headers);
+    final res = await http.get(
+      url,
+      headers: {"Authorization": "Bearer ${widget.token}"},
+    );
+
+    print("BALANCES STATUS => ${res.statusCode}");
+    print("BALANCES BODY   => ${res.body}");
 
     if (res.statusCode == 401) {
+      // token issue
       await checkAuthStatus(context);
-      return {"saving": 0.0, "spending": 0.0};
+      throw Exception("Unauthorized (401) while loading balances");
     }
-
     if (res.statusCode != 200) {
-      return {"saving": 0.0, "spending": 0.0};
+      throw Exception("Failed to load balances: ${res.statusCode} ${res.body}");
     }
 
     final data = jsonDecode(res.body);
 
-    double _double(dynamic v) {
+    double _toDouble(dynamic v) {
       if (v == null) return 0.0;
       if (v is num) return v.toDouble();
       return double.tryParse(v.toString()) ?? 0.0;
     }
 
-    return {
-      "saving": _double(data['saving']),
-      "spending": _double(data['spending']),
-    };
+    final saving = _toDouble(
+      data['saving'] ??
+          data['savingBalance'] ??
+          data['save'] ??
+          data['saving_balance'],
+    );
+
+    final spending = _toDouble(
+      data['spending'] ??
+          data['spend'] ??
+          data['spendingBalance'] ??
+          data['spend_balance'],
+    );
+
+    return {"saving": saving, "spending": spending};
   }
 
   Future<void> _moveAmount(String type) async {
