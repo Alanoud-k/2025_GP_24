@@ -150,7 +150,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
     setState(() => _isUpdating = true);
 
     final url = Uri.parse(
-      '${widget.baseUrl}/api/child/${widget.childId}/password',
+      '${widget.baseUrl}/api/auth/child/${widget.childId}/password',
     );
 
     try {

@@ -93,8 +93,71 @@ app.post("/api/create-payment/:parentId", createPayment);
 --------------------------------------------------------- */
 
 app.get("/payment-success", (_req, res) => {
-  res.send("Payment completed successfully.");
+  res.send(`
+    <html>
+      <head>
+        <title>Payment Successful</title>
+        <style>
+          body {
+            background: #F7F8FA;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            color: #333;
+          }
+          .card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+          }
+          .check {
+            font-size: 60px;
+            color: #37C4BE;
+            margin-bottom: 10px;
+          }
+          .title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2C3E50;
+            margin-bottom: 6px;
+          }
+          .msg {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+          }
+          .closing {
+            font-size: 12px;
+            color: #999;
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="card">
+          <div class="check">✔</div>
+          <div class="title">Payment Successful</div>
+          <div class="msg">Your payment has been processed successfully.</div>
+          <div class="closing">This window will close automatically…</div>
+        </div>
+
+        <script>
+          setTimeout(() => {
+            window.close();
+          }, 3000); // 3 seconds
+        </script>
+      </body>
+    </html>
+  `);
 });
+
 
 app.get("/payment-failed", (_req, res) => {
   res.send("Payment failed.");

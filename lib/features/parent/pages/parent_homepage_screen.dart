@@ -23,7 +23,8 @@ class ParentHomeScreen extends StatefulWidget {
   State<ParentHomeScreen> createState() => _ParentHomeScreenState();
 }
 
-class _ParentHomeScreenState extends State<ParentHomeScreen> {
+class _ParentHomeScreenState extends State<ParentHomeScreen>
+    with WidgetsBindingObserver {
   String firstname = '';
   String walletBalance = '0.00';
   bool _isLoading = true;
@@ -42,10 +43,30 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initialize();
     });
   }
+
+  /////////////////////////////////
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // 🔧 FIX (3)
+    super.dispose();
+  }
+
+  // 🔧 FIX (4): Detect when user comes back from Moyasar browser
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+
+    if (state == AppLifecycleState.resumed) {
+      // User has returned to the app → refresh wallet
+      _refreshFromDb();
+    }
+  }
+  ////////////////////////////////
 
   Future<void> _initialize() async {
     await checkAuthStatus(context);
@@ -102,8 +123,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
         final b = data['balance'];
         if (b != null) {
-          newBalance =
-              (b is num) ? b.toDouble() : double.tryParse(b.toString()) ?? 0.0;
+          newBalance = (b is num)
+              ? b.toDouble()
+              : double.tryParse(b.toString()) ?? 0.0;
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -128,7 +150,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       if (cardRes.statusCode == 200) {
         final cardData = jsonDecode(cardRes.body);
         final hasLast4 =
-            cardData['last4'] != null && cardData['last4'].toString().isNotEmpty;
+            cardData['last4'] != null &&
+            cardData['last4'].toString().isNotEmpty;
         final hasFlag = cardData['hasCard'] == true;
         newHasCard = hasLast4 || hasFlag;
       } else if (cardRes.statusCode == 404) {
