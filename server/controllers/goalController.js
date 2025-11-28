@@ -142,9 +142,10 @@ export async function createGoal(req, res) {
 
     // Create GoalAccount linked to SavingAccount
     const gacc = await sql`
-      INSERT INTO "Account"("walletid","savingaccountid","accounttype","currency","balance","limitamount")
-      VALUES (${walletId}, ${savingAccountId}, 'GoalAccount', 'SAR', 0, ${tAmount})
-      RETURNING "accountid","balance"
+      INSERT INTO "Account"(walletid, savingaccountid, accounttype, currency, balance, limitamount)
+VALUES (${walletId}, ${savingAccountId}, 'GoalAccount', 'SAR', 0, 0)
+RETURNING accountid, balance
+
     `;
     const goalAccountId = gacc[0].accountid;
 
