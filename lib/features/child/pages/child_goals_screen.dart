@@ -11,8 +11,8 @@ import 'package:my_app/utils/check_auth.dart';
 const kBg = Color(0xFFF7F8FA);
 const kMint = Color(0xFF9FE5E2);
 const kMint26 = Color(0x429FE5E2);
-const kTextSecondary = Color(0xFF6E6E6E);
 const kProgress = Color(0xFF67AFAC);
+const kTextSecondary = Color(0xFF6E6E6E);
 
 class ChildGoalsScreen extends StatefulWidget {
   final int childId;
@@ -47,9 +47,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchBalances();
 
-    // Check token after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       checkAuthStatus(context);
     });
@@ -62,89 +60,69 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     setState(() => _loading = true);
 
     try {
-      // 1) Load goals
       final goals = await _api.listGoals(widget.childId);
-
-      // 2) Load saving + spending balances
       final balances = await _fetchBalances();
 
       if (!mounted) return;
+
       setState(() {
         _goals = goals;
-        _savingBalance = balances['saving'] ?? 0.0;
-        _spendingBalance = balances['spending'] ?? 0.0;
+        _savingBalance = balances['saving']!;
+        _spendingBalance = balances['spending']!;
       });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to load goals: $e')));
+      ).showSnackBar(SnackBar(content: Text("Failed to load data: $e")));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  /// Calls a backend endpoint like:
-  ///   GET /api/children/:childId/wallet/balances
-  /// Expected response (flexible):
-  ///   { "saving": 50.0, "spending": 20.0 }
-  ///   or { "savingBalance": 50.0, "spend": 20.0 } etc.
   Future<Map<String, double>> _fetchBalances() async {
-    final res = await http.get(
-      Uri.parse(
-        "${widget.baseUrl}/api/children/${widget.childId}/wallet/balances",
-      ),
-      headers: {"Authorization": "Bearer ${widget.token}"},
+    final url = Uri.parse(
+      "${widget.baseUrl}/api/children/${widget.childId}/wallet/balances",
     );
+
+    final res = await http.get(url, headers: _headers);
+
     if (res.statusCode == 401) {
       await checkAuthStatus(context);
       return {"saving": 0.0, "spending": 0.0};
     }
+
     if (res.statusCode != 200) {
       return {"saving": 0.0, "spending": 0.0};
     }
 
     final data = jsonDecode(res.body);
 
-    double _toDouble(dynamic v) {
+    double _double(dynamic v) {
       if (v == null) return 0.0;
       if (v is num) return v.toDouble();
       return double.tryParse(v.toString()) ?? 0.0;
     }
 
-    final saving = _toDouble(
-      data['saving'] ??
-          data['savingBalance'] ??
-          data['save'] ??
-          data['saving_balance'],
-    );
-
-    final spending = _toDouble(
-      data['spending'] ??
-          data['spend'] ??
-          data['spendingBalance'] ??
-          data['spend_balance'],
-    );
-
-    return {"saving": saving, "spending": spending};
+    return {
+      "saving": _double(data['saving']),
+      "spending": _double(data['spending']),
+    };
   }
 
-  /// type = "move-in"  (Spending → Saving)
-  /// type = "move-out" (Saving → Spending)
-  Future<void> _moveInOrOut(String type) async {
+  Future<void> _moveAmount(String type) async {
     final ctrl = TextEditingController();
 
     final amount = await showModalBottomSheet<double>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
+          left: 18,
+          right: 18,
           top: 16,
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
         ),
@@ -155,10 +133,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
               type == "move-in"
                   ? "Move In (Spending → Saving)"
                   : "Move Out (Saving → Spending)",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextField(
               controller: ctrl,
               keyboardType: const TextInputType.numberWithOptions(
@@ -169,32 +146,23 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton(
-                onPressed: () {
-                  final v = double.tryParse(ctrl.text.trim());
-                  if (v != null && v > 0) Navigator.pop(ctx, v);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kProgress,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "Confirm",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                final v = double.tryParse(ctrl.text.trim());
+                if (v != null && v > 0) Navigator.pop(ctx, v);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kProgress,
+                minimumSize: const Size(double.infinity, 48),
+              ),
+              child: const Text(
+                "Confirm",
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -204,11 +172,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
     if (amount == null) return;
 
+    final url = Uri.parse("${widget.baseUrl}/api/saving/$type");
+
     try {
-      // Your backend routes for these should be:
-      //   POST /api/saving/move-in
-      //   POST /api/saving/move-out
-      final url = Uri.parse("${widget.baseUrl}/api/saving/$type");
       final res = await http.post(
         url,
         headers: _headers,
@@ -220,17 +186,15 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
         return;
       }
 
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        // Refresh balances + goals
-        await _bootstrap();
-      } else {
+      if (res.statusCode < 200 || res.statusCode > 299) {
         throw Exception("Request failed (${res.statusCode})");
       }
+
+      await _bootstrap();
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${type.replaceAll('-', ' ')} failed: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed: $e")));
     }
   }
 
@@ -267,135 +231,108 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const hassalaGreen1 = Color(0xFF37C4BE);
+    const hassalaGreen = Color(0xFF37C4BE);
 
-    return FutureBuilder(
-      future: checkAuthStatus(context),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        return Scaffold(
-          backgroundColor: kBg,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                size: 20,
-                color: Colors.black87,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: const Text(
-              "My Goals",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-            bottom: const PreferredSize(
-              preferredSize: Size.fromHeight(1),
-              child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED)),
-            ),
+    return Scaffold(
+      backgroundColor: kBg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: BackButton(color: Colors.black87),
+        title: const Text(
+          "My Goals",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Colors.black87,
           ),
-          body: SafeArea(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-                    onRefresh: _bootstrap,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 18),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: Color(0xFFEDEDED)),
+        ),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _bootstrap,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 18),
 
-                          // Saving + Spending section
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: _SavingSection(
-                              savingBalance: _savingBalance,
-                              spendingBalance: _spendingBalance,
-                              onMoveIn: () => _moveInOrOut("move-in"),
-                              onMoveOut: () => _moveInOrOut("move-out"),
-                            ),
-                          ),
+                    /// --- Balance Panel ---
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _SavingPanel(
+                        saving: _savingBalance,
+                        spending: _spendingBalance,
+                        onMoveIn: () => _moveAmount("move-in"),
+                        onMoveOut: () => _moveAmount("move-out"),
+                      ),
+                    ),
 
-                          const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
-                          // Add goal button
-                          InkWell(
-                            onTap: _openAddGoal,
-                            borderRadius: BorderRadius.circular(40),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                CircleAvatar(
-                                  radius: 27,
-                                  backgroundColor: hassalaGreen1,
-                                  child: Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                    size: 30,
-                                  ),
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Add new goal',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
+                    /// --- Add Goal ---
+                    InkWell(
+                      borderRadius: BorderRadius.circular(50),
+                      onTap: _openAddGoal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          CircleAvatar(
+                            radius: 27,
+                            backgroundColor: hassalaGreen,
+                            child: Icon(
+                              Icons.add,
+                              size: 30,
+                              color: Colors.white,
                             ),
                           ),
-
-                          const SizedBox(height: 18),
-
-                          // Goals card
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: _MainGoalsCard(
-                              goals: _goals,
-                              onTapGoal: _openGoalDetails,
+                          SizedBox(width: 12),
+                          Text(
+                            "Add new goal",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
                             ),
                           ),
-
-                          const SizedBox(height: 30),
                         ],
                       ),
                     ),
-                  ),
-          ),
-        );
-      },
+
+                    const SizedBox(height: 20),
+
+                    /// --- Goals List ---
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _GoalsList(goals: _goals, onTap: _openGoalDetails),
+                    ),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }
 
-/* ---------------- Saving + Spending UI ---------------- */
+/* ===================== BALANCES PANEL ===================== */
 
-class _SavingSection extends StatelessWidget {
-  final double savingBalance;
-  final double spendingBalance;
+class _SavingPanel extends StatelessWidget {
+  final double saving;
+  final double spending;
   final VoidCallback onMoveIn;
   final VoidCallback onMoveOut;
 
-  const _SavingSection({
-    required this.savingBalance,
-    required this.spendingBalance,
+  const _SavingPanel({
+    required this.saving,
+    required this.spending,
     required this.onMoveIn,
     required this.onMoveOut,
   });
@@ -403,7 +340,6 @@ class _SavingSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -422,35 +358,31 @@ class _SavingSection extends StatelessWidget {
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          // Balances row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _balanceTile("Saving", savingBalance, Colors.teal),
-              _balanceTile("Spending", spendingBalance, Colors.orange),
+              _balance("Saving", saving, Colors.teal),
+              _balance("Spending", spending, Colors.orange),
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
-          const SizedBox(height: 14),
-
-          // Action buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _MintCircleAction(
-                label: "Move In\n(Spending → Saving)",
-                icon: Icons.arrow_downward,
-                onTap: onMoveIn,
+              _circleAction(
+                "Move In\n(Sp → Sv)",
+                Icons.arrow_downward,
+                onMoveIn,
               ),
-              const SizedBox(width: 32),
-              _MintCircleAction(
-                label: "Move Out\n(Saving → Spending)",
-                icon: Icons.arrow_upward,
-                onTap: onMoveOut,
+              const SizedBox(width: 40),
+              _circleAction(
+                "Move Out\n(Sv → Sp)",
+                Icons.arrow_upward,
+                onMoveOut,
               ),
             ],
           ),
@@ -459,11 +391,11 @@ class _SavingSection extends StatelessWidget {
     );
   }
 
-  Widget _balanceTile(String name, double amount, Color color) {
+  Widget _balance(String label, double amt, Color color) {
     return Column(
       children: [
         Text(
-          name,
+          label,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -471,48 +403,34 @@ class _SavingSection extends StatelessWidget {
           ),
         ),
         Text(
-          "﷼ ${amount.toStringAsFixed(2)}",
+          "﷼ ${amt.toStringAsFixed(2)}",
           style: TextStyle(
             fontSize: 24,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
             color: color,
           ),
         ),
       ],
     );
   }
-}
 
-class _MintCircleAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _MintCircleAction({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _circleAction(String text, IconData icon, VoidCallback onTap) {
     return Column(
       children: [
         InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(50),
           child: CircleAvatar(
             radius: 27,
             backgroundColor: kMint,
-            child: Icon(icon, size: 28, color: Colors.white),
+            child: Icon(icon, size: 26, color: Colors.white),
           ),
         ),
         const SizedBox(height: 6),
         Text(
-          label,
+          text,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Colors.black87,
           ),
@@ -522,20 +440,18 @@ class _MintCircleAction extends StatelessWidget {
   }
 }
 
-/* ---------------- Goals list card ---------------- */
+/* ===================== GOALS LIST ===================== */
 
-class _MainGoalsCard extends StatelessWidget {
+class _GoalsList extends StatelessWidget {
   final List<Goal> goals;
-  final void Function(Goal) onTapGoal;
+  final void Function(Goal) onTap;
 
-  const _MainGoalsCard({required this.goals, required this.onTapGoal});
+  const _GoalsList({required this.goals, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 385,
-      constraints: const BoxConstraints(minHeight: 300),
-      padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(26),
@@ -547,37 +463,36 @@ class _MainGoalsCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: goals.isEmpty
-            ? const [
-                SizedBox(height: 20),
-                Text(
-                  "No goals yet",
-                  style: TextStyle(
-                    color: kTextSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+      child: goals.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text(
+                "No goals yet",
+                style: TextStyle(
+                  color: kTextSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
-                SizedBox(height: 20),
-              ]
-            : goals
+              ),
+            )
+          : Column(
+              children: goals
                   .map(
                     (g) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: _GoalTile(goal: g, onTap: () => onTapGoal(g)),
+                      child: _GoalCard(goal: g, onTap: () => onTap(g)),
                     ),
                   )
                   .toList(),
-      ),
+            ),
     );
   }
 }
 
-class _GoalTile extends StatelessWidget {
+class _GoalCard extends StatelessWidget {
   final Goal goal;
   final VoidCallback onTap;
 
-  const _GoalTile({required this.goal, required this.onTap});
+  const _GoalCard({required this.goal, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -588,9 +503,7 @@ class _GoalTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 358,
-        constraints: const BoxConstraints(minHeight: 117),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         decoration: BoxDecoration(
           color: kMint26,
           borderRadius: BorderRadius.circular(20),
@@ -598,6 +511,7 @@ class _GoalTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// Title + Target
             Row(
               children: [
                 Expanded(
@@ -611,38 +525,44 @@ class _GoalTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '﷼ ${goal.targetAmount.toStringAsFixed(1)}',
+                  "﷼ ${goal.targetAmount.toStringAsFixed(1)}",
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 19,
                     fontWeight: FontWeight.w700,
                     color: Colors.black87,
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 8),
+
             Text(
-              'Remaining: ${remaining.toStringAsFixed(1)}',
-              style: const TextStyle(fontSize: 14, color: kTextSecondary),
+              "Remaining: ${remaining.toStringAsFixed(1)}",
+              style: const TextStyle(color: kTextSecondary, fontSize: 14),
             ),
-            const SizedBox(height: 8),
+
+            const SizedBox(height: 10),
+
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
                 value: goal.progress,
                 minHeight: 6,
                 backgroundColor: Colors.white,
-                valueColor: const AlwaysStoppedAnimation<Color>(kProgress),
+                valueColor: const AlwaysStoppedAnimation(kProgress),
               ),
             ),
+
             const SizedBox(height: 4),
+
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                '$pct%',
+                "$pct%",
                 style: const TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

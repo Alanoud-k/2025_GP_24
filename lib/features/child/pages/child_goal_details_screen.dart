@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/goal_model.dart';
 import '../services/goals_api.dart';
-import 'package:my_app/utils/check_auth.dart'; // <<--- ADDED
+import 'package:my_app/utils/check_auth.dart';
 
 const kBg = Color(0xFFF7F8FA);
 const kMint = Color(0xFF9FE5E2);
@@ -31,31 +31,84 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   late Goal _goal;
   bool _busy = false;
 
-  // Letters only (Arabic + English + spaces)
   final RegExp _lettersRegex = RegExp(r'^[a-zA-Z\u0621-\u064A\s]+$');
 
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      checkAuthStatus(context); // 🔐 check token validity
-    });
-
     _api = GoalsApi(widget.baseUrl, widget.token);
     _goal = widget.goal;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAuthStatus(context);
+    });
   }
 
-  Future<void> _refreshGoal() async {
+  Future<void> _refresh() async {
+    final fresh = await _api.getGoalById(_goal.goalId);
+    if (mounted) setState(() => _goal = fresh);
+  }
+
+  // -------------------------------
+  // DELETE GOAL
+  // -------------------------------
+  Future<void> _deleteGoal() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Goal"),
+        content: const Text(
+          "Are you sure you want to delete this goal?\n"
+          "If it contains money, deletion will be blocked.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _busy = true);
+
     try {
-      final fresh = await _api.getGoalById(_goal.goalId);
+      await _api.deleteGoal(_goal.goalId);
+
       if (!mounted) return;
-      setState(() => _goal = fresh);
-    } catch (_) {}
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Goal deleted")));
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (e.toString().contains("goal_has_money")) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Goal contains money. Move the balance out first."),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("$e")));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
-  // Edit goal bottom sheet
-  Future<void> _openEditSheet() async {
+  // -------------------------------
+  // EDIT GOAL
+  // -------------------------------
+  Future<void> _editGoal() async {
     final nameCtrl = TextEditingController(text: _goal.goalName);
     final descCtrl = TextEditingController(text: _goal.description);
     final targetCtrl = TextEditingController(
@@ -81,69 +134,37 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
           key: formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Center(
-                child: Text(
-                  "Edit goal",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                ),
+              const Text(
+                "Edit Goal",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
 
-              const Text(
-                "Goal name",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
+              // Name
+              _fieldLabel("Goal name"),
               TextFormField(
                 controller: nameCtrl,
                 decoration: _fieldDeco(),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return "Enter goal name";
+                  if (v == null || v.trim().isEmpty) return "Enter name";
                   if (!_lettersRegex.hasMatch(v.trim())) return "Letters only";
                   return null;
                 },
               ),
-
               const SizedBox(height: 12),
 
-              const Text(
-                "Description",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
+              // Description
+              _fieldLabel("Description"),
               TextFormField(
                 controller: descCtrl,
                 maxLines: 3,
                 decoration: _fieldDeco(),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return null; // optional
-                  if (!_lettersRegex.hasMatch(v.trim())) return "Letters only";
-                  if (v.trim().length > 200) return "Max 200 characters";
-                  return null;
-                },
               ),
-
               const SizedBox(height: 12),
 
-              const Text(
-                "Target amount",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
+              // Target
+              _fieldLabel("Target amount"),
               TextFormField(
                 controller: targetCtrl,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -153,55 +174,34 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return "Enter target";
                   final d = double.tryParse(v.trim());
-                  if (d == null || d <= 0) return "Numbers only";
-                  if (d < _goal.goalBalance) {
-                    return "Target must be >= saved";
-                  }
+                  if (d == null || d <= 0) return "Invalid amount";
+                  if (d < _goal.goalBalance)
+                    return "Target must be ≥ saved amount";
                   return null;
                 },
               ),
-
               const SizedBox(height: 14),
 
               Row(
                 children: [
                   Expanded(
-                    child: SizedBox(
-                      height: 46,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text("Cancel"),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: SizedBox(
-                      height: 46,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (!formKey.currentState!.validate()) return;
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
                           Navigator.pop(ctx, true);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kProgress,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Save",
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kProgress,
                       ),
+                      child: const Text("Save"),
                     ),
                   ),
                 ],
@@ -215,6 +215,7 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
     if (saved != true) return;
 
     setState(() => _busy = true);
+
     try {
       await _api.updateGoal(
         goalId: _goal.goalId,
@@ -222,16 +223,19 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
         targetAmount: double.parse(targetCtrl.text.trim()),
         description: descCtrl.text.trim(),
       );
-    } catch (e) {
-      if (e.toString().contains("401")) {
-        await checkAuthStatus(context);
-        return;
-      }
+
+      await _refresh();
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<void> _openAmountSheet({required bool isAdd}) async {
+  // -------------------------------
+  // MOVE IN / MOVE OUT
+  // -------------------------------
+  Future<void> _moveSheet({required bool isAdd}) async {
     final ctrl = TextEditingController();
+
     final amount = await showModalBottomSheet<double>(
       context: context,
       isScrollControlled: true,
@@ -250,45 +254,24 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
           children: [
             Text(
               isAdd ? "Move In (Saving → Goal)" : "Move Out (Goal → Saving)",
-              textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
-
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: ctrl,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: InputDecoration(
-                hintText: "Amount",
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+              decoration: _fieldDeco(hint: "Amount"),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton(
-                onPressed: () {
-                  final v = double.tryParse(ctrl.text.trim());
-                  if (v != null && v > 0) Navigator.pop(ctx, v);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kProgress,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "Confirm",
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
+            const SizedBox(height: 14),
+            ElevatedButton(
+              onPressed: () {
+                final v = double.tryParse(ctrl.text.trim());
+                if (v != null && v > 0) Navigator.pop(ctx, v);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: kProgress),
+              child: const Text("Confirm"),
             ),
           ],
         ),
@@ -296,8 +279,8 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
     );
 
     if (amount == null) return;
-
     setState(() => _busy = true);
+
     try {
       if (isAdd) {
         await _api.addMoneyToGoal(
@@ -313,26 +296,28 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
         );
       }
 
-      await _refreshGoal();
+      await _refresh();
+
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(isAdd ? "Added" : "Moved")));
-      Navigator.pop(context, true);
-    } catch (e) {
-      if (e.toString().contains("401")) {
-        await checkAuthStatus(context);
-        return;
-      }
+      ).showSnackBar(SnackBar(content: Text(isAdd ? "Moved in" : "Moved out")));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
+  // -------------------------------
+  // UI
+  // -------------------------------
+
   @override
   Widget build(BuildContext context) {
     final pct = (_goal.progress * 100).clamp(0, 100).toStringAsFixed(0);
-    final remaining = (_goal.targetAmount - _goal.goalBalance).clamp(0, 999999);
+    final remaining = (_goal.targetAmount - _goal.goalBalance).clamp(
+      0,
+      double.infinity,
+    );
 
     return Scaffold(
       backgroundColor: kBg,
@@ -340,145 +325,142 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: Colors.black87,
-          ),
-          onPressed: () => Navigator.pop(context, false),
-        ),
+        leading: BackButton(color: Colors.black87),
         title: const Text(
-          "Savings goal",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.black87,
-          ),
+          "Savings Goal",
+          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.black87),
         ),
         actions: [
           IconButton(
-            onPressed: _busy ? null : _openEditSheet,
-            icon: const Icon(Icons.edit, color: Colors.black87, size: 20),
+            icon: const Icon(Icons.edit, color: Colors.black87),
+            onPressed: _busy ? null : _editGoal,
           ),
-          const SizedBox(width: 6),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: _busy ? null : _deleteGoal,
+          ),
         ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED)),
-        ),
       ),
-      body: SafeArea(
-        child: _busy
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
-                child: Column(
-                  children: [
-                    _ProgressRing(percent: _goal.progress, label: "$pct%"),
+      body: _busy
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _ProgressRing(percent: _goal.progress, label: "$pct%"),
+                  const SizedBox(height: 12),
 
-                    const SizedBox(height: 10),
-
-                    // Description under ring
-                    if (_goal.description.trim().isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          _goal.description,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: kTextSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                  if (_goal.description.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        _goal.description,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: kTextSecondary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-
-                    const SizedBox(height: 12),
-
-                    Text(
-                      _goal.goalName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      ),
                     ),
 
-                    const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
-                    Text(
-                      "﷼ ${_goal.goalBalance.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                      ),
+                  Text(
+                    _goal.goalName,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Target: ﷼ ${_goal.targetAmount.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: kTextSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Remaining: ﷼ ${remaining.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: kTextSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  ),
 
-                    const SizedBox(height: 18),
+                  const SizedBox(height: 6),
+                  Text(
+                    "﷼ ${_goal.goalBalance.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    "Target: ﷼ ${_goal.targetAmount.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: kTextSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    "Remaining: ﷼ ${remaining.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: kTextSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ActionButton(
-                            text: "Move Out\n(Goal → Saving)",
-                            bg: kMint,
-                            textColor: Colors.black87,
-                            onTap: () => _openAmountSheet(isAdd: false),
-                          ),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ActionButton(
+                          text: "Move Out\n(Goal → Saving)",
+                          bg: kMint,
+                          textColor: Colors.black,
+                          onTap: () => _moveSheet(isAdd: false),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _ActionButton(
-                            text: "Move In\n(Saving → Goal)",
-                            bg: kProgress,
-                            textColor: Colors.white,
-                            onTap: () => _openAmountSheet(isAdd: true),
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _ActionButton(
+                          text: "Move In\n(Saving → Goal)",
+                          bg: kProgress,
+                          textColor: Colors.white,
+                          onTap: () => _moveSheet(isAdd: true),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 18),
+                  const SizedBox(height: 20),
 
-                    _DetailsCard(goal: _goal),
-                  ],
-                ),
+                  _DetailsCard(goal: _goal),
+                ],
               ),
-      ),
+            ),
     );
   }
 }
 
-// Field decoration
-InputDecoration _fieldDeco() => InputDecoration(
+Widget _fieldLabel(String text) => Padding(
+  padding: const EdgeInsets.only(bottom: 6),
+  child: Text(
+    text,
+    style: const TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: kTextSecondary,
+    ),
+  ),
+);
+
+InputDecoration _fieldDeco({String? hint}) => InputDecoration(
+  hintText: hint,
   filled: true,
   fillColor: Colors.white,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
   border: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
     borderSide: BorderSide.none,
   ),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
 );
+
+// --------------------------------------------------------
+// UI Widgets
+// --------------------------------------------------------
 
 class _ProgressRing extends StatelessWidget {
   final double percent;
@@ -545,10 +527,11 @@ class _ActionButton extends StatelessWidget {
         ),
         child: Text(
           text,
+          textAlign: TextAlign.center,
           style: TextStyle(
+            color: textColor,
             fontWeight: FontWeight.w800,
             fontSize: 14,
-            color: textColor,
           ),
         ),
       ),
@@ -558,15 +541,16 @@ class _ActionButton extends StatelessWidget {
 
 class _DetailsCard extends StatelessWidget {
   final Goal goal;
-
   const _DetailsCard({required this.goal});
 
   @override
   Widget build(BuildContext context) {
-    final remaining = (goal.targetAmount - goal.goalBalance).clamp(0, 999999);
+    final remaining = (goal.targetAmount - goal.goalBalance).clamp(
+      0,
+      double.infinity,
+    );
 
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -587,40 +571,38 @@ class _DetailsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _detailRow("Status", goal.goalStatus),
-          _detailRow("Saved", "﷼ ${goal.goalBalance.toStringAsFixed(2)}"),
-          _detailRow("Target", "﷼ ${goal.targetAmount.toStringAsFixed(2)}"),
-          _detailRow("Remaining", "﷼ ${remaining.toStringAsFixed(2)}"),
+          _row("Status", goal.goalStatus),
+          _row("Saved", "﷼ ${goal.goalBalance.toStringAsFixed(2)}"),
+          _row("Target", "﷼ ${goal.targetAmount.toStringAsFixed(2)}"),
+          _row("Remaining", "﷼ ${remaining.toStringAsFixed(2)}"),
         ],
       ),
     );
   }
 
-  Widget _detailRow(String k, String v) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              k,
-              style: const TextStyle(
-                fontSize: 13,
-                color: kTextSecondary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
-            v,
+  Widget _row(String k, String v) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            k,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: Colors.black87,
+              color: kTextSecondary,
+              fontWeight: FontWeight.w700,
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        Text(
+          v,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    ),
+  );
 }
