@@ -20,18 +20,52 @@ class ChildCardScanScreen extends StatefulWidget {
 }
 
 class _ChildCardScanScreenState extends State<ChildCardScanScreen> {
-  bool isScanning = true;
+  // لو حابة تضيفين سكان بالكاميرا بعدين، نخلي المتغيرات جاهزة
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _expiryController = TextEditingController();
+  final TextEditingController _cvvController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    // Fake scan delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
+  void dispose() {
+    _cardNumberController.dispose();
+    _expiryController.dispose();
+    _cvvController.dispose();
+    super.dispose();
+  }
+
+  void _goToConfirmScreen() {
+    final cardNumber = _cardNumberController.text.trim();
+    final expiry = _expiryController.text.trim();
+    final cvv = _cvvController.text.trim();
+
+    if (cardNumber.isEmpty || expiry.isEmpty || cvv.isEmpty) {
       setState(() {
-        isScanning = false;
+        _errorMessage = "Please fill all card details.";
       });
+      return;
+    }
+
+    setState(() {
+      _errorMessage = null;
     });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChildCardConfirmScreen(
+          childId: widget.childId,
+          receiverAccountId: widget.receiverAccountId,
+          token: widget.token,
+          baseUrl: widget.baseUrl,
+          cardNumber: cardNumber,
+          expiryDate: expiry,
+          cvv: cvv,
+        ),
+      ),
+    );
   }
 
   @override
@@ -45,116 +79,187 @@ class _ChildCardScanScreenState extends State<ChildCardScanScreen> {
         backgroundColor: kBg,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: Colors.black87,
+        iconTheme: const IconThemeData(color: Colors.black87),
         title: const Text(
-          "Scan to pay",
+          'Add Card',
           style: TextStyle(
-            fontWeight: FontWeight.w600,
+            color: Colors.black87,
             fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 20,
-                    offset: const Offset(0, 14),
-                    color: Colors.black.withOpacity(0.05),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Child card details",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                "Enter the card information or connect it to the child wallet.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // مستطيل كأنه placeholder للسكان/الكاميرا
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade300),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                      color: Colors.black.withOpacity(0.05),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.credit_card,
+                      size: 40,
+                      color: Colors.grey.shade700,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Card scan area",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "You can add card details manually below.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // رقم البطاقة
+              TextField(
+                controller: _cardNumberController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Card number",
+                  hintText: "XXXX XXXX XXXX XXXX",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  isDense: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _expiryController,
+                      keyboardType: TextInputType.datetime,
+                      decoration: InputDecoration(
+                        labelText: "Expiry date",
+                        hintText: "MM/YY",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _cvvController,
+                      keyboardType: TextInputType.number,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: "CVV",
+                        hintText: "XXX",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: Column(
-                children: [
-                  Container(
-                    height: 220,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.qr_code_2,
-                        size: 120,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    isScanning ? "Scanning QR code..." : "QR code scanned",
+
+              const SizedBox(height: 12),
+
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    _errorMessage!,
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      color: Colors.red,
+                      fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "In the real version this screen will scan the merchant QR. "
-                    "For now we will use fake details for testing.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
+                ),
+
+              const Spacer(),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _goToConfirmScreen,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  if (isScanning)
-                    const CircularProgressIndicator(color: kPrimary)
-                  else
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                          ),
-                        ),
-                        onPressed: () {
-                          // Example fake data after scan
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChildCardConfirmScreen(
-                                childId: widget.childId,
-                                receiverAccountId: widget.receiverAccountId,
-                                token: widget.token,
-                                baseUrl: widget.baseUrl,
-                                initialMerchant: "STARBUCKS RIYADH",
-                                initialMcc: "5814",
-                                initialAmount: "30.50",
-                              ),
-                            ),
-                          );
-                        },
-                        child: const Text(
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
                           "Continue",
                           style: TextStyle(
-                            fontWeight: FontWeight.w600,
                             fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                    ),
-                ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );

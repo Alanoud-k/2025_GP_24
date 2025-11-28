@@ -28,79 +28,41 @@ class ChildCardScreen extends StatelessWidget {
         centerTitle: true,
         foregroundColor: Colors.black87,
         title: const Text(
-          "Virtual Card",
+          "Card",   // ←ــــــــــــــــــــــــــــــ تم تغيير الاسم هنا فقط
           style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            fontSize: 22,
           ),
         ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Info box
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 20,
-                    offset: const Offset(0, 12),
-                    color: Colors.black.withOpacity(0.04),
-                  ),
-                ],
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Test card payment",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "This is a fake payment used only to classify the "
-                    "transaction and save it to the wallet.",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
 
-            // Card visual
+            // -------------------- Virtual Card --------------------
             Container(
-              height: 200,
+              height: 210,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(26),
                 gradient: const LinearGradient(
                   colors: [
-                    Color(0xFF3B82F6),
-                    Color(0xFF2563EB),
+                    Color(0xFF4C7DF0),
+                    Color(0xFF3359CC),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    blurRadius: 28,
-                    offset: const Offset(0, 18),
-                    color: Colors.black26.withOpacity(0.15),
+                    blurRadius: 24,
+                    offset: Offset(0, 12),
+                    color: Colors.black26,
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -108,11 +70,15 @@ class ChildCardScreen extends StatelessWidget {
                     "Hassalah Virtual Card",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+
                   const Spacer(),
+
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Expanded(
                         child: Column(
@@ -122,7 +88,7 @@ class ChildCardScreen extends StatelessWidget {
                               "Card number",
                               style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: 11,
+                                fontSize: 12,
                               ),
                             ),
                             SizedBox(height: 4),
@@ -130,23 +96,21 @@ class ChildCardScreen extends StatelessWidget {
                               "1234 5678 9012 3456",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
-                                letterSpacing: 1.5,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 22,
+                                letterSpacing: 2,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: const [
                           Text(
                             "CVV",
                             style: TextStyle(
                               color: Colors.white70,
-                              fontSize: 11,
+                              fontSize: 12,
                             ),
                           ),
                           SizedBox(height: 4),
@@ -154,19 +118,22 @@ class ChildCardScreen extends StatelessWidget {
                             "000",
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+
+                  const SizedBox(height: 20),
+
                   const Text(
                     "CHILD USER",
                     style: TextStyle(
                       color: Colors.white,
+                      fontSize: 15,
                       letterSpacing: 1.2,
                       fontWeight: FontWeight.w600,
                     ),
@@ -175,57 +142,44 @@ class ChildCardScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 30),
 
-            // Pay button
-            Center(
-              child: SizedBox(
-                width: 160,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 32,
-                    ),
+            SizedBox(
+              width: 180,
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChildCardScanScreen(
-                          childId: childId,
-                          receiverAccountId: receiverAccountId,
-                          token: token,
-                          baseUrl: baseUrl,
-                        ),
+                  elevation: 6,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChildCardScanScreen(
+                        childId: childId,
+                        receiverAccountId: receiverAccountId,
+                        token: token,
+                        baseUrl: baseUrl,
                       ),
-                    );
-                  },
-                  child: const Text(
-                    "Pay",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
                     ),
+                  );
+                },
+                child: const Text(
+                  "Pay",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                "For testing only, no real payment is processed.",
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.black45,
-                ),
-              ),
-            ),
+            const SizedBox(height: 10),
           ],
         ),
       ),

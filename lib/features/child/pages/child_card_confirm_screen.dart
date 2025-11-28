@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 class ChildCardConfirmScreen extends StatefulWidget {
   final int childId;
@@ -8,9 +6,10 @@ class ChildCardConfirmScreen extends StatefulWidget {
   final String token;
   final String baseUrl;
 
-  final String initialMerchant;
-  final String initialMcc;
-  final String initialAmount;
+  // معلومات البطاقة القادمة من صفحة السكان/الإدخال
+  final String cardNumber;
+  final String expiryDate;
+  final String cvv;
 
   const ChildCardConfirmScreen({
     super.key,
@@ -18,164 +17,62 @@ class ChildCardConfirmScreen extends StatefulWidget {
     required this.receiverAccountId,
     required this.token,
     required this.baseUrl,
-    required this.initialMerchant,
-    required this.initialMcc,
-    required this.initialAmount,
+    required this.cardNumber,
+    required this.expiryDate,
+    required this.cvv,
   });
 
   @override
-  State<ChildCardConfirmScreen> createState() =>
-      _ChildCardConfirmScreenState();
+  State<ChildCardConfirmScreen> createState() => _ChildCardConfirmScreenState();
 }
 
 class _ChildCardConfirmScreenState extends State<ChildCardConfirmScreen> {
-  late TextEditingController merchantController;
-  late TextEditingController mccController;
-  late TextEditingController amountController;
+  bool _isConfirming = false;
+  String? _errorMessage;
 
-  bool isSubmitting = false;
-  String? lastCategory;
-
-  @override
-  void initState() {
-    super.initState();
-    merchantController = TextEditingController(text: widget.initialMerchant);
-    mccController = TextEditingController(text: widget.initialMcc);
-    amountController = TextEditingController(text: widget.initialAmount);
-  }
-
-  @override
-  void dispose() {
-    merchantController.dispose();
-    mccController.dispose();
-    amountController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _confirmAndPay() async {
-    final merchant = merchantController.text.trim();
-    final mccText = mccController.text.trim();
-    final amountText = amountController.text.trim();
-
-    if (merchant.isEmpty || mccText.isEmpty || amountText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
-      return;
-    }
-
-    final int? mcc = int.tryParse(mccText);
-    final double? amount = double.tryParse(amountText);
-
-    if (mcc == null || amount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid MCC or amount")),
-      );
-      return;
-    }
-
+  Future<void> _confirmCard() async {
     setState(() {
-      isSubmitting = true;
+      _isConfirming = true;
+      _errorMessage = null;
     });
 
     try {
-      final uri =
-          Uri.parse("${widget.baseUrl}/api/transaction/simulate-card");
+      // TODO: هنا اربطي مع الـ backend حقكم
+      // مثال (عدلي الـ endpoint حسب سيرفركم):
+      //
+      // final url = Uri.parse(
+      //   "${widget.baseUrl}/api/child/${widget.childId}/card",
+      // );
+      // final res = await http.post(
+      //   url,
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "Authorization": "Bearer ${widget.token}",
+      //   },
+      //   body: jsonEncode({
+      //     "receiverAccountId": widget.receiverAccountId,
+      //     "cardNumber": widget.cardNumber,
+      //     "expiryDate": widget.expiryDate,
+      //   }),
+      // );
+      //
+      // if (res.statusCode != 200 && res.statusCode != 201) {
+      //   throw Exception("Failed with status ${res.statusCode}");
+      // }
 
-      final res = await http.post(
-        uri,
-        headers: {
-          "Content-Type": "application/json",
-          // Add token later when backend requires it
-          // "Authorization": "Bearer ${widget.token}",
-        },
-        body: jsonEncode({
-          "childId": widget.childId,
-          "receiverAccountId": widget.receiverAccountId,
-          "amount": amount,
-          "merchantName": merchant,
-          "mcc": mcc,
-        }),
-      );
+      await Future.delayed(const Duration(milliseconds: 800));
 
-      if (res.statusCode != 200) {
-        throw Exception("Failed with status ${res.statusCode}");
-      }
+      if (!mounted) return;
 
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      final category =
-          data["data"]?["transactioncategory"] ?? "Uncategorized";
-
-      setState(() {
-        lastCategory = category;
-      });
-
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          contentPadding: const EdgeInsets.all(24),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.check_circle_rounded,
-                size: 70,
-                color: Color(0xFF67AFAC),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                "Payment confirmed",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "The transaction has been saved and classified as $category.",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "$merchant • ${amount.toStringAsFixed(2)} SAR",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("Done"),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      if (mounted) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-      }
+      Navigator.pop(context, true); // نرجع للشاشة السابقة مع نجاح
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      setState(() {
+        _errorMessage = "Something went wrong while linking the card.";
+      });
     } finally {
       if (mounted) {
         setState(() {
-          isSubmitting = false;
+          _isConfirming = false;
         });
       }
     }
@@ -186,133 +83,180 @@ class _ChildCardConfirmScreenState extends State<ChildCardConfirmScreen> {
     const Color kPrimary = Color(0xFF67AFAC);
     const Color kBg = Color(0xFFF7F8FA);
 
+    final maskedCard = widget.cardNumber.length >= 4
+        ? "•••• •••• •••• ${widget.cardNumber.substring(widget.cardNumber.length - 4)}"
+        : widget.cardNumber;
+
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kBg,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: Colors.black87,
+        iconTheme: const IconThemeData(color: Colors.black87),
         title: const Text(
-          "Confirm payment",
+          'Confirm card',
           style: TextStyle(
-            fontWeight: FontWeight.w600,
+            color: Colors.black87,
             fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 18,
-                    offset: const Offset(0, 12),
-                    color: Colors.black.withOpacity(0.05),
-                  ),
-                ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Review card details",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Payment details",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+              const SizedBox(height: 6),
+              const Text(
+                "Make sure the information is correct before linking it to the child wallet.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: kPrimary,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 6),
+                      color: Colors.black.withOpacity(0.15),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: merchantController,
-                    decoration: const InputDecoration(
-                      labelText: "Merchant name",
-                      border: OutlineInputBorder(),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Child card",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: mccController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "MCC",
-                      border: OutlineInputBorder(),
+                    const SizedBox(height: 10),
+                    Text(
+                      maskedCard,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: amountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: "Amount (SAR)",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: kBg,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(
-                          Icons.info_outline_rounded,
-                          size: 20,
-                          color: Colors.black54,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            lastCategory == null
-                                ? "The AI model will classify this transaction and add it to the wallet."
-                                : "Last detected category: $lastCategory",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Expiry",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.expiryDate,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              "Type",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "Child wallet card",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                        ),
-                      ),
-                      onPressed: isSubmitting ? null : _confirmAndPay,
-                      child: Text(
-                        isSubmitting
-                            ? "Processing..."
-                            : "Confirm and pay",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
                     ),
                   ),
-                ],
+                ),
+
+              const Spacer(),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isConfirming ? null : _confirmCard,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: _isConfirming
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          "Confirm and link card",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
