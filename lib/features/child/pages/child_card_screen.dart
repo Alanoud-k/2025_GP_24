@@ -1,10 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'child_card_scan_screen.dart';
 
-class ChildCardScreen extends StatefulWidget {
+class ChildCardScreen extends StatelessWidget {
   final int childId;
-  final int receiverAccountId; // child spending account id
+  final int receiverAccountId;
   final String token;
   final String baseUrl;
 
@@ -17,143 +16,41 @@ class ChildCardScreen extends StatefulWidget {
   });
 
   @override
-  State<ChildCardScreen> createState() => _ChildCardScreenState();
-}
-
-class _ChildCardScreenState extends State<ChildCardScreen> {
-  final TextEditingController amountController = TextEditingController();
-  final TextEditingController merchantController = TextEditingController();
-  final TextEditingController mccController = TextEditingController();
-
-  bool isLoading = false;
-  String? lastCategory;
-  double? lastAmount;
-  String? lastMerchant;
-
-  Future<void> _simulatePayment() async {
-    final amountText = amountController.text.trim();
-    final merchant = merchantController.text.trim();
-    final mccText = mccController.text.trim();
-
-    if (amountText.isEmpty || merchant.isEmpty || mccText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
-      return;
-    }
-
-    final double? amount = double.tryParse(amountText);
-    final int? mcc = int.tryParse(mccText);
-
-    if (amount == null || mcc == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid amount or MCC")),
-      );
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final uri = Uri.parse(
-        "${widget.baseUrl}/api/transaction/simulate-card",
-      );
-
-      final res = await http.post(
-        uri,
-        headers: {
-          "Content-Type": "application/json",
-          // Add token header if backend requires it
-          // "Authorization": "Bearer ${widget.token}",
-        },
-        body: jsonEncode({
-          "childId": widget.childId,
-          "receiverAccountId": widget.receiverAccountId,
-          "amount": amount,
-          "merchantName": merchant,
-          "mcc": mcc,
-        }),
-      );
-
-      if (res.statusCode != 200) {
-        throw Exception("Failed with status ${res.statusCode}");
-      }
-
-      final body = jsonDecode(res.body) as Map<String, dynamic>;
-      final category = body["data"]?["transactioncategory"] ?? "Unknown";
-
-      setState(() {
-        lastCategory = category;
-        lastAmount = amount;
-        lastMerchant = merchant;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Transaction saved. Category: $category")),
-      );
-
-      // Optional: clear fields after success
-      amountController.clear();
-      merchantController.clear();
-      mccController.clear();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    amountController.dispose();
-    merchantController.dispose();
-    mccController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    const bgColor = Color(0xffF7F8FA);
-    const cardColor = Colors.white;
-    const primary = Color(0xFF67AFAC);
+    const Color kPrimary = Color(0xFF67AFAC);
+    const Color kBg = Color(0xFFF7F8FA);
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: kBg,
       appBar: AppBar(
+        backgroundColor: kBg,
         elevation: 0,
-        backgroundColor: bgColor,
+        centerTitle: true,
         foregroundColor: Colors.black87,
         title: const Text(
           "Virtual Card",
           style: TextStyle(
             fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
-        centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top info card
+            // Info box
             Container(
-              width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: cardColor,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 12),
+                    color: Colors.black.withOpacity(0.04),
                   ),
                 ],
               ),
@@ -163,140 +60,172 @@ class _ChildCardScreenState extends State<ChildCardScreen> {
                   Text(
                     "Test card payment",
                     style: TextStyle(
-                      fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: 8),
                   Text(
-                    "This is a fake payment used only to classify the transaction and save it to the wallet.",
+                    "This is a fake payment used only to classify the "
+                    "transaction and save it to the wallet.",
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.black54,
+                      height: 1.4,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Form card
+            // Card visual
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              height: 200,
               decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF3B82F6),
+                    Color(0xFF2563EB),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 28,
+                    offset: const Offset(0, 18),
+                    color: Colors.black26.withOpacity(0.15),
                   ),
                 ],
               ),
+              padding: const EdgeInsets.all(20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: merchantController,
-                    decoration: const InputDecoration(
-                      labelText: "Merchant name",
-                      hintText: "e.g. STARBUCKS RIYADH",
+                  const Text(
+                    "Hassalah Virtual Card",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: mccController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "MCC",
-                      hintText: "e.g. 5814",
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: amountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: "Amount (SAR)",
-                      hintText: "e.g. 30.50",
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _simulatePayment,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              "Card number",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "1234 5678 9012 3456",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Text(
-                        isLoading ? "Processing..." : "Simulate payment",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: const [
+                          Text(
+                            "CVV",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            "000",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "CHILD USER",
+                    style: TextStyle(
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            if (lastCategory != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                      color: Colors.black.withOpacity(0.05),
+            // Pay button
+            Center(
+              child: SizedBox(
+                width: 160,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Last simulated transaction",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 32,
                     ),
-                    const SizedBox(height: 8),
-                    if (lastMerchant != null)
-                      Text(
-                        "Merchant: $lastMerchant",
-                        style: const TextStyle(fontSize: 13),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChildCardScanScreen(
+                          childId: childId,
+                          receiverAccountId: receiverAccountId,
+                          token: token,
+                          baseUrl: baseUrl,
+                        ),
                       ),
-                    if (lastAmount != null)
-                      Text(
-                        "Amount: ${lastAmount!.toStringAsFixed(2)} SAR",
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                    Text(
-                      "Category: $lastCategory",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Pay",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
-                  ],
+                  ),
                 ),
               ),
+            ),
+
+            const SizedBox(height: 8),
+            const Center(
+              child: Text(
+                "For testing only, no real payment is processed.",
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.black45,
+                ),
+              ),
+            ),
           ],
         ),
       ),
