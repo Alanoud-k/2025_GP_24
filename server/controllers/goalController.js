@@ -304,11 +304,11 @@ export async function moveIn(req, res) {
     `;
 
     // Transaction record
-   await sql`
+await sql`
   INSERT INTO "Transaction"(
-    transactiontype, amount, transactiondate, transactionstatus,
-    merchantname, sourcetype, transactioncategory,
-    senderaccountid, receiveraccountid
+    "transactiontype", "amount", "transactiondate", "transactionstatus",
+    "merchantname", "sourcetype", "transactioncategory",
+    "senderAccountId", "receiverAccountId"
   )
   VALUES (
     'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
@@ -316,6 +316,8 @@ export async function moveIn(req, res) {
     ${spendAcc[0].accountid}, ${saveAcc[0].accountid}
   )
 `;
+
+
 
 
     res.status(200).json({
@@ -378,9 +380,9 @@ export async function moveOut(req, res) {
     // Transaction record
 await sql`
   INSERT INTO "Transaction"(
-    transactiontype, amount, transactiondate, transactionstatus,
-    merchantname, sourcetype, transactioncategory,
-    senderaccountid, receiveraccountid
+    "transactiontype", "amount", "transactiondate", "transactionstatus",
+    "merchantname", "sourcetype", "transactioncategory",
+    "senderAccountId", "receiverAccountId"
   )
   VALUES (
     'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
@@ -388,6 +390,8 @@ await sql`
     ${saveAcc[0].accountid}, ${spendAcc[0].accountid}
   )
 `;
+
+
 
 
     res.status(200).json({
