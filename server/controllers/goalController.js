@@ -455,3 +455,154 @@ export async function getChildWalletBalances(req, res) {
     return res.status(500).json({ error: "failed_to_fetch_balances" });
   }
 }
+
+export async function addMoneyToGoal(req, res) {
+  try {
+    const goalId = Number(req.params.goalId);
+    const { childId, amount } = req.body;
+
+    const amt = Number(amount);
+    const cId = Number(childId);
+
+    if (!cId || !amt || amt <= 0) {
+      return res.status(400).json({ error: "invalid_fields" });
+    }
+
+    // Fetch goal + accounts
+    const g = await sql`
+      SELECT
+        g."goalid",
+        ga."accountid"       AS goalaccountid,
+        ga."savingaccountid" AS savingaccountid
+      FROM "Goal" g
+      JOIN "Account" ga ON ga."accountid" = g."accountid"
+      WHERE g."goalid" = ${goalId} AND g."childid" = ${cId}
+      LIMIT 1
+    `;
+
+    if (!g.length) return res.status(404).json({ error: "goal_not_found" });
+
+    const goalAccountId   = g[0].goalaccountid;
+    const savingAccountId = g[0].savingaccountid;
+
+    // Check saving balance
+    const sBal = await sql`
+      SELECT balance FROM "Account"
+      WHERE accountid = ${savingAccountId}
+    `;
+    if (Number(sBal[0].balance) < amt)
+      return res.status(400).json({ error: "insufficient_saving" });
+
+    // Insert transaction
+    await sql`
+      INSERT INTO "Transaction"(
+        transactiontype, amount, transactiondate, transactionstatus,
+        merchantname, sourcetype, transactioncategory,
+        senderAccountId, receiverAccountId,
+        gatewayPaymentId, mcc
+      )
+      VALUES (
+        'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
+        'Goal Move In', 'Transfer', 'internal',
+        ${savingAccountId}, ${goalAccountId},
+        NULL, NULL
+      )
+    `;
+
+    // UPDATE BALANCES
+    await sql`
+      UPDATE "Account" SET balance = balance - ${amt}
+      WHERE "accountid" = ${savingAccountId}
+    `;
+
+    const updGoal = await sql`
+      UPDATE "Account" SET balance = balance + ${amt}
+      WHERE "accountid" = ${goalAccountId}
+      RETURNING balance
+    `;
+
+    res.status(200).json({
+      ok: true,
+      newGoalBalance: updGoal[0].balance
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "goal_move_in_failed" });
+  }
+}
+
+export async function moveMoneyFromGoal(req, res) {
+  try {
+    const goalId = Number(req.params.goalId);
+    const { childId, amount } = req.body;
+
+    const amt = Number(amount);
+    const cId = Number(childId);
+
+    if (!cId || !amt || amt <= 0) {
+      return res.status(400).json({ error: "invalid_fields" });
+    }
+
+    const g = await sql`
+      SELECT
+        g."goalid",
+        ga."accountid"       AS goalaccountid,
+        ga."savingaccountid" AS savingaccountid
+      FROM "Goal" g
+      JOIN "Account" ga ON ga."accountid" = g."accountid"
+      WHERE g."goalid" = ${goalId} AND g."childid" = ${cId}
+      LIMIT 1
+    `;
+
+    if (!g.length) return res.status(404).json({ error: "goal_not_found" });
+
+    const goalAccountId   = g[0].goalaccountid;
+    const savingAccountId = g[0].savingaccountid;
+
+    // Check GOAL balance
+    const gBal = await sql`
+      SELECT balance FROM "Account"
+      WHERE accountid = ${goalAccountId}
+    `;
+    if (Number(gBal[0].balance) < amt)
+      return res.status(400).json({ error: "insufficient_goal_balance" });
+
+    // Insert transaction
+    await sql`
+      INSERT INTO "Transaction"(
+        transactiontype, amount, transactiondate, transactionstatus,
+        merchantname, sourcetype, transactioncategory,
+        senderAccountId, receiverAccountId,
+        gatewayPaymentId, mcc
+      )
+      VALUES (
+        'Transfer', ${amt}, CURRENT_TIMESTAMP, 'Completed',
+        'Goal Move Out', 'Transfer', 'internal',
+        ${goalAccountId}, ${savingAccountId},
+        NULL, NULL
+      )
+    `;
+
+    // UPDATE BALANCES
+    await sql`
+      UPDATE "Account" SET balance = balance - ${amt}
+      WHERE accountid = ${goalAccountId}
+    `;
+
+    const updSave = await sql`
+      UPDATE "Account" SET balance = balance + ${amt}
+      WHERE accountid = ${savingAccountId}
+      RETURNING balance
+    `;
+
+    res.status(200).json({
+      ok: true,
+      newSavingBalance: updSave[0].balance
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "goal_move_out_failed" });
+  }
+}
+
+

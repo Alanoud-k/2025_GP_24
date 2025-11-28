@@ -30,5 +30,7 @@ router.post('/goals/:goalId/contributions', contributeToGoal);
 router.post('/saving/move-in', moveIn);
 router.post('/saving/move-out', moveOut);
 router.get('/children/:childId/wallet/balances', getChildWalletBalances);
+router.post("/goals/:goalId/move-in", addMoneyToGoal);
+router.post("/goals/:goalId/move-out", moveMoneyFromGoal);
 
 export default router;
