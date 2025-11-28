@@ -249,9 +249,11 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isAdd ? "Add money" : "Move money",
+              isAdd ? "Move In (Saving → Goal)" : "Move Out (Goal → Saving)",
+              textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
+
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
@@ -438,7 +440,7 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                       children: [
                         Expanded(
                           child: _ActionButton(
-                            text: "Move money",
+                            text: "Move Out\n(Goal → Saving)",
                             bg: kMint,
                             textColor: Colors.black87,
                             onTap: () => _openAmountSheet(isAdd: false),
@@ -447,7 +449,7 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _ActionButton(
-                            text: "Add money",
+                            text: "Move In\n(Saving → Goal)",
                             bg: kProgress,
                             textColor: Colors.white,
                             onTap: () => _openAmountSheet(isAdd: true),

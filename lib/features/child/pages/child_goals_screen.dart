@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 import '../services/goals_api.dart';
 import '../models/goal_model.dart';
-//import '../widgets/child_bottom_nav_bar.dart';
 import 'child_add_goal_screen.dart';
 import 'child_goal_details_screen.dart';
 import 'package:my_app/utils/check_auth.dart';
@@ -36,7 +35,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   bool _loading = true;
   List<Goal> _goals = [];
+
   double _savingBalance = 0.0;
+  double _spendingBalance = 0.0;
 
   Map<String, String> get _headers => {
     "Authorization": "Bearer ${widget.token}",
@@ -46,7 +47,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchBalances();
 
+    // Check token after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       checkAuthStatus(context);
     });
@@ -59,13 +62,17 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     setState(() => _loading = true);
 
     try {
+      // 1) Load goals
       final goals = await _api.listGoals(widget.childId);
-      final saving = await _fetchSavingBalance();
+
+      // 2) Load saving + spending balances
+      final balances = await _fetchBalances();
 
       if (!mounted) return;
       setState(() {
         _goals = goals;
-        _savingBalance = saving;
+        _savingBalance = balances['saving'] ?? 0.0;
+        _spendingBalance = balances['spending'] ?? 0.0;
       });
     } catch (e) {
       if (!mounted) return;
@@ -77,22 +84,53 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     }
   }
 
-  Future<double> _fetchSavingBalance() async {
-    final url = Uri.parse("${widget.baseUrl}/saving/balance/${widget.childId}");
-    final res = await http.get(url, headers: _headers);
-
+  /// Calls a backend endpoint like:
+  ///   GET /api/children/:childId/wallet/balances
+  /// Expected response (flexible):
+  ///   { "saving": 50.0, "spending": 20.0 }
+  ///   or { "savingBalance": 50.0, "spend": 20.0 } etc.
+  Future<Map<String, double>> _fetchBalances() async {
+    final res = await http.get(
+      Uri.parse(
+        "${widget.baseUrl}/api/children/${widget.childId}/wallet/balances",
+      ),
+      headers: {"Authorization": "Bearer ${widget.token}"},
+    );
     if (res.statusCode == 401) {
       await checkAuthStatus(context);
-      return 0.0;
+      return {"saving": 0.0, "spending": 0.0};
     }
-    if (res.statusCode != 200) return 0.0;
+    if (res.statusCode != 200) {
+      return {"saving": 0.0, "spending": 0.0};
+    }
 
     final data = jsonDecode(res.body);
-    return (data is num)
-        ? data.toDouble()
-        : (data["balance"] ?? data["savingBalance"] ?? 0).toDouble();
+
+    double _toDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString()) ?? 0.0;
+    }
+
+    final saving = _toDouble(
+      data['saving'] ??
+          data['savingBalance'] ??
+          data['save'] ??
+          data['saving_balance'],
+    );
+
+    final spending = _toDouble(
+      data['spending'] ??
+          data['spend'] ??
+          data['spendingBalance'] ??
+          data['spend_balance'],
+    );
+
+    return {"saving": saving, "spending": spending};
   }
 
+  /// type = "move-in"  (Spending → Saving)
+  /// type = "move-out" (Saving → Spending)
   Future<void> _moveInOrOut(String type) async {
     final ctrl = TextEditingController();
 
@@ -114,8 +152,11 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              type == "move-in" ? "Move In" : "Move Out",
+              type == "move-in"
+                  ? "Move In (Spending → Saving)"
+                  : "Move Out (Saving → Spending)",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             TextField(
@@ -151,7 +192,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                   "Confirm",
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Color.fromARGB(255, 255, 255, 255),
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -164,7 +205,10 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     if (amount == null) return;
 
     try {
-      final url = Uri.parse("${widget.baseUrl}/saving/$type");
+      // Your backend routes for these should be:
+      //   POST /api/saving/move-in
+      //   POST /api/saving/move-out
+      final url = Uri.parse("${widget.baseUrl}/api/saving/$type");
       final res = await http.post(
         url,
         headers: _headers,
@@ -177,14 +221,15 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       }
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        _bootstrap();
+        // Refresh balances + goals
+        await _bootstrap();
       } else {
-        throw Exception("Request failed");
+        throw Exception("Request failed (${res.statusCode})");
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${type.replaceAll('-', ' ')} failed")),
+        SnackBar(content: Text("${type.replaceAll('-', ' ')} failed: $e")),
       );
     }
   }
@@ -222,21 +267,19 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-        const hassalaGreen1 = Color(0xFF37C4BE);
+    const hassalaGreen1 = Color(0xFF37C4BE);
+
     return FutureBuilder(
       future: checkAuthStatus(context),
       builder: (context, snapshot) {
-        // While checking token → show lightweight loader
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // After auth check → return actual screen
         return Scaffold(
           backgroundColor: kBg,
-
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -262,7 +305,6 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
               child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED)),
             ),
           ),
-
           body: SafeArea(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -274,10 +316,14 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                         children: [
                           const SizedBox(height: 18),
 
+                          // Saving + Spending section
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
                             child: _SavingSection(
                               savingBalance: _savingBalance,
+                              spendingBalance: _spendingBalance,
                               onMoveIn: () => _moveInOrOut("move-in"),
                               onMoveOut: () => _moveInOrOut("move-out"),
                             ),
@@ -285,6 +331,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
                           const SizedBox(height: 18),
 
+                          // Add goal button
                           InkWell(
                             onTap: _openAddGoal,
                             borderRadius: BorderRadius.circular(40),
@@ -315,8 +362,11 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
                           const SizedBox(height: 18),
 
+                          // Goals card
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
                             child: _MainGoalsCard(
                               goals: _goals,
                               onTapGoal: _openGoalDetails,
@@ -329,27 +379,23 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                     ),
                   ),
           ),
-
-          // bottomNavigationBar: ChildBottomNavBar(
-          //   currentIndex: 2,
-          //   onTap: (i) {
-          //     if (i == 2) Navigator.of(context).pop(true);
-          //   },
-          // ),
         );
       },
     );
   }
 }
 
-// Saving section
+/* ---------------- Saving + Spending UI ---------------- */
+
 class _SavingSection extends StatelessWidget {
   final double savingBalance;
+  final double spendingBalance;
   final VoidCallback onMoveIn;
   final VoidCallback onMoveOut;
 
   const _SavingSection({
     required this.savingBalance,
+    required this.spendingBalance,
     required this.onMoveIn,
     required this.onMoveOut,
   });
@@ -358,50 +404,51 @@ class _SavingSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       child: Column(
         children: [
           const Text(
-            "Saving Balance",
+            "Saving & Spending",
             style: TextStyle(
-              fontSize: 14,
-              color: kTextSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "﷼ ${savingBalance.toStringAsFixed(2)}",
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
+          // Balances row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _balanceTile("Saving", savingBalance, Colors.teal),
+              _balanceTile("Spending", spendingBalance, Colors.orange),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          const SizedBox(height: 14),
+
+          // Action buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _MintCircleAction(
-                label: "Move In",
+                label: "Move In\n(Spending → Saving)",
                 icon: Icons.arrow_downward,
                 onTap: onMoveIn,
               ),
               const SizedBox(width: 32),
               _MintCircleAction(
-                label: "Move Out",
+                label: "Move Out\n(Saving → Spending)",
                 icon: Icons.arrow_upward,
                 onTap: onMoveOut,
               ),
@@ -409,6 +456,29 @@ class _SavingSection extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _balanceTile(String name, double amount, Color color) {
+    return Column(
+      children: [
+        Text(
+          name,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+        Text(
+          "﷼ ${amount.toStringAsFixed(2)}",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -440,6 +510,7 @@ class _MintCircleAction extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
+          textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -451,7 +522,8 @@ class _MintCircleAction extends StatelessWidget {
   }
 }
 
-// Goals list card
+/* ---------------- Goals list card ---------------- */
+
 class _MainGoalsCard extends StatelessWidget {
   final List<Goal> goals;
   final void Function(Goal) onTapGoal;

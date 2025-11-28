@@ -154,7 +154,6 @@ app.get("/payment-success", (_req, res) => {
             Your payment was completed successfully.<br>
             You can safely close this page.
           </div>
-          <div class="closing">(This window will close automatically)</div>
         </div>
 
         <script>
