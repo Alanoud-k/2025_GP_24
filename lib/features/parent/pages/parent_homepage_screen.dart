@@ -51,7 +51,13 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       _fetchUnread();
     });
   }
-
+Future<void> _refreshData() async {
+    // نعيد تحميل بيانات الأب (بما فيها الرصيد) + الإشعارات
+    await Future.wait([
+      fetchParentInfo(),
+      _fetchUnread(),
+    ]);
+  }
   /////////////////////////////////
   @override
   void dispose() {
