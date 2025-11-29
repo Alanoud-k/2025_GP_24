@@ -6,6 +6,7 @@ import 'parent_money_requests_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'parent_child_goals_screen.dart';
+import 'parent_child_chores_screen.dart';
 
 class ParentChildOverviewScreen extends StatefulWidget {
   final int parentId;
@@ -173,12 +174,12 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                               color: Color(0xFF2C3E50),
                             ),
                           ),
-                          const Spacer(),
-                          const Icon(
-                            Icons.notifications_none,
-                            size: 28,
-                            color: Colors.black54,
-                          ),
+                          // const Spacer(),
+                          // const Icon(
+                          //   Icons.notifications_none,
+                          //   size: 28,
+                          //   color: Colors.black54,
+                          // ),
                         ],
                       ),
 
@@ -331,12 +332,21 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(width: 12),
+                         const SizedBox(width: 12),
                           Expanded(
                             child: _actionButton(
                               "Chores",
                               Icons.check_circle_outline,
-                              () {},
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ParentChildChoresScreen(
+                                      childName: widget.childName, // تأكدي أن هذا المتغير موجود ويمثل اسم الطفل
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ],

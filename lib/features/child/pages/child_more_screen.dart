@@ -234,23 +234,23 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                                     color: Colors.white,
                                   ),
 */
-                                // زر تعديل صغير (دائري)
-                                Positioned(
-                                  bottom: -2,
-                                  right: -2,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    padding: const EdgeInsets.all(3),
-                                    child: const Icon(
-                                      Icons.add_a_photo,
-                                      size: 18,
-                                      color: Colors.teal,
-                                    ),
-                                  ),
-                                ),
+                                // // زر تعديل صغير (دائري)
+                                // Positioned(
+                                //   bottom: -2,
+                                //   right: -2,
+                                //   child: Container(
+                                //     decoration: BoxDecoration(
+                                //       color: Colors.white,
+                                //       shape: BoxShape.circle,
+                                //     ),
+                                //     padding: const EdgeInsets.all(3),
+                                //     child: const Icon(
+                                //       Icons.add_a_photo,
+                                //       size: 18,
+                                //       color: Colors.teal,
+                                //     ),
+                                //   ),
+                                // ),
                               ],
                             ),
                           ),

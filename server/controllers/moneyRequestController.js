@@ -53,6 +53,35 @@ export const requestMoney = async (req, res) => {
 
 
 
+// // =============================================
+// // Get all requests for a specific child
+// // =============================================
+// export const getRequestsByChild = async (req, res) => {
+//   const { childId } = req.params;
+
+//   try {
+//     const requests = await sql`
+//       SELECT 
+//         r.requestid AS "requestId",
+//         r.childid AS "childId",
+//         r.parentid AS "parentId",
+//         r.amount AS "amount",
+//         r.requestdescription AS "requestDescription",
+//         r.requeststatus AS "requestStatus",
+//         r.requestdate AS "requestDate",
+//         c.firstname AS "childName"
+//       FROM "MoneyRequest" r
+//       JOIN "Child" c ON r.childid = c.childid
+//       WHERE r.childid = ${childId}
+//       ORDER BY r.requestdate DESC;
+//     `;
+
+//     res.status(200).json(requests);
+//   } catch (err) {
+//     console.error("❌ Error fetching money requests:", err);
+//     res.status(500).json({ error: "Failed to fetch requests" });
+//   }
+// };
 // =============================================
 // Get all requests for a specific child
 // =============================================
@@ -62,13 +91,13 @@ export const getRequestsByChild = async (req, res) => {
   try {
     const requests = await sql`
       SELECT 
-        r.requestid AS "requestId",
-        r.childid AS "childId",
-        r.parentid AS "parentId",
-        r.amount AS "amount",
-        r.requestdescription AS "requestDescription",
-        r.requeststatus AS "requestStatus",
-        r.requestdate AS "requestDate",
+        r.requestid,
+        r.childid,
+        r.parentid,
+        r.amount,
+        r.requestdescription,
+        r.requeststatus,
+        r.requestdate,
         c.firstname AS "childName"
       FROM "MoneyRequest" r
       JOIN "Child" c ON r.childid = c.childid
@@ -76,7 +105,19 @@ export const getRequestsByChild = async (req, res) => {
       ORDER BY r.requestdate DESC;
     `;
 
-    res.status(200).json(requests);
+    // ✅ تحويل الحقول يدوياً إلى camelCase لضمان توافق الفرونت إند
+    const formattedRequests = requests.map(r => ({
+      requestId: r.requestid,
+      childId: r.childid,
+      parentId: r.parentid,
+      amount: r.amount,
+      requestDescription: r.requestdescription,
+      requestStatus: r.requeststatus, // تأكدي أن القيمة المخزنة هي "Pending" / "Approved" (أول حرف كبير)
+      requestDate: r.requestdate,
+      childName: r.childName
+    }));
+
+    res.status(200).json(formattedRequests);
   } catch (err) {
     console.error("❌ Error fetching money requests:", err);
     res.status(500).json({ error: "Failed to fetch requests" });
@@ -123,9 +164,10 @@ export const updateRequestStatus = async (req, res) => {
   }
 
   try {
+    // 👇👇 التصحيح هنا: حذفنا علامات التنصيص "" حول requeststatus 👇👇
     const result = await sql`
       UPDATE "MoneyRequest"
-      SET "requestStatus" = ${status}
+      SET requeststatus = ${status}
       WHERE requestid = ${requestId}
       RETURNING *
     `;

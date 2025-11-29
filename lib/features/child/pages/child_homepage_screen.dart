@@ -8,6 +8,7 @@ import 'child_request_money_screen.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'child_notifications_screen.dart';
+import 'child_chores_screen.dart';
 
 class ChildHomePageScreen extends StatefulWidget {
   final int childId;
@@ -378,7 +379,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Column(
             children: [
-              _actionButton('Chores', Icons.checklist_rounded, () {}),
+              // داخل ChildHomePageScreen
+              _actionButton('Chores', Icons.checklist_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildChoresScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
               const SizedBox(height: 12),
               _actionButton('Transaction', Icons.receipt_long_outlined, () {}),
             ],

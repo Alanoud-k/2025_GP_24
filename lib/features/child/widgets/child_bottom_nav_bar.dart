@@ -353,7 +353,7 @@ class _HomeNavItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               "Home",
-              textAlign: TextAlign.center, // ضمان توسيط النص
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -368,7 +368,6 @@ class _HomeNavItem extends StatelessWidget {
 }
 
 
-// ويدجت لبقية الأزرار العادية
 class _NavItem extends StatelessWidget {
   final String asset;
   final String label;
