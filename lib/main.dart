@@ -1,3 +1,5 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:my_app/core/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,8 +67,9 @@ class MyApp extends StatelessWidget {
         '/parentLogin': (context) => const ParentLoginScreen(),
 
         '/parentHome': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
 
           final int? parentId = args?['parentId'] as int?;
           final String? token = args?['token'] as String?;
@@ -79,18 +82,16 @@ class MyApp extends StatelessWidget {
         '/manageKids': (context) => const ManageKidsScreen(),
 
         '/parentSecuritySettings': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
 
           final int? parentId = args?['parentId'] as int?;
           final String? token = args?['token'] as String?;
 
           if (parentId == null || token == null) return const SplashView();
 
-          return ParentSecuritySettingsPage(
-            parentId: parentId,
-            token: token,
-          );
+          return ParentSecuritySettingsPage(parentId: parentId, token: token);
         },
 
         '/termsPrivacy': (context) => const TermsPrivacyPage(),
@@ -100,8 +101,9 @@ class MyApp extends StatelessWidget {
 
         // Child shell
         '/childShell': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
 
           final int? childId = args?['childId'] as int?;
           final String? token = args?['token'] as String?;
@@ -111,17 +113,14 @@ class MyApp extends StatelessWidget {
             return const SplashView();
           }
 
-          return ChildShell(
-            childId: childId,
-            token: token,
-            baseUrl: baseUrl,
-          );
+          return ChildShell(childId: childId, token: token, baseUrl: baseUrl);
         },
 
         // Child request money
         '/childRequestMoney': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
 
           final int? childId = args?['childId'] as int?;
           final String? token = args?['token'] as String?;
@@ -140,8 +139,9 @@ class MyApp extends StatelessWidget {
 
         // Child security settings
         '/childSecuritySettings': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments
-              as Map<String, dynamic>?;
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
 
           final int? childId = args?['childId'] as int?;
           final String? token = args?['token'] as String?;

@@ -12,13 +12,11 @@ import parentRoutes from "./routes/parentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 // PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
-
-import notificationRoutes from "./routes/notificationRoutes.js";
-
 
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
@@ -27,19 +25,16 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 
-// CORS for all normal endpoints
+// CORS
 app.use(cors());
 
 /* ---------------------------------------------------------
-   1) MOYASAR WEBHOOK — MUST COME BEFORE express.json()
+   1) MOYASAR WEBHOOK — BEFORE express.json()
 --------------------------------------------------------- */
-
 app.post(
   "/api/moyasar-webhook",
-  // Keep raw body so signature check works even if JSON is invalid
   express.raw({ type: "*/*" }),
   (req, res, next) => {
-    // Debug logging so we see what Moyasar actually sends
     console.log("Webhook hit /api/moyasar-webhook");
     console.log("Headers:", req.headers);
 
@@ -60,27 +55,27 @@ app.post(
 );
 
 /* ---------------------------------------------------------
-   2) NORMAL EXPRESS JSON HANDLING — AFTER WEBHOOK
+   2) NORMAL JSON HANDLING
 --------------------------------------------------------- */
-
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 /* ---------------------------------------------------------
-   UPLOAD PICTURE
+   STATIC UPLOADS
 --------------------------------------------------------- */
 app.use("/uploads", express.static("uploads"));
 
-app.use(express.urlencoded({ extended: true }));
-
-// Request logger for all other routes
+/* ---------------------------------------------------------
+   REQUEST LOGGER
+--------------------------------------------------------- */
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
 
 /* ---------------------------------------------------------
-   OTHER ROUTES
+   API ROUTES
 --------------------------------------------------------- */
-
 app.use("/api/auth", authRoutes);
 app.use("/api", parentRoutes);
 app.use("/api", goalRoutes);
@@ -88,14 +83,12 @@ app.use("/api", moneyRequestRoutes);
 app.use("/api/transaction", transactionRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-
 // Create payment
 app.post("/api/create-payment/:parentId", createPayment);
 
 /* ---------------------------------------------------------
    REDIRECT PAGES
 --------------------------------------------------------- */
-
 app.get("/payment-success", (_req, res) => {
   res.send(`
     <html>
@@ -112,7 +105,6 @@ app.get("/payment-success", (_req, res) => {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             color: #1A3C40;
           }
-
           .card {
             background: white;
             padding: 55px 40px;
@@ -122,34 +114,29 @@ app.get("/payment-success", (_req, res) => {
             max-width: 420px;
             width: 92%;
           }
-
           .check {
             font-size: 70px;
             color: #37C4BE;
             margin-bottom: 18px;
           }
-
           .title {
             font-size: 24px;
             font-weight: bold;
             margin-bottom: 10px;
             color: #1A3C40;
           }
-
           .msg {
             font-size: 16px;
             color: #555;
             margin-bottom: 18px;
             line-height: 1.4;
           }
-
           .closing {
             font-size: 14px;
             color: #888;
           }
         </style>
       </head>
-
       <body>
         <div class="card">
           <div class="check">✔</div>
@@ -159,7 +146,6 @@ app.get("/payment-success", (_req, res) => {
             You can safely close this page.
           </div>
         </div>
-
         <script>
           setTimeout(() => {
             window.close();
@@ -170,8 +156,6 @@ app.get("/payment-success", (_req, res) => {
   `);
 });
 
-
-
 app.get("/payment-failed", (_req, res) => {
   res.send("Payment failed.");
 });
@@ -179,7 +163,6 @@ app.get("/payment-failed", (_req, res) => {
 /* ---------------------------------------------------------
    HEALTH CHECK
 --------------------------------------------------------- */
-
 app.get("/", (_req, res) => {
   res.send("Hassalah API is running.");
 });
@@ -188,5 +171,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-
