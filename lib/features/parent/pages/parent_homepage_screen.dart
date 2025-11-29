@@ -9,6 +9,7 @@ import 'parent_add_card_screen.dart';
 import 'parent_my_card_screen.dart';
 import 'package:my_app/core/api_config.dart';
 import 'parent_insights_screen.dart';
+import 'parent_notification_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -210,15 +211,33 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Top bar
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 24,
                       backgroundColor: Colors.teal,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-                    Icon(Icons.notifications_none_rounded, size: 28),
+
+                    // NOTIFICATION ICON WITH NAVIGATION
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ParentNotificationsScreen(
+                              parentId: parentId,
+                              token: token,
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 28,
+                      ),
+                    ),
                   ],
                 ),
 

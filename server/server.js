@@ -17,6 +17,9 @@ import transactionRoutes from "./routes/transactionRoutes.js";
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 
+import notificationRoutes from "./routes/notificationRoutes.js";
+
+
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,6 +86,7 @@ app.use("/api", parentRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
 app.use("/api/transaction", transactionRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 
 // Create payment
