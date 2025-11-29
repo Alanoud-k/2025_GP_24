@@ -21,12 +21,28 @@ export const requestMoney = async (req, res) => {
 
     const parentId = parent[0].parentid;
 
-    // Insert money request
-    await sql`
+    const inserted = await sql`
       INSERT INTO "MoneyRequest" 
       (childId, parentId, amount, requestDescription, requestStatus, requestDate)
       VALUES (${childId}, ${parentId}, ${amount}, ${message}, 'Pending', NOW())
+      RETURNING requestid
     `;
+
+    const requestId = inserted[0].requestid;
+
+// Notify PARENT
+    await sql`
+      INSERT INTO "Notification"(
+        parentid, childid, message, type, moneyrequestid
+      )
+      VALUES (
+        ${parentId}, ${childId},
+        ${'Your child requested SAR ' + Number(amount).toFixed(2)},
+        'MONEY_REQUEST',
+        ${requestId}
+      )
+    `;
+
 
     res.status(200).json({ message: "Request submitted successfully" });
   } catch (err) {
@@ -107,19 +123,51 @@ export const updateRequestStatus = async (req, res) => {
   }
 
   try {
-    // Just update the status tag
     const result = await sql`
       UPDATE "MoneyRequest"
       SET requeststatus = ${status}
       WHERE requestid = ${requestId}
-      RETURNING *;
+      RETURNING *
     `;
 
     if (result.length === 0) {
       return res.status(404).json({ error: "Request not found" });
     }
 
-    res.status(200).json({ message: "Status updated", request: result[0] });
+    const row = result[0];
+
+    // Notify CHILD
+    if (status === "Approved") {
+      await sql`
+        INSERT INTO "Notification"(
+          parentid, childid, message, type, moneyrequestid
+        )
+        VALUES (
+          ${row.parentid},
+          ${row.childid},
+          ${'Your request for SAR ' + Number(row.amount).toFixed(2) + ' was approved'},
+          'REQUEST_APPROVED',
+          ${requestId}
+        )
+      `;
+    }
+
+    if (status === "Declined") {
+      await sql`
+        INSERT INTO "Notification"(
+          parentid, childid, message, type, moneyrequestid
+        )
+        VALUES (
+          ${row.parentid},
+          ${row.childid},
+          ${'Your request for SAR ' + Number(row.amount).toFixed(2) + ' was declined'},
+          'REQUEST_DECLINED',
+          ${requestId}
+        )
+      `;
+    }
+
+    res.status(200).json({ message: "Status updated", request: row });
   } catch (err) {
     console.error("❌ Error updating request:", err);
     res.status(500).json({ error: "Failed to update request" });

@@ -201,6 +201,20 @@ export const transferMoney = async (req, res) => {
         WHERE "accountid" = ${spendingAccountId}
       `;
 
+await s`
+  INSERT INTO "Notification"(
+    parentid, childid, message, type, moneyrequestid
+  )
+  VALUES (
+    ${parentId}, ${childId},
+    ${'Your parent sent you SAR ' + amt.toFixed(2)},
+    'MONEY_TRANSFER',
+    NULL
+  )
+`;
+
+
+
     // 5) Respond
     return res.json({
       message: "Transfer successful",
