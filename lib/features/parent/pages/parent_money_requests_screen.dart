@@ -1,11 +1,10 @@
-// 
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
-import 'package:my_app/core/api_config.dart'; // Ensure correct import for baseUrl if needed, or use hardcoded if preferred.
-import 'parent_transfer_screen.dart'; // Import transfer screen
+import 'package:my_app/core/api_config.dart';
+import 'parent_transfer_screen.dart';
 
 class ParentMoneyRequestsScreen extends StatefulWidget {
   final int parentId;
@@ -28,8 +27,8 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
   bool _loading = true;
   List<dynamic> _requests = [];
   String? token;
-  // Use config or hardcode as per your original file
-  final String baseUrl = 'http://10.0.2.2:3000'; 
+
+  final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void initState() {
@@ -38,20 +37,16 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
   }
 
   Future<void> _initializeFlow() async {
-    // 1) Check expired
     await checkAuthStatus(context);
 
-    // 2) Load token
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString("token") ?? widget.token;
 
-    // 3) Token missing → logout
     if (token == null || token!.isEmpty) {
       _forceLogout();
       return;
     }
 
-    // 4) Fetch requests
     await _fetchRequests();
   }
 
@@ -66,17 +61,16 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
 
   Future<void> _fetchRequests() async {
     try {
-      final url = Uri.parse(
-        '$baseUrl/api/money-requests/${widget.childId}',
-      );
+      final url = Uri.parse('$baseUrl/api/money-requests/${widget.childId}');
 
       final response = await http.get(
         url,
         headers: {
+          "Authorization": "Bearer $token",
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}",
         },
       );
+
       if (response.statusCode == 401) {
         _forceLogout();
         return;
@@ -102,16 +96,11 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
       final response = await http.post(
         url,
         headers: {
+          "Authorization": "Bearer $token",
           "Content-Type": "application/json",
-          "Authorization": "Bearer ${token}",
         },
         body: jsonEncode({"requestId": requestId, "status": newStatus}),
       );
-
-      if (response.statusCode == 401) {
-        _forceLogout();
-        return;
-      }
 
       if (response.statusCode == 200) {
         _fetchRequests();
@@ -119,120 +108,108 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
     } catch (_) {}
   }
 
-  // --- Confirmation Dialog for Decline ---
+  // ------------------------------------------------------------
+  // Confirmation dialog for decline
+  // ------------------------------------------------------------
   void _confirmDecline(int requestId) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20), // زوايا دائرية ناعمة
-        ),
-        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           "Decline Request?",
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800, // خط عريض للعناوين
-            color: Color(0xFF2C3E50), // لون النص الغامق الموحد
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF2C3E50),
           ),
         ),
         content: const Text(
           "Are you sure you want to decline this request?",
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.black54, // لون رمادي للنص الفرعي
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 15, color: Colors.black54),
         ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        actionsAlignment: MainAxisAlignment.center, // توسيط الأزرار
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          // زر الإلغاء (بسيط)
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey,
-            ),
             child: const Text(
               "Cancel",
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              style: TextStyle(color: Colors.black54),
             ),
           ),
-          const SizedBox(width: 10),
-          // زر الرفض (مميز بلون أحمر)
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(ctx); // إغلاق النافذة
-              _updateRequestStatus(requestId, "Declined"); // تنفيذ الرفض
+              Navigator.pop(ctx);
+              _updateRequestStatus(requestId, "Declined");
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent, // خلفية حمراء للتحذير
-              foregroundColor: Colors.white,
-              elevation: 0,
+              backgroundColor: Colors.redAccent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
             ),
-            child: const Text(
-              "Decline",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            child: const Text("Decline"),
           ),
         ],
       ),
     );
   }
 
+  // ------------------------------------------------------------
+  // UI
+  // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Money request"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+        title: const Text(
+          "Money Requests",
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
-        backgroundColor: Colors.white, // Keep your style
-        foregroundColor: Colors.black,
       ),
-      backgroundColor: const Color(0xffF7F8FA),
+      backgroundColor: const Color(0xFFF7F8FA),
 
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _requests.isEmpty
           ? const Center(
-              child: Text("No requests found", style: TextStyle(fontSize: 16)),
+              child: Text(
+                "No requests yet",
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _requests.length,
-              itemBuilder: (context, i) {
+              itemBuilder: (_, i) {
                 final req = _requests[i];
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 14),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        blurRadius: 4,
-                        color: Colors.black12.withOpacity(0.05),
+                        blurRadius: 6,
+                        color: Colors.black12.withOpacity(0.08),
                       ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Amount row
                       Row(
                         children: [
                           const CircleAvatar(
-                            radius: 26,
+                            radius: 24,
                             backgroundImage: AssetImage(
                               'assets/images/child_avatar.png',
                             ),
@@ -240,10 +217,10 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              "﷼ ${req['amount']}",
+                              "﷼ ${req["amount"]}",
                               style: const TextStyle(
                                 fontSize: 22,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
@@ -253,28 +230,25 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
                       const SizedBox(height: 8),
 
                       Text(
-                        req["requestDescription"]?.toString() ?? "No message",
+                        req["requestDescription"] ?? "No message",
                         style: const TextStyle(
-                          color: Colors.black54,
                           fontSize: 14,
+                          color: Colors.black54,
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
 
-                      // Status Handling
                       if (req["requestStatus"] == "Pending")
                         Row(
                           children: [
-                            // 1. Decline Button (with Confirmation)
                             Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _confirmDecline(req['requestId']);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
+                              child: OutlinedButton(
+                                onPressed: () =>
+                                    _confirmDecline(req["requestId"]),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 12,
                                   ),
@@ -282,40 +256,33 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                child: const Text("Decline Request"),
+                                child: const Text("Decline"),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            
-                            // 2. Approve Button (Go to Transfer Screen)
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: () async {
-                                  // Navigate to Transfer Screen with pre-filled data
                                   final result = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ParentTransferScreen(
+                                      builder: (_) => ParentTransferScreen(
                                         parentId: widget.parentId,
                                         childId: widget.childId,
                                         childName: req["childName"] ?? "Child",
-                                        childBalance: "0.00", // Fetch real balance if needed
+                                        childBalance: "0.00",
                                         token: token!,
-                                        // Pass request details
-                                        initialAmount: double.tryParse(req["amount"].toString()),
                                         requestId: req["requestId"],
+                                        initialAmount: double.tryParse(
+                                          req["amount"].toString(),
+                                        ),
                                       ),
                                     ),
                                   );
-
-                                  // Refresh list if transfer was successful
-                                  if (result == true) {
-                                    _fetchRequests();
-                                  }
+                                  if (result == true) _fetchRequests();
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 12,
                                   ),
@@ -323,52 +290,38 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                child: const Text("Approve Request"),
+                                child: const Text("Approve"),
                               ),
                             ),
                           ],
                         ),
 
                       if (req["requestStatus"] == "Declined")
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade100,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "Declined",
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
+                        _statusBadge("Declined", Colors.red),
 
                       if (req["requestStatus"] == "Approved")
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "Paid",
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
+                        _statusBadge("Paid", Colors.green),
                     ],
                   ),
                 );
               },
             ),
+    );
+  }
+
+  Widget _statusBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(color: color, fontWeight: FontWeight.w700),
+        ),
+      ),
     );
   }
 }

@@ -125,7 +125,7 @@ export const updateRequestStatus = async (req, res) => {
   try {
     const result = await sql`
       UPDATE "MoneyRequest"
-      SET requeststatus = ${status}
+      SET "requestStatus" = ${status}
       WHERE requestid = ${requestId}
       RETURNING *
     `;
