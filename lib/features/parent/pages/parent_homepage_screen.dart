@@ -230,6 +230,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Top bar
+                // ----------------------- TOP BAR -----------------------
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -239,7 +240,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                       child: Icon(Icons.person, color: Colors.white),
                     ),
 
-                    // NOTIFICATION ICON WITH NAVIGATION
                     GestureDetector(
                       onTap: () async {
                         await Navigator.push(
@@ -251,7 +251,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                             ),
                           ),
                         );
-                        _fetchUnread(); // refresh after coming back
                       },
                       child: const Icon(
                         Icons.notifications_none_rounded,
@@ -259,19 +258,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                         color: Colors.black87,
                       ),
                     ),
-                    if (unreadCount > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
 

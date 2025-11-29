@@ -30,6 +30,21 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
     _fetchNotifications();
   }
 
+  @override
+  void dispose() {
+    _markParentRead();
+
+    /// NEW
+    super.dispose();
+  }
+
+  Future<void> _markParentRead() async {
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/notifications/mark-read/parent/${widget.parentId}",
+    );
+    await http.post(url, headers: {"Authorization": "Bearer ${widget.token}"});
+  }
+
   Future<void> _fetchNotifications() async {
     final url = Uri.parse(
       "${ApiConfig.baseUrl}/api/notifications/parent/${widget.parentId}",

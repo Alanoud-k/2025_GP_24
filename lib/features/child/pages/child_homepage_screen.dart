@@ -193,6 +193,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        // LEFT SIDE — avatar + name
         Row(
           children: [
             const CircleAvatar(
@@ -232,36 +233,11 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 ),
               ),
             );
-
-            _fetchUnreadCount();
           },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(
-                Icons.notifications_none_rounded,
-                color: Colors.black87,
-                size: 30,
-              ),
-
-              if (unreadCount > 0)
-                Positioned(
-                  right: -3,
-                  top: -3,
-                  child: Container(
-                    height: 12,
-                    width: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white, // makes the dot look sharp
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+          child: const Icon(
+            Icons.notifications_none_rounded,
+            size: 30,
+            color: Colors.black87,
           ),
         ),
       ],
