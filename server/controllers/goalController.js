@@ -188,82 +188,97 @@ export async function addMoneyToGoal(req, res) {
   try {
     const goalId = Number(req.params.goalId);
     const { childId, amount } = req.body;
+
+    const cId = Number(childId);
     const amt = Number(amount);
 
-    if (!amt || amt <= 0)
-      return res.status(400).json({ error: "invalid_amount" });
+    if (!cId || !amt || amt <= 0) {
+      return res.status(400).json({ error: "invalid_fields" });
+    }
 
-    // Fetch goal + accounts
-    const g = await sql`
-      SELECT g.targetamount, a.accountid AS goalaccountid, a.savingaccountid
+    const rows = await sql`
+      SELECT
+        g.goalid,
+        g.goalstatus,
+        g.targetamount,
+        a.accountid       AS goalaccountid,
+        a.balance         AS goalbalance,
+        a.savingaccountid AS savingaccountid
       FROM "Goal" g
       JOIN "Account" a ON a.accountid = g.accountid
-      WHERE g.goalid = ${goalId} AND g.childid = ${childId}
+      WHERE g.goalid = ${goalId} AND g.childid = ${cId}
       LIMIT 1
     `;
 
-    if (!g.length) return res.status(404).json({ error: "goal_not_found" });
+    if (!rows.length) {
+      return res.status(404).json({ error: "goal_not_found" });
+    }
 
-    const targetAmount = Number(g[0].targetamount);
-    const goalAcc = g[0].goalaccountid;
-    const saveAcc = g[0].savingaccountid;
+    const row = rows[0];
+    const goalStatus = row.goalstatus;
+    const targetAmount = Number(row.targetamount);
+    const goalBalance = Number(row.goalbalance);
+    const goalAccId = row.goalaccountid;
+    const savingAccId = row.savingaccountid;
 
-    // Get current goal balance
-    const [goalBalRow] = await sql`
-      SELECT balance FROM "Account" WHERE accountid = ${goalAcc}
-    `;
-    const currentGoalBalance = Number(goalBalRow.balance);
-    const remaining = targetAmount - currentGoalBalance;
-
-    // Do not allow adding more than needed
-    if (amt > remaining) {
+    // ❌ No more contributions if achieved
+    if (goalStatus === "Achieved") {
       return res.status(400).json({
-        error: "exceeds_goal_limit",
-        message: `Goal only needs ${remaining} SAR to complete.`,
+        error: "goal_completed_no_more_contributions",
+      });
+    }
+
+    // ❌ Do not allow going above target
+    const newGoalBalance = goalBalance + amt;
+    if (newGoalBalance > targetAmount) {
+      return res.status(400).json({
+        error: "over_target",
+        message: "Cannot exceed goal target amount.",
       });
     }
 
     // Check saving balance
     const [sBal] = await sql`
-      SELECT balance FROM "Account" WHERE accountid = ${saveAcc}
+      SELECT balance FROM "Account" WHERE accountid = ${savingAccId}
     `;
-    if (Number(sBal.balance) < amt) {
-      return res.status(400).json({
-        error: "insufficient_saving",
-        message: "Not enough money in Saving balance.",
-      });
+    const savingBalance = Number(sBal?.balance ?? 0);
+
+    if (savingBalance < amt) {
+      return res.status(400).json({ error: "insufficient_saving" });
     }
 
-    // Withdraw from saving
+    // Transfer: Saving → Goal
     await sql`
-      UPDATE "Account" SET balance = balance - ${amt}
-      WHERE accountid = ${saveAcc}
+      UPDATE "Account"
+      SET balance = balance - ${amt}
+      WHERE accountid = ${savingAccId}
     `;
 
-    // Deposit into goal
-    const [updated] = await sql`
-      UPDATE "Account" SET balance = balance + ${amt}
-      WHERE accountid = ${goalAcc}
+    const [updGoal] = await sql`
+      UPDATE "Account"
+      SET balance = balance + ${amt}
+      WHERE accountid = ${goalAccId}
       RETURNING balance
     `;
 
-    const newGoalBalance = Number(updated.balance);
+    const finalGoalBalance = Number(updGoal.balance);
 
-    // If completed → update status
-    if (newGoalBalance >= targetAmount) {
+    // ⭐ If we hit target, mark as Achieved (and keep it that way)
+    if (finalGoalBalance >= targetAmount) {
       await sql`
-        UPDATE "Goal" SET goalstatus = 'Achieved'
+        UPDATE "Goal"
+        SET goalstatus = 'Achieved'
         WHERE goalid = ${goalId}
       `;
     }
 
     return res.json({
       ok: true,
-      message: "Money added to goal",
-      newGoalBalance,
+      goalId,
+      newGoalBalance: finalGoalBalance,
     });
   } catch (err) {
-    console.error("goal_move_in_failed:", err);
+    console.error(err);
     return res.status(500).json({ error: "goal_move_in_failed" });
   }
 }
@@ -275,49 +290,68 @@ export async function moveMoneyFromGoal(req, res) {
   try {
     const goalId = Number(req.params.goalId);
     const { childId, amount } = req.body;
+
+    const cId = Number(childId);
     const amt = Number(amount);
 
-    if (!amt || amt <= 0)
-      return res.status(400).json({ error: "invalid_amount" });
+    if (!cId || !amt || amt <= 0) {
+      return res.status(400).json({ error: "invalid_fields" });
+    }
 
-    const g = await sql`
-      SELECT a.accountid AS goalaccountid, a.savingaccountid
+    const rows = await sql`
+      SELECT
+        g.goalid,
+        g.goalstatus,
+        a.accountid       AS goalaccountid,
+        a.balance         AS goalbalance,
+        a.savingaccountid AS savingaccountid
       FROM "Goal" g
       JOIN "Account" a ON a.accountid = g.accountid
-      WHERE g.goalid = ${goalId} AND g.childid = ${childId}
+      WHERE g.goalid = ${goalId} AND g.childid = ${cId}
       LIMIT 1
     `;
 
-    if (!g.length) return res.status(404).json({ error: "goal_not_found" });
-
-    const goalAcc = g[0].goalaccountid;
-    const saveAcc = g[0].savingaccountid;
-
-    const [goalBal] = await sql`
-      SELECT balance FROM "Account" WHERE accountid = ${goalAcc}
-    `;
-
-    if (Number(goalBal.balance) < amt) {
-      return res.status(400).json({
-        error: "insufficient_goal_balance",
-        message: "Not enough money inside this goal.",
-      });
+    if (!rows.length) {
+      return res.status(404).json({ error: "goal_not_found" });
     }
 
-    // Move money out
-    await sql`UPDATE "Account" SET balance = balance - ${amt} WHERE accountid = ${goalAcc}`;
-    const [newSave] = await sql`
-      UPDATE "Account" SET balance = balance + ${amt}
-      WHERE accountid = ${saveAcc}
+    const row = rows[0];
+
+    if (row.goalstatus === "Achieved") {
+      // Child should redeem instead, not move back to saving
+      return res.status(400).json({ error: "goal_completed_no_move_out" });
+    }
+
+    const goalAccId = row.goalaccountid;
+    const savingAccId = row.savingaccountid;
+    const goalBalance = Number(row.goalbalance);
+
+    if (goalBalance < amt) {
+      return res
+        .status(400)
+        .json({ error: "insufficient_goal_balance" });
+    }
+
+    // Transfer: Goal → Saving
+    await sql`
+      UPDATE "Account"
+      SET balance = balance - ${amt}
+      WHERE accountid = ${goalAccId}
+    `;
+
+    const [updSave] = await sql`
+      UPDATE "Account"
+      SET balance = balance + ${amt}
+      WHERE accountid = ${savingAccId}
       RETURNING balance
     `;
 
     return res.json({
       ok: true,
-      newSavingBalance: newSave.balance,
+      newSavingBalance: Number(updSave.balance),
     });
   } catch (err) {
-    console.error("goal_move_out_failed:", err);
+    console.error(err);
     return res.status(500).json({ error: "goal_move_out_failed" });
   }
 }
@@ -338,10 +372,11 @@ export async function deleteGoal(req, res) {
 
     if (!g.length) return res.status(404).json({ error: "goal_not_found" });
 
-    if (Number(g[0].balance) > 0)
+    if (Number(g[0].balance) > 0) {
+      // ⭐ Child must move money out first
       return res.status(400).json({ error: "goal_has_money" });
+    }
 
-    // Delete goal + account
     await sql`DELETE FROM "Goal" WHERE goalid = ${goalId}`;
     await sql`DELETE FROM "Account" WHERE accountid = ${g[0].accountid}`;
 
@@ -502,57 +537,77 @@ export async function redeemGoal(req, res) {
     const goalId = Number(req.params.goalId);
     const { childId } = req.body;
 
-    // Load goal + account
-    const g = await sql`
-      SELECT g.goalstatus, a.accountid AS goalaccountid, a.savingaccountid, a.walletid
-      FROM "Goal" g
-      JOIN "Account" a ON a.accountid = g.accountid
-      WHERE g.goalid = ${goalId} AND g.childid = ${childId}
-      LIMIT 1
-    `;
-
-    if (!g.length) return res.status(404).json({ error: "goal_not_found" });
-
-    if (g[0].goalstatus !== "Achieved") {
-      return res.status(400).json({ error: "goal_not_completed" });
+    const cId = Number(childId);
+    if (!cId) {
+      return res.status(400).json({ error: "invalid_child" });
     }
 
-    const walletId = g[0].walletid;
-
-    const [spending] = await sql`
-      SELECT accountid FROM "Account"
-      WHERE walletid = ${walletId} AND accounttype = 'SpendingAccount'
+    const rows = await sql`
+      SELECT
+        g.goalid,
+        g.goalstatus,
+        a.accountid AS goalaccountid,
+        a.balance   AS goalbalance,
+        a.walletid  AS walletid
+      FROM "Goal" g
+      JOIN "Account" a ON a.accountid = g.accountid
+      WHERE g.goalid = ${goalId} AND g.childid = ${cId}
       LIMIT 1
     `;
 
-    const goalAcc = g[0].goalaccountid;
+    if (!rows.length) {
+      return res.status(404).json({ error: "goal_not_found" });
+    }
 
-    const [goalBal] = await sql`
-      SELECT balance FROM "Account" WHERE accountid = ${goalAcc}
+    const row = rows[0];
+
+    if (row.goalstatus !== "Achieved") {
+      return res.status(400).json({ error: "not_completed" });
+    }
+
+    const goalAccId = row.goalaccountid;
+    const walletId = row.walletid;
+    const goalBalance = Number(row.goalbalance);
+
+    if (goalBalance <= 0) {
+      return res.status(400).json({ error: "nothing_to_redeem" });
+    }
+
+    // Find SpendingAccount for same wallet
+    const spRows = await sql`
+      SELECT accountid
+      FROM "Account"
+      WHERE walletid = ${walletId}
+        AND accounttype = 'SpendingAccount'
+      LIMIT 1
     `;
 
-    const amt = Number(goalBal.balance);
+    if (!spRows.length) {
+      return res.status(500).json({ error: "spending_account_missing" });
+    }
 
-    // Empty goal balance
+    const spendingAccId = spRows[0].accountid;
+
+    // Transfer full balance Goal → Spending
     await sql`
-      UPDATE "Account" SET balance = 0 WHERE accountid = ${goalAcc}
-    `;
-
-    // Add into spending account
-    const [newSpend] = await sql`
       UPDATE "Account"
-      SET balance = balance + ${amt}
-      WHERE accountid = ${spending.accountid}
-      RETURNING balance
+      SET balance = balance - ${goalBalance}
+      WHERE accountid = ${goalAccId}
     `;
 
+    await sql`
+      UPDATE "Account"
+      SET balance = balance + ${goalBalance}
+      WHERE accountid = ${spendingAccId}
+    `;
+
+    // Status remains 'Achieved' (no change)
     return res.json({
       ok: true,
-      transferred: amt,
-      newSpendingBalance: newSpend.balance,
+      redeemed: goalBalance,
     });
   } catch (err) {
-    console.error("redeem_goal_failed:", err);
-    return res.status(500).json({ error: "redeem_goal_failed" });
+    console.error(err);
+    return res.status(500).json({ error: "redeem_failed" });
   }
 }

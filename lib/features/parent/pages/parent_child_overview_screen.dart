@@ -5,6 +5,7 @@ import 'parent_transfer_screen.dart';
 import 'parent_money_requests_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'parent_child_goals_screen.dart';
 
 class ParentChildOverviewScreen extends StatefulWidget {
   final int parentId;
@@ -381,7 +382,19 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                             child: _actionButton(
                               "Goals",
                               Icons.flag_rounded,
-                              () {},
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ParentChildGoalsScreen(
+                                      childId: widget.childId,
+                                      childName: widget.childName,
+                                      token: widget.token,
+                                      baseUrl: baseUrl,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ],

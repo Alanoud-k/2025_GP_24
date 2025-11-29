@@ -2,8 +2,8 @@ import { Router } from "express";
 import {
   setupChildWallet,
   listChildGoals,
-  createGoal,
   getGoalById,
+  createGoal,
   updateGoal,
   addMoneyToGoal,
   moveMoneyFromGoal,

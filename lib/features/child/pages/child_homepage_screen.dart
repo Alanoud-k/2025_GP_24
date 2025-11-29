@@ -56,6 +56,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     _fetchChildInfo();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (mounted) _fetchChildInfo();
+  }
+
   Future<void> _fetchChildInfo() async {
     setState(() => _loading = true);
 
