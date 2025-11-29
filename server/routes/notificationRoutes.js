@@ -1,11 +1,20 @@
-// server/routes/notificationRoutes.js (ESM)
-
 import express from "express";
-import { getParentNotifications } from "../controllers/notificationController.js";
+import {
+  getParentNotifications,
+  getChildNotifications,
+  getUnreadCountParent,
+  getUnreadCountChild,
+  markNotificationRead
+} from "../controllers/notificationController.js";
 
 const router = express.Router();
 
-// GET /api/notifications/parent/:parentId
 router.get("/parent/:parentId", getParentNotifications);
+router.get("/child/:childId", getChildNotifications);
+
+router.get("/unread/parent/:parentId", getUnreadCountParent);
+router.get("/unread/child/:childId", getUnreadCountChild);
+
+router.post("/mark-read", markNotificationRead);
 
 export default router;

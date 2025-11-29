@@ -31,7 +31,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   String walletBalance = '0.00';
   bool _isLoading = true;
   bool parentHasCard = false;
-
+  int unreadCount = 0;
   String get token => widget.token;
   int get parentId => widget.parentId;
 
@@ -48,6 +48,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initialize();
+      _fetchUnread();
     });
   }
 
@@ -182,6 +183,24 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     await fetchParentInfo();
   }
 
+  Future<void> _fetchUnread() async {
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/notifications/unread/parent/$parentId",
+    );
+
+    final response = await http.get(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        unreadCount = data["unread"] ?? 0;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -222,8 +241,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
 
                     // NOTIFICATION ICON WITH NAVIGATION
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => ParentNotificationsScreen(
@@ -232,12 +251,27 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                             ),
                           ),
                         );
+                        _fetchUnread(); // refresh after coming back
                       },
                       child: const Icon(
                         Icons.notifications_none_rounded,
                         size: 28,
+                        color: Colors.black87,
                       ),
                     ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
 

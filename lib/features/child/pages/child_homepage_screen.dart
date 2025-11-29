@@ -7,6 +7,7 @@ import 'child_goals_screen.dart';
 import 'child_request_money_screen.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'child_notifications_screen.dart';
 
 class ChildHomePageScreen extends StatefulWidget {
   final int childId;
@@ -30,7 +31,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   String childName = '';
   bool _loading = true;
   String? avatarUrl; // CHANGED: store avatar URL from backend
-
+  int unreadCount = 0;
   double spendBalance = 0.0;
   double savingBalance = 0.0;
 
@@ -54,6 +55,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     });
 
     _fetchChildInfo();
+    _fetchUnreadCount();
   }
 
   @override
@@ -113,6 +115,29 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     } catch (e) {
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/notifications/unread/child/${widget.childId}",
+    );
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          unreadCount = data["unread"] ?? 0;
+        });
+      }
+    } catch (e) {}
   }
 
   // ---------------------------------------------------------
@@ -195,7 +220,50 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ),
           ],
         ),
-        const Icon(Icons.notifications_none, color: Colors.black87),
+
+        GestureDetector(
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChildNotificationsScreen(
+                  childId: widget.childId,
+                  token: widget.token,
+                ),
+              ),
+            );
+
+            _fetchUnreadCount();
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.black87,
+                size: 30,
+              ),
+
+              if (unreadCount > 0)
+                Positioned(
+                  right: -3,
+                  top: -3,
+                  child: Container(
+                    height: 12,
+                    width: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white, // makes the dot look sharp
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
