@@ -28,7 +28,7 @@ class ChildCardScreen extends StatelessWidget {
         centerTitle: true,
         foregroundColor: Colors.black87,
         title: const Text(
-          "Card",   // ←ــــــــــــــــــــــــــــــ تم تغيير الاسم هنا فقط
+          "Card",
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 22,
@@ -48,8 +48,8 @@ class ChildCardScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(26),
                 gradient: const LinearGradient(
                   colors: [
-                    Color(0xFF4C7DF0),
-                    Color(0xFF3359CC),
+                    Color(0xFF37C4BE),
+                    Color(0xFF9FE5E2),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -144,6 +144,7 @@ class ChildCardScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
+            // زر Pay with QR
             SizedBox(
               width: 180,
               height: 52,
@@ -169,10 +170,10 @@ class ChildCardScreen extends StatelessWidget {
                   );
                 },
                 child: const Text(
-                  "Pay",
+                  "Pay with QR",
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 17,
+                    fontSize: 16,
                     color: Colors.white,
                   ),
                 ),

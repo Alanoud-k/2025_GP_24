@@ -11,7 +11,8 @@ import authRoutes from "./routes/authRoutes.js";
 import parentRoutes from "./routes/parentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
-import transactionRoutes from "./routes/transactionRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+//import transactionRoutes from "./routes/transactionRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 
 // PAYMENT
@@ -80,7 +81,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api", parentRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
-app.use("/api/transaction", transactionRoutes);
+app.use("/api/payment", paymentRoutes);
+//app.use("/api/transaction", transactionRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // Create payment

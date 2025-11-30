@@ -1,39 +1,36 @@
 import { sql } from "../config/db.js";
 
-// Simulate child card payment using ML service
+// Simulate child card payment using ML
 export const simulateCardPayment = async (req, res) => {
   try {
     const {
       childId,
       amount,
       merchantName,
-      mcc,
-      receiverAccountId, // child account id (spend account)
+      receiverAccountId
     } = req.body;
 
-    if (!childId || !amount || !merchantName || !mcc || !receiverAccountId) {
+    if (!childId || !amount || !merchantName || !receiverAccountId) {
       return res.status(400).json({
         message: "Missing required fields",
-        details: { childId, amount, merchantName, mcc, receiverAccountId },
+        details: { childId, amount, merchantName, receiverAccountId },
       });
     }
 
     const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
 
-    const mlRes = await fetch(`${mlUrl}/classify`, {
+    const mlRes = await fetch(`${mlUrl}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        merchant_name: merchantName,
-        mcc: mcc,
+        merchant_name: merchantName
       }),
     });
 
     if (!mlRes.ok) {
       const text = await mlRes.text();
-      console.error("ML service error:", mlRes.status, mlRes.statusText, text);
       return res.status(502).json({
-        message: "ML service failed",
+        message: "ML service error",
         statusCode: mlRes.status,
         body: text,
       });
@@ -42,9 +39,8 @@ export const simulateCardPayment = async (req, res) => {
     const mlData = await mlRes.json();
 
     const category =
-      mlData?.data?.transactioncategory ??
-      mlData?.transactioncategory ??
-      mlData?.category ??
+      mlData?.predicted_category ||
+      mlData?.category ||
       "Uncategorized";
 
     const rows = await sql`
@@ -56,29 +52,28 @@ export const simulateCardPayment = async (req, res) => {
         "sourcetype",
         "transactioncategory",
         "receiverAccountId",
-        "mcc"
+        "created_at"
       )
       VALUES (
-        'Spend',              -- card spending transaction
+        'Spend',
         ${amount},
         'Completed',
         ${merchantName},
-        'Payment',            -- external payment
-        ${category},          -- ML category
+        'Payment',
+        ${category},
         ${receiverAccountId},
-        ${mcc}
+        NOW()
       )
       RETURNING *;
     `;
 
-    return res.json({
+    return res.status(201).json({
       status: "success",
       data: rows[0],
-      mlCategory: category,
-      mlRaw: mlData,
+      mlCategory: category
     });
+
   } catch (err) {
-    console.error("simulateCardPayment error:", err);
     return res.status(500).json({
       message: "Internal server error",
       error: err.message,
