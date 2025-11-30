@@ -9,6 +9,7 @@ import 'package:my_app/utils/check_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'child_notifications_screen.dart';
 import 'child_chores_screen.dart';
+import 'child_transactions_screen.dart'; 
 
 class ChildHomePageScreen extends StatefulWidget {
   final int childId;
@@ -31,7 +32,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   int currentPoints = 0;
   String childName = '';
   bool _loading = true;
-  String? avatarUrl; // CHANGED: store avatar URL from backend
+  String? avatarUrl;
   int unreadCount = 0;
   double spendBalance = 0.0;
   double savingBalance = 0.0;
@@ -52,7 +53,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await checkAuthStatus(context); // ✅ auto logout if token expired
+      await checkAuthStatus(context);
     });
 
     _fetchChildInfo();
@@ -102,7 +103,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           spendBalance = _toDouble(data['spend']);
           savingBalance = _toDouble(data['saving']);
           currentPoints = data['rewardKeys'] ?? 0.toInt();
-          // avatarUrl = data['avatarUrl']; // CHANGED: store avatar
 
           categoryPercentages = Map<String, double>.from(
             data['categories'] ?? categoryPercentages,
@@ -140,10 +140,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       }
     } catch (e) {}
   }
-
-  // ---------------------------------------------------------
-  // UI
-  // ---------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -187,14 +183,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------
   Widget _header() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // LEFT SIDE — avatar + name
         Row(
           children: [
             const CircleAvatar(
@@ -222,7 +214,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ),
           ],
         ),
-
         GestureDetector(
           onTap: () async {
             await Navigator.push(
@@ -245,9 +236,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // Balance Cards
-  // ---------------------------------------------------------
   Widget _balancesRow() {
     return Row(
       children: [
@@ -328,9 +316,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // Keys Badge
-  // ---------------------------------------------------------
   Widget _keysBadge() {
     return Align(
       alignment: Alignment.centerRight,
@@ -353,7 +338,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             Icon(
               Icons.vpn_key_rounded,
               size: 18,
-              color: Colors.amber.shade800, // ← الذهبي
+              color: Colors.amber.shade800,
             ),
             const SizedBox(width: 6),
             Text(
@@ -370,16 +355,12 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // Actions Grid
-  // ---------------------------------------------------------
   Widget _actionsGrid() {
     return Row(
       children: [
         Expanded(
           child: Column(
             children: [
-              // داخل ChildHomePageScreen
               _actionButton('Chores', Icons.checklist_rounded, () {
                 Navigator.push(
                   context,
@@ -392,7 +373,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 );
               }),
               const SizedBox(height: 12),
-              _actionButton('Transaction', Icons.receipt_long_outlined, () {}),
+              _actionButton('Transactions', Icons.receipt_long_outlined, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildTransactionsScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                      baseUrl: widget.baseUrl,
+                    ),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -477,9 +469,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // Breakdown Card
-  // ---------------------------------------------------------
   Widget _breakdownCard() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
@@ -569,9 +558,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // Legend (ترتيب ثابت + لون داخلي)
-  // ---------------------------------------------------------
   Widget _legend() {
     final List<String> ordered = [
       'Food',
@@ -595,7 +581,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               width: 18,
               height: 18,
               padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(shape: BoxShape.circle),
+              decoration: const BoxDecoration(shape: BoxShape.circle),
               child: Container(
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
@@ -615,9 +601,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  // ---------------------------------------------------------
-  // Pie Chart sections
-  // ---------------------------------------------------------
   List<PieChartSectionData> _buildPieSections() {
     return categoryPercentages.entries.map((entry) {
       return PieChartSectionData(
