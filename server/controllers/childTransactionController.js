@@ -11,7 +11,7 @@ export const getChildTransactions = async (req, res) => {
       });
     }
 
-    // Query transactions for child's spending account
+    // Transaction → Account → Wallet → Child
     const rows = await sql`
       SELECT 
         t."transactionid",
@@ -21,8 +21,11 @@ export const getChildTransactions = async (req, res) => {
         t."merchantname",
         t."transactioncategory"
       FROM "Transaction" t
-      JOIN "Account" a ON a."accountId" = t."receiverAccountId"
-      WHERE a."childId" = ${childId}
+      JOIN "Account" a 
+        ON a.accountid = t."receiverAccountId"
+      JOIN "Wallet" w 
+        ON w.walletid = a.walletid
+      WHERE w.childid = ${childId}
       ORDER BY t."transactiondate" DESC;
     `;
 
