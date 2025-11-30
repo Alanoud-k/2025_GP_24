@@ -2,24 +2,17 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
 
-# ===== Load Model (Pipeline) =====
 MODEL_PATH = "hassalah_ml_model.pkl"
-model = joblib.load(MODEL_PATH)  # Pipeline: TF-IDF + Classifier
+model = joblib.load(MODEL_PATH)
 
-# ===== Request Schema =====
 class MerchantInput(BaseModel):
     merchant_name: str
 
-# ===== App ======
-app = FastAPI()
+app = FastAPI()  
 
 @app.get("/")
 def home():
-    return {
-        "status": "running",
-        "service": "Hassalah ML Service",
-        "model": MODEL_PATH
-    }
+    return {"status": "running"}
 
 @app.post("/predict")
 def predict_category(data: MerchantInput):
