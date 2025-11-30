@@ -1,4 +1,3 @@
-
 // import 'dart:convert';
 // import 'package:flutter/material.dart';
 // import 'package:http/http.dart' as http;
@@ -12,7 +11,7 @@
 //   final String childName;
 //   final String childBalance;
 //   final String token;
-  
+
 //   // New Optional Parameters for Request Handling
 //   final double? initialAmount;
 //   final int? requestId;
@@ -149,7 +148,7 @@
 //           'Authorization': 'Bearer ${widget.token}',
 //         },
 //         body: jsonEncode({
-//           "requestId": reqId, 
+//           "requestId": reqId,
 //           "status": "Approved"
 //         }),
 //       );
@@ -409,7 +408,7 @@ class ParentTransferScreen extends StatefulWidget {
   final String childName;
   final String childBalance;
   final String token;
-  
+
   // New Optional Parameters for Request Handling
   final double? initialAmount;
   final int? requestId;
@@ -434,9 +433,9 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
   double savingPercentage = 50; // default 50/50 split for normal transfer
   String? token;
   late final String baseUrl = ApiConfig.baseUrl;
-  
+
   // ✅ New variable to store real balance
-  String parentCurrentBalance = "..."; 
+  String parentCurrentBalance = "...";
 
   @override
   void initState() {
@@ -477,7 +476,9 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
         final data = jsonDecode(response.body);
         // Check different possible key names for balance
         final b = data['walletbalance'] ?? data['balance'] ?? 0;
-        final double val = (b is num) ? b.toDouble() : double.tryParse(b.toString()) ?? 0.0;
+        final double val = (b is num)
+            ? b.toDouble()
+            : double.tryParse(b.toString()) ?? 0.0;
 
         if (mounted) {
           setState(() {
@@ -566,10 +567,7 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
         },
-        body: jsonEncode({
-          "requestId": reqId, 
-          "status": "Approved"
-        }),
+        body: jsonEncode({"requestId": reqId, "status": "Approved"}),
       );
     } catch (e) {
       print("Error auto-approving request: $e");
