@@ -1,42 +1,31 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
-import pandas as pd
 
-app = FastAPI(
-    title="Hassalah AI Service",
-    description="Spending categorization model API.",
-    version="1.0.0",
-)
+# ===== Load Model (Pipeline) =====
+MODEL_PATH = "hassalah_ml_model.pkl"
+model = joblib.load(MODEL_PATH)  # Pipeline: TF-IDF + Classifier
 
-# Input schema
-class TransactionInput(BaseModel):
+# ===== Request Schema =====
+class MerchantInput(BaseModel):
     merchant_name: str
-    mcc: int
 
-# Load model once on startup
-model = joblib.load("hassalah_ml_model.joblib")
-
+# ===== App ======
+app = FastAPI()
 
 @app.get("/")
-def root():
-    # Health check endpoint
+def home():
     return {
-        "service": "Hassalah AI",
         "status": "running",
-        "info": "Use POST /classify to classify transactions"
+        "service": "Hassalah ML Service",
+        "model": MODEL_PATH
     }
 
-
-@app.post("/classify")
-def classify(data: TransactionInput):
-    # Prepare input for model
-    df = pd.DataFrame([{
-        "merchant_name": data.merchant_name,
-        "mcc": data.mcc
-    }])
-
-    # Predict category
-    prediction = model.predict(df)[0]
-
-    return {"category": str(prediction)}
+@app.post("/predict")
+def predict_category(data: MerchantInput):
+    merchant = data.merchant_name
+    prediction = model.predict([merchant])[0]
+    return {
+        "merchant_name": merchant,
+        "predicted_category": prediction
+    }
