@@ -10,6 +10,7 @@ import 'parent_my_card_screen.dart';
 import 'package:my_app/core/api_config.dart';
 import 'parent_insights_screen.dart';
 import 'parent_notification_screen.dart';
+import 'parent_transactions_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -377,10 +378,13 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                         asset: "assets/icons/transactions.png",
                         labelStyle: fintechLabelStyle,
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Transactions page will be added later",
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentTransactionsScreen(
+                                parentId: parentId,
+                                token: token,
+                                baseUrl: ApiConfig.baseUrl,
                               ),
                             ),
                           );
