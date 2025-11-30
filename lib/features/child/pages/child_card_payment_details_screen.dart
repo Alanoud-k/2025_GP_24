@@ -6,7 +6,7 @@ class ChildCardPaymentDetailsScreen extends StatefulWidget {
   final int childId;
   final int receiverAccountId;
   final String token;
-  final String baseUrl; // مثال: https://hassalah-backend.up.railway.app
+  final String baseUrl; // Backend URL
 
   const ChildCardPaymentDetailsScreen({
     super.key,
@@ -48,14 +48,15 @@ class _ChildCardPaymentDetailsScreenState
       _isLoading = true;
     });
 
-    final double amountToSend = total + fee; // أو total بس، حسب منطقكم
+    final double amountToSend = total + fee;
 
     try {
-      final url = Uri.parse("${widget.baseUrl}/api/payment/test");
+      final url =
+          Uri.parse("${widget.baseUrl}/api/payment/card/simulate");
 
       final body = {
         "childId": widget.childId,
-        "accountId": widget.receiverAccountId,
+        "receiverAccountId": widget.receiverAccountId,
         "amount": amountToSend,
         "merchantName": selectedMerchant,
       };
@@ -72,9 +73,9 @@ class _ChildCardPaymentDetailsScreenState
       if (!mounted) return;
 
       if (res.statusCode == 201) {
-        final data = jsonDecode(res.body);
-        final tx = data["transaction"];
-        final category = tx["category"];
+        final decoded = jsonDecode(res.body);
+        final tx = decoded["data"];
+        final category = decoded["mlCategory"];
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -84,8 +85,8 @@ class _ChildCardPaymentDetailsScreenState
           ),
         );
 
-        // هنا لو تبين ترجعي المستخدم لصفحة سابقة:
-        // Navigator.pop(context);
+        // Example: print transaction id
+        // debugPrint("Transaction id: ${tx["id"]}");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -145,7 +146,6 @@ class _ChildCardPaymentDetailsScreenState
             ),
             const SizedBox(height: 24),
 
-            // الكارد
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -211,7 +211,6 @@ class _ChildCardPaymentDetailsScreenState
 
             const Spacer(),
 
-            // Confirm & Pay
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
