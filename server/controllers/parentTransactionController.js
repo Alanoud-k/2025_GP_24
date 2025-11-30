@@ -1,3 +1,6 @@
+import { sql } from "../config/db.js";
+
+
 export const getParentTransactions = async (req, res) => {
   try {
     const { parentId } = req.params;
