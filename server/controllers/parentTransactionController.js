@@ -1,17 +1,7 @@
-import { sql } from "../config/db.js";
-
-// Fetch all parent wallet transactions
 export const getParentTransactions = async (req, res) => {
   try {
     const { parentId } = req.params;
 
-    if (!parentId) {
-      return res.status(400).json({
-        message: "Missing parentId",
-      });
-    }
-
-    // Parent Wallet → Accounts → Transactions
     const rows = await sql`
       SELECT
         t."transactionid",
@@ -28,11 +18,17 @@ export const getParentTransactions = async (req, res) => {
         t."mcc",
         t."categorysource"
       FROM "Transaction" t
-      JOIN "Account" a
-        ON a.accountid = t."receiverAccountId"
-      JOIN "Wallet" w
-        ON w.walletid = a.walletid
-      WHERE w.parentid = ${parentId}
+      LEFT JOIN "Account" a1
+        ON a1.accountid = t."receiverAccountId"
+      LEFT JOIN "Wallet" w1
+        ON w1.walletid = a1.walletid
+      LEFT JOIN "Account" a2
+        ON a2.accountid = t."senderAccountId"
+      LEFT JOIN "Wallet" w2
+        ON w2.walletid = a2.walletid
+      WHERE 
+        w1.parentid = ${parentId}
+        OR w2.parentid = ${parentId}
       ORDER BY t."transactiondate" DESC;
     `;
 
@@ -40,7 +36,6 @@ export const getParentTransactions = async (req, res) => {
       status: "success",
       data: rows,
     });
-
   } catch (err) {
     console.error("getParentTransactions error:", err);
     return res.status(500).json({

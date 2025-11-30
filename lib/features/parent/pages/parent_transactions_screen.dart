@@ -56,22 +56,28 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
       if (!mounted) return;
 
       if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        final list = decoded["data"] ?? [];
+        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
 
-        final parsed = list
+        // 👇 EXACTLY like child screen: make it List<dynamic> first.
+        final List<dynamic> list = decoded["data"] ?? [];
+
+        final List<ParentTransaction> items = list
             .map((e) => ParentTransaction.fromJson(e as Map<String, dynamic>))
             .toList();
 
         setState(() {
-          _transactions = parsed;
+          _transactions = items;
         });
       } else {
         setState(() {
           _errorMessage = "Failed to load transactions (${res.statusCode})";
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      // Optional: log stack for debugging
+      // ignore: avoid_print
+      print("Parent _fetchTransactions error: $e\n$stack");
+
       if (!mounted) return;
       setState(() {
         _errorMessage = "Something went wrong: $e";
@@ -86,10 +92,10 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
     switch (type.toLowerCase()) {
       case "spend":
       case "transfer_out":
-        return const Color(0xFFE57373);
+        return const Color(0xFFE57373); // red
       case "deposit":
       case "transfer_in":
-        return const Color(0xFF2BBE7A);
+        return const Color(0xFF2BBE7A); // green
       default:
         return Colors.black54;
     }
@@ -109,7 +115,10 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
     if (c.contains("transport")) {
       return Icons.directions_bus_rounded;
     }
-    if (c.contains("child") || c.contains("money") || c.contains("transfer")) {
+    if (c.contains("top-up") || c.contains("wallet")) {
+      return Icons.account_balance_wallet_rounded;
+    }
+    if (c.contains("child") || c.contains("transfer")) {
       return Icons.swap_horiz_rounded;
     }
     return Icons.payment_rounded;
@@ -212,9 +221,8 @@ class ParentTransaction {
     return ParentTransaction(
       id: json["transactionid"] ?? 0,
       type: json["transactiontype"] ?? "",
-      amount: (json["amount"] is num)
-          ? json["amount"].toDouble()
-          : double.tryParse(json["amount"].toString()) ?? 0.0,
+      // 👇 Always parse from string or number safely
+      amount: double.tryParse(json["amount"].toString()) ?? 0.0,
       description: json["merchantname"] ?? json["description"] ?? "Transaction",
       category: json["transactioncategory"] ?? "General",
       date: parsedDate,
