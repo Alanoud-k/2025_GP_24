@@ -4,32 +4,43 @@ export const getParentTransactions = async (req, res) => {
 
     const rows = await sql`
       SELECT
-        t."transactionid",
-        t."transactiontype",
-        t."amount",
-        t."transactiondate",
-        t."transactionstatus",
-        t."merchantname",
-        t."sourcetype",
-        t."transactioncategory",
-        t."senderAccountId",
-        t."receiverAccountId",
-        t."gatewayPaymentId",
-        t."mcc",
-        t."categorysource"
-      FROM "Transaction" t
-      LEFT JOIN "Account" a1
-        ON a1.accountid = t."receiverAccountId"
-      LEFT JOIN "Wallet" w1
-        ON w1.walletid = a1.walletid
-      LEFT JOIN "Account" a2
-        ON a2.accountid = t."senderAccountId"
-      LEFT JOIN "Wallet" w2
-        ON w2.walletid = a2.walletid
-      WHERE 
-        w1.parentid = ${parentId}
-        OR w2.parentid = ${parentId}
-      ORDER BY t."transactiondate" DESC;
+  t."transactionid",
+  t."transactiontype",
+  t."amount",
+  t."transactiondate",
+  t."transactionstatus",
+  t."merchantname",
+  t."transactioncategory",
+  t."senderAccountId",
+  t."receiverAccountId"
+FROM "Transaction" t
+JOIN "Account" a_sender
+  ON a_sender.accountid = t."senderAccountId"
+JOIN "Wallet" w_sender
+  ON w_sender.walletid = a_sender.walletid
+    AND w_sender.parentid = ${parentId}
+
+UNION ALL
+
+SELECT
+  t."transactionid",
+  t."transactiontype",
+  t."amount",
+  t."transactiondate",
+  t."transactionstatus",
+  t."merchantname",
+  t."transactioncategory",
+  t."senderAccountId",
+  t."receiverAccountId"
+FROM "Transaction" t
+JOIN "Account" a_receiver
+  ON a_receiver.accountid = t."receiverAccountId"
+JOIN "Wallet" w_receiver
+  ON w_receiver.walletid = a_receiver.walletid
+    AND w_receiver.parentid = ${parentId}
+
+ORDER BY "transactiondate" DESC;
+
     `;
 
     return res.status(200).json({
