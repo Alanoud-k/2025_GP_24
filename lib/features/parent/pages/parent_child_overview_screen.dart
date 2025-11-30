@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'parent_child_goals_screen.dart';
 import 'parent_child_chores_screen.dart';
+import 'package:my_app/features/child/pages/child_transactions_screen.dart';
 
 class ParentChildOverviewScreen extends StatefulWidget {
   final int parentId;
@@ -46,20 +47,16 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
   }
 
   Future<void> _initialize() async {
-    // 1) Check if expired → auto redirect
     await checkAuthStatus(context);
 
-    // 2) Load token locally
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString("token") ?? widget.token;
 
-    // 3) If missing → force logout
     if (token == null || token!.isEmpty) {
       _forceLogout();
       return;
     }
 
-    // 4) Fetch child info
     await _fetchChildInfo();
 
     if (mounted) setState(() => _loading = false);
@@ -129,8 +126,6 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-
-        /// FULL BACKGROUND
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
@@ -138,7 +133,6 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -154,7 +148,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                       /// ---------------- HEADER ----------------
                       Row(
                         children: [
-                          Container(
+                          SizedBox(
                             height: 42,
                             width: 42,
                             child: IconButton(
@@ -174,12 +168,6 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                               color: Color(0xFF2C3E50),
                             ),
                           ),
-                          // const Spacer(),
-                          // const Icon(
-                          //   Icons.notifications_none,
-                          //   size: 28,
-                          //   color: Colors.black54,
-                          // ),
                         ],
                       ),
 
@@ -281,7 +269,6 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 14),
                             Row(
                               children: [
@@ -304,7 +291,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
 
                       const SizedBox(height: 28),
 
-                      /// ---------------- ACTION BUTTONS ----------------
+                      /// ---------------- ACTION BUTTONS (row 1) ----------------
                       Row(
                         children: [
                           Expanded(
@@ -326,13 +313,13 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                                 );
 
                                 if (result == true) {
-                                  await _fetchChildInfo(); // 🔧 Refresh balances
-                                  setState(() {}); // 🔄 Update UI
+                                  await _fetchChildInfo();
+                                  if (mounted) setState(() {});
                                 }
                               },
                             ),
                           ),
-                         const SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: _actionButton(
                               "Chores",
@@ -341,8 +328,9 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ParentChildChoresScreen(
-                                      childName: widget.childName, // تأكدي أن هذا المتغير موجود ويمثل اسم الطفل
+                                    builder: (context) =>
+                                        ParentChildChoresScreen(
+                                      childName: widget.childName,
                                     ),
                                   ),
                                 );
@@ -354,13 +342,25 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
 
                       const SizedBox(height: 12),
 
+                      /// ---------------- ACTION BUTTONS (row 2) ----------------
                       Row(
                         children: [
                           Expanded(
                             child: _actionButton(
                               "Transactions",
                               Icons.receipt_long_rounded,
-                              () {},
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ChildTransactionsScreen(
+                                      childId: widget.childId,
+                                      token: widget.token,
+                                      baseUrl: baseUrl,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -386,6 +386,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
 
                       const SizedBox(height: 12),
 
+                      /// ---------------- ACTION BUTTONS (row 3) ----------------
                       Row(
                         children: [
                           Expanded(
