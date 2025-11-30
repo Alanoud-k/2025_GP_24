@@ -27,11 +27,11 @@ class _ChildCardPaymentDetailsScreenState
   static const Color kBg = Color(0xFFF7F8FA);
   static const Color kTextDark = Color(0xFF222222);
 
+  // Merchants list without Star Cafe
   final List<String> merchants = const [
     "McDonald's",
     "Albaik",
     "Alnahdi Pharmacy",
-    "Star Cafe",
     "Starbucks",
   ];
 
@@ -77,16 +77,29 @@ class _ChildCardPaymentDetailsScreenState
         final tx = decoded["data"];
         final category = decoded["mlCategory"];
 
+        // Success message
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
-              "Payment stored. Category: $category",
+              "Payment completed successfully.",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
             ),
+            duration: Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
           ),
         );
 
-        // Example: print transaction id
-        // debugPrint("Transaction id: ${tx["id"]}");
+        // Go back to card screen after 5 seconds
+        Future.delayed(const Duration(seconds: 5), () {
+          if (!mounted) return;
+          Navigator.pop(context); // back from Payment Details
+          Navigator.pop(context); // back from Scan to Card screen
+        });
+
+        // Example debug usage if needed:
+        // debugPrint("Transaction id: ${tx["transactionid"]}, category: $category");
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -146,6 +159,7 @@ class _ChildCardPaymentDetailsScreenState
             ),
             const SizedBox(height: 24),
 
+            // Payment summary card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -211,6 +225,7 @@ class _ChildCardPaymentDetailsScreenState
 
             const Spacer(),
 
+            // Confirm & Pay button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
