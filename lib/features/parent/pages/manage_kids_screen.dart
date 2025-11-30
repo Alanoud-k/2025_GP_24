@@ -759,7 +759,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           backgroundColor: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -792,7 +794,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                     Expanded(
@@ -803,7 +808,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
                           if (value == null || value <= 0) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Enter a valid amount")),
+                              const SnackBar(
+                                content: Text("Enter a valid amount"),
+                              ),
                             );
                             return;
                           }
@@ -820,7 +827,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                         ),
                         child: const Text(
                           "Save",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -885,7 +895,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: SingleChildScrollView(
@@ -909,7 +921,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       icon: Icons.person_outline,
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Enter first name';
-                        if (!RegExp(r'^[a-zA-Z]+$').hasMatch(v)) return 'Letters only';
+                        if (!RegExp(r'^[a-zA-Z]+$').hasMatch(v))
+                          return 'Letters only';
                         return null;
                       },
                     ),
@@ -921,7 +934,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       keyboardType: TextInputType.number,
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Enter National ID';
-                        if (!RegExp(r'^[0-9]{10}$').hasMatch(v)) return 'Must be 10 digits';
+                        if (!RegExp(r'^[0-9]{10}$').hasMatch(v))
+                          return 'Must be 10 digits';
                         return null;
                       },
                     ),
@@ -948,16 +962,25 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
                         labelText: "Date of Birth",
-                        prefixIcon: const Icon(Icons.calendar_today, color: Colors.grey, size: 20),
+                        prefixIcon: const Icon(
+                          Icons.calendar_today,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
-                      validator: (v) => v == null || v.isEmpty ? 'Select date of birth' : null,
+                      validator: (v) => v == null || v.isEmpty
+                          ? 'Select date of birth'
+                          : null,
                       onTap: () async {
                         FocusScope.of(context).unfocus();
                         final pickedDate = await showDatePicker(
@@ -968,14 +991,19 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                           builder: (context, child) {
                             return Theme(
                               data: ThemeData.light().copyWith(
-                                colorScheme: const ColorScheme.light(primary: hassalaGreen1),
+                                colorScheme: const ColorScheme.light(
+                                  primary: hassalaGreen1,
+                                ),
                               ),
                               child: child!,
                             );
                           },
                         );
                         if (pickedDate != null) {
-                          dob.text = pickedDate.toIso8601String().split("T").first;
+                          dob.text = pickedDate
+                              .toIso8601String()
+                              .split("T")
+                              .first;
                         }
                       },
                     ),
@@ -988,7 +1016,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Enter password';
                         if (v.length < 8) return 'Min 8 chars';
-                        if (!RegExp(r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])').hasMatch(v)) {
+                        if (!RegExp(
+                          r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
+                        ).hasMatch(v)) {
                           return 'Use upper, lower, number & special char';
                         }
                         return null;
@@ -1013,7 +1043,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ),
                         ),
                         Expanded(
@@ -1033,7 +1066,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                               if (exists) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("Phone already linked to user."),
+                                    content: Text(
+                                      "Phone already linked to user.",
+                                    ),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -1055,7 +1090,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                             },
                             child: const Text(
                               "Add Child",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -1150,7 +1188,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
       return false;
     }
@@ -1188,7 +1228,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: hassalaGreen1, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       validator: validator,
     );
@@ -1216,7 +1259,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     IconButton(
@@ -1240,90 +1286,120 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
               // Content List
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: hassalaGreen1))
+                    ? const Center(
+                        child: CircularProgressIndicator(color: hassalaGreen1),
+                      )
                     : _children.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.family_restroom_outlined, size: 80, color: Colors.black12),
-                                SizedBox(height: 16),
-                                Text(
-                                  "No children added yet",
-                                  style: TextStyle(fontSize: 16, color: Colors.black38),
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.family_restroom_outlined,
+                              size: 80,
+                              color: Colors.black12,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              "No children added yet",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black38,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        itemCount: _children.length,
+                        itemBuilder: (context, index) {
+                          final kid = _children[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            itemCount: _children.length,
-                            itemBuilder: (context, index) {
-                              final kid = _children[index];
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 16),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              onTap: () => _openEditLimitDialog(kid),
+                              leading: Container(
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                                  color: hassalaGreen2.withOpacity(0.1),
+                                  shape: BoxShape.circle,
                                 ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  onTap: () => _openEditLimitDialog(kid),
-                                  leading: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: hassalaGreen2.withOpacity(0.1),
-                                      shape: BoxShape.circle,
+                                child: const Icon(
+                                  Icons.person,
+                                  color: hassalaGreen2,
+                                  size: 24,
+                                ),
+                              ),
+                              title: Text(
+                                kid["firstName"],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: textDark,
+                                ),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Phone: ${kid["phoneNo"]}",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                    child: const Icon(Icons.person, color: hassalaGreen2, size: 24),
-                                  ),
-                                  title: Text(
-                                    kid["firstName"],
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: textDark,
-                                    ),
-                                  ),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                    const SizedBox(height: 4),
+                                    Row(
                                       children: [
-                                        Text(
-                                          "Phone: ${kid["phoneNo"]}",
-                                          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                        const Icon(
+                                          Icons.account_balance_wallet_outlined,
+                                          size: 14,
+                                          color: hassalaGreen1,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.account_balance_wallet_outlined, size: 14, color: hassalaGreen1),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              "Limit: ${kid["limitAmount"].toStringAsFixed(0)} SAR",
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: hassalaGreen1,
-                                              ),
-                                            ),
-                                          ],
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          "Limit: ${kid["limitAmount"].toStringAsFixed(0)} SAR",
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: hassalaGreen1,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  trailing: const Icon(Icons.edit_outlined, color: Colors.grey, size: 20),
+                                  ],
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                              trailing: const Icon(
+                                Icons.edit_outlined,
+                                color: Colors.grey,
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),

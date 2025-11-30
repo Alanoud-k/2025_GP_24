@@ -94,49 +94,59 @@ app.get("/payment-success", (_req, res) => {
     <html>
       <head>
         <title>Payment Successful</title>
+        <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
         <style>
+          html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+          }
+
           body {
             background: linear-gradient(#F7FAFC, #E6F4F3);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
             color: #1A3C40;
           }
+
           .card {
             background: white;
-            padding: 55px 40px;
+            padding: 60px 35px;
             border-radius: 26px;
             box-shadow: 0 4px 14px rgba(0,0,0,0.12);
             text-align: center;
-            max-width: 420px;
-            width: 92%;
+            width: 90%;
+            max-width: 380px;
           }
+
           .check {
-            font-size: 70px;
+            font-size: 90px;
             color: #37C4BE;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
           }
+
           .title {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
-            margin-bottom: 10px;
-            color: #1A3C40;
+            margin-bottom: 12px;
           }
+
           .msg {
-            font-size: 16px;
+            font-size: 17px;
+            line-height: 1.5;
             color: #555;
-            margin-bottom: 18px;
-            line-height: 1.4;
-          }
-          .closing {
-            font-size: 14px;
-            color: #888;
           }
         </style>
       </head>
+
       <body>
         <div class="card">
           <div class="check">✔</div>
@@ -146,15 +156,16 @@ app.get("/payment-success", (_req, res) => {
             You can safely close this page.
           </div>
         </div>
+
         <script>
-          setTimeout(() => {
-            window.close();
-          }, 3000);
+          setTimeout(() => window.close(), 3000);
         </script>
       </body>
     </html>
   `);
 });
+
+
 
 app.get("/payment-failed", (_req, res) => {
   res.send("Payment failed.");

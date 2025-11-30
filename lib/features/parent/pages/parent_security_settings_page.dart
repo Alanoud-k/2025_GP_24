@@ -351,46 +351,93 @@ class _ParentSecuritySettingsPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Security Settings'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _sectionTitle("Security"),
-
-          _securityCard(
-            icon: Icons.lock_outline,
-            title: "Change password",
-            onTap: () => _showChangeParentPasswordDialog(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-
-          const SizedBox(height: 14),
-
-          _securityCard(
-            icon: Icons.child_care_outlined,
-            title: "Change child password",
-            onTap: children.isEmpty
-                ? null
-                : () => _showChangeChildPasswordDialog(),
-          ),
-
-          if (children.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 12),
-              child: Text(
-                "No children found",
-                style: TextStyle(color: Colors.grey),
+        ),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              // HEADER -------------------------------------------------------
+              // HEADER -------------------------------------------------------
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF2C3E50),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    "Security Settings",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                ],
               ),
-            ),
-        ],
+
+              const SizedBox(height: 25),
+
+              _sectionTitle("Security"),
+
+              // --- Change Parent Password ------------------------------------
+              _securityCard(
+                icon: Icons.lock,
+                title: "Change password",
+                color: const Color(0xFF37C4BE),
+                onTap: () => _showChangeParentPasswordDialog(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // --- Change Child Password -------------------------------------
+              _securityCard(
+                icon: Icons.child_care_rounded,
+                title: "Change child password",
+                color: const Color(0xFF2EA49E),
+                onTap: children.isEmpty
+                    ? null
+                    : () => _showChangeChildPasswordDialog(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // --- No Children (ONLY AFTER LOADING) --------------------------
+              if (!isLoadingChildren && children.isEmpty)
+                Center(
+                  child: Column(
+                    children: const [
+                      Icon(
+                        Icons.family_restroom_outlined,
+                        size: 80,
+                        color: Colors.black12,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "No children found",
+                        style: TextStyle(fontSize: 15, color: Colors.black38),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
+  // TITLE STYLE
   Widget _sectionTitle(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -398,33 +445,59 @@ class _ParentSecuritySettingsPageState
         text,
         style: const TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF2C3E50),
         ),
       ),
     );
   }
 
+  // CARD STYLE — MODERN HASSALA STYLE --------------------------------------
   Widget _securityCard({
     required IconData icon,
     required String title,
+    required Color color,
     required VoidCallback? onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 5),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.teal.withOpacity(0.15),
-          child: Icon(icon, color: Colors.teal),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 14,
         ),
-        title: Text(title),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        leading: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2C3E50),
+          ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey,
+        ),
         onTap: onTap,
       ),
     );
