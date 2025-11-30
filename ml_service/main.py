@@ -3,13 +3,14 @@ from pydantic import BaseModel
 import joblib
 import numpy as np
 
-MODEL_PATH = "hassalah_ml_model.pkl"
-model = joblib.load(MODEL_PATH)
-
 class MerchantInput(BaseModel):
     merchant_name: str
 
 app = FastAPI()
+
+# Load model + label encoder
+model = joblib.load("hassalah_ml_model.pkl")
+label_encoder = joblib.load("label_encoder.pkl")
 
 @app.get("/")
 def home():
@@ -19,16 +20,17 @@ def home():
 def predict_category(data: MerchantInput):
     merchant = data.merchant_name
 
-    # Model prediction
-    raw_pred = model.predict([merchant])[0]
+    # Predict encoded label (number)
+    encoded_pred = model.predict([merchant])[0]
 
-    # Convert numpy types to pure Python
-    if isinstance(raw_pred, (np.int64, np.int32, np.float64, np.float32)):
-        raw_pred = raw_pred.item()  # convert to Python int/float
-    else:
-        raw_pred = str(raw_pred)
+    # Convert numpy type to int
+    if isinstance(encoded_pred, (np.integer,)):
+        encoded_pred = int(encoded_pred)
+
+    # Decode number → original category name
+    decoded_category = label_encoder.inverse_transform([encoded_pred])[0]
 
     return {
         "merchant_name": merchant,
-        "predicted_category": raw_pred
+        "predicted_category": decoded_category
     }
