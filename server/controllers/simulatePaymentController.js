@@ -7,7 +7,7 @@ export const simulateCardPayment = async (req, res) => {
       childId,
       amount,
       merchantName,
-      receiverAccountId
+      receiverAccountId,
     } = req.body;
 
     if (!childId || !amount || !merchantName || !receiverAccountId) {
@@ -19,11 +19,12 @@ export const simulateCardPayment = async (req, res) => {
 
     const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
 
+    // Call ML service
     const mlRes = await fetch(`${mlUrl}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        merchant_name: merchantName
+        merchant_name: merchantName,
       }),
     });
 
@@ -43,6 +44,7 @@ export const simulateCardPayment = async (req, res) => {
       mlData?.category ||
       "Uncategorized";
 
+    // Insert transaction (no created_at column)
     const rows = await sql`
       INSERT INTO "Transaction" (
         "transactiontype",
@@ -52,7 +54,7 @@ export const simulateCardPayment = async (req, res) => {
         "sourcetype",
         "transactioncategory",
         "receiverAccountId",
-        "created_at"
+        "categorysource"
       )
       VALUES (
         'Spend',
@@ -62,7 +64,7 @@ export const simulateCardPayment = async (req, res) => {
         'Payment',
         ${category},
         ${receiverAccountId},
-        NOW()
+        'ML'
       )
       RETURNING *;
     `;
@@ -70,9 +72,8 @@ export const simulateCardPayment = async (req, res) => {
     return res.status(201).json({
       status: "success",
       data: rows[0],
-      mlCategory: category
+      mlCategory: category,
     });
-
   } catch (err) {
     return res.status(500).json({
       message: "Internal server error",
