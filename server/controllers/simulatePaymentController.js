@@ -44,7 +44,7 @@ export const simulateCardPayment = async (req, res) => {
       mlData?.category ||
       "Uncategorized";
 
-    // Insert transaction (no created_at column)
+    // Insert transaction 
     const rows = await sql`
       INSERT INTO "Transaction" (
         "transactiontype",
@@ -57,9 +57,9 @@ export const simulateCardPayment = async (req, res) => {
         "categorysource"
       )
       VALUES (
-        'Spend',
+        'Payment',
         ${amount},
-        'Completed',
+        'Success',
         ${merchantName},
         'Payment',
         ${category},
