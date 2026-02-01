@@ -75,7 +75,10 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
             : int.tryParse(expYearRaw?.toString() ?? '');
 
         final hasRealCard =
-            last4 != null && last4.isNotEmpty && brand != null && brand.isNotEmpty;
+            last4 != null &&
+            last4.isNotEmpty &&
+            brand != null &&
+            brand.isNotEmpty;
 
         setState(() {
           _hasCard = hasRealCard;
@@ -95,9 +98,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
           _hasCard = false;
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load card')),
-        );
+        _showErrorBar('Failed to load card');
       }
     } catch (_) {
       if (!mounted) return;
@@ -105,9 +106,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
         _hasCard = false;
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error while loading card')),
-      );
+      _showErrorBar('Error while loading card');
     }
   }
 
@@ -155,32 +154,165 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Remove card?'),
-        content: const Text(
-          'Are you sure you want to remove this card? You can add a new one later.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Remove',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await _showConfirmDialog(
+      title: "Remove card?",
+      message:
+          "Are you sure you want to remove this card? You can add a new one later.",
+      confirmText: "Remove",
+      confirmColor: const Color(0xFFE74C3C),
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       await _deleteCard();
     }
+  }
+
+  // ✅ Unified Hassala Snackbars
+  void _showErrorBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFFE74C3C),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSuccessBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF2EA49E),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // ✅ Unified Hassala-style confirm dialog (teal)
+  Future<bool> _showConfirmDialog({
+    required String title,
+    required String message,
+    required String confirmText,
+    String cancelText = "Cancel",
+    Color confirmColor = const Color(0xFFE74C3C), // red for destructive
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF37C4BE).withOpacity(0.14),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.credit_card_off_rounded,
+                        color: Color(0xFF2EA49E),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2C3E50),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.35,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF2C3E50),
+                            side: BorderSide(
+                              color: Colors.black12.withOpacity(0.12),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            cancelText,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: confirmColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            confirmText,
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   Future<void> _deleteCard() async {
@@ -205,21 +337,14 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
       }
 
       if (res.statusCode == 200 || res.statusCode == 204) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Card removed successfully')),
-        );
+        _showSuccessBar('Card removed successfully');
         Navigator.pop(context, true);
+        //Navigator.pop(context, true);
       } else if (res.statusCode == 404) {
         // No card already → اعتبرها نجاح وارجعي للهوم
         Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to remove card (code: ${res.statusCode})',
-            ),
-          ),
-        );
+        _showErrorBar('Failed to remove card (code: ${res.statusCode})');
       }
     } catch (e) {
       if (!mounted) return;
@@ -256,11 +381,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
         ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            thickness: 1,
-            color: Color(0xFFEDEDED),
-          ),
+          child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED)),
         ),
       ),
       body: _isLoading
@@ -305,8 +426,10 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE4F4F2),
                       borderRadius: BorderRadius.circular(20),
@@ -355,10 +478,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
                     children: [
                       const Text(
                         'Expires',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 11, color: Colors.black54),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -379,10 +499,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
         const SizedBox(height: 16),
         const Text(
           'Only one card can be saved for this parent account.',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.black54),
         ),
         const Spacer(),
         SafeArea(

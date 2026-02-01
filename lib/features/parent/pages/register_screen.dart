@@ -17,9 +17,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final dob = TextEditingController();
   final password = TextEditingController();
   final securityAnswer = TextEditingController();
+  final confirmPassword = TextEditingController(); // ✅ NEW: confirm password
 
   String phoneNo = '';
   bool _obscure = true;
+  bool _obscureConfirm = true; // ✅ NEW: toggle confirm field
+  bool _isLoading = false;
 
   @override
   void didChangeDependencies() {
@@ -35,8 +38,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     nationalId.dispose();
     dob.dispose();
     password.dispose();
+    confirmPassword.dispose(); // ✅ NEW
     securityAnswer.dispose();
     super.dispose();
+  }
+
+  void _showErrorBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFFE74C3C), // 🔴 soft red
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // ✅ OPTIONAL (keep for success)
+  void _showSuccessBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   void _showPasswordRequirementsDialog(BuildContext context) {
@@ -86,9 +121,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
+  // ✅ NEW: National ID / Iqama validation (10 digits)
+  String? _nationalIdValidator(String? v) {
+    final value = (v ?? '').trim();
+    if (value.isEmpty) return "Required field";
+    if (!RegExp(r'^\d{10}$').hasMatch(value)) {
+      return "National ID / Iqama must be 10 digits";
+    }
+    return null;
+  }
+
+  // ✅ NEW: Confirm password validation
+  String? _confirmPasswordValidator(String? v) {
+    final value = (v ?? '').trim();
+    if (value.isEmpty) return "Confirm your password";
+    if (value != password.text.trim()) return "Passwords do not match";
+    return null;
+  }
+
   Future<void> _registerParent() async {
     if (!_formKey.currentState!.validate()) return;
-
+    // ✅ NEW: stop double submissions
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
     final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
 
     try {
@@ -109,12 +164,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Registered successfully! Please log in."),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // ✅ CHANGED: success bar style (optional, keep if you want)
+        _showSuccessBar("Registered successfully! Please log in.");
 
         Navigator.pushReplacementNamed(
           context,
@@ -122,19 +173,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           arguments: {'phoneNo': phoneNo},
         );
       } else {
-        final error = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error['error'] ?? 'Registration failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // ✅ CHANGED: backend error popup now uses red Hassala bar
+        final decoded = jsonDecode(response.body);
+        _showErrorBar(decoded['error'] ?? 'Registration failed');
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      // ✅ CHANGED: network error uses same red bar
+      _showErrorBar("Error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -224,6 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 nationalId,
                                 "National ID / Iqama",
                                 keyboardType: TextInputType.number,
+                                validator: _nationalIdValidator,
                               ),
                               const SizedBox(height: 15),
 
@@ -244,6 +293,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 20,
                                       vertical: 18,
+                                    ),
+                                    // ✅ NEW: show info dialog button (optional)
+                                    prefixIcon: IconButton(
+                                      icon: const Icon(
+                                        Icons.info_outline,
+                                        color: Colors.black54,
+                                      ),
+                                      onPressed: () =>
+                                          _showPasswordRequirementsDialog(
+                                            context,
+                                          ),
                                     ),
                                     suffixIcon: GestureDetector(
                                       onTap: () =>
@@ -278,6 +338,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     }
                                     return null;
                                   },
+                                ),
+                              ),
+
+                              const SizedBox(height: 15),
+
+                              // ✅ NEW: CONFIRM PASSWORD FIELD
+                              Material(
+                                elevation: 10,
+                                shadowColor: Colors.black12,
+                                borderRadius: BorderRadius.circular(20),
+                                child: TextFormField(
+                                  controller: confirmPassword,
+                                  obscureText: _obscureConfirm,
+                                  decoration: InputDecoration(
+                                    hintText: "Confirm Password",
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 18,
+                                    ),
+                                    suffixIcon: GestureDetector(
+                                      onTap: () => setState(
+                                        () =>
+                                            _obscureConfirm = !_obscureConfirm,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 12,
+                                        ),
+                                        child: Icon(
+                                          _obscureConfirm
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          size: 26,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  validator: _confirmPasswordValidator,
                                 ),
                               ),
 

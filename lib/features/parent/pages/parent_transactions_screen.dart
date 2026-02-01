@@ -314,13 +314,25 @@ class _TransactionCard extends StatelessWidget {
           const SizedBox(width: 8),
 
           // Amount
-          Text(
-            "﷼ ${transaction.amount.toStringAsFixed(2)}",
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: amountColor,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/icons/Sar.png',
+                width: 14,
+                height: 14,
+                color: amountColor,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                transaction.amount.toStringAsFixed(2),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: amountColor,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -45,11 +45,41 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (!mounted) return;
         setState(() {
           firstName = data['firstName'] ?? '';
         });
       }
     } catch (_) {}
+  }
+
+  // =========================================================
+  // ✅ ADDED: Unified Hassala-style floating bar message
+  // (looks like your "Enter a valid amount" bar)
+  // =========================================================
+  void _showHassalaBar(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+        backgroundColor: const Color(0xFFE74C3C), // Hassala teal
+        elevation: 10,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+    );
   }
 
   Future<void> _loginParent() async {
@@ -69,26 +99,30 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         }),
       );
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      final body = jsonDecode(response.body);
+      // ✅ Safe decode (some servers may return non-json on errors)
+      Map<String, dynamic> body = {};
+      try {
+        body = jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (_) {
+        body = {};
+      }
 
       if (response.statusCode == 200) {
         final token = body['token'] as String?;
         final parentId = body['parentId'];
 
         if (token == null || parentId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Login response missing token or parentId'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          // =========================================================
+          // ✅ CHANGED: use Hassala bar instead of red SnackBar
+          // =========================================================
+          _showHassalaBar('Login response missing token or parentId');
           return;
         }
 
         final prefs = await SharedPreferences.getInstance();
-        // Clear any stale data before storing fresh session
         await prefs.clear();
         await prefs.setString('token', token);
         await prefs.setString('role', 'Parent');
@@ -110,15 +144,20 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
             body['message'] ??
             'Login failed, please try again';
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-        );
+        // =========================================================
+        // ✅ CHANGED: backend errors show in teal floating bar
+        // (wrong password / account not found / etc.)
+        // =========================================================
+        _showHassalaBar(errorMessage.toString());
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
+
+      // =========================================================
+      // ✅ CHANGED: network errors show in teal floating bar
+      // =========================================================
+      _showHassalaBar('Error: $e');
     }
   }
 
@@ -136,7 +175,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // ← زر الرجوع
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -150,7 +188,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                   },
                 ),
               ),
-
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
@@ -163,15 +200,12 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                           child: Column(
                             children: [
                               const SizedBox(height: 10),
-
                               Image.asset(
                                 'assets/logo/hassalaLogo5.png',
                                 width: MediaQuery.of(context).size.width * 0.90,
                                 fit: BoxFit.contain,
                               ),
-
                               const SizedBox(height: 10),
-
                               const Text(
                                 "Welcome Back",
                                 style: TextStyle(
@@ -180,9 +214,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                   color: Color(0xFF2C3E50),
                                 ),
                               ),
-
                               const SizedBox(height: 10),
-
                               Text(
                                 firstName.isNotEmpty ? firstName : phoneNo,
                                 style: const TextStyle(
@@ -191,9 +223,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                   color: Color(0xFF2C3E50),
                                 ),
                               ),
-
                               const SizedBox(height: 25),
-
                               const Text(
                                 'Enter your password',
                                 style: TextStyle(
@@ -201,9 +231,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                   color: Color(0xFF333333),
                                 ),
                               ),
-
                               const SizedBox(height: 30),
-
                               Material(
                                 elevation: 10,
                                 shadowColor: Colors.black12,
@@ -249,9 +277,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                       : null,
                                 ),
                               ),
-
                               const SizedBox(height: 15),
-
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: GestureDetector(
@@ -275,9 +301,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                   ),
                                 ),
                               ),
-
                               const SizedBox(height: 40),
-
                               SizedBox(
                                 width: double.infinity,
                                 child: DecoratedBox(
@@ -317,7 +341,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                   ),
                                 ),
                               ),
-
                               const SizedBox(height: 40),
                             ],
                           ),

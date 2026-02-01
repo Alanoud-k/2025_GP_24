@@ -31,9 +31,83 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
   @override
   void dispose() {
     _markAllRead();
-
-    /// FIX: mark read
     super.dispose();
+  }
+
+  // ---------------- SAR ICON ----------------
+  Widget _sarIcon({double size = 14, Color? color}) {
+    return Image.asset(
+      'assets/icons/Sar.png',
+      width: size,
+      height: size,
+      color: color,
+    );
+  }
+
+  /// Put Sar.png right before the amount inside the sentence.
+  /// Supports:
+  /// - "... requested 50"
+  /// - "... requested SR 50"
+  /// - "... requested SAR 50.00"
+  /// - "... requested ﷼ 50"
+  Widget _messageWithSar(String message) {
+    // No (?i) here — Dart RegExp doesn't support inline flags.
+    // We'll use caseSensitive: false.
+    final reg = RegExp(
+      r'\b(requested|sent you|for)\b\s*(?:SAR|SR|﷼)?\s*([0-9]+(?:\.[0-9]{1,2})?)',
+      caseSensitive: false,
+    );
+
+    final match = reg.firstMatch(message);
+
+    const baseStyle = TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFF2C3E50),
+    );
+
+    if (match == null) {
+      return Text(message, style: baseStyle);
+    }
+
+    final amountStr = match.group(2)!;
+
+    // Dart Match doesn't support start/end for groups, so we find the amount location manually.
+    final amountStart = message.indexOf(amountStr, match.start);
+    if (amountStart == -1) {
+      return Text(message, style: baseStyle);
+    }
+    final amountEnd = amountStart + amountStr.length;
+
+    final before = message.substring(0, amountStart);
+    final after = message.substring(amountEnd);
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: before, style: baseStyle),
+
+          // Icon directly before the number
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: _sarIcon(size: 14, color: const Color(0xFF2C3E50)),
+            ),
+          ),
+
+          TextSpan(
+            text: amountStr,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF2C3E50),
+            ),
+          ),
+          TextSpan(text: after, style: baseStyle),
+        ],
+      ),
+    );
   }
 
   Future<void> _markAllRead() async {
@@ -66,12 +140,11 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
       } else {
         setState(() => _loading = false);
       }
-    } catch (err) {
+    } catch (_) {
       setState(() => _loading = false);
     }
   }
 
-  /// NEW: same styling as parent notifications
   IconData _icon(String type) {
     switch (type) {
       case "REQUEST_APPROVED":
@@ -107,7 +180,6 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
         foregroundColor: Colors.black,
       ),
       backgroundColor: const Color(0xffF7F8FA),
-
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
@@ -117,7 +189,8 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
               itemCount: _notifications.length,
               itemBuilder: (_, i) {
                 final n = _notifications[i];
-                final type = n["type"];
+                final type = (n["type"] ?? "").toString();
+                final message = (n["message"] ?? "").toString();
 
                 return Container(
                   padding: const EdgeInsets.all(14),
@@ -134,7 +207,6 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
                   ),
                   child: Row(
                     children: [
-                      /// NEW ICON
                       Container(
                         width: 40,
                         height: 40,
@@ -144,21 +216,12 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
                         ),
                         child: Icon(_icon(type), color: _color(type), size: 22),
                       ),
-
                       const SizedBox(width: 12),
-
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              n["message"],
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C3E50),
-                              ),
-                            ),
+                            _messageWithSar(message),
                             const SizedBox(height: 5),
                             Text(
                               (n["createdAt"] ?? "")

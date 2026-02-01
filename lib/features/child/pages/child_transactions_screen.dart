@@ -125,10 +125,7 @@ class _ChildTransactionsScreenState extends State<ChildTransactionsScreen> {
         iconTheme: const IconThemeData(color: kTextDark),
         title: const Text(
           "Transactions",
-          style: TextStyle(
-            color: kTextDark,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: kTextDark, fontWeight: FontWeight.w600),
         ),
       ),
       body: RefreshIndicator(
@@ -144,9 +141,7 @@ class _ChildTransactionsScreenState extends State<ChildTransactionsScreen> {
 
   Widget _buildBody() {
     if (_isLoading && _transactions.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
@@ -163,10 +158,7 @@ class _ChildTransactionsScreenState extends State<ChildTransactionsScreen> {
       return const Center(
         child: Text(
           "No transactions yet.",
-          style: TextStyle(
-            color: Colors.black45,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.black45, fontSize: 14),
         ),
       );
     }
@@ -265,7 +257,7 @@ class _TransactionCard extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 14,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -279,11 +271,7 @@ class _TransactionCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               color: Colors.grey.shade100,
             ),
-            child: Icon(
-              icon,
-              size: 22,
-              color: Colors.grey.shade700,
-            ),
+            child: Icon(icon, size: 22, color: Colors.grey.shade700),
           ),
           const SizedBox(width: 12),
           // title and subtitle
@@ -317,13 +305,26 @@ class _TransactionCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // amount
-          Text(
-            "﷼ ${transaction.amount.toStringAsFixed(2)}",
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: amountColor,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/icons/Sar.png',
+                width: 14,
+                height: 14,
+                color:
+                    amountColor, // remove if your PNG already has the right color
+              ),
+              const SizedBox(width: 4),
+              Text(
+                transaction.amount.toStringAsFixed(2),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: amountColor,
+                ),
+              ),
+            ],
           ),
         ],
       ),

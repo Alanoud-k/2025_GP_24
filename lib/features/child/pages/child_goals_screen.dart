@@ -135,6 +135,116 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     return {"saving": parse(saving), "spending": parse(spending)};
   }
 
+  ////////////////
+  String _extractMessage(
+    http.Response res, {
+    String fallback = "Something went wrong",
+  }) {
+    try {
+      final data = jsonDecode(res.body);
+      final msg =
+          data["error"] ?? data["message"] ?? data["msg"] ?? data["details"];
+      final s = (msg ?? "").toString().trim();
+      return s.isNotEmpty ? s : fallback;
+    } catch (_) {
+      final raw = res.body.toString().trim();
+      return raw.isNotEmpty ? raw : fallback;
+    }
+  }
+
+  void _showErrorBar(String msg) {
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        duration: const Duration(seconds: 4),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE74C3C), // Hassala red
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.white),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  msg,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessBar(String msg) {
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        duration: const Duration(seconds: 3),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2EA49E), // Hassala green
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.check_circle_outline_rounded,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  msg,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// ---------------- MOVE SAVING <-> SPENDING ----------------
   Future<void> _moveAmount(String type) async {
     final ctrl = TextEditingController();
@@ -195,6 +305,12 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     );
 
     if (amount == null) return;
+    final available = (type == "move-in") ? _spendingBalance : _savingBalance;
+
+    if (amount > available) {
+      _showErrorBar("You don’t have enough balance to move this amount.");
+      return;
+    }
 
     final url = Uri.parse("${widget.baseUrl}/api/saving/$type");
 
@@ -211,14 +327,14 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       }
 
       if (res.statusCode < 200 || res.statusCode > 299) {
-        throw Exception("Failed (${res.statusCode})");
+        _showErrorBar("Move failed. Please try again.");
+        return;
       }
 
+      _showSuccessBar("Moved successfully");
       await _bootstrap();
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Move failed: $e")));
+    } catch (_) {
+      _showErrorBar("Network error. Please try again.");
     }
   }
 
@@ -490,8 +606,10 @@ class _SavingSpendingPill extends StatelessWidget {
                   color: color,
                 ),
               ),
-              Text(
-                "﷼ ${amount.toStringAsFixed(2)}",
+              SarAmount(
+                amount: amount,
+                decimals: 2,
+                iconSize: 13,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
@@ -632,25 +750,59 @@ class _ActiveGoalCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  "Target: ﷼ ${goal.targetAmount.toStringAsFixed(0)}",
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: kTextSecondary,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "Target:",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: kTextSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    SarAmount(
+                      amount: goal.targetAmount,
+                      decimals: 0,
+                      iconSize: 12,
+                      iconColor: kTextSecondary,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: kTextSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 6),
 
-            Text(
-              "Remaining: ﷼ ${remaining.toStringAsFixed(0)}",
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: kTextSecondary,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Remaining:",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: kTextSecondary,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                SarAmount(
+                  amount: remaining.toDouble(),
+                  decimals: 0,
+                  iconSize: 12,
+                  iconColor: kTextSecondary,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: kTextSecondary,
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 10),
@@ -742,13 +894,30 @@ class _CompletedGoalCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          Text(
-            "Target: ﷼ ${goal.targetAmount.toStringAsFixed(0)}",
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: kTextSecondary,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Target:",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: kTextSecondary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              SarAmount(
+                amount: goal.targetAmount,
+                decimals: 0,
+                iconSize: 12,
+                iconColor: kTextSecondary,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: kTextSecondary,
+                ),
+              ),
+            ],
           ),
 
           //---------------- Redeem button ----------------
@@ -774,6 +943,40 @@ class _CompletedGoalCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class SarAmount extends StatelessWidget {
+  final double amount;
+  final TextStyle style;
+  final double iconSize;
+  final Color? iconColor;
+  final int decimals;
+
+  const SarAmount({
+    super.key,
+    required this.amount,
+    required this.style,
+    this.iconSize = 14,
+    this.iconColor,
+    this.decimals = 2,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/icons/Sar.png',
+          width: iconSize,
+          height: iconSize,
+          color: iconColor ?? style.color,
+        ),
+        const SizedBox(width: 4),
+        Text(amount.toStringAsFixed(decimals), style: style),
+      ],
     );
   }
 }

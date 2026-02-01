@@ -105,7 +105,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   }*/
 
   // ---------------------------------------------------------
-  //Logout
+  // Logout
   // ---------------------------------------------------------
   void _performLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -176,13 +176,12 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    print("BASE URL = ${widget.baseUrl}");
-    // print("AVATAR URL = ${widget.avatarUrl}");
+    // debugPrint("BASE URL = ${widget.baseUrl}");
+    // debugPrint("AVATAR URL = ${widget.avatarUrl}");
 
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
-
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -191,7 +190,6 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-
         child: isLoading
             ? const Center(child: CircularProgressIndicator(color: Colors.teal))
             : SafeArea(
@@ -203,7 +201,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                       const SizedBox(height: 20),
 
                       // ---------------------------------------------------------
-                      //  ملف الطفل الشخصي
+                      // ملف الطفل الشخصي
                       // ---------------------------------------------------------
                       Row(
                         children: [
@@ -214,13 +212,12 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                // صورة الطفل أو placeholder
                                 CircleAvatar(
                                   radius: 35,
                                   backgroundColor: Colors.teal,
                                   // backgroundImage: (widget.avatarUrl != null)
-                                  // ? NetworkImage("${widget.baseUrl}${widget.avatarUrl}")
-                                  // : null,
+                                  //     ? NetworkImage("${widget.baseUrl}${widget.avatarUrl}")
+                                  //     : null,
                                   child: const Icon(
                                     Icons.person,
                                     size: 32,
@@ -232,25 +229,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                                 /*if (uploading)
                                   const CircularProgressIndicator(
                                     color: Colors.white,
-                                  ),
-*/
-                                // // زر تعديل صغير (دائري)
-                                // Positioned(
-                                //   bottom: -2,
-                                //   right: -2,
-                                //   child: Container(
-                                //     decoration: BoxDecoration(
-                                //       color: Colors.white,
-                                //       shape: BoxShape.circle,
-                                //     ),
-                                //     padding: const EdgeInsets.all(3),
-                                //     child: const Icon(
-                                //       Icons.add_a_photo,
-                                //       size: 18,
-                                //       color: Colors.teal,
-                                //     ),
-                                //   ),
-                                // ),
+                                  ),*/
                               ],
                             ),
                           ),
@@ -282,7 +261,11 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
 
                       const SizedBox(height: 40),
 
-                      // SECURITY SETTINGS
+                      // ---------------------------------------------------------
+                      // SECURITY SETTINGS (COMMENTED OUT)
+                      // Examiners: only parents can change child password
+                      // ---------------------------------------------------------
+                      /*
                       _buildMenuItem(
                         icon: Icons.lock_outline,
                         title: "Security settings",
@@ -300,7 +283,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                       ),
 
                       const SizedBox(height: 18),
-
+                      */
                       _buildMenuItem(
                         icon: Icons.privacy_tip_outlined,
                         title: "Terms & privacy policy",

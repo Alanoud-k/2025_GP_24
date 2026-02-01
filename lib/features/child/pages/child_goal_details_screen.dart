@@ -578,31 +578,81 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-                                  Text(
-                                    "Saved: ﷼ ${_goal.goalBalance.toStringAsFixed(2)}",
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        "Saved:",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      SarAmount(
+                                        amount: _goal.goalBalance,
+                                        decimals: 2,
+                                        iconSize: 13,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
-                                    "Target: ﷼ ${_goal.targetAmount.toStringAsFixed(2)}",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: kTextSecondary,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        "Target:",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: kTextSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      SarAmount(
+                                        amount: _goal.targetAmount,
+                                        decimals: 2,
+                                        iconSize: 12,
+                                        iconColor: kTextSecondary,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: kTextSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
-                                    "Remaining: ﷼ ${remaining.toStringAsFixed(2)}",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: kTextSecondary,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        "Remaining:",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: kTextSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      SarAmount(
+                                        amount: remaining.toDouble(),
+                                        decimals: 2,
+                                        iconSize: 12,
+                                        iconColor: kTextSecondary,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: kTextSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -890,16 +940,62 @@ class _DetailsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _detailRow("Status", goal.goalStatus),
-          _detailRow("Saved", "﷼ ${goal.goalBalance.toStringAsFixed(2)}"),
-          _detailRow("Target", "﷼ ${goal.targetAmount.toStringAsFixed(2)}"),
-          _detailRow("Remaining", "﷼ ${remaining.toStringAsFixed(2)}"),
+          _detailRow(
+            "Status",
+            Text(
+              goal.goalStatus,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          _detailRow(
+            "Saved",
+            SarAmount(
+              amount: goal.goalBalance,
+              decimals: 2,
+              iconSize: 12,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          _detailRow(
+            "Target",
+            SarAmount(
+              amount: goal.targetAmount,
+              decimals: 2,
+              iconSize: 12,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          _detailRow(
+            "Remaining",
+            SarAmount(
+              amount: remaining.toDouble(),
+              decimals: 2,
+              iconSize: 12,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _detailRow(String k, String v) {
+  Widget _detailRow(String k, Widget value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -914,16 +1010,43 @@ class _DetailsCard extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            v,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: Colors.black87,
-            ),
-          ),
+          value,
         ],
       ),
+    );
+  }
+}
+
+class SarAmount extends StatelessWidget {
+  final double amount;
+  final TextStyle style;
+  final double iconSize;
+  final Color? iconColor;
+  final int decimals;
+
+  const SarAmount({
+    super.key,
+    required this.amount,
+    required this.style,
+    this.iconSize = 14,
+    this.iconColor,
+    this.decimals = 2,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/icons/Sar.png',
+          width: iconSize,
+          height: iconSize,
+          color: iconColor ?? style.color,
+        ),
+        const SizedBox(width: 4),
+        Text(amount.toStringAsFixed(decimals), style: style),
+      ],
     );
   }
 }

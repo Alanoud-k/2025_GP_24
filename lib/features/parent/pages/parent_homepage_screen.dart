@@ -96,6 +96,29 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     );
   }
 
+  // ✅ NEW: Hassala-style TEAL info bar (for "add card first")
+  void _showTealInfoBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        // ✅ TEAL BOX STYLE (floating, rounded, consistent)
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2EA49E),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   // Fetch parent info and card status
   Future<void> fetchParentInfo() async {
     if (token.isEmpty) {
@@ -347,11 +370,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                         labelStyle: fintechLabelStyle,
                         onTap: () async {
                           if (!parentHasCard) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Please add a card first"),
-                              ),
-                            );
+                            // ✅ CHANGED: grey SnackBar -> teal Hassala info bar
+                            _showTealInfoBar("Please add a card first");
                             return;
                           }
 

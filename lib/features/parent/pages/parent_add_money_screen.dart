@@ -61,6 +61,31 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     token = prefs.getString("token") ?? widget.token; // fallback من الwidget
   }
 
+  // ✅✅ NEW: Unified Hassala-style message bar (teal / red / green)
+  void _showMessageBar(
+    String message, {
+    Color backgroundColor = const Color(0xFF37C4BE), // default teal
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: duration,
+      ),
+    );
+  }
+
+  // ✅ Colors for consistency (optional helper)
+  static const Color _tealMsg = Color(0xFF37C4BE);
+  static const Color _redMsg = Color(0xFFE74C3C);
+  static const Color _greenMsg = Color(0xFF27AE60);
+
   // ✅ فتح صفحة الدفع بدون canLaunchUrl + fallback
   Future<void> _openPaymentPage(String redirectUrl) async {
     final uri = Uri.parse(redirectUrl);
@@ -73,8 +98,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
       final ok2 = await launchUrl(uri, mode: LaunchMode.inAppWebView);
 
       if (!ok2 && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Unable to open payment page")),
+        _showMessageBar(
+          "Unable to open payment page",
+          backgroundColor: _redMsg,
         );
       }
     }
@@ -85,16 +111,13 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
     final amount = double.tryParse(amountText);
 
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Enter a valid amount")));
+      _showMessageBar("Enter a valid amount", backgroundColor: _redMsg);
       return;
     }
 
     if (token == null || token!.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Authentication error")));
+      // ✅ CHANGED: unified popup
+      _showMessageBar("Authentication error", backgroundColor: _redMsg);
       return;
     }
 
@@ -124,12 +147,10 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
       final contentType = res.headers["content-type"] ?? "";
       if (!contentType.contains("application/json")) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Server returned non-JSON response (${res.statusCode})",
-            ),
-          ),
+        // ✅ CHANGED: unified popup
+        _showMessageBar(
+          "Server returned non-JSON response (${res.statusCode})",
+          backgroundColor: _redMsg,
         );
         return;
       }
@@ -238,11 +259,16 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                       keyboardType: TextInputType.number,
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.attach_money_rounded,
-                          color: Colors.grey,
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Image.asset(
+                            'assets/icons/Sar.png',
+                            width: 20,
+                            height: 20,
+                            color: Colors.grey,
+                          ),
                         ),
-                        hintText: "e.g. 100",
+                        //hintText: "e.g. 100",
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
@@ -259,8 +285,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 30),
-
+                    const SizedBox(height: 12), // 👈 small space
                     // BUTTON -------------------------------------------------
                     SizedBox(
                       width: double.infinity,

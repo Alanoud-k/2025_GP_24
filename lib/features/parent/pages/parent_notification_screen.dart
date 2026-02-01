@@ -110,6 +110,43 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
     }
   }
 
+  Widget _sarIcon({double size = 14, Color? color}) {
+    return Image.asset(
+      'assets/icons/Sar.png',
+      width: size,
+      height: size,
+      color: color,
+    );
+  }
+
+  Widget _messageAmountInline(String message) {
+    // Captures: "Your child requested 30.00" => prefix + amount
+    final match = RegExp(r'^(.*?)(\d+(?:\.\d{1,2})?)\s*$').firstMatch(message);
+
+    const baseStyle = TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFF2C3E50),
+    );
+
+    if (match == null) {
+      return Text(message, style: baseStyle);
+    }
+
+    final prefix = match.group(1) ?? "";
+    final amount = match.group(2) ?? "";
+
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(prefix, style: baseStyle),
+        Text(amount, style: baseStyle),
+        const SizedBox(width: 6),
+        _sarIcon(size: 14, color: const Color(0xFF2C3E50)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -174,14 +211,10 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // message
-                              Text(
-                                n["message"] ?? "",
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF2C3E50),
-                                ),
+                              _messageAmountInline(
+                                (n["message"] ?? "").toString(),
                               ),
+
                               const SizedBox(height: 4),
                               // optional child name
                               if (n["childName"] != null)

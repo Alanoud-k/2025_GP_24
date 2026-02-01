@@ -104,7 +104,7 @@ class _MorePageState extends State<MorePage> {
         return;
       }
 
-     if (response.statusCode == 404 ||
+      if (response.statusCode == 404 ||
           response.body.contains("Parent not found")) {
         if (!mounted) return;
         setState(() {
@@ -130,66 +130,115 @@ class _MorePageState extends State<MorePage> {
   }
 
   void _showLogoutConfirmation(BuildContext context) {
+    const kTextDark = Color(0xFF2C3E50);
+    const kRed = Color(0xFFE74C3C);
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
           backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(22),
           ),
-          title: const Row(
-            children: [
-              Icon(Icons.logout, color: Colors.red, size: 24),
-              SizedBox(width: 8),
-              Text(
-                'Log Out',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // soft icon circle
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: kRed.withOpacity(0.12),
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: kRed,
+                    size: 28,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Are you sure you want to log out?',
-            style: TextStyle(fontSize: 16, color: Colors.black54),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color.fromARGB(255, 255, 255, 255),
+                const SizedBox(height: 12),
+
+                const Text(
+                  "Log Out",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: kTextDark,
+                  ),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(200, 152, 152, 152),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 8),
+
+                Text(
+                  "Are you sure you want to log out?",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.35,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: kTextDark,
+                            side: BorderSide(
+                              color: Colors.black12.withOpacity(0.14),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _performLogout();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kRed,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            "Log Out",
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performLogout();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Log Out',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
