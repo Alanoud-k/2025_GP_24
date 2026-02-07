@@ -5,7 +5,7 @@ import '../models/chore_model.dart';
 
 class ChoreService {
   // الرابط الأساسي (تأكدي أنه ينتهي بـ /api/chores)
-static const String baseUrl = "https://2025gp24-production.up.railway.app/api/chores";
+static const String baseUrl = "https://2025gp24-production.up.railway.app";
 
   // دالة مساعدة لجلب التوكن
   Future<String?> _getToken() async {
