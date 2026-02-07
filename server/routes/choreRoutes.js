@@ -15,7 +15,7 @@ router.get("/child/:childId", protect, getChildChores);
 
 // باقي المسارات
 router.get("/parent/:parentId", protect, getParentChores);
-//router.post("/create", protect, createChore);
-//router.patch("/:id/status", protect, updateChoreStatus);
+router.post("/create", protect, createChore);
+router.patch("/:id/status", protect, updateChoreStatus);
 
 export default router;
