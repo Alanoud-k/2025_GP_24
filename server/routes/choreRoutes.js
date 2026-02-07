@@ -2,8 +2,8 @@ import express from "express";
 import { 
   getParentChores, 
   getChildChores, 
-  createChore, 
-  updateChoreStatus 
+  //createChore, 
+  //updateChoreStatus 
 } from "../controllers/choreController.js";
 import { protect } from "../middleware/authMiddleware.js"; 
 
@@ -15,7 +15,7 @@ router.get("/child/:childId", protect, getChildChores);
 
 // باقي المسارات
 router.get("/parent/:parentId", protect, getParentChores);
-router.post("/create", protect, createChore);
-router.patch("/:id/status", protect, updateChoreStatus);
+//router.post("/create", protect, createChore);
+//router.patch("/:id/status", protect, updateChoreStatus);
 
 export default router;
