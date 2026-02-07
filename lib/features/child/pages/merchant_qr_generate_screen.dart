@@ -36,7 +36,6 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
   String? _qrString;
   String? _token;
   DateTime? _expiresAt;
-  final _receiverAccountCtrl = TextEditingController(text: "1");
 
   @override
   void initState() {
@@ -48,7 +47,6 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
   void dispose() {
     _merchantCtrl.dispose();
     _amountCtrl.dispose();
-    _receiverAccountCtrl.dispose();
     super.dispose();
   }
 
@@ -78,21 +76,14 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
       if (amount == null || amount <= 0) {
         throw Exception('Enter a valid amount.');
       }
-      final receiverAccountId = int.tryParse(_receiverAccountCtrl.text.trim());
-      if (receiverAccountId == null || receiverAccountId <= 0) {
-        throw Exception('Enter a valid receiverAccountId.');
-      }
+
       final res = await http.post(
         _createUrl(),
         headers: {
           "Authorization": "Bearer ${widget.token}",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({
-          "merchantName": merchantName,
-          "amount": amount,
-          "receiverAccountId": receiverAccountId,
-        }),
+        body: jsonEncode({"merchantName": merchantName, "amount": amount}),
       );
 
       if (res.statusCode != 200) {
@@ -213,17 +204,7 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _receiverAccountCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: "Receiver Account ID (merchant)",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
+
                       const SizedBox(height: 14),
 
                       ElevatedButton(

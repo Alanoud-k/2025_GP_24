@@ -47,15 +47,11 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   final TextEditingController _amountCtrl = TextEditingController(
     text: "10.00",
   );
-  final TextEditingController _receiverAccountCtrl = TextEditingController(
-    text: "1", // temporary: replace with a real Account ID from your DB
-  );
 
   @override
   void dispose() {
     _merchantCtrl.dispose();
     _amountCtrl.dispose();
-    _receiverAccountCtrl.dispose();
     super.dispose();
   }
 
@@ -229,17 +225,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _receiverAccountCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: "Receiver Account ID (merchant)",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
+
                 const SizedBox(height: 12),
 
                 Row(
@@ -311,10 +297,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
       if (amount == null || amount <= 0) {
         throw Exception("Please enter a valid amount.");
       }
-      final receiverAccountId = int.tryParse(_receiverAccountCtrl.text.trim());
-      if (receiverAccountId == null || receiverAccountId <= 0) {
-        throw Exception("Please enter a valid receiverAccountId.");
-      }
 
       // Backend endpoint you will implement:
       // POST /api/qr/create
@@ -327,11 +309,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
           "Authorization": "Bearer ${widget.token}",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({
-          "merchantName": merchantName,
-          "amount": amount,
-          "receiverAccountId": receiverAccountId,
-        }),
+        body: jsonEncode({"merchantName": merchantName, "amount": amount}),
       );
 
       if (res.statusCode != 200) {

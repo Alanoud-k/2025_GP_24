@@ -213,23 +213,6 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                       ),
 
                       const SizedBox(height: 10),
-
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.qr_code_rounded,
-                            color: Colors.black54,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Token: ${widget.qrToken}',
-                              style: const TextStyle(color: Colors.black54),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),

@@ -231,13 +231,14 @@ export async function confirmQrPayment(req, res) {
     // 3) Update balances + create transaction + mark QR paid
     // Neon serverless often supports multi statements; if it doesn’t in your env,
     // we’ll refactor to safer steps. Start with this simplest version.
-    const txnRows = await sql`
-      INSERT INTO "Transaction"
-        (transactiontype, amount, merchantname, senderaccountid, receiveraccountid, transactionstatus, sourcetype)
-      VALUES
-        ('Payment', ${amount}, ${qr.merchantname}, ${senderAccountId}, ${receiverAccountId}, 'Completed', 'QR')
-      RETURNING transactionid
-    `;
+const txnRows = await sql`
+  INSERT INTO "Transaction"
+    (transactiontype, amount, merchantname, "senderAccountId", "receiverAccountId", transactionstatus, sourcetype)
+  VALUES
+    ('Payment', ${amount}, ${qr.merchantname}, ${senderAccountId}, ${receiverAccountId}, 'Completed', 'QR')
+  RETURNING transactionid
+`;
+
 
     const transactionId = txnRows?.[0]?.transactionid;
 
