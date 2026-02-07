@@ -224,15 +224,15 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                               Icons.check_circle_outline,
                               () {
                                 Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    // نستدعي ParentChildChoresScreen الخاصة بالطفل
-                                    builder: (context) => ParentChildChoresScreen(
-                                      childName: widget.childName,
-                                      childId: widget.childId.toString(), 
-                                    ),
-                                  ),
-                                );
+  context,
+  MaterialPageRoute(
+    builder: (context) => ParentChildChoresScreen(
+      childName: widget.childName,
+      childId: widget.childId.toString(),
+      parentId: widget.parentId, // 👈 لا تنسي إضافة هذا السطر
+    ),
+  ),
+);
                               },
                             ),
                             // ✅✅✅

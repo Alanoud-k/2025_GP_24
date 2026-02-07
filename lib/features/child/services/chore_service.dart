@@ -4,62 +4,42 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chore_model.dart';
 
 class ChoreService {
-  // الرابط الأساسي للسيرفر (تأكدي من مطابقتة لما تستخدمينه في باقي الملفات)
-  static const String baseUrl = "http://10.0.2.2:3000/api/chores";
+  // الرابط الأساسي (تأكدي أنه ينتهي بـ /api/chores)
+static const String baseUrl = "https://2025gp24-production.up.railway.app";
 
-  // دالة مساعدة لجلب التوكن المخزن
+  // دالة مساعدة لجلب التوكن
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
   }
 
-  // 1. جلب مهام طفل محدد (التي استخدمناها في صفحة Overview)
-  // Future<List<ChoreModel>> getChores(String childId) async {
-  //   final token = await _getToken();
-  //   final response = await http.get(
-  //     Uri.parse('$baseUrl/child/$childId'),
-  //     headers: {
-  //       'Authorization': 'Bearer $token',
-  //       'Content-Type': 'application/json',
-  //     },
-  //   );
-
-  //   if (response.statusCode == 200) {
-  //     List<dynamic> body = jsonDecode(response.body);
-  //     return body.map((item) => ChoreModel.fromJson(item)).toList();
-  //   } else {
-  //     throw Exception("فشل في جلب مهام الطفل");
-  //   }
-  // }
-
+  // 1. جلب مهام طفل محدد
   Future<List<ChoreModel>> getChores(String childId) async {
-  final token = await _getToken();
-  final url = Uri.parse('$baseUrl/child/$childId');
-  
-  print("🔍 جاري الطلب من الرابط: $url"); // للتأكد من صحة الرابط
-  
-  final response = await http.get(
-    url,
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
+    final token = await _getToken();
+    final url = Uri.parse('$baseUrl/child/$childId');
+    
+    print("🔍 Fetching from: $url"); 
+    
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
-  if (response.statusCode == 200) {
-    List<dynamic> body = jsonDecode(response.body);
-    return body.map((item) => ChoreModel.fromJson(item)).toList();
-  } else {
-    // 💡 هذا السطر سيطبع لكِ في الـ Terminal سبب الرفض (مثلاً 404 أو 500)
-    print("❌ خطأ من السيرفر: ${response.statusCode} - ${response.body}");
-    throw Exception("السيرفر أعاد خطأ: ${response.statusCode}");
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      return body.map((item) => ChoreModel.fromJson(item)).toList();
+    } else {
+      print("❌ Error: ${response.statusCode} - ${response.body}");
+      throw Exception("Server Error: ${response.statusCode}");
+    }
   }
-}
 
-  // 2. جلب جميع مهام العائلة للأب (لصفحة ParentChoresScreen العامة)
+  // 2. جلب جميع مهام العائلة للأب
   Future<List<ChoreModel>> getAllParentChores(String parentId) async {
     final token = await _getToken();
-    // ملاحظة: تأكدي أن المسار في Node.js هو /api/chores/parent/:parentId
     final response = await http.get(
       Uri.parse('$baseUrl/parent/$parentId'),
       headers: {
@@ -72,11 +52,41 @@ class ChoreService {
       List<dynamic> body = jsonDecode(response.body);
       return body.map((item) => ChoreModel.fromJson(item)).toList();
     } else {
-      throw Exception("فشل في جلب قائمة مهام العائلة");
+      throw Exception("Failed to load family chores");
     }
   }
 
-  // 3. تحديث حالة المهمة (مثل الموافقة على المهمة أو رفضها)
+  // 3. إنشاء مهمة جديدة (Create Chore)
+  Future<void> createChore({
+    required String title,
+    required String description,
+    required int keys,
+    required String childId,
+    required String parentId,
+  }) async {
+    final token = await _getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl/create'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'title': title,
+        'description': description,
+        'keys': keys,
+        'childId': childId,
+        'parentId': parentId,
+        'type': 'One-time', // قيمة افتراضية
+      }),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception("Failed to create chore: ${response.body}");
+    }
+  }
+
+  // 4. تحديث حالة المهمة (Update Status)
   Future<void> updateChoreStatus(String choreId, String newStatus) async {
     final token = await _getToken();
     final response = await http.patch(
@@ -89,7 +99,7 @@ class ChoreService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("فشل في تحديث حالة المهمة");
+      throw Exception("Failed to update status");
     }
   }
 }
