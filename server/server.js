@@ -12,11 +12,13 @@ import parentRoutes from "./routes/parentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import allowanceRoutes from "./routes/allowanceRoutes.js";
+
 //import transactionRoutes from "./routes/transactionRoutes.js";
 import childTransactionRoutes from "./routes/childTransactionRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import parentTransactionRoutes from "./routes/parentTransactionRoutes.js";
-import choreRoutes from "./routes/choreRoutes.js"; // 👈 استدعاء الملف
+/////////////////////////////import choreRoutes from "./routes/choreRoutes.js"; // 👈 استدعاء الملف
 // PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
@@ -91,7 +93,8 @@ app.use("/api/notifications", notificationRoutes);
 //app.use("/api/parent", parentTransactionRoutes);
 app.use("/api/parent", parentTransactionRoutes);
 app.use("/api", parentRoutes);
-app.use('/api/chores', choreRoutes);
+///////////////////app.use('/api/chores', choreRoutes);
+app.use("/api/allowance", allowanceRoutes);
 
 
 // Create payment
