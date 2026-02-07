@@ -20,6 +20,7 @@ import choreRoutes from "./routes/choreRoutes.js"; // 👈 استدعاء الم
 // PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
+import qrRoutes from "./routes/qrRoutes.js";
 
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
@@ -192,3 +193,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+////////////////////////////
+app.use("/api/qr", qrRoutes);
+

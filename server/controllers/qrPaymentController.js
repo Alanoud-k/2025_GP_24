@@ -13,7 +13,7 @@ import { generateToken, buildQrString } from "../utils/qrToken.js";
  */
 export async function createQrRequest(req, res) {
   try {
-    const { merchantName, amount, receiverAccountId, expiresInMinutes } = req.body;
+    const { merchantName, amount, expiresInMinutes } = req.body;
 
     if (!merchantName || String(merchantName).trim().length < 2) {
       return res.status(400).json({ error: "merchantName is required." });
@@ -24,11 +24,50 @@ export async function createQrRequest(req, res) {
       return res.status(400).json({ error: "amount must be > 0." });
     }
 
-    // For now, require receiverAccountId (merchant receiving account)
-    if (!receiverAccountId) {
-      return res.status(400).json({ error: "receiverAccountId is required for now." });
+    // 1) Find merchant by name
+    const mRows = await sql`
+      SELECT merchantid, merchantname
+      FROM "Merchant"
+      WHERE LOWER(merchantname) = LOWER(${merchantName})
+      LIMIT 1
+    `;
+
+    if (!mRows || mRows.length === 0) {
+      return res.status(404).json({ error: "Merchant not found / cannot be verified." });
     }
 
+    const merchantId = Number(mRows[0].merchantid);
+
+    // 2) Find merchant wallet
+    const wRows = await sql`
+      SELECT walletid
+      FROM "Wallet"
+      WHERE merchantid = ${merchantId}
+      LIMIT 1
+    `;
+
+    if (!wRows || wRows.length === 0) {
+      return res.status(404).json({ error: "Merchant wallet not found." });
+    }
+
+    const walletId = Number(wRows[0].walletid);
+
+    // 3) Find merchant receiving account
+    const aRows = await sql`
+      SELECT accountid
+      FROM "Account"
+      WHERE walletid = ${walletId}
+        AND accounttype = 'MerchantAccount'
+      LIMIT 1
+    `;
+
+    if (!aRows || aRows.length === 0) {
+      return res.status(404).json({ error: "Merchant receiving account not found." });
+    }
+
+    const receiverAccountId = Number(aRows[0].accountid);
+
+    // 4) Create QR request
     const token = generateToken();
     const mins = Number.isFinite(Number(expiresInMinutes)) ? Number(expiresInMinutes) : 10;
     const expiresAt = new Date(Date.now() + mins * 60 * 1000);
@@ -44,12 +83,14 @@ export async function createQrRequest(req, res) {
       token,
       qrString: buildQrString(token),
       expiresAt: expiresAt.toISOString(),
+      receiverAccountId, // optional but useful for debugging
     });
   } catch (e) {
     console.error("createQrRequest error:", e);
     return res.status(500).json({ error: "Server error creating QR request." });
   }
 }
+
 
 /**
  * GET /api/qr/resolve?token=...

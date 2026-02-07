@@ -12,6 +12,7 @@ import '../pages/child_rewards_screen.dart';
 import '../pages/child_game_screen.dart';
 import '../pages/child_card_screen.dart';
 import '../pages/child_more_screen.dart';
+import '../pages/child_qr_scan_image_screen.dart';
 
 // Widgets
 import '../widgets/child_bottom_nav_bar.dart';
@@ -91,9 +92,7 @@ class _ChildShellState extends State<ChildShell> {
     if (isLoadingData || spendingAccountId == null) {
       return const Scaffold(
         backgroundColor: Color(0xffF7F8FA),
-        body: Center(
-          child: CircularProgressIndicator(color: Colors.teal),
-        ),
+        body: Center(child: CircularProgressIndicator(color: Colors.teal)),
       );
     }
 
@@ -113,11 +112,10 @@ class _ChildShellState extends State<ChildShell> {
         token: widget.token,
         baseUrl: widget.baseUrl,
       ),
-      ChildCardScreen(
+      ChildQrScanImageScreen(
         childId: widget.childId,
         token: widget.token,
         baseUrl: widget.baseUrl,
-        receiverAccountId: spendingAccountId!, // important!!!
       ),
       ChildMoreScreen(
         childId: widget.childId,
@@ -131,10 +129,7 @@ class _ChildShellState extends State<ChildShell> {
     return Scaffold(
       extendBody: true,
       backgroundColor: const Color(0xffF7F8FA),
-      body: SafeArea(
-        bottom: false,
-        child: pages[currentIndex],
-      ),
+      body: SafeArea(bottom: false, child: pages[currentIndex]),
       bottomNavigationBar: ChildBottomNavBar(
         currentIndex: currentIndex,
         onTap: (index) {
