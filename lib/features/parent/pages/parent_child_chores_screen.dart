@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+// ⚠️ تأكدي أن مسارات الامبورت هذه صحيحة حسب مشروعك
+import '../../child/models/chore_model.dart'; 
+import '../../child/services/chore_service.dart';
 
 class ParentChildChoresScreen extends StatefulWidget {
   final String childName;
+  final String childId; // 👈 نحتاج الآيدي لجلب البيانات من السيرفر
 
   const ParentChildChoresScreen({
     super.key,
     required this.childName,
+    required this.childId,
   });
 
   @override
@@ -15,41 +20,10 @@ class ParentChildChoresScreen extends StatefulWidget {
 class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  // --- Mock Data (بيانات شكلية فقط) ---
-  final List<Map<String, dynamic>> _activeChores = [
-    {
-      'title': 'Clean Room',
-      'description': 'Make bed and organize desk',
-      'keys': 5,
-      'type': 'One-time',
-      'status': 'In Progress',
-    },
-    {
-      'title': 'Wash Dishes',
-      'description': 'After lunch',
-      'keys': 3,
-      'type': 'Weekly',
-      'status': 'Waiting Approval', // حالة تنتظر موافقة الأب
-    },
-  ];
-
-  final List<Map<String, dynamic>> _historyChores = [
-    {
-      'title': 'Finish Homework',
-      'description': 'Math Chapter 1',
-      'keys': 10,
-      'date': 'Yesterday',
-      'status': 'Completed',
-    },
-    {
-      'title': 'Walk the Dog',
-      'description': '',
-      'keys': 4,
-      'date': '2 days ago',
-      'status': 'Completed',
-    },
-  ];
+  
+  // 1. تعريف السيرفر والفيوتشر
+  final ChoreService _choreService = ChoreService();
+  late Future<List<ChoreModel>> _choresFuture;
 
   // --- Colors ---
   static const Color hassalaGreen1 = Color(0xFF37C4BE);
@@ -61,6 +35,8 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // 2. بدء جلب البيانات عند فتح الصفحة باستخدام ID الطفل
+    _choresFuture = _choreService.getChores(widget.childId);
   }
 
   @override
@@ -90,79 +66,137 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
           ),
         ),
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
+      // 3. استخدام FutureBuilder للتعامل مع البيانات القادمة من السيرفر
+      body: FutureBuilder<List<ChoreModel>>(
+        future: _choresFuture,
+        builder: (context, snapshot) {
+          // حالة التحميل
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: hassalaGreen1),
+            );
+          } 
+          // حالة الخطأ
+          // else if (snapshot.hasError) {
+          //   return Center(
+          //     child: Column(
+          //       mainAxisAlignment: MainAxisAlignment.center,
+          //       children: [
+          //         const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          //         const SizedBox(height: 10),
+          //         Text(
+          //           "Error loading chores",
+          //           style: const TextStyle(color: textColor),
+          //         ),
+          //         TextButton(
+          //           onPressed: () {
+          //             setState(() {
+          //               _choresFuture = _choreService.getChores(widget.childId);
+          //             });
+          //           }, 
+          //           child: const Text("Retry")
+          //         )
+          //       ],
+          //     ),
+          //   );
+          // } 
+          else if (snapshot.hasError) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Text(
+        "تفاصيل الخطأ: ${snapshot.error}", // سيظهر لكِ السبب الحقيقي هنا
+        style: const TextStyle(color: Colors.red),
+        textAlign: TextAlign.center,
+      ),
+    ),
+  );
+}
+          final allChores = snapshot.data ?? [];
           
-          // --- Tab Bar ---
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+          // تقسيم البيانات
+          final activeChores = allChores.where((c) => c.status != 'Completed').toList();
+          final historyChores = allChores.where((c) => c.status == 'Completed').toList();
+
+          return Column(
+            children: [
+              const SizedBox(height: 10),
+              
+              // --- Tab Bar ---
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                gradient: const LinearGradient(
-                  colors: [hassalaGreen1, hassalaGreen2],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    gradient: const LinearGradient(
+                      colors: [hassalaGreen1, hassalaGreen2],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.grey,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                  tabs: const [
+                    Tab(text: "Active"),
+                    Tab(text: "History"),
+                  ],
                 ),
               ),
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.grey,
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-              tabs: const [
-                Tab(text: "Active"),
-                Tab(text: "History"),
-              ],
-            ),
-          ),
 
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // --- Content ---
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Tab 1: Active List
-                ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: _activeChores.length,
-                  itemBuilder: (context, index) {
-                    return _buildChoreCard(_activeChores[index], isActive: true);
-                  },
+              // --- Content ---
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Tab 1: Active List
+                    activeChores.isEmpty 
+                      ? const Center(child: Text("No active chores"))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(20),
+                          itemCount: activeChores.length,
+                          itemBuilder: (context, index) {
+                            return _buildChoreCard(activeChores[index], isActive: true);
+                          },
+                        ),
+
+                    // Tab 2: History List
+                    historyChores.isEmpty
+                      ? const Center(child: Text("No history yet"))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(20),
+                          itemCount: historyChores.length,
+                          itemBuilder: (context, index) {
+                            return _buildChoreCard(historyChores[index], isActive: false);
+                          },
+                        ),
+                  ],
                 ),
-
-                // Tab 2: History List
-                ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: _historyChores.length,
-                  itemBuilder: (context, index) {
-                    return _buildChoreCard(_historyChores[index], isActive: false);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildChoreCard(Map<String, dynamic> chore, {required bool isActive}) {
-    final bool isWaiting = chore['status'] == 'Waiting Approval';
+  Widget _buildChoreCard(ChoreModel chore, {required bool isActive}) {
+    final bool isWaiting = chore.status == 'Waiting Approval';
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -183,7 +217,6 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
       ),
       child: Row(
         children: [
-          // Icon Container
           Container(
             width: 50,
             height: 50,
@@ -201,16 +234,13 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
               size: 26,
             ),
           ),
-          
           const SizedBox(width: 16),
-          
-          // Texts
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  chore['title'],
+                  chore.title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -219,9 +249,7 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isActive 
-                      ? (chore['status'] ?? chore['type']) 
-                      : "Finished ${chore['date']}",
+                  isActive ? chore.status : "Completed",
                   style: TextStyle(
                     fontSize: 12,
                     color: isWaiting ? Colors.orange : Colors.grey,
@@ -231,19 +259,17 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
               ],
             ),
           ),
-
-          // Reward Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF8E1), // Light Yellow
+              color: const Color(0xFFFFF8E1),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color(0xFFFFECB3)),
             ),
             child: Row(
               children: [
                 Text(
-                  "${chore['keys']}",
+                  "${chore.keys}",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFFFA000),
