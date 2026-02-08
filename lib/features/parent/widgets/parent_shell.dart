@@ -9,6 +9,8 @@ import '../pages/parent_allowance_screen.dart';
 import '../pages/parent_gifts_screen.dart';
 import '../pages/parent_more_screen.dart';
 
+const String baseUrl = "https://2025gp24-production.up.railway.app";
+
 class ParentShell extends StatefulWidget {
   final int parentId;
   final String token;
@@ -60,10 +62,12 @@ class _ParentShellState extends State<ParentShell> {
     final pages = [
       ParentHomeScreen(parentId: parentId, token: token), // 0
       ParentChoresScreen(parentId: parentId, token: token), // 1
-      ParentAllowanceScreen(
-        parentId: parentId,
-        token: token,
-      ), // 2 (placeholder)
+    ParentAllowanceScreen(
+  parentId: parentId,
+  token: token,
+  baseUrl: baseUrl,
+),
+ // 2 (placeholder)
       ParentGiftsScreen(parentId: parentId, token: token), // 3
       MorePage(parentId: parentId, token: token), // 4
     ];

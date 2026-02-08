@@ -86,16 +86,21 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ParentAllowanceScreen extends StatefulWidget {
   final int parentId;
   final String token;
+  final String baseUrl;
 
   const ParentAllowanceScreen({
     super.key,
     required this.parentId,
     required this.token,
+    required this.baseUrl,
   });
+
 
   @override
   State<ParentAllowanceScreen> createState() => _ParentAllowanceScreenState();
@@ -111,12 +116,9 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
   final TextEditingController _amountController = TextEditingController(text: "100");
   bool _isAutoTransferEnabled = true;
 
-  // --- Mock Data (Children) ---
-  final List<Map<String, dynamic>> _children = [
-    {'name': 'Ahmed', 'avatar': 'assets/boy.png', 'balance': 150},
-    {'name': 'Sara', 'avatar': 'assets/girl.png', 'balance': 320},
-    {'name': 'Khalid', 'avatar': 'assets/boy2.png', 'balance': 50},
-  ];
+ List<Map<String, dynamic>> _children = [];
+bool _childrenLoading = true;
+
 
   @override
   void initState() {
@@ -136,6 +138,8 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     }
 
     if (mounted) setState(() => _loading = false);
+      await _fetchChildren();
+
   }
 
   void _forceLogout() async {
@@ -154,28 +158,145 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     }
   }
 
-  // --- Helpers ---
-  void _saveSettings() {
-    // TODO: Integrate API to save allowance settings [cite: 45]
+Future<void> _fetchChildren() async {
+  final url = Uri.parse(
+    '${widget.baseUrl}/api/child/parent/${widget.parentId}/children',
+  );
+
+  try {
+    final res = await http.get(url, headers: {
+'Authorization': 'Bearer ${token!}',
+    });
+
+    if (res.statusCode == 200) {
+      final List data = jsonDecode(res.body);
+
+      setState(() {
+        _children = data.map((c) => {
+          'childId': c['childId'],
+          'name': c['firstName'],
+        }).toList();
+
+        _childrenLoading = false;
+        _selectedChildIndex = 0;
+      });
+
+      // بعد ما يجي أول طفل، نجيب إعداداته
+      if (_children.isNotEmpty) {
+        await _fetchAllowanceSettings(_children[0]['childId']);
+      }
+    } else {
+      setState(() => _childrenLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load children (${res.statusCode})')),
+      );
+    }
+  } catch (e) {
+    setState(() => _childrenLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Allowance settings updated successfully!'),
-        backgroundColor: Color(0xFF37C4BE),
-      ),
+      SnackBar(content: Text('Error loading children: $e')),
     );
   }
+}
+
+Future<void> _fetchAllowanceSettings(int childId) async {
+  final url = Uri.parse('${widget.baseUrl}/api/allowance/$childId');
+
+  try {
+    final res = await http.get(url, headers: {
+'Authorization': 'Bearer ${token!}',
+      'Content-Type': 'application/json',
+    });
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      setState(() {
+        _isAutoTransferEnabled = data['isEnabled'] ?? false;
+        _amountController.text = (data['amount'] ?? 100).toString();
+
+        final sp = (data['savePercentage'] ?? 20).toDouble();
+        _savePercentage = (sp / 100.0).clamp(0.0, 1.0);
+      });
+    }
+  } catch (_) {
+    // عادي إذا ما عنده settings
+  }
+}
+
+  // --- Helpers ---
+ Future<void> _saveSettings() async {
+  if (_children.isEmpty) return;
+
+  final childId = _children[_selectedChildIndex]['childId'];
+  final amount = double.tryParse(_amountController.text) ?? 0;
+
+  // تحويل النسبة من 0.20 إلى 20
+  final savePctInt = (_savePercentage * 100).round();
+
+  final url = Uri.parse('${widget.baseUrl}/api/allowance/$childId');
+
+  try {
+    final res = await http.put(
+      url,
+      headers: {
+'Authorization': 'Bearer ${token!}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'isEnabled': _isAutoTransferEnabled,
+        'amount': amount,
+        'savePercentage': savePctInt,
+      }),
+    );
+
+    if (res.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved ✅')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Save failed (${res.statusCode})')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error saving: $e')),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
     const hassalaGreen1 = Color(0xFF37C4BE);
     const hassalaGreen2 = Color(0xFF2EA49E);
 
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF7F8FA),
-        body: Center(child: CircularProgressIndicator(color: hassalaGreen1)),
-      );
-    }
+   if (_loading) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF7F8FA),
+    body: const Center(
+      child: CircularProgressIndicator(color: Color(0xFF37C4BE)),
+    ),
+  );
+}
+
+if (_childrenLoading) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF7F8FA),
+    body: const Center(
+      child: CircularProgressIndicator(color: Color(0xFF37C4BE)),
+    ),
+  );
+}
+
+if (_children.isEmpty) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF7F8FA),
+    body: const Center(child: Text("No children found")),
+  );
+}
+
 
     // Calculate visual values
     double amount = double.tryParse(_amountController.text) ?? 0.0;
@@ -229,7 +350,10 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                     itemBuilder: (context, index) {
                       final isSelected = index == _selectedChildIndex;
                       return GestureDetector(
-                        onTap: () => setState(() => _selectedChildIndex = index),
+onTap: () async {
+  setState(() => _selectedChildIndex = index);
+  await _fetchAllowanceSettings(_children[index]['childId']);
+},
                         child: Container(
                           margin: const EdgeInsets.only(right: 16),
                           child: Column(

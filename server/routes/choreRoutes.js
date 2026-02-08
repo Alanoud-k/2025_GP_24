@@ -11,6 +11,8 @@ import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.get("/child/:childId", protect, getChildChores);
+
+// Parent chores
 router.get("/parent/:parentId", protect, getParentChores);
 router.post("/create", protect, createChore);
 router.patch("/:id/status", protect, updateChoreStatus);
