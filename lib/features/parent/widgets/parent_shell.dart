@@ -9,7 +9,7 @@ import '../pages/parent_allowance_screen.dart';
 import '../pages/parent_gifts_screen.dart';
 import '../pages/parent_more_screen.dart';
 
-const String baseUrl = "http://localhost:3000"; // أو رابط railway
+const String baseUrl = "https://2025gp24-production.up.railway.app";
 
 class ParentShell extends StatefulWidget {
   final int parentId;
