@@ -1,44 +1,30 @@
 import { sql } from "../config/db.js";
 
-/* ============================================================
-   1. GET CHILD CHORES (مع سجلات تتبع الأخطاء Debugging)
-   Route: GET /api/chores/child/:childId
-============================================================ */
+// 1. جلب مهام طفل محدد
 export const getChildChores = async (req, res) => {
   const { childId } = req.params;
-  
-  console.log(`🔍 Request received for Child ID: ${childId}`); 
-
   try {
     const chores = await sql`
       SELECT * FROM "Chore"
       WHERE "childid" = ${childId}
       ORDER BY "choreid" DESC
     `;
-
-    console.log("🔥 Data from Database:", chores); 
-
-    const formattedChores = chores.map(chore => ({
+    const formatted = chores.map(chore => ({
       _id: chore.choreid.toString(),
-      title: chore.chorename || "No Title",
-      description: chore.choredescription || "",
-      keys: chore.rewardkeys || 0,
-      status: chore.chorestatus || "Pending",
-      childId: chore.childid
+      title: chore.chorename,
+      description: chore.choredescription,
+      keys: chore.rewardkeys,
+      status: chore.chorestatus,
+      childId: chore.childid, // 👈 تم إضافة الفاصلة هنا
+      type: chore.choretype || 'One-time' // ✅ الآن سيعمل بدون مشاكل
     }));
-
-    return res.json(formattedChores);
-
+    return res.json(formatted);
   } catch (err) {
-    console.error("❌ SERVER ERROR inside getChildChores:", err);
-    return res.status(500).json({ error: "Failed to fetch chores", details: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-/* ============================================================
-   2. GET PARENT CHORES
-   Route: GET /api/chores/parent/:parentId
-============================================================ */
+// 2. جلب مهام الأب العامة
 export const getParentChores = async (req, res) => {
   const { parentId } = req.params;
   try {
@@ -49,39 +35,30 @@ export const getParentChores = async (req, res) => {
       WHERE c."parentid" = ${parentId}
       ORDER BY c."choreid" DESC
     `;
-
-    const formattedChores = chores.map(chore => ({
+    const formatted = chores.map(chore => ({
       _id: chore.choreid.toString(),
       title: chore.chorename,
-      description: chore.choredescription,
+      description: chore.choredescription, // أضفت الوصف أيضاً للاحتياط
       keys: chore.rewardkeys,
       status: chore.chorestatus,
-      childId: chore.childid,
-      childName: chore.childName
+      childName: chore.childName,
+      type: chore.choretype || 'One-time' // ✅ أضفت النوع هنا أيضاً لتظهر العلامة للأب
     }));
-
-    return res.json(formattedChores);
+    return res.json(formatted);
   } catch (err) {
-    console.error("Error fetching parent chores:", err);
-    return res.status(500).json({ error: "Failed to fetch chores" });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-/* ============================================================
-   3. CREATE CHORE (إضافة مهمة جديدة)
-   Route: POST /api/chores/create
-============================================================ */
+// 3. إضافة مهمة جديدة (Create)
 export const createChore = async (req, res) => {
-  // نستقبل البيانات بالأسماء التي يرسلها تطبيق فلاتر
-  const { title, description, keys, childId, parentId } = req.body;
+  const { title, description, keys, childId, parentId, type } = req.body; 
 
   try {
-    // التحقق من البيانات المطلوبة
     if (!title || !keys || !childId || !parentId) {
-        return res.status(400).json({ error: "Missing required fields (title, keys, childId, parentId)" });
+        return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // الإدخال في قاعدة البيانات (لاحظي استخدام الأسماء الصحيحة لجدول Neon)
     const newChore = await sql`
       INSERT INTO "Chore" (
         "chorename", 
@@ -89,7 +66,8 @@ export const createChore = async (req, res) => {
         "rewardkeys", 
         "chorestatus", 
         "childid", 
-        "parentid"
+        "parentid",
+        "choretype"
       )
       VALUES (
         ${title}, 
@@ -97,12 +75,13 @@ export const createChore = async (req, res) => {
         ${keys}, 
         'Pending', 
         ${childId}, 
-        ${parentId}
+        ${parentId},
+        ${type || 'One-time'}
       )
       RETURNING *
     `;
 
-    return res.json({ message: "Chore created successfully", chore: newChore[0] });
+    return res.json({ message: "Chore created", chore: newChore[0] });
 
   } catch (err) {
     console.error("❌ Error creating chore:", err);
@@ -110,19 +89,32 @@ export const createChore = async (req, res) => {
   }
 };
 
-/* ============================================================
-   4. UPDATE CHORE STATUS (تحديث الحالة)
-   Route: PATCH /api/chores/:id/status
-============================================================ */
+// 4. تحديث الحالة (Approve/Update)
 export const updateChoreStatus = async (req, res) => {
-  const { id } = req.params; // choreId
+  const { id } = req.params;
   const { status } = req.body;
+  try {
+    const updated = await sql`
+      UPDATE "Chore" SET "chorestatus" = ${status} WHERE "choreid" = ${id} RETURNING *
+    `;
+    return res.json(updated[0]);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// 5. تعديل تفاصيل المهمة
+export const updateChoreDetails = async (req, res) => {
+  const { id } = req.params; 
+  const { title, description, keys } = req.body;
 
   try {
-    // تحديث عمود chorestatus في الجدول
     const updated = await sql`
       UPDATE "Chore"
-      SET "chorestatus" = ${status}
+      SET 
+        "chorename" = ${title},
+        "choredescription" = ${description},
+        "rewardkeys" = ${keys}
       WHERE "choreid" = ${id}
       RETURNING *
     `;
@@ -133,7 +125,7 @@ export const updateChoreStatus = async (req, res) => {
 
     return res.json(updated[0]);
   } catch (err) {
-    console.error("Error updating chore:", err);
-    return res.status(500).json({ error: "Failed to update chore" });
+    console.error("❌ Error editing chore:", err);
+    return res.status(500).json({ error: "Failed to edit chore" });
   }
 };

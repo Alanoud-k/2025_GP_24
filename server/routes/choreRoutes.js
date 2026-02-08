@@ -1,20 +1,21 @@
 import express from "express";
-// 👇👇 تأكدي أن هذا السطر يحتوي على createChore و updateChoreStatus
 import { 
   getParentChores, 
   getChildChores, 
-  createChore,       // 👈 كانت ناقصة هنا
-  updateChoreStatus  // 👈 وكانت ناقصة هنا
+  createChore, 
+  updateChoreStatus,
+  updateChoreDetails // 👈 1. استيراد الدالة الجديدة
 } from "../controllers/choreController.js";
-
 import { protect } from "../middleware/authMiddleware.js"; 
 
 const router = express.Router();
 
-// الآن السيرفر سيتعرف على الدوال ولن ينهار
 router.get("/child/:childId", protect, getChildChores);
 router.get("/parent/:parentId", protect, getParentChores);
 router.post("/create", protect, createChore);
 router.patch("/:id/status", protect, updateChoreStatus);
+
+// 👇 2. إضافة مسار التعديل
+router.put("/:id/details", protect, updateChoreDetails);
 
 export default router;

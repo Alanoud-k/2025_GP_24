@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // ✅ لإدخال الأرقام فقط
 import '../../child/models/chore_model.dart'; 
 import '../../child/services/chore_service.dart';
 
 class ParentChildChoresScreen extends StatefulWidget {
   final String childName;
   final String childId;
-  final int parentId; // ✅ أضفنا هذا لكي نتمكن من إنشاء المهمة
+  final int parentId; 
 
   const ParentChildChoresScreen({
     super.key,
     required this.childName,
     required this.childId,
-    required this.parentId, // ✅ مطلوب
+    required this.parentId,
   });
 
   @override
@@ -24,11 +25,16 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
   final ChoreService _choreService = ChoreService();
   late Future<List<ChoreModel>> _choresFuture;
 
-  // --- Colors ---
+  // --- Colors & Styles ---
   static const Color hassalaGreen1 = Color(0xFF37C4BE);
   static const Color hassalaGreen2 = Color(0xFF2EA49E);
   static const Color textColor = Color(0xFF2C3E50);
   static const Color bgColor = Color(0xFFF7FAFC);
+
+  // ✅ ألوان الرسائل الموحدة
+  static const Color _tealMsg = Color(0xFF37C4BE);
+  static const Color _redMsg = Color(0xFFE74C3C);
+  static const Color _greenMsg = Color(0xFF27AE60);
 
   @override
   void initState() {
@@ -43,63 +49,134 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
     super.dispose();
   }
 
-  // ✅ دالة إظهار نافذة إضافة المهمة
+  // ✅ دالة الرسائل الموحدة (مثل صفحة إضافة الأموال)
+  void _showMessageBar(
+    String message, {
+    Color backgroundColor = _tealMsg,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: duration,
+      ),
+    );
+  }
+
+  // ✅ دالة إظهار نافذة إضافة المهمة (محدثة مع النوع والرسائل)
   void _showChoreDialog() {
     final titleController = TextEditingController();
     final descController = TextEditingController();
     final keysController = TextEditingController();
+    
+    // متغير لنوع المهمة (الافتراضي One-time)
+    String selectedType = 'One-time';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Add New Chore", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: titleController, decoration: const InputDecoration(labelText: "Title")),
-            TextField(controller: descController, decoration: const InputDecoration(labelText: "Description")),
-            TextField(
-              controller: keysController, 
-              decoration: const InputDecoration(labelText: "Reward (Keys)"), 
-              keyboardType: TextInputType.number
+      builder: (context) => StatefulBuilder( // ✅ نستخدم StatefulBuilder لتحديث الـ Dropdown
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text("Add New Chore", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController, 
+                    decoration: const InputDecoration(labelText: "Title", prefixIcon: Icon(Icons.title))
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: descController, 
+                    decoration: const InputDecoration(labelText: "Description", prefixIcon: Icon(Icons.description))
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: keysController, 
+                    decoration: const InputDecoration(labelText: "Reward (Keys)", prefixIcon: Icon(Icons.vpn_key)), 
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly], // أرقام فقط
+                  ),
+                  const SizedBox(height: 15),
+
+                  // ✅ قائمة اختيار نوع المهمة
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: "Chore Type",
+                      prefixIcon: Icon(Icons.repeat),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                    ),
+                    value: selectedType,
+                    items: const [
+                      DropdownMenuItem(value: 'One-time', child: Text("One-time")),
+                      DropdownMenuItem(value: 'Weekly', child: Text("Weekly")),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setStateDialog(() => selectedType = val);
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1),
-            onPressed: () async {
-              if (titleController.text.isEmpty || keysController.text.isEmpty) return;
-              
-              try {
-                // ✅ استدعاء السيرفر
-                await _choreService.createChore(
-                  title: titleController.text,
-                  description: descController.text,
-                  keys: int.parse(keysController.text),
-                  childId: widget.childId,
-                  parentId: widget.parentId.toString(),
-                );
-                Navigator.pop(context);
-                // ✅ تحديث الصفحة
-                setState(() {
-                  _choresFuture = _choreService.getChores(widget.childId);
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Chore added successfully!")),
-                );
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Error: $e")),
-                );
-              }
-            },
-            child: const Text("Create", style: TextStyle(color: Colors.white)),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context), 
+                child: const Text("Cancel", style: TextStyle(color: Colors.grey))
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1),
+                onPressed: () async {
+                  // التحقق من المدخلات
+                  if (titleController.text.isEmpty || keysController.text.isEmpty) {
+                    _showMessageBar("Please fill all required fields", backgroundColor: _redMsg);
+                    return;
+                  }
+
+                  int keysValue = int.tryParse(keysController.text) ?? 0;
+                  if (keysValue <= 0) {
+                    _showMessageBar("Reward must be greater than 0", backgroundColor: _redMsg);
+                    return;
+                  }
+                  
+                  try {
+                    // ✅ استدعاء السيرفر مع النوع
+                    await _choreService.createChore(
+                      title: titleController.text,
+                      description: descController.text,
+                      keys: keysValue,
+                      childId: widget.childId,
+                      parentId: widget.parentId.toString(),
+                      type: selectedType, // إرسال النوع المختار
+                    );
+                    
+                    if (mounted) Navigator.pop(context);
+                    
+                    // ✅ تحديث الصفحة
+                    setState(() {
+                      _choresFuture = _choreService.getChores(widget.childId);
+                    });
+                    
+                    _showMessageBar("Chore added successfully!", backgroundColor: _greenMsg);
+                  } catch (e) {
+                    if (mounted) Navigator.pop(context);
+                    _showMessageBar("Error: $e", backgroundColor: _redMsg);
+                  }
+                },
+                child: const Text("Create", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
@@ -122,7 +199,7 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
         ),
       ),
       
-      // ✅ الزر العائم مع الإصلاح (مرفوع للأعلى)
+      // ✅ الزر العائم
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 90.0), 
         child: FloatingActionButton(
@@ -143,7 +220,7 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                 padding: const EdgeInsets.all(20.0),
                 child: Text(
                   "Error: ${snapshot.error}",
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(color: _redMsg),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -210,6 +287,8 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
 
   Widget _buildChoreCard(ChoreModel chore, {required bool isActive}) {
     final bool isWaiting = chore.status == 'Waiting Approval';
+    final bool isWeekly = chore.type == 'Weekly'; // ✅ التحقق من النوع
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -238,7 +317,19 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(chore.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+                Row(
+                  children: [
+                    Text(chore.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+                    const SizedBox(width: 8),
+                    // ✅ علامة تميز المهام الأسبوعية
+                    if (isWeekly)
+                       Container(
+                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                         decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
+                         child: const Text("Weekly", style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
+                       ),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 Text(
                   isActive ? chore.status : "Completed",
