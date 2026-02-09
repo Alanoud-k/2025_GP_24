@@ -52,13 +52,24 @@ export const upsertAllowanceByChild = async (req, res) => {
     const amt = Number(amount);
     const sp = Number(savePercentage);
 
-    if (!Number.isFinite(amt) || amt < 0) {
-      return res.status(400).json({ error: "amount must be a number >= 0" });
-    }
+    // savePercentage validation
     if (!Number.isFinite(sp) || sp < 0 || sp > 100) {
       return res
         .status(400)
         .json({ error: "savePercentage must be between 0 and 100" });
+    }
+
+    // amount validation 
+    if (enabled) {
+      if (!Number.isFinite(amt) || amt <= 0) {
+        return res
+          .status(400)
+          .json({ error: "amount must be > 0 when allowance is enabled" });
+      }
+    } else {
+      if (!Number.isFinite(amt) || amt < 0) {
+        return res.status(400).json({ error: "amount must be a number >= 0" });
+      }
     }
 
     const rows = await sql`
@@ -81,3 +92,4 @@ export const upsertAllowanceByChild = async (req, res) => {
     return res.status(500).json({ error: "Failed to save allowance settings" });
   }
 };
+

@@ -7,7 +7,10 @@ import {
 
 const router = express.Router();
 
-router.get("/:childId", getAllowanceByChild);
-router.put("/:childId", upsertAllowanceByChild);
+import { protect } from "../middleware/authMiddleware.js";
+
+router.get("/:childId", protect, getAllowanceByChild);
+router.put("/:childId", protect, upsertAllowanceByChild);
+
 
 export default router;

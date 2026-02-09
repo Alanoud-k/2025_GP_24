@@ -133,7 +133,7 @@ bool _childrenLoading = true;
     token = prefs.getString("token") ?? widget.token;
 
     if (token == null || token!.isEmpty) {
-      _forceLogout();
+  await _forceLogout();
       return;
     }
 
@@ -142,14 +142,14 @@ bool _childrenLoading = true;
 
   }
 
-  void _forceLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+ 
+Future<void> _forceLogout() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();
 
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
-    }
-  }
+  if (!mounted) return;
+  Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
+}
 
   Future<void> _handleAuth() async {
     await checkAuthStatus(context);
@@ -167,6 +167,10 @@ Future<void> _fetchChildren() async {
     final res = await http.get(url, headers: {
 'Authorization': 'Bearer ${token!}',
     });
+if (res.statusCode == 401) {
+await _forceLogout();
+  return;
+}
 
     if (res.statusCode == 200) {
       final List data = jsonDecode(res.body);
@@ -186,11 +190,12 @@ Future<void> _fetchChildren() async {
         await _fetchAllowanceSettings(_children[0]['childId']);
       }
     } else {
-      setState(() => _childrenLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load children (${res.statusCode})')),
-      );
-    }
+  setState(() => _childrenLoading = false);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Failed to load children (${res.statusCode})')),
+  );
+}
+
   } catch (e) {
     setState(() => _childrenLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -207,6 +212,10 @@ Future<void> _fetchAllowanceSettings(int childId) async {
 'Authorization': 'Bearer ${token!}',
       'Content-Type': 'application/json',
     });
+if (res.statusCode == 401) {
+await _forceLogout();
+  return;
+}
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
@@ -225,13 +234,24 @@ Future<void> _fetchAllowanceSettings(int childId) async {
 }
 
   // --- Helpers ---
- Future<void> _saveSettings() async {
+Future<void> _saveSettings() async {
   if (_children.isEmpty) return;
 
   final childId = _children[_selectedChildIndex]['childId'];
-  final amount = double.tryParse(_amountController.text) ?? 0;
 
-  // تحويل النسبة من 0.20 إلى 20
+  final raw = _amountController.text.trim();
+  final parsedAmount = double.tryParse(raw);
+
+  if (_isAutoTransferEnabled) {
+    if (parsedAmount == null || parsedAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid amount > 0')),
+      );
+      return;
+    }
+  }
+
+  final amountToSend = parsedAmount ?? 0;
   final savePctInt = (_savePercentage * 100).round();
 
   final url = Uri.parse('${widget.baseUrl}/api/allowance/$childId');
@@ -240,15 +260,20 @@ Future<void> _fetchAllowanceSettings(int childId) async {
     final res = await http.put(
       url,
       headers: {
-'Authorization': 'Bearer ${token!}',
+        'Authorization': 'Bearer ${token!}',
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
         'isEnabled': _isAutoTransferEnabled,
-        'amount': amount,
+        'amount': amountToSend,
         'savePercentage': savePctInt,
       }),
     );
+
+    if (res.statusCode == 401) {
+      await _forceLogout();
+      return;
+    }
 
     if (res.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -266,6 +291,13 @@ Future<void> _fetchAllowanceSettings(int childId) async {
   }
 }
 
+
+
+@override
+void dispose() {
+  _amountController.dispose();
+  super.dispose();
+}
 
   @override
   Widget build(BuildContext context) {

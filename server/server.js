@@ -24,6 +24,9 @@ import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 import qrRoutes from "./routes/qrRoutes.js";
 
+
+import { startWeeklyAllowanceCron } from "./cron/weeklyAllowanceCron.js";
+
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -192,11 +195,15 @@ app.get("/", (_req, res) => {
   res.send("Hassalah API is running.");
 });
 
+
+app.use("/api/qr", qrRoutes);
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  startWeeklyAllowanceCron();
 });
 
 ////////////////////////////
-app.use("/api/qr", qrRoutes);
 
