@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'child_homepage_screen.dart'; // ✅ add this at the top
 
 class ChildQrConfirmScreen extends StatefulWidget {
   final int childId;
@@ -41,6 +42,21 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
     final min = d.minute.toString().padLeft(2, '0');
     return '$y-$m-$day $h:$min';
   }
+
+  // ======================
+  // Riyal icon (SAR symbol)
+  // Make sure pubspec.yaml includes: assets/icons/Sar.png
+  // ======================
+  Widget _sarIcon({double size = 18}) {
+    return Image.asset(
+      'assets/icons/Sar.png',
+      height: size,
+      width: size,
+      fit: BoxFit.contain,
+    );
+  }
+
+  String _formatNow() => _formatDateTime(DateTime.now());
 
   Uri _confirmUrl() {
     // When you build the backend, keep it consistent with the scan screen.
@@ -88,26 +104,106 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
         }
       }
 
-      final data = jsonDecode(res.body);
+      final paidAt = _formatNow();
       if (!mounted) return;
 
-      final txnId = data["transactionId"]?.toString() ?? "-";
-
-      showDialog(
+      showModalBottomSheet(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Paid ✅'),
-          content: Text('Transaction ID: $txnId'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // close dialog
-                Navigator.pop(context); // back to scan
-              },
-              child: const Text('Done'),
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.10),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 54,
+                    width: 54,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2EA49E).withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: Color(0xFF2EA49E),
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Paid",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Summary rows (kid-friendly)
+                  _summaryRow("Merchant", widget.merchantName),
+                  _amountSummaryRow(widget.amount), // ✅ amount + Riyal icon
+
+                  _summaryRow("Time", paidAt),
+
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // 1) close the success sheet
+                        Navigator.pop(context);
+
+                        // 2) go to ChildShell and clear the stack so they can’t press Pay again
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/childShell',
+                          (route) => false,
+                          arguments: {
+                            'childId': widget.childId,
+                            'token': widget.token,
+                            'baseUrl': widget.baseUrl,
+                          },
+                        );
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2EA49E),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        "Done",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          );
+        },
       );
     } catch (e) {
       setState(() {
@@ -116,6 +212,77 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
     } finally {
       if (mounted) setState(() => _paying = false);
     }
+  }
+
+  Widget _summaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 86,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.55),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ======================
+  // Amount row with Riyal icon (used in the success popup)
+  // ======================
+  Widget _amountSummaryRow(double amount) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 86,
+            child: Text(
+              "Amount",
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.55),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  amount.toStringAsFixed(2),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _sarIcon(size: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -181,12 +348,21 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                             color: Color(0xFF2EA49E),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'Amount: ${widget.amount.toStringAsFixed(2)} SAR',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          // ✅ Big clear amount with Riyal icon (kid-friendly)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                widget.amount.toStringAsFixed(2),
+                                style: const TextStyle(
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _sarIcon(size: 22),
+                            ],
                           ),
                         ],
                       ),
