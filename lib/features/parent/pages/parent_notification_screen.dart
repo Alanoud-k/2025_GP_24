@@ -90,6 +90,8 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
         return Colors.green;
       case 'REQUEST_DECLINED':
         return Colors.red;
+      case "CHORE_COMPLETED":
+       return Colors.orange;
       default:
         return Colors.blueGrey;
     }

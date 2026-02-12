@@ -87,167 +87,200 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
       context: context,
       builder: (context) => StatefulBuilder( 
         builder: (context, setStateDialog) {
-          return AlertDialog(
-            backgroundColor: Colors.white, // ✅ تعديل لون الخلفية للأبيض
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text("Add New Chore", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController, 
-                    decoration: const InputDecoration(labelText: "Title", prefixIcon: Icon(Icons.title))
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: descController, 
-                    decoration: const InputDecoration(labelText: "Description", prefixIcon: Icon(Icons.description))
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: keysController, 
-                    decoration: const InputDecoration(labelText: "Reward (Keys)", prefixIcon: Icon(Icons.vpn_key)), 
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  ),
-                  const SizedBox(height: 15),
-
-                  // قائمة اختيار نوع المهمة
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: "Chore Type",
-                      prefixIcon: Icon(Icons.repeat),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
-                    ),
-                    value: selectedType,
-                    items: const [
-                      DropdownMenuItem(value: 'One-time', child: Text("One-time")),
-                      DropdownMenuItem(value: 'Weekly', child: Text("Weekly")),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setStateDialog(() {
-                          selectedType = val;
-                          // تصفير الخيارات إذا غير النوع
-                          if (val == 'One-time') {
-                            selectedDay = null;
-                            selectedTime = null;
-                          }
-                        });
-                      }
-                    },
-                  ),
-
-                  // ✅ خيارات اليوم والوقت تظهر فقط إذا كان النوع أسبوعي
-                  if (selectedType == 'Weekly') ...[
-                    const SizedBox(height: 15),
-                    Row(
-                      children: [
-                        // اختيار اليوم
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              labelText: "Day",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                            ),
-                            value: selectedDay,
-                            items: _daysOfWeek.map((day) => DropdownMenuItem(value: day, child: Text(day, style: const TextStyle(fontSize: 14)))).toList(),
-                            onChanged: (val) => setStateDialog(() => selectedDay = val),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        // اختيار الوقت
-                        Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                              if (time != null) {
-                                setStateDialog(() => selectedTime = time);
-                              }
-                            },
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: "Time",
-                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
-                                suffixIcon: Icon(Icons.access_time, size: 20),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                              ),
-                              child: Text(
-                                selectedTime != null ? selectedTime!.format(context) : "Select Time",
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+          // ✅ 1. تغليف الـ Dialog بـ Theme لتغيير اللون البنفسجي إلى التركوازي
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(
+                primary: hassalaGreen1, // لون الإطار والفوكس
+                onPrimary: Colors.white, 
+                surface: Colors.white,
+                onSurface: textColor,
+              ),
+              textSelectionTheme: const TextSelectionThemeData(
+                cursorColor: hassalaGreen1,
+                selectionHandleColor: hassalaGreen1,
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: hassalaGreen1, width: 2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context), 
-                child: const Text("Cancel", style: TextStyle(color: Colors.grey))
+            child: AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text("Add New Chore", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController, 
+                      decoration: const InputDecoration(labelText: "Title", prefixIcon: Icon(Icons.title))
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: descController, 
+                      decoration: const InputDecoration(labelText: "Description", prefixIcon: Icon(Icons.description))
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: keysController, 
+                      decoration: const InputDecoration(labelText: "Reward (Keys)", prefixIcon: Icon(Icons.vpn_key)), 
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                    const SizedBox(height: 15),
+
+                    // قائمة اختيار نوع المهمة
+                    DropdownButtonFormField<String>(
+                      dropdownColor: Colors.white, // ✅ 2. خلفية القائمة بيضاء
+                      decoration: const InputDecoration(
+                        labelText: "Chore Type",
+                        prefixIcon: Icon(Icons.repeat),
+                      ),
+                      value: selectedType,
+                      items: const [
+                        DropdownMenuItem(value: 'One-time', child: Text("One-time")),
+                        DropdownMenuItem(value: 'Weekly', child: Text("Weekly")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setStateDialog(() {
+                            selectedType = val;
+                            if (val == 'One-time') {
+                              selectedDay = null;
+                              selectedTime = null;
+                            }
+                          });
+                        }
+                      },
+                    ),
+
+                    if (selectedType == 'Weekly') ...[
+                      const SizedBox(height: 15),
+                      Row(
+                        children: [
+                          // اختيار اليوم
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              dropdownColor: Colors.white, // ✅ خلفية بيضاء
+                              decoration: const InputDecoration(
+                                labelText: "Day",
+                                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                              ),
+                              value: selectedDay,
+                              items: _daysOfWeek.map((day) => DropdownMenuItem(value: day, child: Text(day, style: const TextStyle(fontSize: 14)))).toList(),
+                              onChanged: (val) => setStateDialog(() => selectedDay = val),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // اختيار الوقت
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.now(),
+                                  builder: (context, child) {
+                                    // ✅ تعديل ألوان الـ TimePicker
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: const ColorScheme.light(
+                                          primary: hassalaGreen1, // الهيدر
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white, // الخلفية
+                                          onSurface: textColor, // النص
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (time != null) {
+                                  setStateDialog(() => selectedTime = time);
+                                }
+                              },
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: "Time",
+                                  suffixIcon: Icon(Icons.access_time, size: 20),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                                ),
+                                child: Text(
+                                  selectedTime != null ? selectedTime!.format(context) : "Select Time",
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1),
-                onPressed: () async {
-                  // التحقق من المدخلات الأساسية
-                  if (titleController.text.isEmpty || keysController.text.isEmpty) {
-                    _showMessageBar("Please fill all required fields", backgroundColor: _redMsg);
-                    return;
-                  }
-
-                  int keysValue = int.tryParse(keysController.text) ?? 0;
-                  if (keysValue <= 0) {
-                    _showMessageBar("Reward must be greater than 0", backgroundColor: _redMsg);
-                    return;
-                  }
-
-                  // ✅ التحقق من مدخلات الأسبوعي
-                  if (selectedType == 'Weekly' && (selectedDay == null || selectedTime == null)) {
-                    _showMessageBar("Please select day and time for weekly chore", backgroundColor: _redMsg);
-                    return;
-                  }
-                  
-                  try {
-                    // تنسيق الوقت للإرسال (HH:mm)
-                    String? formattedTime;
-                    if (selectedTime != null) {
-                      final hour = selectedTime!.hour.toString().padLeft(2, '0');
-                      final minute = selectedTime!.minute.toString().padLeft(2, '0');
-                      formattedTime = "$hour:$minute";
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context), 
+                  child: const Text("Cancel", style: TextStyle(color: Colors.grey))
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1),
+                  onPressed: () async {
+                    if (titleController.text.isEmpty || keysController.text.isEmpty) {
+                      _showMessageBar("Please fill all required fields", backgroundColor: _redMsg);
+                      return;
                     }
 
-                    await _choreService.createChore(
-                      title: titleController.text,
-                      description: descController.text,
-                      keys: keysValue,
-                      childId: widget.childId,
-                      parentId: widget.parentId.toString(),
-                      type: selectedType,
-                      assignedDay: selectedDay,    // إرسال اليوم
-                      assignedTime: formattedTime, // إرسال الوقت
-                    );
+                    int keysValue = int.tryParse(keysController.text) ?? 0;
+                    if (keysValue <= 0) {
+                      _showMessageBar("Reward must be greater than 0", backgroundColor: _redMsg);
+                      return;
+                    }
+
+                    if (selectedType == 'Weekly' && (selectedDay == null || selectedTime == null)) {
+                      _showMessageBar("Please select day and time for weekly chore", backgroundColor: _redMsg);
+                      return;
+                    }
                     
-                    if (mounted) Navigator.pop(context);
-                    
-                    setState(() {
-                      _choresFuture = _choreService.getChores(widget.childId);
-                    });
-                    
-                    _showMessageBar("Chore added successfully!", backgroundColor: _greenMsg);
-                  } catch (e) {
-                    if (mounted) Navigator.pop(context);
-                    _showMessageBar("Error: $e", backgroundColor: _redMsg);
-                  }
-                },
-                child: const Text("Create", style: TextStyle(color: Colors.white)),
-              ),
-            ],
+                    try {
+                      String? formattedTime;
+                      if (selectedTime != null) {
+                        final hour = selectedTime!.hour.toString().padLeft(2, '0');
+                        final minute = selectedTime!.minute.toString().padLeft(2, '0');
+                        formattedTime = "$hour:$minute";
+                      }
+
+                      await _choreService.createChore(
+                        title: titleController.text,
+                        description: descController.text,
+                        keys: keysValue,
+                        childId: widget.childId,
+                        parentId: widget.parentId.toString(),
+                        type: selectedType,
+                        assignedDay: selectedDay,
+                        assignedTime: formattedTime,
+                      );
+                      
+                      if (mounted) Navigator.pop(context);
+                      
+                      setState(() {
+                        _choresFuture = _choreService.getChores(widget.childId);
+                      });
+                      
+                      _showMessageBar("Chore added successfully!", backgroundColor: _greenMsg);
+                    } catch (e) {
+                      if (mounted) Navigator.pop(context);
+                      _showMessageBar("Error: $e", backgroundColor: _redMsg);
+                    }
+                  },
+                  child: const Text("Create", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
           );
         }
       ),

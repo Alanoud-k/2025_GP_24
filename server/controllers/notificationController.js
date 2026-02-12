@@ -33,6 +33,38 @@ export const getParentNotifications = async (req, res) => {
   }
 };
 
+// /* ============================================================
+//    CHILD – GET NOTIFICATIONS
+// ============================================================ */
+// export const getChildNotifications = async (req, res) => {
+//   const { childId } = req.params;
+
+//   try {
+//     const rows = await sql`
+//       SELECT 
+//         n.notificationid AS "notificationId",
+//         n.message,
+//         n.type,
+//         n.moneyrequestid AS "requestId",
+//         n.createdat AS "createdAt",
+//         n.isread
+//       FROM "Notification" n
+//       WHERE n.childid = ${childId}
+//         AND n.type IN (
+//           'REQUEST_APPROVED',
+//           'REQUEST_DECLINED',
+//           'MONEY_TRANSFER'
+//         )
+//       ORDER BY n.createdat DESC
+//     `;
+
+//     return res.status(200).json(rows);
+//   } catch (err) {
+//     console.error("❌ Error fetching child notifications:", err);
+//     return res.status(500).json({ error: "Failed to load notifications" });
+//   }
+// };
+
 /* ============================================================
    CHILD – GET NOTIFICATIONS
 ============================================================ */
@@ -53,7 +85,9 @@ export const getChildNotifications = async (req, res) => {
         AND n.type IN (
           'REQUEST_APPROVED',
           'REQUEST_DECLINED',
-          'MONEY_TRANSFER'
+          'MONEY_TRANSFER',
+          'CHORE_ASSIGNED',  -- 👈 جديد
+          'CHORE_APPROVED'   -- 👈 جديد
         )
       ORDER BY n.createdat DESC
     `;
@@ -100,6 +134,8 @@ export const getUnreadCountChild = async (req, res) => {
           'REQUEST_APPROVED',
           'REQUEST_DECLINED',
           'MONEY_TRANSFER'
+          'CHORE_ASSIGNED',  -- 👈 جديد
+          'CHORE_APPROVED'   -- 👈 جديد
         )
     `;
 
@@ -145,5 +181,40 @@ export const markChildNotificationsRead = async (req, res) => {
   } catch (err) {
     console.error("❌ Child mark-read error:", err);
     res.status(500).json({ error: "Failed to update notifications" });
+  }
+};
+
+export const createNotification = async (
+  parentId,
+  childId,
+  type,
+  message,
+  moneyRequestId = null,
+  choreId = null // 👈 معامل جديد للتشورز
+) => {
+  try {
+    await sql`
+      INSERT INTO "Notification" (
+        "parentid", 
+        "childid", 
+        "type", 
+        "message", 
+        "moneyrequestid", 
+        "isread", 
+        "createdat"
+      )
+      VALUES (
+        ${parentId}, 
+        ${childId}, 
+        ${type}, 
+        ${message}, 
+        ${moneyRequestId}, 
+        FALSE, 
+        CURRENT_TIMESTAMP
+      )
+    `;
+    console.log(`🔔 Notification created for Parent ${parentId}: ${message}`);
+  } catch (err) {
+    console.error("❌ Failed to create notification:", err);
   }
 };

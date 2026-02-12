@@ -1,4 +1,5 @@
 import { sql } from "../config/db.js";
+import { createNotification } from "./notificationController.js"; 
 
 // 1. جلب مهام طفل محدد
 export const getChildChores = async (req, res) => {
@@ -138,3 +139,72 @@ export const updateChoreDetails = async (req, res) => {
     return res.status(500).json({ error: "Failed to edit chore" });
   }
 };
+
+// // 6. الطفل يكمل المهمة (طلب موافقة)
+// export const completeChore = async (req, res) => {
+//   const { id } = req.params;
+  
+//   try {
+//     // نحدث الحالة فقط إذا كانت Pending
+//     const updated = await sql`
+//       UPDATE "Chore" 
+//       SET "chorestatus" = 'Waiting Approval' 
+//       WHERE "choreid" = ${id} 
+//       RETURNING *
+//     `;
+
+//     if (updated.length === 0) {
+//       return res.status(404).json({ error: "Chore not found" });
+//     }
+
+//     // هنا يمكن إضافة كود لإرسال إشعار للأب (اختياري)
+//     // await createNotificationForParent(...)
+
+//     return res.json({ message: "Chore sent for approval", chore: updated[0] });
+//   } catch (err) {
+//     console.error("❌ Error completing chore:", err);
+//     return res.status(500).json({ error: "Failed to complete chore" });
+//   }
+// };
+
+// 6. الطفل يكمل المهمة (طلب موافقة)
+export const completeChore = async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    // أولاً: نحدث الحالة
+    const updated = await sql`
+      UPDATE "Chore" 
+      SET "chorestatus" = 'Waiting Approval' 
+      WHERE "choreid" = ${id} 
+      RETURNING *
+    `;
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    const chore = updated[0];
+
+    // ثانياً: نجلب اسم الطفل لإدراجه في الرسالة (اختياري للتحسين)
+    const child = await sql`SELECT firstname FROM "Child" WHERE childid = ${chore.childid}`;
+    const childName = child[0]?.firstname || "Your child";
+
+    // 👇 3. إرسال الإشعار للأب
+    await createNotification(
+      chore.parentid,         // معرف الأب (موجود في جدول Chore)
+      chore.childid,          // معرف الطفل
+      'CHORE_COMPLETED',      // نوع الإشعار (تأكدي من توحيد المسميات)
+      `${childName} completed the chore: ${chore.chorename}`, // نص الرسالة
+      null,                   // لا يوجد MoneyRequest
+      chore.choreid           // معرف المهمة
+    );
+
+    return res.json({ message: "Chore sent for approval", chore: chore });
+
+  } catch (err) {
+    console.error("❌ Error completing chore:", err);
+    return res.status(500).json({ error: "Failed to complete chore" });
+  }
+};
+

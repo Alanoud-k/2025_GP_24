@@ -159,5 +159,24 @@ class ChoreService {
     }
   }
 
+
+// داخل كلاس ChoreService
+
+  // الطفل يطلب الموافقة (إنهاء المهمة)
+  Future<void> completeChore(String choreId) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/$choreId/complete'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to complete chore");
+    }
+  }
+
 }
 

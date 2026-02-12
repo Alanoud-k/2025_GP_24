@@ -153,8 +153,16 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
         return Icons.cancel_rounded;
       case "MONEY_TRANSFER":
         return Icons.swap_horiz_rounded;
+      
+      case "CHORE_ASSIGNED":
+        return Icons.assignment_add; 
+      case "CHORE_APPROVED":
+        return Icons.verified;
+
       default:
         return Icons.notifications_rounded;
+      
+        
     }
   }
 
@@ -166,6 +174,10 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
         return Colors.red;
       case "MONEY_TRANSFER":
         return Colors.teal;
+        case "CHORE_ASSIGNED":
+        return Colors.purple;
+      case "CHORE_APPROVED":
+        return Colors.orange;
       default:
         return Colors.blueGrey;
     }

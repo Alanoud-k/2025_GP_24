@@ -3,8 +3,10 @@ import {
   getParentChores, 
   getChildChores, 
   createChore, 
+  completeChore,
   updateChoreStatus,
   updateChoreDetails // 👈 1. استيراد الدالة الجديدة
+  
 } from "../controllers/choreController.js";
 import { protect } from "../middleware/authMiddleware.js"; 
 
@@ -19,5 +21,7 @@ router.patch("/:id/status", protect, updateChoreStatus);
 
 // 👇 2. إضافة مسار التعديل
 router.put("/:id/details", protect, updateChoreDetails);
+
+router.patch("/:id/complete", protect, completeChore);
 
 export default router;
