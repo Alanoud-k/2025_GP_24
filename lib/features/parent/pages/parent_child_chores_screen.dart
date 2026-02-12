@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // ✅ لإدخال الأرقام فقط
+import 'package:flutter/services.dart'; // لإدخال الأرقام فقط
 import '../../child/models/chore_model.dart'; 
 import '../../child/services/chore_service.dart';
 
@@ -31,10 +31,14 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
   static const Color textColor = Color(0xFF2C3E50);
   static const Color bgColor = Color(0xFFF7FAFC);
 
-  // ✅ ألوان الرسائل الموحدة
+  // ألوان الرسائل الموحدة
   static const Color _tealMsg = Color(0xFF37C4BE);
   static const Color _redMsg = Color(0xFFE74C3C);
   static const Color _greenMsg = Color(0xFF27AE60);
+
+  final List<String> _daysOfWeek = [
+    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+  ];
 
   @override
   void initState() {
@@ -49,7 +53,6 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
     super.dispose();
   }
 
-  // ✅ دالة الرسائل الموحدة (مثل صفحة إضافة الأموال)
   void _showMessageBar(
     String message, {
     Color backgroundColor = _tealMsg,
@@ -69,20 +72,23 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
     );
   }
 
-  // ✅ دالة إظهار نافذة إضافة المهمة (محدثة مع النوع والرسائل)
+  // دالة إظهار نافذة إضافة المهمة
   void _showChoreDialog() {
     final titleController = TextEditingController();
     final descController = TextEditingController();
     final keysController = TextEditingController();
     
-    // متغير لنوع المهمة (الافتراضي One-time)
+    // متغيرات الحالة للنافذة
     String selectedType = 'One-time';
+    String? selectedDay;
+    TimeOfDay? selectedTime;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder( // ✅ نستخدم StatefulBuilder لتحديث الـ Dropdown
+      builder: (context) => StatefulBuilder( 
         builder: (context, setStateDialog) {
           return AlertDialog(
+            backgroundColor: Colors.white, // ✅ تعديل لون الخلفية للأبيض
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Text("Add New Chore", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
             content: SingleChildScrollView(
@@ -103,11 +109,11 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                     controller: keysController, 
                     decoration: const InputDecoration(labelText: "Reward (Keys)", prefixIcon: Icon(Icons.vpn_key)), 
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly], // أرقام فقط
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   const SizedBox(height: 15),
 
-                  // ✅ قائمة اختيار نوع المهمة
+                  // قائمة اختيار نوع المهمة
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       labelText: "Chore Type",
@@ -121,10 +127,63 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                     ],
                     onChanged: (val) {
                       if (val != null) {
-                        setStateDialog(() => selectedType = val);
+                        setStateDialog(() {
+                          selectedType = val;
+                          // تصفير الخيارات إذا غير النوع
+                          if (val == 'One-time') {
+                            selectedDay = null;
+                            selectedTime = null;
+                          }
+                        });
                       }
                     },
                   ),
+
+                  // ✅ خيارات اليوم والوقت تظهر فقط إذا كان النوع أسبوعي
+                  if (selectedType == 'Weekly') ...[
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        // اختيار اليوم
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: "Day",
+                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                            ),
+                            value: selectedDay,
+                            items: _daysOfWeek.map((day) => DropdownMenuItem(value: day, child: Text(day, style: const TextStyle(fontSize: 14)))).toList(),
+                            onChanged: (val) => setStateDialog(() => selectedDay = val),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // اختيار الوقت
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                              if (time != null) {
+                                setStateDialog(() => selectedTime = time);
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: "Time",
+                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                                suffixIcon: Icon(Icons.access_time, size: 20),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                              ),
+                              child: Text(
+                                selectedTime != null ? selectedTime!.format(context) : "Select Time",
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -136,7 +195,7 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1),
                 onPressed: () async {
-                  // التحقق من المدخلات
+                  // التحقق من المدخلات الأساسية
                   if (titleController.text.isEmpty || keysController.text.isEmpty) {
                     _showMessageBar("Please fill all required fields", backgroundColor: _redMsg);
                     return;
@@ -147,21 +206,35 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                     _showMessageBar("Reward must be greater than 0", backgroundColor: _redMsg);
                     return;
                   }
+
+                  // ✅ التحقق من مدخلات الأسبوعي
+                  if (selectedType == 'Weekly' && (selectedDay == null || selectedTime == null)) {
+                    _showMessageBar("Please select day and time for weekly chore", backgroundColor: _redMsg);
+                    return;
+                  }
                   
                   try {
-                    // ✅ استدعاء السيرفر مع النوع
+                    // تنسيق الوقت للإرسال (HH:mm)
+                    String? formattedTime;
+                    if (selectedTime != null) {
+                      final hour = selectedTime!.hour.toString().padLeft(2, '0');
+                      final minute = selectedTime!.minute.toString().padLeft(2, '0');
+                      formattedTime = "$hour:$minute";
+                    }
+
                     await _choreService.createChore(
                       title: titleController.text,
                       description: descController.text,
                       keys: keysValue,
                       childId: widget.childId,
                       parentId: widget.parentId.toString(),
-                      type: selectedType, // إرسال النوع المختار
+                      type: selectedType,
+                      assignedDay: selectedDay,    // إرسال اليوم
+                      assignedTime: formattedTime, // إرسال الوقت
                     );
                     
                     if (mounted) Navigator.pop(context);
                     
-                    // ✅ تحديث الصفحة
                     setState(() {
                       _choresFuture = _choreService.getChores(widget.childId);
                     });
@@ -199,7 +272,6 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
         ),
       ),
       
-      // ✅ الزر العائم
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 90.0), 
         child: FloatingActionButton(
@@ -234,7 +306,6 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
           return Column(
             children: [
               const SizedBox(height: 10),
-              // --- Tab Bar ---
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
@@ -256,7 +327,6 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                 ),
               ),
               const SizedBox(height: 20),
-              // --- Content ---
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -287,7 +357,7 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
 
   Widget _buildChoreCard(ChoreModel chore, {required bool isActive}) {
     final bool isWaiting = chore.status == 'Waiting Approval';
-    final bool isWeekly = chore.type == 'Weekly'; // ✅ التحقق من النوع
+    final bool isWeekly = chore.type == 'Weekly';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -321,7 +391,6 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                   children: [
                     Text(chore.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
                     const SizedBox(width: 8),
-                    // ✅ علامة تميز المهام الأسبوعية
                     if (isWeekly)
                        Container(
                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

@@ -26,6 +26,7 @@ import qrRoutes from "./routes/qrRoutes.js";
 
 
 import { startWeeklyAllowanceCron } from "./cron/weeklyAllowanceCron.js";
+import { startChoreCron } from "./cron/choreCron.js";
 
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
@@ -205,5 +206,11 @@ app.listen(PORT, () => {
   startWeeklyAllowanceCron();
 });
 
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  startWeeklyAllowanceCron();
+  startChoreCron(); 
+});
 ////////////////////////////
 

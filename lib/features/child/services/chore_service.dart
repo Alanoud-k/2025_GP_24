@@ -67,7 +67,9 @@ class ChoreService {
     required int keys,
     required String childId,
     required String parentId,
-    String type = 'One-time', // ✅ معامل جديد
+    String type = 'One-time', 
+    String? assignedDay, 
+  String? assignedTime, 
   }) async {
     final token = await _getToken();
     final response = await http.post(
@@ -82,7 +84,9 @@ class ChoreService {
         'keys': keys,
         'childId': childId,
         'parentId': parentId,
-        'type': type, // ✅ إرسال النوع
+        'type': type,
+        'assignedDay': assignedDay,
+        'assignedTime': assignedTime,
       }),
     );
 

@@ -50,9 +50,12 @@ export const getParentChores = async (req, res) => {
   }
 };
 
+// ... (الاستيرادات)
+
 // 3. إضافة مهمة جديدة (Create)
 export const createChore = async (req, res) => {
-  const { title, description, keys, childId, parentId, type } = req.body; 
+  // نستقبل الحقول الجديدة هنا 👇
+  const { title, description, keys, childId, parentId, type, assignedDay, assignedTime } = req.body; 
 
   try {
     if (!title || !keys || !childId || !parentId) {
@@ -67,7 +70,9 @@ export const createChore = async (req, res) => {
         "chorestatus", 
         "childid", 
         "parentid",
-        "choretype"
+        "choretype",
+        "assigned_day",  -- 👈
+        "assigned_time"  -- 👈
       )
       VALUES (
         ${title}, 
@@ -76,7 +81,9 @@ export const createChore = async (req, res) => {
         'Pending', 
         ${childId}, 
         ${parentId},
-        ${type || 'One-time'}
+        ${type || 'One-time'},
+        ${assignedDay || null}, -- 👈 نخزن اليوم أو null
+        ${assignedTime || null}  -- 👈 نخزن الوقت أو null
       )
       RETURNING *
     `;
@@ -88,6 +95,8 @@ export const createChore = async (req, res) => {
     return res.status(500).json({ error: "Failed to create chore", details: err.message });
   }
 };
+
+// ... (باقي الدوال)
 
 // 4. تحديث الحالة (Approve/Update)
 export const updateChoreStatus = async (req, res) => {

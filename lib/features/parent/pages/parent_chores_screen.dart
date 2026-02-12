@@ -32,6 +32,10 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
   static const Color _redMsg = Color(0xFFE74C3C);
   static const Color _greenMsg = Color(0xFF27AE60);
 
+  final List<String> _daysOfWeek = [
+    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -98,8 +102,11 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
     final descController = TextEditingController(text: choreToEdit?.description ?? '');
     final keysController = TextEditingController(text: choreToEdit?.keys.toString() ?? '');
     
-    // ✅ متغير لنوع المهمة (One-time افتراضي)
     String selectedType = isEditing ? choreToEdit!.type : 'One-time';
+    String? selectedDay;
+    TimeOfDay? selectedTime;
+
+    // TODO: إذا كان في التعديل يجب جلب اليوم والوقت القديمين إذا أردت دعم تعديلهم
 
     String? initialChildId = isEditing ? choreToEdit!.childId : null;
     if (initialChildId != null && _childrenList.isNotEmpty) {
@@ -113,6 +120,7 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
       builder: (context) => StatefulBuilder(
         builder: (context, setStateDialog) {
           return AlertDialog(
+            backgroundColor: Colors.white, // ✅ تعديل لون الخلفية للأبيض
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(isEditing ? "Edit Chore" : "Add New Chore", style: const TextStyle(fontWeight: FontWeight.bold)),
             content: SingleChildScrollView(
@@ -131,7 +139,6 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                   ),
                   const SizedBox(height: 15),
 
-                  // ✅ قائمة اختيار نوع المهمة
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       labelText: "Chore Type",
@@ -144,9 +151,61 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                       DropdownMenuItem(value: 'Weekly', child: Text("Weekly")),
                     ],
                     onChanged: (val) {
-                      if (val != null) setStateDialog(() => selectedType = val);
+                      if (val != null) {
+                        setStateDialog(() {
+                          selectedType = val;
+                          if (val == 'One-time') {
+                            selectedDay = null;
+                            selectedTime = null;
+                          }
+                        });
+                      }
                     },
                   ),
+
+                  // ✅ خيارات اليوم والوقت (في حالة الإنشاء فقط حالياً لتجنب تعقيد التعديل)
+                  if (selectedType == 'Weekly' && !isEditing) ...[
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: "Day",
+                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                            ),
+                            value: selectedDay,
+                            items: _daysOfWeek.map((day) => DropdownMenuItem(value: day, child: Text(day, style: const TextStyle(fontSize: 14)))).toList(),
+                            onChanged: (val) => setStateDialog(() => selectedDay = val),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                              if (time != null) {
+                                setStateDialog(() => selectedTime = time);
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: "Time",
+                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                                suffixIcon: Icon(Icons.access_time, size: 20),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                              ),
+                              child: Text(
+                                selectedTime != null ? selectedTime!.format(context) : "Select Time",
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
 
                   if (!isEditing) ...[
                     const SizedBox(height: 15),
@@ -187,7 +246,6 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
 
                   try {
                     if (isEditing) {
-                      // ملاحظة: الـ Edit حالياً لا يدعم تغيير النوع في السيرفر إلا إذا حدثنا الكنترولر لدعم ذلك
                       await _choreService.editChore(
                         choreId: choreToEdit!.id,
                         title: titleController.text,
@@ -200,6 +258,19 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                          _showMessageBar("Please fill all fields & select a child", backgroundColor: _redMsg);
                          return;
                       }
+
+                      // ✅ التحقق من الوقت واليوم للمهام الأسبوعية
+                      if (selectedType == 'Weekly' && (selectedDay == null || selectedTime == null)) {
+                        _showMessageBar("Please select day and time", backgroundColor: _redMsg);
+                        return;
+                      }
+
+                      String? formattedTime;
+                      if (selectedTime != null) {
+                        final hour = selectedTime!.hour.toString().padLeft(2, '0');
+                        final minute = selectedTime!.minute.toString().padLeft(2, '0');
+                        formattedTime = "$hour:$minute";
+                      }
                       
                       await _choreService.createChore(
                         title: titleController.text,
@@ -207,7 +278,9 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                         keys: keysValue,
                         childId: selectedChildId!,
                         parentId: widget.parentId.toString(),
-                        type: selectedType, // ✅ إرسال النوع
+                        type: selectedType,
+                        assignedDay: selectedDay,    // إرسال
+                        assignedTime: formattedTime, // إرسال
                       );
                       _showMessageBar("Chore created!", backgroundColor: _greenMsg);
                     }
@@ -341,7 +414,6 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                   children: [
                     Text(chore.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(width: 8),
-                    // ✅ أيقونة تميز المهمة الأسبوعية
                     if (isWeekly)
                        Container(
                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
