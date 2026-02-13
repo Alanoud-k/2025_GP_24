@@ -5,7 +5,8 @@ class ChoreModel {
   final int keys;
   final String status;
   final String childId;
-  final String type; // ✅ جديد
+  final String type;
+  final String? proofUrl; // ✅ جديد: رابط صورة الإثبات
 
   ChoreModel({
     required this.id,
@@ -14,7 +15,8 @@ class ChoreModel {
     required this.keys,
     required this.status,
     required this.childId,
-    required this.type, // ✅
+    required this.type,
+    this.proofUrl, // ✅
   });
 
   factory ChoreModel.fromJson(Map<String, dynamic> json) {
@@ -25,7 +27,8 @@ class ChoreModel {
       keys: json['keys'] ?? 0,
       status: json['status'] ?? 'Pending',
       childId: (json['childId'] ?? '').toString(),
-      type: json['type'] ?? 'One-time', // ✅ قراءة النوع
+      type: json['type'] ?? 'One-time',
+      proofUrl: json['proofUrl'], // ✅ قراءة الرابط
     );
   }
 }
