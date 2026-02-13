@@ -574,8 +574,15 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
   }
 
   // ✅ دالة جديدة: عرض الصورة للمراجعة
-  void _showReviewDialog(ChoreModel chore) {
-    final String imageUrl = chore.proofUrl ?? "";
+void _showReviewDialog(ChoreModel chore) {
+    String imageUrl = chore.proofUrl ?? "";
+
+    // إصلاح الرابط إذا كان http
+    if (imageUrl.isNotEmpty && imageUrl.startsWith('http:')) {
+      imageUrl = imageUrl.replaceFirst('http:', 'https:');
+    }
+    
+    debugPrint("🖼️ Displaying Image: $imageUrl");
 
     showDialog(
       context: context,
@@ -583,57 +590,69 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("Review Proof", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Child completed: ${chore.title}", style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 15),
-            if (imageUrl.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  imageUrl,
-                  height: 250,
+        
+        // 🔥🔥 التعديل هنا: تحديد عرض المحتوى لكسر اللانهائية
+        content: SizedBox(
+          width: double.maxFinite, // ✅ هذا السطر يحل المشكلة
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Child completed: ${chore.title}", style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 15),
+              
+              if (imageUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    imageUrl,
+                    height: 250, // طول ثابت
+                    width: double.infinity, // الآن هذا سيعمل لأن الأب (SizedBox) له عرض محدد
+                    fit: BoxFit.cover,
+                    
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 250,
+                        width: double.infinity,
+                        color: Colors.grey[100],
+                        child: const Center(child: CircularProgressIndicator(color: hassalaGreen1)),
+                      );
+                    },
+                    
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint("❌ Image Error: $error");
+                      return Container(
+                        height: 150, 
+                        width: double.infinity,
+                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                            SizedBox(height: 8),
+                            Text("Image not found", style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(20),
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      height: 250,
-                      color: Colors.grey[100],
-                      child: const Center(child: CircularProgressIndicator(color: hassalaGreen1)),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => 
-                    Container(
-                      height: 150, 
-                      width: double.infinity,
-                      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.broken_image, color: Colors.grey, size: 40),
-                          Text("Could not load image", style: TextStyle(color: Colors.grey)),
-                        ],
-                      ),
-                    ),
+                  decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.image_not_supported, color: Colors.grey, size: 40),
+                      SizedBox(height: 8),
+                      Text("No proof image provided.", style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
                 ),
-              )
-            else
-              Container(
-                padding: const EdgeInsets.all(20),
-                width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-                child: const Column(
-                  children: [
-                    Icon(Icons.image_not_supported, color: Colors.grey, size: 40),
-                    SizedBox(height: 8),
-                    Text("No proof image provided.", style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -643,10 +662,10 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              _approveChore(chore.id); // الموافقة بعد الرؤية
+              _approveChore(chore.id);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: _greenMsg,
+              backgroundColor: const Color(0xFF27AE60),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text("Approve", style: TextStyle(color: Colors.white)),

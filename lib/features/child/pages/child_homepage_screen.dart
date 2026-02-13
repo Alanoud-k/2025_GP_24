@@ -141,7 +141,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     } catch (e) {}
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     const bg1 = Color(0xFFF7FAFC);
     const bg2 = Color(0xFFE6F4F3);
@@ -158,24 +158,32 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _header(),
-                      const SizedBox(height: 20),
-                      _balancesRow(),
-                      const SizedBox(height: 10),
-                      _keysBadge(),
-                      const SizedBox(height: 24),
-                      _actionsGrid(),
-                      const SizedBox(height: 28),
-                      _breakdownCard(),
-                    ],
+              : RefreshIndicator( // ✅ 1. إضافة RefreshIndicator
+                  onRefresh: () async {
+                    // عند السحب، نعيد جلب بيانات الطفل (بما فيها المفاتيح)
+                    await _fetchChildInfo();
+                    await _fetchUnreadCount();
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(), // ✅ ضروري لعمل السحب
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _header(),
+                        const SizedBox(height: 20),
+                        _balancesRow(),
+                        const SizedBox(height: 10),
+                        _keysBadge(), // هذا سيتحدث تلقائياً بعد السحب
+                        const SizedBox(height: 24),
+                        _actionsGrid(),
+                        const SizedBox(height: 28),
+                        _breakdownCard(),
+                      ],
+                    ),
                   ),
                 ),
         ),
