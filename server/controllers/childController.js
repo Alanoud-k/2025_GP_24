@@ -2,7 +2,7 @@
 
 import bcrypt from "bcrypt";
 import { sql } from "../config/db.js";
-import cloudinary from "../config/cloudinary.js";
+import cloudinary from "../cloudinary.js";
 
 /* =====================================================
    Get Children by Parent
