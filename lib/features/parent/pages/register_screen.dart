@@ -144,7 +144,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // ✅ NEW: stop double submissions
     if (_isLoading) return;
     setState(() => _isLoading = true);
-    final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
+   final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
+//final url = Uri.parse('http://localhost:3000/api/auth/register-parent');
 
     try {
       final response = await http.post(

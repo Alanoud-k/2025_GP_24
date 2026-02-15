@@ -13,6 +13,7 @@ import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import allowanceRoutes from "./routes/allowanceRoutes.js";
+import childRoutes from "./routes/childRoutes.js";
 
 //import transactionRoutes from "./routes/transactionRoutes.js";
 import childTransactionRoutes from "./routes/childTransactionRoutes.js";
@@ -91,6 +92,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/child", childRoutes);
 //app.use("/api/transaction", transactionRoutes);
 app.use("/api/child", childTransactionRoutes);
 app.use("/api/notifications", notificationRoutes);
@@ -214,6 +216,8 @@ app.use("/api/qr", qrRoutes);
 // });
 
 const PORT = process.env.PORT || 3000;
+
+console.log("✅ Reached before listen");
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
