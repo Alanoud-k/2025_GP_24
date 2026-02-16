@@ -88,19 +88,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:my_app/core/api_config.dart'; // ✅ NEW
 
 class ParentAllowanceScreen extends StatefulWidget {
   final int parentId;
   final String token;
-  final String baseUrl;
 
   const ParentAllowanceScreen({
     super.key,
     required this.parentId,
     required this.token,
-    required this.baseUrl,
   });
-
 
   @override
   State<ParentAllowanceScreen> createState() => _ParentAllowanceScreenState();
@@ -113,12 +112,12 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
   // --- State Variables for UI ---
   int _selectedChildIndex = 0;
   double _savePercentage = 0.20; // Default 20% Savings
-  final TextEditingController _amountController = TextEditingController(text: "100");
+  final TextEditingController _amountController =
+      TextEditingController(text: "100");
   bool _isAutoTransferEnabled = true;
 
- List<Map<String, dynamic>> _children = [];
-bool _childrenLoading = true;
-
+  List<Map<String, dynamic>> _children = [];
+  bool _childrenLoading = true;
 
   @override
   void initState() {
@@ -132,205 +131,218 @@ bool _childrenLoading = true;
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString("token") ?? widget.token;
 
+    debugPrint("ALLOWANCE ApiConfig.baseUrl = ${ApiConfig.baseUrl}");
+
     if (token == null || token!.isEmpty) {
-  await _forceLogout();
+      await _forceLogout();
       return;
     }
 
     if (mounted) setState(() => _loading = false);
-      await _fetchChildren();
-
+    await _fetchChildren();
   }
 
- 
-Future<void> _forceLogout() async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.clear();
+  Future<void> _forceLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
 
-  if (!mounted) return;
-  Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
-}
-
-  Future<void> _handleAuth() async {
-    await checkAuthStatus(context);
-    if (mounted) {
-      setState(() => _loading = false);
-    }
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
   }
 
-Future<void> _fetchChildren() async {
-  final url = Uri.parse(
-    '${widget.baseUrl}/api/child/parent/${widget.parentId}/children',
-  );
+  Future<void> _fetchChildren() async {
+    final url = Uri.parse(
+  '${ApiConfig.baseUrl}/api/auth/parent/${widget.parentId}/children',
+);
 
-  try {
-    final res = await http.get(url, headers: {
-'Authorization': 'Bearer ${token!}',
-    });
-if (res.statusCode == 401) {
-await _forceLogout();
-  return;
-}
 
-    if (res.statusCode == 200) {
-      final List data = jsonDecode(res.body);
+    debugPrint("GET children => $url");
 
-      setState(() {
-        _children = data.map((c) => {
-          'childId': c['childId'],
-          'name': c['firstName'],
-        }).toList();
-
-        _childrenLoading = false;
-        _selectedChildIndex = 0;
+    try {
+      final res = await http.get(url, headers: {
+        'Authorization': 'Bearer ${token!}',
       });
 
-      // بعد ما يجي أول طفل، نجيب إعداداته
-      if (_children.isNotEmpty) {
-        await _fetchAllowanceSettings(_children[0]['childId']);
+      debugPrint("GET children status => ${res.statusCode}");
+
+      if (res.statusCode == 401) {
+        await _forceLogout();
+        return;
       }
-    } else {
+
+      if (res.statusCode == 200) {
+final decoded = jsonDecode(res.body);
+final List data = (decoded is List)
+    ? decoded
+    : (decoded is Map && decoded["children"] is List)
+        ? decoded["children"]
+        : [];
+
+        setState(() {
+        _children = data.map((c) => {
+  'childId': c['childId'] ?? c['id'],
+  'name': c['firstName'] ?? c['firstname'] ?? 'Unnamed',
+}).toList();
+
+
+          _childrenLoading = false;
+          _selectedChildIndex = 0;
+        });
+
+        if (_children.isNotEmpty) {
+          await _fetchAllowanceSettings(_children[0]['childId']);
+        }
+      } else {
   setState(() => _childrenLoading = false);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text('Failed to load children (${res.statusCode})')),
   );
 }
 
-  } catch (e) {
-    setState(() => _childrenLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error loading children: $e')),
-    );
-  }
-}
-
-Future<void> _fetchAllowanceSettings(int childId) async {
-  final url = Uri.parse('${widget.baseUrl}/api/allowance/$childId');
-
-  try {
-    final res = await http.get(url, headers: {
-'Authorization': 'Bearer ${token!}',
-      'Content-Type': 'application/json',
-    });
-if (res.statusCode == 401) {
-await _forceLogout();
-  return;
-}
-
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-
-      setState(() {
-        _isAutoTransferEnabled = data['isEnabled'] ?? false;
-        _amountController.text = (data['amount'] ?? 100).toString();
-
-        final sp = (data['savePercentage'] ?? 20).toDouble();
-        _savePercentage = (sp / 100.0).clamp(0.0, 1.0);
-      });
-    }
-  } catch (_) {
-    // عادي إذا ما عنده settings
-  }
-}
-
-  // --- Helpers ---
-Future<void> _saveSettings() async {
-  if (_children.isEmpty) return;
-
-  final childId = _children[_selectedChildIndex]['childId'];
-
-  final raw = _amountController.text.trim();
-  final parsedAmount = double.tryParse(raw);
-
-  if (_isAutoTransferEnabled) {
-    if (parsedAmount == null || parsedAmount <= 0) {
+    } catch (e) {
+      setState(() => _childrenLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid amount > 0')),
+        SnackBar(content: Text('Error loading children: $e')),
       );
-      return;
     }
   }
 
-  final amountToSend = parsedAmount ?? 0;
-  final savePctInt = (_savePercentage * 100).round();
+  Future<void> _fetchAllowanceSettings(int childId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/allowance/$childId');
+    debugPrint("GET allowance => $url");
 
-  final url = Uri.parse('${widget.baseUrl}/api/allowance/$childId');
-
-  try {
-    final res = await http.put(
-      url,
-      headers: {
+    try {
+      final res = await http.get(url, headers: {
         'Authorization': 'Bearer ${token!}',
         'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'isEnabled': _isAutoTransferEnabled,
-        'amount': amountToSend,
-        'savePercentage': savePctInt,
-      }),
-    );
+      });
 
-    if (res.statusCode == 401) {
-      await _forceLogout();
-      return;
-    }
+      debugPrint("GET allowance status => ${res.statusCode}");
 
-    if (res.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saved ✅')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Save failed (${res.statusCode})')),
-      );
+      if (res.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+
+        setState(() {
+          _isAutoTransferEnabled = data['isEnabled'] ?? false;
+          _amountController.text = (data['amount'] ?? 100).toString();
+
+          final sp = (data['savePercentage'] ?? 20).toDouble();
+          _savePercentage = (sp / 100.0).clamp(0.0, 1.0);
+        });
+      }
+    } catch (_) {
+      // عادي إذا ما عنده settings
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error saving: $e')),
-    );
   }
-}
 
+  Future<void> _saveSettings() async {
+    if (_children.isEmpty) return;
 
+    final childId = _children[_selectedChildIndex]['childId'];
 
-@override
-void dispose() {
-  _amountController.dispose();
-  super.dispose();
-}
+    final raw = _amountController.text.trim();
+    final cleaned = raw.replaceAll(',', '');
+    final parsedAmount = double.tryParse(cleaned);
+
+    // Validation
+    if (_isAutoTransferEnabled) {
+      if (cleaned.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter weekly amount')),
+        );
+        return;
+      }
+
+      if (parsedAmount == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Amount must be a number')),
+        );
+        return;
+      }
+
+      if (parsedAmount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Amount must be greater than 0')),
+        );
+        return;
+      }
+    }
+
+    final amountToSend = _isAutoTransferEnabled ? parsedAmount! : 0.0;
+    final savePctInt = (_savePercentage * 100).round().clamp(0, 100);
+
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/allowance/$childId');
+    debugPrint("PUT allowance => $url");
+
+    try {
+      final res = await http.put(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${token!}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'isEnabled': _isAutoTransferEnabled,
+          'amount': amountToSend,
+          'savePercentage': savePctInt,
+        }),
+      );
+
+      debugPrint("PUT allowance status => ${res.statusCode}");
+
+      if (res.statusCode == 401) {
+        await _forceLogout();
+        return;
+      }
+
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Allowance Saved ✅')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Save failed (${res.statusCode})')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving: $e')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     const hassalaGreen1 = Color(0xFF37C4BE);
     const hassalaGreen2 = Color(0xFF2EA49E);
 
-   if (_loading) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF7F8FA),
-    body: const Center(
-      child: CircularProgressIndicator(color: Color(0xFF37C4BE)),
-    ),
-  );
-}
+    if (_loading || _childrenLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF7F8FA),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF37C4BE)),
+        ),
+      );
+    }
 
-if (_childrenLoading) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF7F8FA),
-    body: const Center(
-      child: CircularProgressIndicator(color: Color(0xFF37C4BE)),
-    ),
-  );
-}
+    if (_children.isEmpty) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF7F8FA),
+        body: Center(child: Text("No children found")),
+      );
+    }
 
-if (_children.isEmpty) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF7F8FA),
-    body: const Center(child: Text("No children found")),
-  );
-}
-
-
-    // Calculate visual values
     double amount = double.tryParse(_amountController.text) ?? 0.0;
     double saveAmount = amount * _savePercentage;
     double spendAmount = amount - saveAmount;
@@ -349,9 +361,9 @@ if (_children.isEmpty) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
@@ -365,14 +377,13 @@ if (_children.isEmpty) {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        "Teach them to save by splitting their weekly allowance.", // Updated to weekly
+                        "Teach them to save by splitting their weekly allowance.",
                         style: TextStyle(fontSize: 15, color: Colors.black54),
                       ),
                     ],
                   ),
                 ),
 
-                // 2. Child Selector (Horizontal List)
                 SizedBox(
                   height: 110,
                   child: ListView.builder(
@@ -381,11 +392,14 @@ if (_children.isEmpty) {
                     itemCount: _children.length,
                     itemBuilder: (context, index) {
                       final isSelected = index == _selectedChildIndex;
+
                       return GestureDetector(
-onTap: () async {
-  setState(() => _selectedChildIndex = index);
-  await _fetchAllowanceSettings(_children[index]['childId']);
-},
+                        onTap: () async {
+                          setState(() => _selectedChildIndex = index);
+                          await _fetchAllowanceSettings(
+                            _children[index]['childId'],
+                          );
+                        },
                         child: Container(
                           margin: const EdgeInsets.only(right: 16),
                           child: Column(
@@ -395,24 +409,34 @@ onTap: () async {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isSelected ? hassalaGreen1 : Colors.transparent,
+                                    color: isSelected
+                                        ? hassalaGreen1
+                                        : Colors.transparent,
                                     width: 3,
                                   ),
                                 ),
                                 child: CircleAvatar(
                                   radius: 32,
                                   backgroundColor: Colors.grey.shade200,
-                                  child: Icon(Icons.person, 
-                                    size: 35, 
-                                    color: isSelected ? hassalaGreen2 : Colors.grey),
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 35,
+                                    color: isSelected
+                                        ? hassalaGreen2
+                                        : Colors.grey,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 _children[index]['name'],
                                 style: TextStyle(
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? const Color(0xFF2C3E50) : Colors.grey,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? const Color(0xFF2C3E50)
+                                      : Colors.grey,
                                 ),
                               ),
                             ],
@@ -425,7 +449,6 @@ onTap: () async {
 
                 const SizedBox(height: 20),
 
-                // 3. Main Control Card
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding: const EdgeInsets.all(24),
@@ -443,15 +466,19 @@ onTap: () async {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Amount Input
                       const Text(
-                        "Weekly Amount", // Updated to Weekly
-                        style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey),
+                        "Weekly Amount",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, color: Colors.grey),
                       ),
                       const SizedBox(height: 10),
                       TextField(
                         controller: _amountController,
+                        enabled: _isAutoTransferEnabled, // ✅ NEW
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -459,15 +486,15 @@ onTap: () async {
                         ),
                         decoration: const InputDecoration(
                           prefixText: "SAR  ",
-                          prefixStyle: TextStyle(fontSize: 20, color: Colors.grey),
+                          prefixStyle:
+                              TextStyle(fontSize: 20, color: Colors.grey),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                         ),
-                        onChanged: (val) => setState(() {}),
+                        onChanged: (_) => setState(() {}),
                       ),
                       const Divider(height: 30),
 
-                      // Split Slider Title
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -490,7 +517,6 @@ onTap: () async {
                       ),
                       const SizedBox(height: 20),
 
-                      // Visual Indicators (Piggy Bank vs Wallet)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -511,7 +537,6 @@ onTap: () async {
 
                       const SizedBox(height: 20),
 
-                      // The Slider
                       SliderTheme(
                         data: SliderTheme.of(context).copyWith(
                           activeTrackColor: hassalaGreen1,
@@ -524,20 +549,18 @@ onTap: () async {
                           value: _savePercentage,
                           min: 0.0,
                           max: 1.0,
-                          divisions: 10, // Steps of 10%
+                          divisions: 10,
                           label: "${(_savePercentage * 100).toInt()}% Save",
                           onChanged: (value) {
-                            setState(() {
-                              _savePercentage = value;
-                            });
+                            setState(() => _savePercentage = value);
                           },
                         ),
                       ),
-                      
                       const SizedBox(height: 10),
                       const Text(
                         "Adjust the slider to teach your child how much to save from their allowance automatically.",
-                        style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.5),
+                        style:
+                            TextStyle(fontSize: 12, color: Colors.grey, height: 1.5),
                       ),
                     ],
                   ),
@@ -545,7 +568,6 @@ onTap: () async {
 
                 const SizedBox(height: 20),
 
-                // 4. Settings Switch
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
@@ -555,18 +577,21 @@ onTap: () async {
                   child: SwitchListTile(
                     activeColor: hassalaGreen1,
                     title: const Text(
-                      "Auto-transfer Weekly", // Updated to Weekly
-                      style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      "Auto-transfer Weekly",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2C3E50),
+                      ),
                     ),
-                    subtitle: const Text("Every Sunday"), // Updated subtitle logic
+                    subtitle: const Text("Every Sunday"),
                     value: _isAutoTransferEnabled,
-                    onChanged: (val) => setState(() => _isAutoTransferEnabled = val),
+                    onChanged: (val) =>
+                        setState(() => _isAutoTransferEnabled = val),
                   ),
                 ),
 
                 const SizedBox(height: 30),
 
-                // 5. Save Button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: SizedBox(
@@ -580,7 +605,6 @@ onTap: () async {
                           borderRadius: BorderRadius.circular(18),
                         ),
                         elevation: 4,
-                        shadowColor: hassalaGreen1.withOpacity(0.4),
                       ),
                       child: const Text(
                         "Save Settings",
@@ -602,8 +626,8 @@ onTap: () async {
     );
   }
 
-  // Widget Helper for Spend/Save Boxes
-  Widget _buildAllocationBox(String label, double amount, IconData icon, Color color) {
+  Widget _buildAllocationBox(
+      String label, double amount, IconData icon, Color color) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.38,
       padding: const EdgeInsets.all(16),
