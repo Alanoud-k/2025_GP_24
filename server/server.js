@@ -14,6 +14,8 @@ import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import allowanceRoutes from "./routes/allowanceRoutes.js";
 import childRoutes from "./routes/childRoutes.js";
+import categorizeRoutes from "./routes/categorizeRoutes.js";
+
 
 //import transactionRoutes from "./routes/transactionRoutes.js";
 import childTransactionRoutes from "./routes/childTransactionRoutes.js";
@@ -101,6 +103,8 @@ app.use("/api/parent", parentTransactionRoutes);
 app.use("/api", parentRoutes);
 app.use('/api/chores', choreRoutes);
 app.use("/api/allowance", allowanceRoutes);
+app.use("/api", categorizeRoutes);
+
 
 
 // Create payment
