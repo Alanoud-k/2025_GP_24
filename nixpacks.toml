@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs_20", "python311"]
 
 [phases.install]
-cmds = ["npm install", "pip install -r requirements.txt"]
+cmds = ["cd server && npm ci", "pip install -r requirements.txt"]
 
 [start]
 cmd = "node server/server.js"
