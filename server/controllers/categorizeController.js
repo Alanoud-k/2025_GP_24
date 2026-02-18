@@ -1,5 +1,5 @@
 import { sql } from "../config/db.js";
-import { predictWithPython } from "../../ml_service/predictWithPython.js";
+import { predictWithPython } from "../ml_service/predictWithPython.js";
 import { keywordMap } from "../../ml_service/keywordMap.js";
 
 
