@@ -9,6 +9,63 @@ import cloudinary from "../cloudinary.js";
    Route: GET /api/child/parent/:parentId/children
    Returns: array of children with wallet aggregates
 ===================================================== */
+/*export const getChildrenByParent = async (req, res) => {
+  const { parentId } = req.params;
+
+  try {
+    const children = await sql`
+      SELECT 
+        c."childid"   AS "childId",
+        c."firstname" AS "firstName",
+        c."phoneno"   AS "phoneNo",
+            c."default_saving_ratio"::float AS "defaultSavingRatio",
+
+        /* Total balance (all accounts for this child's wallet) 
+        COALESCE((
+          SELECT SUM(a."balance")
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+        ), 0)::float AS "balance",
+
+        /* SpendingAccount limit 
+        COALESCE((
+          SELECT a."limitamount"
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+            AND a."accounttype" = 'SpendingAccount'
+          LIMIT 1
+        ), 0)::float AS "limitAmount",
+
+        /* Saving balance 
+        COALESCE((
+          SELECT SUM(a."balance")
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+            AND a."accounttype" = 'SavingAccount'
+        ), 0)::float AS "saving",
+
+        /* Spending balance 
+        COALESCE((
+          SELECT SUM(a."balance")
+          FROM "Account" a
+          WHERE a."walletid" = w."walletid"
+            AND a."accounttype" = 'SpendingAccount'
+        ), 0)::float AS "spend"
+
+      FROM "Child" c
+      LEFT JOIN "Wallet" w
+        ON w."childid" = c."childid"
+      WHERE c."parentid" = ${parentId}
+      ORDER BY c."childid" DESC
+    `;
+
+    return res.status(200).json(children);
+  } catch (err) {
+    console.error("Error fetching children:", err);
+    return res.status(500).json({ error: "Failed to fetch children" });
+  }
+};*/
+
 export const getChildrenByParent = async (req, res) => {
   const { parentId } = req.params;
 
@@ -19,14 +76,14 @@ export const getChildrenByParent = async (req, res) => {
         c."firstname" AS "firstName",
         c."phoneno"   AS "phoneNo",
 
-        /* Total balance (all accounts for this child's wallet) */
+        /* Total wallet balance */
         COALESCE((
           SELECT SUM(a."balance")
           FROM "Account" a
           WHERE a."walletid" = w."walletid"
         ), 0)::float AS "balance",
 
-        /* SpendingAccount limit */
+        /* Spending limit */
         COALESCE((
           SELECT a."limitamount"
           FROM "Account" a
@@ -52,18 +109,23 @@ export const getChildrenByParent = async (req, res) => {
         ), 0)::float AS "spend"
 
       FROM "Child" c
-      LEFT JOIN "Wallet" w
+      LEFT JOIN "Wallet" w 
         ON w."childid" = c."childid"
       WHERE c."parentid" = ${parentId}
       ORDER BY c."childid" DESC
     `;
 
     return res.status(200).json(children);
+
   } catch (err) {
-    console.error("Error fetching children:", err);
-    return res.status(500).json({ error: "Failed to fetch children" });
+    console.error("❌ Error fetching children:", err);
+    return res.status(500).json({
+      error: "Failed to fetch children",
+      details: err.message,
+    });
   }
 };
+
 
 /* =====================================================
    Register Child (with hashed password/PIN + wallet)
@@ -78,6 +140,7 @@ export const registerChild = async (req, res) => {
     dob,
     password,
     limitAmount,
+    defaultSavingRatio 
   } = req.body;
 
   if (!parentId || !firstName || !nationalId || !phoneNo || !dob || !password) {
@@ -150,9 +213,20 @@ export const registerChild = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
+    const ratio =
+  defaultSavingRatio !== undefined
+    ? Number(defaultSavingRatio)
+    : 0;
+
+if (!Number.isFinite(ratio) || ratio < 0 || ratio > 1) {
+  return res.status(400).json({
+    error: "Saving ratio must be between 0 and 1",
+  });
+}
+
     const inserted = await sql`
-      INSERT INTO "Child" ("parentid","firstname","nationalid","phoneno","dob","password")
-      VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${dob}, ${hashed})
+      INSERT INTO "Child" ("parentid","firstname","nationalid","phoneno","dob","password", "default_saving_ratio")
+      VALUES (${parentId}, ${firstName}, ${nationalId}, ${phoneNo}, ${dob}, ${hashed}, ${ratio})
       RETURNING "childid"
     `;
     const childId = inserted[0].childid;
@@ -333,3 +407,4 @@ export const updateChildAvatar = async (req, res) => {
   }
 };
 */
+

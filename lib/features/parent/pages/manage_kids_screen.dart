@@ -726,6 +726,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                   "phoneNo": c["phoneNo"] ?? c["phoneno"],
                   "limitAmount": parseDouble(c["limitAmount"]),
                   "balance": parseDouble(c["balance"]),
+                  "defaultSavingRatio": parseDouble(c["defaultSavingRatio"]),
                 },
               )
               .toList();
@@ -754,6 +755,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     final limitController = TextEditingController(
       text: kid["limitAmount"].toString(),
     );
+    double savingRatio = kid["defaultSavingRatio"] ?? 0.0;
 
     showDialog(
       context: context,
@@ -788,6 +790,45 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                   icon: Icons.account_balance_wallet_outlined,
                   keyboardType: TextInputType.number,
                 ),
+                const SizedBox(height: 20),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Default Saving Split",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textDark,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                StatefulBuilder(
+                  builder: (context, setStateDialog) {
+                    return Column(
+                      children: [
+                        Slider(
+                          value: savingRatio,
+                          min: 0,
+                          max: 1,
+                          divisions: 20,
+                          activeColor: hassalaGreen1,
+                          label: "${(savingRatio * 100).round()}%",
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              savingRatio = value;
+                            });
+                          },
+                        ),
+                        Text(
+                          "Saving: ${(savingRatio * 100).round()}% | "
+                          "Spending: ${((1 - savingRatio) * 100).round()}%",
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -815,7 +856,11 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                             return;
                           }
 
-                          await _updateChildLimit(kid["childId"], value);
+                          await _updateChildSettings(
+                            kid["childId"],
+                            value,
+                            savingRatio,
+                          );
                           if (context.mounted) Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
@@ -844,7 +889,11 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     );
   }
 
-  Future<void> _updateChildLimit(int childId, double newLimit) async {
+  Future<void> _updateChildSettings(
+    int childId,
+    double newLimit,
+    double savingRatio,
+  ) async {
     final url = Uri.parse("$baseUrl/api/auth/child/update-limit/$childId");
 
     try {
@@ -854,7 +903,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({"limitAmount": newLimit}),
+        body: jsonEncode({
+          "limitAmount": newLimit,
+          "defaultSavingRatio": savingRatio,
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -889,6 +941,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     final phoneNo = TextEditingController();
     final dob = TextEditingController();
     final limitAmount = TextEditingController();
+    double savingRatio = 0.0;
 
     showDialog(
       context: context,
@@ -1037,6 +1090,45 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 20),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Default Saving Split",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: textDark,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    StatefulBuilder(
+                      builder: (context, setStateDialog) {
+                        return Column(
+                          children: [
+                            Slider(
+                              value: savingRatio,
+                              min: 0,
+                              max: 1,
+                              divisions: 20,
+                              activeColor: hassalaGreen1,
+                              label: "${(savingRatio * 100).round()}%",
+                              onChanged: (value) {
+                                setStateDialog(() {
+                                  savingRatio = value;
+                                });
+                              },
+                            ),
+                            Text(
+                              "Saving: ${(savingRatio * 100).round()}% | "
+                              "Spending: ${((1 - savingRatio) * 100).round()}%",
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
@@ -1082,6 +1174,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                                 dob.text.trim(),
                                 password.text.trim(),
                                 limitAmount.text.trim(),
+                                savingRatio,
                               );
 
                               if (success && context.mounted) {
@@ -1137,6 +1230,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     String dob,
     String password,
     String limitAmount,
+    double savingRatio,
   ) async {
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1154,6 +1248,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       "dob": dob,
       "password": password,
       "limitAmount": double.tryParse(limitAmount),
+      "defaultSavingRatio": savingRatio,
     };
 
     try {

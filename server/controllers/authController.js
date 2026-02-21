@@ -485,7 +485,7 @@ export const getParentById = async (req, res) => {
    FIXED: Get Children by Parent (correct balance & limit logic)
    Used by: /api/auth/parent/:parentId/children
 ============================================================ */
-export const getChildrenByParent = async (req, res) => {
+/*export const getChildrenByParent = async (req, res) => {
   const { parentId } = req.params;
 
   try {
@@ -495,14 +495,14 @@ export const getChildrenByParent = async (req, res) => {
         c."firstname" AS "firstName",
         c."phoneno"   AS "phoneNo",
 
-        /* Total wallet balance */
+        /* Total wallet balance 
         COALESCE((
           SELECT SUM(a."balance")
           FROM "Account" a
           WHERE a."walletid" = w."walletid"
         ), 0)::float AS "balance",
 
-        /* Spending limit */
+        /* Spending limit 
         COALESCE((
           SELECT a."limitamount"
           FROM "Account" a
@@ -511,7 +511,7 @@ export const getChildrenByParent = async (req, res) => {
           LIMIT 1
         ), 0)::float AS "limitAmount",
 
-        /* Saving balance */
+        /* Saving balance 
         COALESCE((
           SELECT SUM(a."balance")
           FROM "Account" a
@@ -519,7 +519,7 @@ export const getChildrenByParent = async (req, res) => {
             AND a."accounttype" = 'SavingAccount'
         ), 0)::float AS "saving",
 
-        /* Spending balance */
+        /* Spending balance 
         COALESCE((
           SELECT SUM(a."balance")
           FROM "Account" a
@@ -543,12 +543,12 @@ export const getChildrenByParent = async (req, res) => {
       details: err.message,
     });
   }
-};
+};*/
 /* ============================================================
    UPDATE CHILD SPENDING LIMIT
    Route: PUT /api/auth/child/update-limit/:childId
 ============================================================ */
-export const updateChildLimit = async (req, res) => {
+/*export const updateChildLimit = async (req, res) => {
   const { childId } = req.params;
   const { limitAmount } = req.body;
 
@@ -586,6 +586,72 @@ export const updateChildLimit = async (req, res) => {
   } catch (err) {
     console.error("❌ Error updating limit:", err);
     return res.status(500).json({ error: "Failed to update limit", details: err.message });
+  }
+};*/
+
+export const updateChildLimit = async (req, res) => {
+  const { childId } = req.params;
+  const { limitAmount, defaultSavingRatio } = req.body;
+
+  const newLimit = Number(limitAmount);
+  const ratio = Number(defaultSavingRatio);
+
+  if (!Number.isFinite(newLimit) || newLimit <= 0) {
+    return res.status(400).json({
+      error: "Limit amount must be a positive number"
+    });
+  }
+
+  if (!Number.isFinite(ratio) || ratio < 0 || ratio > 1) {
+    return res.status(400).json({
+      error: "Saving ratio must be between 0 and 1"
+    });
+  }
+
+  try {
+    // 1) Get wallet
+    const wallet = await sql`
+      SELECT "walletid"
+      FROM "Wallet"
+      WHERE "childid" = ${childId}
+      LIMIT 1
+    `;
+
+    if (wallet.length === 0) {
+      return res.status(404).json({
+        error: "Wallet not found for this child"
+      });
+    }
+
+    const walletId = wallet[0].walletid;
+
+    // 2) Update limit
+    await sql`
+      UPDATE "Account"
+      SET "limitamount" = ${newLimit}
+      WHERE "walletid" = ${walletId}
+        AND "accounttype" = 'SpendingAccount'
+    `;
+
+    // 3) Update saving ratio
+    await sql`
+      UPDATE "Child"
+      SET "default_saving_ratio" = ${ratio}
+      WHERE "childid" = ${childId}
+    `;
+
+    return res.json({
+      message: "Child settings updated",
+      limitAmount: newLimit,
+      defaultSavingRatio: ratio
+    });
+
+  } catch (err) {
+    console.error("❌ Error updating child settings:", err);
+    return res.status(500).json({
+      error: "Failed to update child settings",
+      details: err.message
+    });
   }
 };
 
