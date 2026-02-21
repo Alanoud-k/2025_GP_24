@@ -912,7 +912,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Spending limit updated"),
+            content: Text("Child settings updated successfully"),
             backgroundColor: hassalaGreen2,
           ),
         );
@@ -921,7 +921,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         final err = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(err["error"] ?? "Failed to update limit"),
+            content: Text(err["error"] ?? "Failed to update child settings"),
             backgroundColor: Colors.red,
           ),
         );

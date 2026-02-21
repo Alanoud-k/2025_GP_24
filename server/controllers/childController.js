@@ -75,6 +75,7 @@ export const getChildrenByParent = async (req, res) => {
         c."childid"   AS "childId",
         c."firstname" AS "firstName",
         c."phoneno"   AS "phoneNo",
+        c."default_saving_ratio"::float AS "defaultSavingRatio",
 
         /* Total wallet balance */
         COALESCE((

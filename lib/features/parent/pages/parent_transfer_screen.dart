@@ -33,7 +33,7 @@ class ParentTransferScreen extends StatefulWidget {
 
 class _ParentTransferScreenState extends State<ParentTransferScreen> {
   final TextEditingController _amount = TextEditingController();
-  double savingPercentage = 50; // default 50/50 split for normal transfer
+  double savingPercentage = 0;
   String? token;
   late final String baseUrl = ApiConfig.baseUrl;
 
@@ -55,7 +55,8 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
   Future<void> _initialize() async {
     await checkAuthStatus(context);
     await _loadToken();
-    await _fetchParentBalance(); // ✅ Fetch balance on start
+    await _fetchParentBalance();
+    await _fetchChildDefaultRatio();
   }
 
   Future<void> _loadToken() async {
@@ -132,6 +133,44 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
         duration: const Duration(milliseconds: 3500),
       ),
     );
+  }
+
+  Future<void> _fetchChildDefaultRatio() async {
+    try {
+      final url = Uri.parse(
+        '$baseUrl/api/auth/parent/${widget.parentId}/children',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List children = jsonDecode(response.body);
+
+        final child = children.firstWhere(
+          (c) => c["childId"] == widget.childId,
+          orElse: () => null,
+        );
+
+        if (child != null) {
+          final ratio = (child["defaultSavingRatio"] ?? 0) as num;
+
+          if (mounted && widget.initialAmount == null) {
+            setState(() {
+              savingPercentage = ratio * 100; // convert 0.3 → 30%
+            });
+          }
+        }
+        print("Children response: ${response.body}");
+      }
+    } catch (e) {
+      print("Error fetching child ratio: $e");
+    }
   }
 
   Future<void> _transfer() async {
