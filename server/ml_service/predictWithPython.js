@@ -8,7 +8,10 @@ const __dirname = path.dirname(__filename);
 export function predictWithPython(merchantText) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, "predict.py");
-    const py = spawn("python3", [scriptPath], { stdio: ["pipe", "pipe", "pipe"] });
+
+    const py = spawn("python", [scriptPath], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
 
     let out = "";
     let err = "";

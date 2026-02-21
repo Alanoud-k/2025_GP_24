@@ -1,6 +1,7 @@
-import { sql } from "../config/db.js";
+import { keywordMap } from "../ml_service/keywordMap.js";
 import { predictWithPython } from "../ml_service/predictWithPython.js";
-import keywordMap from "../ml_service/keywordMap.js";
+import { sql } from "../config/db.js";
+
 
 export async function categorize(req, res) {
   const merchantText = req.body?.merchant_text;

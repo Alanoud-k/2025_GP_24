@@ -1,13 +1,12 @@
 import json
 import sys
-import joblib
 import os
+import joblib
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__))
 
-vectorizer = joblib.load(os.path.join(BASE_DIR, "vectorizer.pkl"))
-model = joblib.load(os.path.join(BASE_DIR, "model.pkl"))
-
+vectorizer = joblib.load(os.path.join(HERE, "vectorizer.pkl"))
+model = joblib.load(os.path.join(HERE, "model.pkl"))
 
 raw = sys.stdin.read()
 data = json.loads(raw or "{}")

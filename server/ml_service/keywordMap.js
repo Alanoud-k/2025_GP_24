@@ -1,28 +1,33 @@
-import { sql } from "../config/db.js";
-import { keywordMap } from "../ml_service/keywordMap.js";
-import { predictWithPython } from "../ml_service/predictWithPython.js";
+const RULES = [
+  { category: "Transport", keywords: ["uber", "careem", "taxi", "bolt"] },
+  {
+    category: "Food & Restaurants",
+    keywords: [
+      "albaik",
+      "starbucks",
+      "coffee",
+      "cafe",
+      "restaurant",
+      "pizza",
+      "burger",
+      "shawarma",
+    ],
+  },
+  {
+    category: "Grocery & Markets",
+    keywords: ["panda", "carrefour", "danube", "lulu", "supermarket", "hyper", "grocery", "market"],
+  },
+  { category: "Medical", keywords: ["nahdi", "pharmacy", "clinic", "hospital", "dawaa"] },
+  { category: "Digital & Subscriptions", keywords: ["netflix", "spotify", "itunes", "apple.com", "google", "playstation", "steam"] },
+  { category: "Retail & Shopping", keywords: ["zara", "hm", "ikea", "noon", "amazon", "store", "mall"] },
+];
 
-export async function categorizeTransaction(merchantText) {
-  if (!merchantText) return null;
-
-  const text = String(merchantText).toLowerCase().trim();
-
-  const lookup = await sql`
-    SELECT category
-    FROM merchant_lookup
-    WHERE LOWER(merchant_name) = ${text}
-    LIMIT 1
-  `;
-
-  if (lookup.length > 0) {
-    return lookup[0].category;
+export function keywordMap(merchantText) {
+  const text = String(merchantText || "").toLowerCase();
+  for (const rule of RULES) {
+    for (const kw of rule.keywords) {
+      if (text.includes(kw)) return rule.category;
+    }
   }
-
-  const keywordCategory = keywordMap(text);
-  if (keywordCategory) {
-    return keywordCategory;
-  }
-
-  const modelCategory = await predictWithPython(text);
-  return modelCategory || "Uncategorized";
+  return null;
 }
