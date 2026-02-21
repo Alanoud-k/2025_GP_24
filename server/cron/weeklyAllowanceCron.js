@@ -18,7 +18,7 @@ export const startWeeklyAllowanceCron = () => {
             a.childid,
             c.parentid,
             a.amount,
-            a.savepercentage,
+            c."default_saving_ratio",
             MAX(CASE WHEN acc.accounttype = 'SavingAccount' THEN acc.accountid END)   AS saving_account_id,
             MAX(CASE WHEN acc.accounttype = 'SpendingAccount' THEN acc.accountid END) AS spending_account_id
           FROM "AllowanceSetting" a
@@ -27,8 +27,7 @@ export const startWeeklyAllowanceCron = () => {
           JOIN "Account" acc ON acc.walletid = w.walletid
           WHERE a.isenabled = true
             AND a.amount > 0
-          GROUP BY a.childid, c.parentid, a.amount, a.savepercentage
-        `;
+          GROUP BY a.childid, c.parentid, a.amount, c."default_saving_ratio"        `;
 
         let applied = 0;
         let skippedInsufficient = 0;
@@ -37,8 +36,7 @@ export const startWeeklyAllowanceCron = () => {
           const childId = Number(r.childid);
           const parentId = Number(r.parentid);
           const total = Number(r.amount);
-          const savePct = Number(r.savepercentage);
-
+          const saveRatio = Number(r.default_saving_ratio ?? 0);
           const savingAccountId = r.saving_account_id;
           const spendingAccountId = r.spending_account_id;
 
@@ -82,8 +80,8 @@ export const startWeeklyAllowanceCron = () => {
             continue;
           }
 
-          const saveAmount = +(total * (savePct / 100)).toFixed(2);
-          const spendAmount = +(total - saveAmount).toFixed(2);
+const saveAmount = +(total * saveRatio).toFixed(2);
+const spendAmount = +(total - saveAmount).toFixed(2);
 
           // 5) (اختياري لكن مهم) نفّذيها كـ transaction DB عشان ما يصير نص تحديث
           await sql`BEGIN`;

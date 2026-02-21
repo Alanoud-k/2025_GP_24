@@ -10,18 +10,16 @@ export const getAllowanceByChild = async (req, res) => {
     if (!childId) return res.status(400).json({ error: "Invalid childId" });
 
     const rows = await sql`
-      SELECT "isenabled", "amount", "savepercentage"
+      SELECT "isenabled", "amount"
       FROM "AllowanceSetting"
       WHERE "childid" = ${childId}
       LIMIT 1
     `;
 
     if (rows.length === 0) {
-      // Default values if not set yet
       return res.json({
         isEnabled: false,
         amount: 0,
-        savePercentage: 20,
       });
     }
 
@@ -29,7 +27,6 @@ export const getAllowanceByChild = async (req, res) => {
     return res.json({
       isEnabled: r.isenabled,
       amount: Number(r.amount ?? 0),
-      savePercentage: Number(r.savepercentage ?? 20),
     });
   } catch (err) {
     console.error("getAllowanceByChild error:", err);
@@ -39,27 +36,19 @@ export const getAllowanceByChild = async (req, res) => {
 
 /**
  * PUT /api/allowance/:childId
- * body: { isEnabled, amount, savePercentage }
+ * body: { isEnabled, amount }
  */
 export const upsertAllowanceByChild = async (req, res) => {
   try {
     const childId = Number(req.params.childId);
     if (!childId) return res.status(400).json({ error: "Invalid childId" });
 
-    const { isEnabled, amount, savePercentage } = req.body;
+    const { isEnabled, amount } = req.body;
 
     const enabled = Boolean(isEnabled);
     const amt = Number(amount);
-    const sp = Number(savePercentage);
 
-    // savePercentage validation
-    if (!Number.isFinite(sp) || sp < 0 || sp > 100) {
-      return res
-        .status(400)
-        .json({ error: "savePercentage must be between 0 and 100" });
-    }
-
-    // amount validation 
+    // Validation
     if (enabled) {
       if (!Number.isFinite(amt) || amt <= 0) {
         return res
@@ -73,12 +62,11 @@ export const upsertAllowanceByChild = async (req, res) => {
     }
 
     const rows = await sql`
-      INSERT INTO "AllowanceSetting" ("childid","isenabled","amount","savepercentage","updatedat")
-      VALUES (${childId}, ${enabled}, ${amt}, ${sp}, CURRENT_TIMESTAMP)
+      INSERT INTO "AllowanceSetting" ("childid","isenabled","amount","updatedat")
+      VALUES (${childId}, ${enabled}, ${amt}, CURRENT_TIMESTAMP)
       ON CONFLICT ("childid") DO UPDATE SET
         "isenabled" = EXCLUDED."isenabled",
         "amount" = EXCLUDED."amount",
-        "savepercentage" = EXCLUDED."savepercentage",
         "updatedat" = CURRENT_TIMESTAMP
       RETURNING "childid"
     `;
@@ -92,4 +80,3 @@ export const upsertAllowanceByChild = async (req, res) => {
     return res.status(500).json({ error: "Failed to save allowance settings" });
   }
 };
-

@@ -111,9 +111,10 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
 
   // --- State Variables for UI ---
   int _selectedChildIndex = 0;
-  double _savePercentage = 0.20; // Default 20% Savings
-  final TextEditingController _amountController =
-      TextEditingController(text: "100");
+  double _savePercentage = 0; // Default 20% Savings
+  final TextEditingController _amountController = TextEditingController(
+    text: "100",
+  );
   bool _isAutoTransferEnabled = true;
 
   List<Map<String, dynamic>> _children = [];
@@ -152,16 +153,16 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
 
   Future<void> _fetchChildren() async {
     final url = Uri.parse(
-  '${ApiConfig.baseUrl}/api/auth/parent/${widget.parentId}/children',
-);
-
+      '${ApiConfig.baseUrl}/api/auth/parent/${widget.parentId}/children',
+    );
 
     debugPrint("GET children => $url");
 
     try {
-      final res = await http.get(url, headers: {
-        'Authorization': 'Bearer ${token!}',
-      });
+      final res = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer ${token!}'},
+      );
 
       debugPrint("GET children status => ${res.statusCode}");
 
@@ -171,39 +172,51 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
       }
 
       if (res.statusCode == 200) {
-final decoded = jsonDecode(res.body);
-final List data = (decoded is List)
-    ? decoded
-    : (decoded is Map && decoded["children"] is List)
-        ? decoded["children"]
-        : [];
+        final decoded = jsonDecode(res.body);
+        final List data = (decoded is List)
+            ? decoded
+            : (decoded is Map && decoded["children"] is List)
+            ? decoded["children"]
+            : [];
 
         setState(() {
-        _children = data.map((c) => {
-  'childId': c['childId'] ?? c['id'],
-  'name': c['firstName'] ?? c['firstname'] ?? 'Unnamed',
-}).toList();
-
+          _children = data
+              .map(
+                (c) => {
+                  'childId': c['childId'] ?? c['id'],
+                  'name': c['firstName'] ?? c['firstname'] ?? 'Unnamed',
+                  'defaultSavingRatio': (c['defaultSavingRatio'] ?? 0)
+                      .toDouble(),
+                },
+              )
+              .toList();
 
           _childrenLoading = false;
           _selectedChildIndex = 0;
+          if (_children.isNotEmpty) {
+            final defaultRatio =
+                (_children[0]['defaultSavingRatio'] ?? 0.0) as double;
+
+            _savePercentage = defaultRatio.clamp(0.0, 1.0);
+          }
         });
 
         if (_children.isNotEmpty) {
           await _fetchAllowanceSettings(_children[0]['childId']);
         }
       } else {
-  setState(() => _childrenLoading = false);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Failed to load children (${res.statusCode})')),
-  );
-}
-
+        setState(() => _childrenLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load children (${res.statusCode})'),
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _childrenLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading children: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading children: $e')));
     }
   }
 
@@ -212,10 +225,13 @@ final List data = (decoded is List)
     debugPrint("GET allowance => $url");
 
     try {
-      final res = await http.get(url, headers: {
-        'Authorization': 'Bearer ${token!}',
-        'Content-Type': 'application/json',
-      });
+      final res = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${token!}',
+          'Content-Type': 'application/json',
+        },
+      );
 
       debugPrint("GET allowance status => ${res.statusCode}");
 
@@ -230,9 +246,6 @@ final List data = (decoded is List)
         setState(() {
           _isAutoTransferEnabled = data['isEnabled'] ?? false;
           _amountController.text = (data['amount'] ?? 100).toString();
-
-          final sp = (data['savePercentage'] ?? 20).toDouble();
-          _savePercentage = (sp / 100.0).clamp(0.0, 1.0);
         });
       }
     } catch (_) {
@@ -289,7 +302,6 @@ final List data = (decoded is List)
         body: jsonEncode({
           'isEnabled': _isAutoTransferEnabled,
           'amount': amountToSend,
-          'savePercentage': savePctInt,
         }),
       );
 
@@ -301,18 +313,18 @@ final List data = (decoded is List)
       }
 
       if (res.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Allowance Saved ✅')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Allowance Saved ✅')));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Save failed (${res.statusCode})')),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
     }
   }
 
@@ -362,8 +374,10 @@ final List data = (decoded is List)
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
@@ -395,7 +409,16 @@ final List data = (decoded is List)
 
                       return GestureDetector(
                         onTap: () async {
-                          setState(() => _selectedChildIndex = index);
+                          setState(() {
+                            _selectedChildIndex = index;
+
+                            final defaultRatio =
+                                (_children[index]['defaultSavingRatio'] ?? 0.0)
+                                    as double;
+
+                            _savePercentage = defaultRatio.clamp(0.0, 1.0);
+                          });
+
                           await _fetchAllowanceSettings(
                             _children[index]['childId'],
                           );
@@ -469,7 +492,9 @@ final List data = (decoded is List)
                       const Text(
                         "Weekly Amount",
                         style: TextStyle(
-                            fontWeight: FontWeight.w600, color: Colors.grey),
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       TextField(
@@ -486,8 +511,10 @@ final List data = (decoded is List)
                         ),
                         decoration: const InputDecoration(
                           prefixText: "SAR  ",
-                          prefixStyle:
-                              TextStyle(fontSize: 20, color: Colors.grey),
+                          prefixStyle: TextStyle(
+                            fontSize: 20,
+                            color: Colors.grey,
+                          ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                         ),
@@ -559,8 +586,11 @@ final List data = (decoded is List)
                       const SizedBox(height: 10),
                       const Text(
                         "Adjust the slider to teach your child how much to save from their allowance automatically.",
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey, height: 1.5),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -627,7 +657,11 @@ final List data = (decoded is List)
   }
 
   Widget _buildAllocationBox(
-      String label, double amount, IconData icon, Color color) {
+    String label,
+    double amount,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.38,
       padding: const EdgeInsets.all(16),
