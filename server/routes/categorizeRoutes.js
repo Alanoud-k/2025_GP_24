@@ -1,8 +1,9 @@
-import { Router } from "express";
+import express from "express";
 import { categorize } from "../controllers/categorizeController.js";
 
-const router = Router();
+const router = express.Router();
 
-router.post("/categorize", categorize);
+// POST /api/categorize
+router.post("/", categorize);
 
 export default router;
