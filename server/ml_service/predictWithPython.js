@@ -1,15 +1,9 @@
-import { spawn } from "child_process";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { spawn } from "node:child_process";
 
 export function predictWithPython(merchantText) {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.join(__dirname, "predict.py");
-
-    const py = spawn("python", [scriptPath], {
+    const py = spawn("python", ["./ml_service/predict.py"], {
+      cwd: process.cwd(), // داخل server
       stdio: ["pipe", "pipe", "pipe"],
     });
 
@@ -20,17 +14,18 @@ export function predictWithPython(merchantText) {
     py.stderr.on("data", (d) => (err += d.toString()));
 
     py.on("close", (code) => {
-      if (code !== 0) return reject(new Error(err || "python_failed"));
+      if (code !== 0) {
+        return reject(new Error(`Python exited with code ${code}. ${err}`));
+      }
       try {
-        const obj = JSON.parse(out);
-        if (!obj?.prediction) return reject(new Error("bad_python_response"));
-        resolve(obj.prediction);
-      } catch {
-        reject(new Error("invalid_python_output"));
+        const parsed = JSON.parse(out || "{}");
+        resolve(parsed.prediction ?? null);
+      } catch (e) {
+        reject(new Error(`Invalid JSON from python: ${out}`));
       }
     });
 
-    py.stdin.write(JSON.stringify({ merchant_text: merchantText }));
+    py.stdin.write(JSON.stringify({ merchant_text: merchantText || "" }));
     py.stdin.end();
   });
 }

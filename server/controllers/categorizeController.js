@@ -1,37 +1,47 @@
-import { keywordMap } from "../ml_service/keywordMap.js";
-import { predictWithPython } from "../ml_service/predictWithPython.js";
 import { sql } from "../config/db.js";
+import keywordMap from "../ml_service/keywordMap.js";
+import { predictWithPython } from "../ml_service/predictWithPython.js";
 
+export async function categorizeTransaction(merchantText) {
+  if (!merchantText) return null;
 
-export async function categorize(req, res) {
-  const merchantText = req.body?.merchant_text;
+  const text = String(merchantText).toLowerCase().trim();
 
-  if (!merchantText) {
-    return res.status(400).json({ error: "merchant_text is required" });
-  }
+  // 1) DB lookup
+  const lookup = await sql`
+    SELECT category
+    FROM merchant_lookup
+    WHERE lower(merchant_text) = ${text}
+    LIMIT 1
+  `;
+  if (lookup.length > 0) return lookup[0].category;
 
-  try {
-    const rows = await sql`
-      SELECT category
-      FROM merchant_rules
-      WHERE merchant_text = ${merchantText}
-      LIMIT 1
+  // 2) Rule-based keywords
+  const ruleCat = keywordMap(text);
+  if (ruleCat) {
+    // خزنيها في lookup عشان المرة الجاية تكون أسرع
+    await sql`
+      INSERT INTO merchant_lookup (merchant_text, category)
+      VALUES (${text}, ${ruleCat})
+      ON CONFLICT (merchant_text) DO UPDATE SET category = EXCLUDED.category
     `;
-
-    if (rows.length) {
-      return res.json({ category: rows[0].category, source: "lookup" });
-    }
-
-    const mapped = keywordMap(merchantText);
-    if (mapped) {
-      return res.json({ category: mapped, source: "mapping" });
-    }
-
-    const predicted = await predictWithPython(merchantText);
-    return res.json({ category: predicted, source: "model" });
-
-  } catch (e) {
-    return res.status(500).json({ error: "categorization_failed" });
+    return ruleCat;
   }
+
+  // 3) ML (Python)
+  try {
+    const mlCat = await predictWithPython(text);
+    if (mlCat) {
+      await sql`
+        INSERT INTO merchant_lookup (merchant_text, category)
+        VALUES (${text}, ${mlCat})
+        ON CONFLICT (merchant_text) DO UPDATE SET category = EXCLUDED.category
+      `;
+      return mlCat;
+    }
+  } catch (e) {
+    console.error("ML prediction failed:", e.message);
+  }
+
+  return "Other";
 }
-//
