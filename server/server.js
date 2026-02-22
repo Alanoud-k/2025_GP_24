@@ -15,6 +15,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import allowanceRoutes from "./routes/allowanceRoutes.js";
 import childRoutes from "./routes/childRoutes.js";
 import categorizeRoutes from "./routes/categorizeRoutes.js";
+import rewardRoutes from "./routes/rewardRoutes.js"; 
 
 
 
@@ -105,6 +106,7 @@ app.use("/api", parentRoutes);
 app.use('/api/chores', choreRoutes);
 app.use("/api/allowance", allowanceRoutes);
 app.use("/api", categorizeRoutes);
+app.use("/api/rewards", rewardRoutes);
 
 
 

@@ -82,6 +82,9 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
 
   Color _typeColor(String type) {
     switch (type) {
+
+       case 'REWARD_REDEEMED': 
+        return Colors.purple;
       case 'MONEY_REQUEST':
         return Colors.orange;
       case 'MONEY_TRANSFER':
@@ -94,11 +97,15 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
        return Colors.orange;
       default:
         return Colors.blueGrey;
+      
     }
   }
 
   IconData _typeIcon(String type) {
     switch (type) {
+
+      case 'REWARD_REDEEMED':  
+        return Icons.card_giftcard;
       case 'MONEY_REQUEST':
         return Icons.attach_money_rounded;
       case 'MONEY_TRANSFER':

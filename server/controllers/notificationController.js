@@ -21,8 +21,7 @@ export const getParentNotifications = async (req, res) => {
         n.isread
       FROM "Notification" n
       LEFT JOIN "Child" c ON c.childid = n.childid
-      WHERE n.parentid = ${parentId}
-        AND n.type = 'MONEY_REQUEST'
+      WHERE n.parentid = ${parentId} AND n.type IN ('MONEY_REQUEST', 'REWARD_REDEEMED')
       ORDER BY n.createdat DESC
     `;
 
@@ -109,9 +108,7 @@ export const getUnreadCountParent = async (req, res) => {
     const row = await sql`
       SELECT COUNT(*) AS unread
       FROM "Notification"
-      WHERE parentid = ${parentId}
-        AND isread = FALSE
-        AND type = 'MONEY_REQUEST'
+      WHERE parentid = ${parentId} AND isread = FALSE AND type IN ('MONEY_REQUEST', 'REWARD_REDEEMED')
     `;
 
     res.status(200).json({ unread: Number(row[0].unread) });
@@ -158,8 +155,7 @@ export const markParentNotificationsRead = async (req, res) => {
     await sql`
       UPDATE "Notification"
       SET isread = TRUE
-      WHERE parentid = ${parentId}
-        AND type = 'MONEY_REQUEST'
+      WHERE parentid = ${parentId} AND type IN ('MONEY_REQUEST', 'REWARD_REDEEMED')
     `;
     res.sendStatus(200);
   } catch (err) {
