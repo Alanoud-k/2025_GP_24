@@ -23,7 +23,7 @@ import rewardRoutes from "./routes/rewardRoutes.js";
 import childTransactionRoutes from "./routes/childTransactionRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import parentTransactionRoutes from "./routes/parentTransactionRoutes.js";
-import choreRoutes from "./routes/choreRoutes.js"; // 👈 استدعاء الملف
+import choreRoutes from "./routes/choreRoutes.js"; 
 // PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
