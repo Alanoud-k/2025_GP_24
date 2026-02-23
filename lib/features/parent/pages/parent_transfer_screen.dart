@@ -575,17 +575,24 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Text(
+                      //   "Save: ${savingPercentage.toStringAsFixed(0)}%",
+                      //   style: const TextStyle(
+                      //     color: Color(0xFF7E57C2),
+                      //     fontSize: 15,
+                      //   ),
+                      // ),
                       Text(
-                        "Save: ${savingPercentage.toStringAsFixed(0)}%",
+                        "Spend: ${(100 - savingPercentage).toStringAsFixed(0)}%",
                         style: const TextStyle(
                           color: Colors.teal,
                           fontSize: 15,
                         ),
                       ),
-                      Text(
-                        "Spend: ${(100 - savingPercentage).toStringAsFixed(0)}%",
+                                            Text(
+                        "Save: ${savingPercentage.toStringAsFixed(0)}%",
                         style: const TextStyle(
-                          color: Colors.amber,
+                          color: Color(0xFF7E57C2),
                           fontSize: 15,
                         ),
                       ),
@@ -597,7 +604,7 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
                     max: 100,
                     divisions: 20,
                     activeColor: const Color(0xFF2EA49E),
-                    inactiveColor: Colors.amber.shade200,
+                    inactiveColor: Colors.grey.shade200,
                     onChanged: (value) {
                       setState(() {
                         savingPercentage = value;

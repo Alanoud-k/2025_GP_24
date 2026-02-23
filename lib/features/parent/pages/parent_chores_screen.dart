@@ -855,7 +855,7 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                 child: TabBar(
                   controller: _tabController,
                   indicatorSize: TabBarIndicatorSize.tab,
-                  indicator: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(colors: [hassalaGreen1, _greenMsg])),
+                  indicator: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(colors: [hassalaGreen1, Color.fromARGB(255, 53, 144, 169)])),
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.grey,
                   tabs: const [Tab(text: "To Review"), Tab(text: "In Progress")],
