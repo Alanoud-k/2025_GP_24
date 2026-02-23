@@ -31,12 +31,27 @@ export const getChildTransactions = async (req, res) => {
 
     const tx = await sql`
       SELECT
-        "transactionid","transactiontype","amount","transactiondate",
-        "transactionstatus","merchantname","sourcetype","transactioncategory",
-        "senderAccountId","receiverAccountId"
-      FROM "Transaction"
-      WHERE "receiverAccountId" = ANY(${accountIds})
-      ORDER BY "transactiondate" DESC
+        t."transactionid",
+        t."transactiontype",
+        t."amount",
+        t."transactiondate",
+        t."transactionstatus",
+        t."merchantname",
+        t."sourcetype",
+        t."transactioncategory",
+        t."senderAccountId",
+        t."receiverAccountId"
+      FROM "Transaction" t
+      JOIN "Account" a_sender
+        ON a_sender."accountid" = t."senderAccountId"
+      JOIN "Wallet" w_sender
+        ON w_sender."walletid" = a_sender."walletid"
+      WHERE t."receiverAccountId" = ANY(${accountIds})
+        AND w_sender."parentid" IS NOT NULL
+        AND t."transactioncategory" IS NOT NULL
+        AND btrim(t."transactioncategory") <> ''
+        AND LOWER(btrim(t."transactioncategory")) <> 'uncategorized'
+      ORDER BY t."transactiondate" DESC
       LIMIT 200
     `;
 

@@ -3,7 +3,6 @@ import { getChildTransactions } from "../controllers/childTransactionController.
 
 const router = Router();
 
-// GET /api/transactions/child/:childId
-router.get("/child/:childId", getChildTransactions);
+router.get("/:childId/transactions", getChildTransactions);
 
 export default router;
