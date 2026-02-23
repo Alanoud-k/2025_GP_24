@@ -356,4 +356,23 @@ class ChoreService {
       throw Exception("Failed to upload proof: $respStr");
     }
   }
+
+// ✅ دالة رفض المهمة
+  Future<void> rejectChore(String choreId, String reason) async {
+    final token = await _getToken();
+    final response = await http.patch(
+      Uri.parse('$baseUrl/$choreId/reject'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'reason': reason}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to reject chore");
+    }
+  }
+
+
 }

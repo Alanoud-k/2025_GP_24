@@ -159,6 +159,9 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
       case "CHORE_APPROVED":
         return Icons.verified;
 
+      case "CHORE_REJECTED": 
+        return Icons.assignment_return;
+
       default:
         return Icons.notifications_rounded;
       
@@ -178,6 +181,8 @@ class _ChildNotificationsScreenState extends State<ChildNotificationsScreen> {
         return Colors.purple;
       case "CHORE_APPROVED":
         return Colors.orange;
+      case "CHORE_REJECTED":
+       return Colors.red;
       default:
         return Colors.blueGrey;
     }

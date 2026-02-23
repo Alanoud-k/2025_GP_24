@@ -55,44 +55,64 @@ export const getParentChores = async (req, res) => {
 };
 
 // 3. إضافة مهمة جديدة
+// export const createChore = async (req, res) => {
+//   const { title, description, keys, childId, parentId, type, assignedDay, assignedTime } = req.body; 
+
+//   try {
+//     if (!title || !keys || !childId || !parentId) {
+//         return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     const newChore = await sql`
+//       INSERT INTO "Chore" (
+//         "chorename", 
+//         "choredescription", 
+//         "rewardkeys", 
+//         "chorestatus", 
+//         "childid", 
+//         "parentid",
+//         "choretype",
+//         "assigned_day",
+//         "assigned_time"
+//       )
+//       VALUES (
+//         ${title}, 
+//         ${description || ''}, 
+//         ${keys}, 
+//         'Pending', 
+//         ${childId}, 
+//         ${parentId},
+//         ${type || 'One-time'},
+//         ${assignedDay || null},
+//         ${assignedTime || null}
+//       )
+//       RETURNING *
+//     `;
+
+//     return res.json({ message: "Chore created", chore: newChore[0] });
+
+//   } catch (err) {
+//     console.error("❌ Error creating chore:", err);
+//     return res.status(500).json({ error: "Failed to create chore", details: err.message });
+//   }
+// };
+
 export const createChore = async (req, res) => {
   const { title, description, keys, childId, parentId, type, assignedDay, assignedTime } = req.body; 
-
   try {
-    if (!title || !keys || !childId || !parentId) {
-        return res.status(400).json({ error: "Missing required fields" });
-    }
+    if (!title || !keys || !childId || !parentId) return res.status(400).json({ error: "Missing fields" });
 
     const newChore = await sql`
-      INSERT INTO "Chore" (
-        "chorename", 
-        "choredescription", 
-        "rewardkeys", 
-        "chorestatus", 
-        "childid", 
-        "parentid",
-        "choretype",
-        "assigned_day",
-        "assigned_time"
-      )
-      VALUES (
-        ${title}, 
-        ${description || ''}, 
-        ${keys}, 
-        'Pending', 
-        ${childId}, 
-        ${parentId},
-        ${type || 'One-time'},
-        ${assignedDay || null},
-        ${assignedTime || null}
-      )
+      INSERT INTO "Chore" ("chorename", "choredescription", "rewardkeys", "chorestatus", "childid", "parentid", "choretype", "assigned_day", "assigned_time")
+      VALUES (${title}, ${description || ''}, ${keys}, 'Pending', ${childId}, ${parentId}, ${type || 'One-time'}, ${assignedDay || null}, ${assignedTime || null})
       RETURNING *
     `;
 
-    return res.json({ message: "Chore created", chore: newChore[0] });
+    // ✅ إرسال إشعار للطفل عند إضافة مهمة جديدة
+    await createNotification(parentId, childId, 'CHORE_ASSIGNED', `New chore assigned: ${title}`, null, newChore[0].choreid);
 
+    return res.json({ message: "Chore created", chore: newChore[0] });
   } catch (err) {
-    console.error("❌ Error creating chore:", err);
     return res.status(500).json({ error: "Failed to create chore", details: err.message });
   }
 };
@@ -209,5 +229,33 @@ export const completeChore = async (req, res) => {
   } catch (err) {
     console.error("❌ Error completing chore:", err);
     return res.status(500).json({ error: "Failed to submit chore" });
+  }
+};
+
+// 7. رفض المهمة وإعادتها للطفل
+export const rejectChore = async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+
+  try {
+    // نرجع الحالة إلى Pending ونحفظ سبب الرفض ونحذف رابط الصورة القديم
+    const updated = await sql`
+      UPDATE "Chore" 
+      SET "chorestatus" = 'Pending', 
+          "choreproofurl" = NULL, 
+          "rejection_reason" = ${reason}
+      WHERE "choreid" = ${id} 
+      RETURNING *
+    `;
+
+    if (updated.length === 0) return res.status(404).json({ error: "Chore not found" });
+    const chore = updated[0];
+
+    // إرسال إشعار للطفل
+    await createNotification(chore.parentid, chore.childid, 'CHORE_REJECTED', `Chore rejected: ${chore.chorename}`, null, chore.choreid);
+
+    return res.json({ message: "Chore rejected", chore });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to reject chore" });
   }
 };

@@ -815,22 +815,40 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
             ]
           ],
         ),
-        subtitle: Text(
-          isTodo ? (chore.description ?? "No description") : (isWaiting ? "Waiting Approval" : "Completed"),
-          style: TextStyle(
-            fontSize: 13,
-            color: isWaiting ? Colors.orange : Colors.grey[600],
-            fontWeight: isWaiting ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        // subtitle: Text(
+        //   isTodo ? (chore.description ?? "No description") : (isWaiting ? "Waiting Approval" : "Completed"),
+        //   style: TextStyle(
+        //     fontSize: 13,
+        //     color: isWaiting ? Colors.orange : Colors.grey[600],
+        //     fontWeight: isWaiting ? FontWeight.bold : FontWeight.normal,
+        //   ),
+        // ),
+        // trailing: Column(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        //     const Icon(Icons.vpn_key, color: Color(0xFFF6C44B), size: 18),
+        //     Text(
+        //       "${chore.keys}",
+        //       style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF6C44B)),
+        //     ),
+        //   ],
+        // ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.vpn_key, color: Color(0xFFF6C44B), size: 18),
             Text(
-              "${chore.keys}",
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF6C44B)),
+              isTodo ? (chore.description ?? "No description") : (isWaiting ? "Waiting Approval" : "Completed"),
+              style: TextStyle(fontSize: 13, color: isWaiting ? Colors.orange : Colors.grey[600], fontWeight: isWaiting ? FontWeight.bold : FontWeight.normal),
             ),
+            // ✅ إظهار رسالة الرفض إن وجدت وكانت المهمة ضمن الـ To Do
+            if (isTodo && chore.rejectionReason != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  "Rejected: ${chore.rejectionReason}",
+                  style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
           ],
         ),
         onTap: isTodo ? () => _showCompletionDialog(chore) : null,

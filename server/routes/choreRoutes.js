@@ -11,6 +11,7 @@ import {
   completeChore 
 } from "../controllers/choreController.js";
 import { protect } from "../middleware/authMiddleware.js"; 
+import { getParentChores, getChildChores, createChore, updateChoreStatus, updateChoreDetails, completeChore, rejectChore } from "../controllers/choreController.js";
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ const upload = multer({ storage: storage });
 // --- Routes ---
 
 router.get("/child/:childId", protect, getChildChores);
+router.patch("/:id/reject", protect, rejectChore);
 
 // Parent chores
 router.get("/parent/:parentId", protect, getParentChores);
