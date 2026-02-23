@@ -503,15 +503,12 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
   List<ChoreModel> _allChores = [];
   List<Map<String, dynamic>> _childrenList = [];
 
-  // Colors
-  static const Color _tealMsg = Color(0xFF37C4BE);
+  static const Color hassalaGreen1 = Color(0xFF37C4BE);
   static const Color _redMsg = Color(0xFFE74C3C);
   static const Color _greenMsg = Color(0xFF27AE60);
-  static const Color hassalaGreen1 = Color(0xFF37C4BE);
+  static const Color textColor = Color(0xFF2C3E50);
 
-  final List<String> _daysOfWeek = [
-    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
-  ];
+  final List<String> _daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   @override
   void initState() {
@@ -520,7 +517,7 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
     _loadAllData();
   }
 
-  void _showMessageBar(String message, {Color backgroundColor = _tealMsg}) {
+  void _showMessageBar(String message, {Color backgroundColor = hassalaGreen1}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -563,207 +560,131 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
     }
   }
 
-  String _getChildName(String id) {
-    if (id.isEmpty || id == "null") return ""; 
-    for (var child in _childrenList) {
-      if (child['childId'].toString() == id) {
-        return "For: ${child['firstName'] ?? 'Unknown'}";
-      }
+  Future<void> _rejectChore(String choreId, String reason) async {
+    try {
+      await _choreService.rejectChore(choreId, reason);
+      _loadAllData();
+      _showMessageBar("Chore Rejected & returned to child", backgroundColor: _redMsg);
+    } catch (e) {
+      _showMessageBar("Failed to reject", backgroundColor: _redMsg);
     }
-    return ""; 
   }
 
-//   // ✅ دالة جديدة: عرض الصورة للمراجعة
-// void _showReviewDialog(ChoreModel chore) {
-//     String imageUrl = chore.proofUrl ?? "";
+  String _getChildNameOnly(String id) {
+    for (var child in _childrenList) {
+      if (child['childId'].toString() == id) {
+        return child['firstName'] ?? 'Unknown';
+      }
+    }
+    return "Unknown"; 
+  }
 
-//     // إصلاح الرابط إذا كان http
-//     if (imageUrl.isNotEmpty && imageUrl.startsWith('http:')) {
-//       imageUrl = imageUrl.replaceFirst('http:', 'https:');
-//     }
-    
-//     debugPrint("🖼️ Displaying Image: $imageUrl");
-
-//     showDialog(
-//       context: context,
-//       builder: (ctx) => AlertDialog(
-//         backgroundColor: Colors.white,
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-//         title: const Text("Review Proof", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
-        
-//         // 🔥🔥 التعديل هنا: تحديد عرض المحتوى لكسر اللانهائية
-//         content: SizedBox(
-//           width: double.maxFinite, // ✅ هذا السطر يحل المشكلة
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               Text("Child completed: ${chore.title}", style: const TextStyle(fontSize: 16)),
-//               const SizedBox(height: 15),
-              
-//               if (imageUrl.isNotEmpty)
-//                 ClipRRect(
-//                   borderRadius: BorderRadius.circular(12),
-//                   child: Image.network(
-//                     imageUrl,
-//                     height: 250, // طول ثابت
-//                     width: double.infinity, // الآن هذا سيعمل لأن الأب (SizedBox) له عرض محدد
-//                     fit: BoxFit.cover,
-                    
-//                     loadingBuilder: (context, child, loadingProgress) {
-//                       if (loadingProgress == null) return child;
-//                       return Container(
-//                         height: 250,
-//                         width: double.infinity,
-//                         color: Colors.grey[100],
-//                         child: const Center(child: CircularProgressIndicator(color: hassalaGreen1)),
-//                       );
-//                     },
-                    
-//                     errorBuilder: (context, error, stackTrace) {
-//                       debugPrint("❌ Image Error: $error");
-//                       return Container(
-//                         height: 150, 
-//                         width: double.infinity,
-//                         decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-//                         child: const Column(
-//                           mainAxisAlignment: MainAxisAlignment.center,
-//                           children: [
-//                             Icon(Icons.broken_image, color: Colors.grey, size: 40),
-//                             SizedBox(height: 8),
-//                             Text("Image not found", style: TextStyle(color: Colors.grey)),
-//                           ],
-//                         ),
-//                       );
-//                     },
-//                   ),
-//                 )
-//               else
-//                 Container(
-//                   padding: const EdgeInsets.all(20),
-//                   width: double.infinity,
-//                   decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-//                   child: const Column(
-//                     children: [
-//                       Icon(Icons.image_not_supported, color: Colors.grey, size: 40),
-//                       SizedBox(height: 8),
-//                       Text("No proof image provided.", style: TextStyle(color: Colors.grey)),
-//                     ],
-//                   ),
-//                 ),
-//             ],
-//           ),
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(ctx), 
-//             child: const Text("Close", style: TextStyle(color: Colors.grey))
-//           ),
-//           ElevatedButton(
-//             onPressed: () {
-//               Navigator.pop(ctx);
-//               _approveChore(chore.id);
-//             },
-//             style: ElevatedButton.styleFrom(
-//               backgroundColor: const Color(0xFF27AE60),
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-//             ),
-//             child: const Text("Approve", style: TextStyle(color: Colors.white)),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-void _showReviewDialog(ChoreModel chore) {
+  // ✅ الملاحظة 4: توحيد الألوان للنافذة البيضاء التركوازية
+  void _showReviewDialog(ChoreModel chore) {
     String imageUrl = chore.proofUrl ?? "";
     if (imageUrl.isNotEmpty && imageUrl.startsWith('http:')) {
       imageUrl = imageUrl.replaceFirst('http:', 'https:');
     }
     
-    // ✅ 3. إظهار اسم الطفل
-    final String cName = chore.childName ?? _getChildName(chore.childId);
+    final String cName = chore.childName ?? _getChildNameOnly(chore.childId);
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Review Proof", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("$cName completed: ${chore.title}", style: const TextStyle(fontSize: 16)), // ✅
-              const SizedBox(height: 15),
-              if (imageUrl.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(imageUrl, height: 250, width: double.infinity, fit: BoxFit.cover,
-                    loadingBuilder: (ctx, child, progress) => progress == null ? child : Container(height: 250, color: Colors.grey[100], child: const Center(child: CircularProgressIndicator())),
-                    errorBuilder: (ctx, err, stack) => Container(height: 150, color: Colors.grey[100], child: const Icon(Icons.broken_image, color: Colors.grey, size: 40)),
-                  ),
-                )
-              else
-                Container(padding: const EdgeInsets.all(20), color: Colors.grey[100], child: const Text("No proof image provided.", style: TextStyle(color: Colors.grey))),
-            ],
-          ),
+      builder: (ctx) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: hassalaGreen1, surface: Colors.white, onPrimary: Colors.white),
         ),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-        actions: [
-          // ✅ 2. زر الرفض
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _showRejectReasonDialog(chore); // فتح نافذة إدخال السبب
-            }, 
-            child: const Text("Reject", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("Review $cName's Proof", style: const TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Task: ${chore.title}", style: const TextStyle(fontSize: 16)), 
+                const SizedBox(height: 15),
+                if (imageUrl.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(imageUrl, height: 250, width: double.infinity, fit: BoxFit.cover,
+                      loadingBuilder: (ctx, child, progress) => progress == null ? child : Container(height: 250, color: Colors.grey[100], child: const Center(child: CircularProgressIndicator(color: hassalaGreen1))),
+                      errorBuilder: (ctx, err, stack) => Container(height: 150, color: Colors.grey[100], child: const Icon(Icons.broken_image, color: Colors.grey, size: 40)),
+                    ),
+                  )
+                else
+                  Container(padding: const EdgeInsets.all(20), width: double.infinity, decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)), child: const Text("No proof image provided.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey))),
+              ],
+            ),
           ),
-          Row(
-            children: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close", style: TextStyle(color: Colors.grey))),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _approveChore(chore.id);
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27AE60)),
-                child: const Text("Approve", style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          )
-        ],
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showRejectReasonDialog(chore); 
+              }, 
+              child: const Text("Reject", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close", style: TextStyle(color: Colors.grey))),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _approveChore(chore.id);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27AE60), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  child: const Text("Approve", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
 
-  // ✅ نافذة كتابة سبب الرفض
+  // ✅ الملاحظة 4: توحيد لون نافذة الرفض
   void _showRejectReasonDialog(ChoreModel chore) {
     final reasonController = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Reason for Rejection"),
-        content: TextField(
-          controller: reasonController,
-          decoration: const InputDecoration(hintText: "E.g., The room is still messy!"),
-          maxLines: 2,
+      builder: (ctx) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: Colors.red, surface: Colors.white, onPrimary: Colors.white),
+          inputDecorationTheme: InputDecorationTheme(
+            focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.circular(10)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              if (reasonController.text.isNotEmpty) {
-                Navigator.pop(ctx);
-                _rejectChore(chore.id, reasonController.text);
-              }
-            },
-            child: const Text("Send to Child", style: TextStyle(color: Colors.white)),
-          )
-        ],
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Reason for Rejection", style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: reasonController,
+            cursorColor: Colors.red,
+            decoration: const InputDecoration(hintText: "E.g., The room is still messy!"),
+            maxLines: 2,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel", style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              onPressed: () {
+                if (reasonController.text.isNotEmpty) {
+                  Navigator.pop(ctx);
+                  _rejectChore(chore.id, reasonController.text);
+                }
+              },
+              child: const Text("Send to Child", style: TextStyle(color: Colors.white)),
+            )
+          ],
+        )
       )
     );
   }
@@ -789,25 +710,20 @@ void _showReviewDialog(ChoreModel chore) {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setStateDialog) {
+          // ✅ الملاحظة 4: ثيم إضافة المهمة أبيض وتركوازي بالكامل
           return Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: const ColorScheme.light(
-                primary: hassalaGreen1,
-                onPrimary: Colors.white,
-                surface: Colors.white,
-              ),
+              colorScheme: const ColorScheme.light(primary: hassalaGreen1, onPrimary: Colors.white, surface: Colors.white),
+              textSelectionTheme: const TextSelectionThemeData(cursorColor: hassalaGreen1, selectionHandleColor: hassalaGreen1),
               inputDecorationTheme: InputDecorationTheme(
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: hassalaGreen1, width: 2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: hassalaGreen1, width: 2), borderRadius: BorderRadius.circular(10)),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
             child: AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Text(isEditing ? "Edit Chore" : "Add New Chore", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C3E50))),
+              title: Text(isEditing ? "Edit Chore" : "Add New Chore", style: const TextStyle(fontWeight: FontWeight.bold, color: textColor)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -817,10 +733,8 @@ void _showReviewDialog(ChoreModel chore) {
                     TextField(controller: descController, decoration: const InputDecoration(labelText: "Description", prefixIcon: Icon(Icons.description))),
                     const SizedBox(height: 10),
                     TextField(
-                      controller: keysController, 
-                      decoration: const InputDecoration(labelText: "Reward (Keys)", prefixIcon: Icon(Icons.vpn_key)), 
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
+                      controller: keysController, decoration: const InputDecoration(labelText: "Reward (Keys)", prefixIcon: Icon(Icons.vpn_key)), 
+                      keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
                     ),
                     const SizedBox(height: 15),
 
@@ -828,20 +742,9 @@ void _showReviewDialog(ChoreModel chore) {
                       dropdownColor: Colors.white,
                       decoration: const InputDecoration(labelText: "Chore Type", prefixIcon: Icon(Icons.repeat)),
                       value: selectedType,
-                      items: const [
-                        DropdownMenuItem(value: 'One-time', child: Text("One-time")),
-                        DropdownMenuItem(value: 'Weekly', child: Text("Weekly")),
-                      ],
+                      items: const [DropdownMenuItem(value: 'One-time', child: Text("One-time")), DropdownMenuItem(value: 'Weekly', child: Text("Weekly"))],
                       onChanged: (val) {
-                        if (val != null) {
-                          setStateDialog(() {
-                            selectedType = val;
-                            if (val == 'One-time') {
-                              selectedDay = null;
-                              selectedTime = null;
-                            }
-                          });
-                        }
+                        if (val != null) setStateDialog(() { selectedType = val; if (val == 'One-time') { selectedDay = null; selectedTime = null; } });
                       },
                     ),
 
@@ -863,23 +766,12 @@ void _showReviewDialog(ChoreModel chore) {
                             child: InkWell(
                               onTap: () async {
                                 final time = await showTimePicker(
-                                  context: context, 
-                                  initialTime: TimeOfDay.now(),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: Theme.of(context).copyWith(
-                                        colorScheme: const ColorScheme.light(primary: hassalaGreen1, onPrimary: Colors.white, surface: Colors.white),
-                                      ),
-                                      child: child!,
-                                    );
-                                  },
+                                  context: context, initialTime: TimeOfDay.now(),
+                                  builder: (context, child) => Theme(data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: hassalaGreen1, onPrimary: Colors.white, surface: Colors.white)), child: child!),
                                 );
                                 if (time != null) setStateDialog(() => selectedTime = time);
                               },
-                              child: InputDecorator(
-                                decoration: const InputDecoration(labelText: "Time", suffixIcon: Icon(Icons.access_time, size: 20), contentPadding: EdgeInsets.symmetric(horizontal: 10)),
-                                child: Text(selectedTime != null ? selectedTime!.format(context) : "Select Time", style: const TextStyle(fontSize: 14)),
-                              ),
+                              child: InputDecorator(decoration: const InputDecoration(labelText: "Time", suffixIcon: Icon(Icons.access_time, size: 20), contentPadding: EdgeInsets.symmetric(horizontal: 10)), child: Text(selectedTime != null ? selectedTime!.format(context) : "Select Time", style: const TextStyle(fontSize: 14))),
                             ),
                           ),
                         ],
@@ -894,10 +786,7 @@ void _showReviewDialog(ChoreModel chore) {
                             dropdownColor: Colors.white,
                             decoration: const InputDecoration(labelText: "Assign to Child", prefixIcon: Icon(Icons.face)),
                             value: selectedChildId,
-                            items: _childrenList.map((child) => DropdownMenuItem<String>(
-                              value: child['childId'].toString(),
-                              child: Text(child['firstName'] ?? "Unknown"),
-                            )).toList(),
+                            items: _childrenList.map((child) => DropdownMenuItem<String>(value: child['childId'].toString(), child: Text(child['firstName'] ?? "Unknown"))).toList(),
                             onChanged: (val) => setStateDialog(() => selectedChildId = val),
                             hint: const Text("Select a child"),
                           ),
@@ -908,10 +797,10 @@ void _showReviewDialog(ChoreModel chore) {
               actions: [
                 TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel", style: TextStyle(color: Colors.grey))),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1),
+                  style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                   onPressed: () async {
                     int keysValue = int.tryParse(keysController.text) ?? 0;
-                    if (keysValue <= 0) { _showMessageBar("Reward must be greater than 0", backgroundColor: _redMsg); return; }
+                    if (keysValue <= 0) { _showMessageBar("Reward must be > 0", backgroundColor: _redMsg); return; }
                     
                     try {
                       if (isEditing) {
@@ -919,22 +808,14 @@ void _showReviewDialog(ChoreModel chore) {
                         _showMessageBar("Chore updated!", backgroundColor: _greenMsg);
                       } else {
                         if (titleController.text.isEmpty || selectedChildId == null) { _showMessageBar("Please fill all fields", backgroundColor: _redMsg); return; }
-                        
                         String? formattedTime;
                         if (selectedTime != null) formattedTime = "${selectedTime!.hour.toString().padLeft(2,'0')}:${selectedTime!.minute.toString().padLeft(2,'0')}";
-                        
-                        await _choreService.createChore(
-                          title: titleController.text, description: descController.text, keys: keysValue, 
-                          childId: selectedChildId!, parentId: widget.parentId.toString(), 
-                          type: selectedType, assignedDay: selectedDay, assignedTime: formattedTime
-                        );
+                        await _choreService.createChore(title: titleController.text, description: descController.text, keys: keysValue, childId: selectedChildId!, parentId: widget.parentId.toString(), type: selectedType, assignedDay: selectedDay, assignedTime: formattedTime);
                         _showMessageBar("Chore created!", backgroundColor: _greenMsg);
                       }
                       if (context.mounted) Navigator.pop(context);
                       _loadAllData(); 
-                    } catch (e) {
-                      _showMessageBar("Error: $e", backgroundColor: _redMsg);
-                    }
+                    } catch (e) { _showMessageBar("Error: $e", backgroundColor: _redMsg); }
                   },
                   child: Text(isEditing ? "Save" : "Create", style: const TextStyle(color: Colors.white)),
                 ),
@@ -946,81 +827,35 @@ void _showReviewDialog(ChoreModel chore) {
     );
   }
 
-Future<void> _rejectChore(String choreId, String reason) async {
-    try {
-      await _choreService.rejectChore(choreId, reason);
-      _loadAllData();
-      _showMessageBar("Chore Rejected & returned to child", backgroundColor: _redMsg);
-    } catch (e) {
-      _showMessageBar("Failed to reject", backgroundColor: _redMsg);
-    }
-  }
-
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF7F8FA),
-        body: Center(child: CircularProgressIndicator(color: hassalaGreen1)),
-      );
+      return const Scaffold(backgroundColor: Color(0xFFF7F8FA), body: Center(child: CircularProgressIndicator(color: hassalaGreen1)));
     }
 
-    // ✅ تشمل المهام بانتظار الموافقة أو التي تم تسليمها
-    // final activeChores = _allChores.where((c) => c.status == 'In Progress' || c.status == 'Pending').toList();
-    // final pendingChores = _allChores.where((c) => c.status == 'Submitted' || c.status == 'Waiting Approval').toList();
-
-// جلب المهام
     List<ChoreModel> activeChores = _allChores.where((c) => c.status == 'In Progress' || c.status == 'Pending').toList();
     List<ChoreModel> pendingChores = _allChores.where((c) => c.status == 'Submitted' || c.status == 'Waiting Approval').toList();
-
-    // ✅ 4. ترتيب قائمة In Progress بناءً على اسم الطفل
-    activeChores.sort((a, b) {
-      String nameA = a.childName ?? _getChildName(a.childId);
-      String nameB = b.childName ?? _getChildName(b.childId);
-      return nameA.compareTo(nameB);
-    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 90.0),
-        child: FloatingActionButton(
-          onPressed: () => _showChoreDialog(),
-          backgroundColor: hassalaGreen1,
-          child: const Icon(Icons.add, color: Colors.white, size: 30),
-        ),
+        child: FloatingActionButton(onPressed: () => _showChoreDialog(), backgroundColor: hassalaGreen1, child: const Icon(Icons.add, color: Colors.white, size: 30)),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                child: Text("All Family Chores", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF2C3E50))),
-              ),
+              const Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20), child: Text("All Family Chores", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: textColor))),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]),
                 child: TabBar(
                   controller: _tabController,
                   indicatorSize: TabBarIndicatorSize.tab,
-                  indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    gradient: const LinearGradient(colors: [hassalaGreen1, _greenMsg]), 
-                  ),
+                  indicator: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(colors: [hassalaGreen1, _greenMsg])),
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.grey,
                   tabs: const [Tab(text: "To Review"), Tab(text: "In Progress")],
@@ -1031,8 +866,8 @@ Future<void> _rejectChore(String choreId, String reason) async {
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildChoreList(pendingChores, isReview: true),
-                    _buildChoreList(activeChores, isReview: false),
+                    _buildGroupedChoreList(pendingChores, isReview: true),
+                    _buildGroupedChoreList(activeChores, isReview: false),
                   ],
                 ),
               ),
@@ -1043,29 +878,61 @@ Future<void> _rejectChore(String choreId, String reason) async {
     );
   }
 
-  Widget _buildChoreList(List<ChoreModel> chores, {required bool isReview}) {
+  // ✅ الملاحظات 2 و 3: تجميع وعرض المهام حسب كل طفل
+  Widget _buildGroupedChoreList(List<ChoreModel> chores, {required bool isReview}) {
     if (chores.isEmpty) {
-      return Center(child: Text(isReview ? "No chores to review" : "No active chores"));
+      return Center(child: Text(isReview ? "No chores to review" : "No active chores", style: const TextStyle(color: Colors.grey)));
     }
+
+    // تجميع المهام في قاموس (Map) حيث المفتاح هو الـ childId
+    Map<String, List<ChoreModel>> groupedChores = {};
+    for (var chore in chores) {
+      if (!groupedChores.containsKey(chore.childId)) {
+        groupedChores[chore.childId] = [];
+      }
+      groupedChores[chore.childId]!.add(chore);
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: chores.length,
-      itemBuilder: (context, index) => _buildChoreCard(chores[index], isReview),
+      itemCount: groupedChores.keys.length,
+      itemBuilder: (context, index) {
+        String childId = groupedChores.keys.elementAt(index);
+        List<ChoreModel> childChores = groupedChores[childId]!;
+        
+        // جلب اسم الطفل النظيف
+        String childName = childChores.first.childName ?? _getChildNameOnly(childId);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ عنوان القسم (اسم الطفل)
+            Padding(
+              padding: const EdgeInsets.only(top: 15, bottom: 10, left: 5),
+              child: Row(
+                children: [
+                  const Icon(Icons.face, color: hassalaGreen1, size: 22),
+                  const SizedBox(width: 8),
+                  Text("$childName's Chores", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                ],
+              ),
+            ),
+            // عرض المهام الخاصة بهذا الطفل فقط تحت اسمه
+            ...childChores.map((c) => _buildChoreCard(c, isReview)).toList(),
+            const SizedBox(height: 10),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildChoreCard(ChoreModel chore, bool isReview) {
-    final childNameText = _getChildName(chore.childId);
     final isWeekly = chore.type == 'Weekly';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)]),
       child: Row(
         children: [
           CircleAvatar(
@@ -1089,24 +956,16 @@ Future<void> _rejectChore(String choreId, String reason) async {
                        ),
                     const SizedBox(width: 8),
                     if (!isReview)
-                      GestureDetector(
-                        onTap: () => _showChoreDialog(choreToEdit: chore),
-                        child: const Icon(Icons.edit, size: 18, color: Colors.grey),
-                      ),
+                      GestureDetector(onTap: () => _showChoreDialog(choreToEdit: chore), child: const Icon(Icons.edit, size: 18, color: Colors.grey)),
                   ],
                 ),
-                if (childNameText.isNotEmpty)
-                  Text(childNameText, style: const TextStyle(color: Color(0xFF37C4BE), fontSize: 12, fontWeight: FontWeight.bold)),
+                // (تم إزالة اسم الطفل من داخل البطاقة لأنه أصبح موجوداً في عنوان القسم)
                 Text("Reward: ${chore.keys} Keys", style: const TextStyle(color: Colors.grey, fontSize: 13)),
               ],
             ),
           ),
           if (isReview)
-            // ✅ تغيير الزر ليصبح "عرض" بدلاً من "موافقة فورية"
-            IconButton(
-              icon: const Icon(Icons.visibility, color: Colors.orange),
-              onPressed: () => _showReviewDialog(chore), // فتح نافذة المراجعة
-            ),
+            IconButton(icon: const Icon(Icons.visibility, color: Colors.orange), onPressed: () => _showReviewDialog(chore)),
         ],
       ),
     );

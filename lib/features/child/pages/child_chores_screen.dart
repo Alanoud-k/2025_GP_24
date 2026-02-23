@@ -535,7 +535,7 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // تأكدي من وجود المكتبة
+import 'package:image_picker/image_picker.dart'; 
 import '../../child/models/chore_model.dart';
 import '../../child/services/chore_service.dart';
 
@@ -558,9 +558,9 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
   final ChoreService _choreService = ChoreService();
   late Future<List<ChoreModel>> _choresFuture;
   
-  // Colors
   static const Color hassalaGreen1 = Color(0xFF37C4BE);
   static const Color hassalaGreen2 = Color(0xFF2EA49E);
+  static const Color textColor = Color(0xFF2C3E50);
 
   @override
   void initState() {
@@ -575,7 +575,6 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
     });
   }
 
-  // دالة إنهاء المهمة مع ملف
   Future<void> _completeChore(String choreId, File proofImage) async {
     try {
       showDialog(
@@ -584,10 +583,9 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
         builder: (_) => const Center(child: CircularProgressIndicator(color: hassalaGreen1)),
       );
 
-      // استدعاء السيرفس الجديدة مع الصورة
       await _choreService.completeChore(choreId, proofImage);
       
-      if (mounted) Navigator.pop(context); // إغلاق التحميل
+      if (mounted) Navigator.pop(context); 
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Great job! Sent for approval."), backgroundColor: Colors.green),
@@ -602,7 +600,60 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
     }
   }
 
-  // نافذة التأكيد مع اختيار الصورة
+  // ✅ الملاحظة 1: نافذة التنبيه بسبب الرفض
+  void _showRejectionReasonDialog(ChoreModel chore) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: hassalaGreen1, surface: Colors.white, onPrimary: Colors.white),
+        ),
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              SizedBox(width: 8),
+              Text("Task Returned!", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Your parent reviewed this task and sent it back with this note:", style: TextStyle(color: Colors.black87)),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.red.shade200)),
+                child: Text(chore.rejectionReason ?? "Please fix the task and try again.", style: const TextStyle(color: Colors.red, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 12),
+              const Text("Please fix it, then submit a new proof photo.", style: TextStyle(color: Colors.black87)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Later", style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showCompletionDialog(chore); // ✅ بعد القراءة يسمح له برفع الصورة
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              child: const Text("Resubmit Proof", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ الملاحظة 4: توحيد الألوان للنافذة البيضاء والأخضر التركوازي
   void _showCompletionDialog(ChoreModel chore) {
     File? selectedImage;
     final picker = ImagePicker();
@@ -611,73 +662,66 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setStateDialog) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text("Submit Proof"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("Select a photo from your gallery to prove you finished the task."),
-                const SizedBox(height: 15),
-                GestureDetector(
-                  onTap: () async {
-                    // ✅ اختيار من الاستوديو (Gallery)
-                    final picked = await picker.pickImage(source: ImageSource.gallery);
-                    
-                    if (picked != null) {
-                      setStateDialog(() {
-                        selectedImage = File(picked.path);
-                      });
-                    }
-                  },
-                  child: Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
-                      image: selectedImage != null 
-                        ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
-                        : null
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(primary: hassalaGreen1, surface: Colors.white, onPrimary: Colors.white),
+            ),
+            child: AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text("Submit Proof", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Select a photo from your gallery to prove you finished the task."),
+                  const SizedBox(height: 15),
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await picker.pickImage(source: ImageSource.gallery);
+                      if (picked != null) setStateDialog(() => selectedImage = File(picked.path));
+                    },
+                    child: Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: hassalaGreen1.withOpacity(0.5), width: 1.5), // ✅ إطار أخضر
+                        image: selectedImage != null ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover) : null
+                      ),
+                      child: selectedImage == null 
+                        ? const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.photo_library, size: 40, color: hassalaGreen1),
+                              SizedBox(height: 8),
+                              Text("Tap to open Gallery", style: TextStyle(color: hassalaGreen1, fontWeight: FontWeight.bold)),
+                            ],
+                          )
+                        : null,
                     ),
-                    child: selectedImage == null 
-                      ? const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.photo_library, size: 40, color: Colors.teal), // أيقونة المعرض
-                            SizedBox(height: 8),
-                            Text("Tap to open Gallery", style: TextStyle(color: Colors.teal)),
-                          ],
-                        )
-                      : null,
                   ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedImage == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Proof picture is required!"), backgroundColor: Colors.red));
+                      return;
+                    }
+                    Navigator.pop(ctx);
+                    _completeChore(chore.id, selectedImage!); 
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  child: const Text("Submit", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (selectedImage == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Proof picture is required!"), backgroundColor: Colors.red),
-                    );
-                    return;
-                  }
-                  Navigator.pop(ctx);
-                  _completeChore(chore.id, selectedImage!); // إرسال الصورة
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: hassalaGreen1,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text("Submit", style: TextStyle(color: Colors.white)),
-              ),
-            ],
           );
         }
       ),
@@ -689,52 +733,34 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFC),
       appBar: AppBar(
-        title: const Text(
-          "My Chores",
-          style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF2C3E50)),
-        ),
+        title: const Text("My Chores", style: TextStyle(fontWeight: FontWeight.w800, color: textColor)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50)),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: textColor), onPressed: () => Navigator.pop(context)),
         bottom: TabBar(
           controller: _tabController,
           labelColor: hassalaGreen2,
           unselectedLabelColor: Colors.grey,
           indicatorColor: hassalaGreen2,
           indicatorWeight: 3,
-          tabs: const [
-            Tab(text: "To Do"),
-            Tab(text: "History"),
-          ],
+          tabs: const [Tab(text: "To Do"), Tab(text: "History")],
         ),
       ),
       body: FutureBuilder<List<ChoreModel>>(
         future: _choresFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: hassalaGreen1));
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No chores found"));
-          }
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: hassalaGreen1));
+          if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+          if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No chores found"));
 
           final allChores = snapshot.data!;
-          // To Do: Pending
           final todoList = allChores.where((c) => c.status == 'Pending').toList();
-          // History: Submitted (Waiting Approval) OR Completed
           final historyList = allChores.where((c) => c.status == 'Submitted' || c.status == 'Waiting Approval' || c.status == 'Completed').toList();
 
           return TabBarView(
             controller: _tabController,
-            children: [
-              _buildList(todoList, isTodo: true),
-              _buildList(historyList, isTodo: false),
-            ],
+            children: [_buildList(todoList, isTodo: true), _buildList(historyList, isTodo: false)],
           );
         },
       ),
@@ -749,90 +775,57 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
           children: [
             Icon(isTodo ? Icons.task_alt : Icons.history, size: 80, color: Colors.black12),
             const SizedBox(height: 16),
-            Text(
-              isTodo ? "No chores assigned yet!" : "No history yet.",
-              style: const TextStyle(fontSize: 16, color: Colors.black38),
-            ),
+            Text(isTodo ? "No chores assigned yet!" : "No history yet.", style: const TextStyle(fontSize: 16, color: Colors.black38)),
           ],
         ),
       );
     }
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: chores.length,
-      itemBuilder: (context, index) {
-        final item = chores[index];
-        return _buildChoreCard(item, isTodo: isTodo);
-      },
+      itemBuilder: (context, index) => _buildChoreCard(chores[index], isTodo: isTodo),
     );
   }
 
   Widget _buildChoreCard(ChoreModel chore, {required bool isTodo}) {
-    // التحقق من الحالات المختلفة
     final bool isWaiting = chore.status == 'Submitted' || chore.status == 'Waiting Approval';
     final bool isWeekly = chore.type == 'Weekly';
+    final bool isRejected = isTodo && chore.rejectionReason != null && chore.rejectionReason!.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: isRejected ? Border.all(color: Colors.red.shade300, width: 1.5) : null, // إطار أحمر للمهمة المرفوضة
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 4))],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isTodo ? const Color(0xFF37C4BE).withOpacity(0.1) : (isWaiting ? Colors.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.1)),
+            color: isRejected ? Colors.red.withOpacity(0.1) : (isTodo ? hassalaGreen1.withOpacity(0.1) : (isWaiting ? Colors.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.1))),
             shape: BoxShape.circle,
           ),
           child: Icon(
-            isTodo ? Icons.cleaning_services : (isWaiting ? Icons.hourglass_empty : Icons.check),
-            color: isTodo ? const Color(0xFF37C4BE) : (isWaiting ? Colors.orange : Colors.grey),
+            isRejected ? Icons.assignment_return : (isTodo ? Icons.cleaning_services : (isWaiting ? Icons.hourglass_empty : Icons.check)),
+            color: isRejected ? Colors.red : (isTodo ? hassalaGreen1 : (isWaiting ? Colors.orange : Colors.grey)),
           ),
         ),
         title: Row(
           children: [
-            Text(
-              chore.title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2C3E50)),
-            ),
-             if (isWeekly) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
-                  child: const Text("Weekly", style: TextStyle(fontSize: 10, color: Colors.blue)),
-                ),
+            Text(chore.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+            if (isWeekly) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
+                child: const Text("Weekly", style: TextStyle(fontSize: 10, color: Colors.blue)),
+              ),
             ]
           ],
         ),
-        // subtitle: Text(
-        //   isTodo ? (chore.description ?? "No description") : (isWaiting ? "Waiting Approval" : "Completed"),
-        //   style: TextStyle(
-        //     fontSize: 13,
-        //     color: isWaiting ? Colors.orange : Colors.grey[600],
-        //     fontWeight: isWaiting ? FontWeight.bold : FontWeight.normal,
-        //   ),
-        // ),
-        // trailing: Column(
-        //   mainAxisAlignment: MainAxisAlignment.center,
-        //   children: [
-        //     const Icon(Icons.vpn_key, color: Color(0xFFF6C44B), size: 18),
-        //     Text(
-        //       "${chore.keys}",
-        //       style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF6C44B)),
-        //     ),
-        //   ],
-        // ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -840,18 +833,35 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
               isTodo ? (chore.description ?? "No description") : (isWaiting ? "Waiting Approval" : "Completed"),
               style: TextStyle(fontSize: 13, color: isWaiting ? Colors.orange : Colors.grey[600], fontWeight: isWaiting ? FontWeight.bold : FontWeight.normal),
             ),
-            // ✅ إظهار رسالة الرفض إن وجدت وكانت المهمة ضمن الـ To Do
-            if (isTodo && chore.rejectionReason != null)
+            // ✅ رسالة الرفض تظهر بوضوح تحت الوصف
+            if (isRejected)
               Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  "Rejected: ${chore.rejectionReason}",
-                  style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                padding: const EdgeInsets.only(top: 6.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: Colors.red, size: 14),
+                    const SizedBox(width: 4),
+                    Expanded(child: Text("Parent returned this: Tap to read", style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold))),
+                  ],
                 ),
               ),
           ],
         ),
-        onTap: isTodo ? () => _showCompletionDialog(chore) : null,
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.vpn_key, color: Color(0xFFF6C44B), size: 18),
+            Text("${chore.keys}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF6C44B))),
+          ],
+        ),
+        onTap: isTodo ? () {
+          // ✅ الملاحظة 1: توجيه الطفل للنافذة المناسبة
+          if (isRejected) {
+            _showRejectionReasonDialog(chore);
+          } else {
+            _showCompletionDialog(chore);
+          }
+        } : null,
       ),
     );
   }
