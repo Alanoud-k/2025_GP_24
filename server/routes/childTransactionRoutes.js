@@ -1,9 +1,8 @@
-import express from "express";
+import { Router } from "express";
 import { getChildTransactions } from "../controllers/childTransactionController.js";
 
-const router = express.Router();
+const router = Router();
 
-
-router.get("/child/:childId", getChildTransactions);
+router.get("/:childId/transactions", getChildTransactions);
 
 export default router;

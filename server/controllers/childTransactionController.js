@@ -1,62 +1,51 @@
 import { sql } from "../config/db.js";
 
-// Fetch child transactions (incoming + outgoing)
+async function getChildAccountIds(childId) {
+  const w = await sql`
+    SELECT "walletid"
+    FROM "Wallet"
+    WHERE "childid" = ${childId}
+    LIMIT 1
+  `;
+  if (!w.length) return [];
+
+  const walletId = w[0].walletid;
+
+  const accounts = await sql`
+    SELECT "accountid"
+    FROM "Account"
+    WHERE "walletid" = ${walletId}
+      AND "accounttype" IN ('SavingAccount','SpendingAccount')
+  `;
+
+  return accounts.map(a => a.accountid);
+}
+
 export const getChildTransactions = async (req, res) => {
   try {
-    const { childId } = req.params;
+    const childId = Number(req.params.childId);
+    if (!childId) return res.status(400).json({ message: "Invalid childId" });
 
-    if (!childId) {
-      return res.status(400).json({ message: "Missing childId" });
+    const accountIds = await getChildAccountIds(childId);
+
+    if (accountIds.length === 0) {
+      return res.status(200).json({ status: "success", data: [] });
     }
-
-    const cid = Number(childId);
-    if (!Number.isInteger(cid) || cid <= 0) {
-      return res.status(400).json({ message: "Invalid childId" });
-    }
-
-    // Optional pagination
-    const limit = Math.min(Number(req.query.limit ?? 50), 200);
-    const offset = Math.max(Number(req.query.offset ?? 0), 0);
 
     const rows = await sql`
-      WITH child_accounts AS (
-        SELECT a."accountid", a."accounttype"
-        FROM "Account" a
-        JOIN "Wallet" w ON w."walletid" = a."walletid"
-        WHERE w."childid" = ${cid}
-      )
       SELECT
-        t."transactionid",
-        t."transactiontype",
-        t."amount",
-        t."transactiondate",
-        t."merchantname",
-        t."transactioncategory",
-        ca."accounttype" AS "accountType",
-        ca."accountid"   AS "childAccountId",
-        CASE 
-          WHEN t."receiverAccountId" = ca."accountid" THEN 'IN'
-          WHEN t."senderAccountId"   = ca."accountid" THEN 'OUT'
-          ELSE NULL
-        END AS "direction"
-      FROM "Transaction" t
-      JOIN child_accounts ca
-        ON ca."accountid" IN (t."receiverAccountId", t."senderAccountId")
-      ORDER BY t."transactiondate" DESC
-      LIMIT ${limit} OFFSET ${offset};
+        "transactionid","transactiontype","amount","transactiondate",
+        "transactionstatus","merchantname","sourcetype","transactioncategory",
+        "senderAccountId","receiverAccountId"
+      FROM "Transaction"
+      WHERE "receiverAccountId" = ANY(${accountIds})
+      ORDER BY "transactiondate" DESC
+      LIMIT 200
     `;
 
-    return res.status(200).json({
-      status: "success",
-      childId: cid,
-      pagination: { limit, offset, returned: rows.length },
-      data: rows,
-    });
+    return res.status(200).json({ status: "success", data: rows });
   } catch (err) {
     console.error("getChildTransactions error:", err);
-    return res.status(500).json({
-      message: "Internal server error",
-      error: err.message,
-    });
+    return res.status(500).json({ message: "Failed to load child transactions", error: err.message });
   }
 };

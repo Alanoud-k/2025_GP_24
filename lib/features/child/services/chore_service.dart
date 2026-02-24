@@ -19,9 +19,9 @@
 //   Future<List<ChoreModel>> getChores(String childId) async {
 //     final token = await _getToken();
 //     final url = Uri.parse('$baseUrl/child/$childId');
-    
-//     print("🔍 Fetching from: $url"); 
-    
+
+//     print("🔍 Fetching from: $url");
+
 //     final response = await http.get(
 //       url,
 //       headers: {
@@ -67,9 +67,9 @@
 //     required int keys,
 //     required String childId,
 //     required String parentId,
-//     String type = 'One-time', 
-//     String? assignedDay, 
-//   String? assignedTime, 
+//     String type = 'One-time',
+//     String? assignedDay,
+//   String? assignedTime,
 //   }) async {
 //     final token = await _getToken();
 //     final response = await http.post(
@@ -142,7 +142,7 @@
 //   Future<List<Map<String, dynamic>>> getChildren(String parentId) async {
 //     final token = await _getToken();
 //     // 💡 نستخدم replace لنعود للرابط الرئيسي بدلاً من /api/chores
-//     final rootUrl = baseUrl.replaceAll('/api/chores', ''); 
+//     final rootUrl = baseUrl.replaceAll('/api/chores', '');
 //     final response = await http.get(
 //       Uri.parse('$rootUrl/api/auth/parent/$parentId/children'),
 //       headers: {
@@ -158,7 +158,6 @@
 //       throw Exception("Failed to load children list");
 //     }
 //   }
-
 
 // // داخل كلاس ChoreService
 
@@ -184,11 +183,12 @@ import 'dart:convert';
 import 'dart:io'; // ✅ لاستخدام File
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/chore_model.dart'; 
+import '../models/chore_model.dart';
 
 class ChoreService {
   // تأكدي من أن الرابط صحيح
-  static const String baseUrl = "https://2025gp24-production.up.railway.app/api/chores";
+  static const String baseUrl =
+      "https://2025gp24-production.up.railway.app/api/chores";
 
   Future<String?> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -199,7 +199,7 @@ class ChoreService {
   Future<List<ChoreModel>> getChores(String childId) async {
     final token = await _getToken();
     final url = Uri.parse('$baseUrl/child/$childId');
-    
+
     final response = await http.get(
       url,
       headers: {
@@ -236,7 +236,7 @@ class ChoreService {
 
   Future<List<Map<String, dynamic>>> getChildren(String parentId) async {
     final token = await _getToken();
-    final rootUrl = baseUrl.replaceAll('/api/chores', ''); 
+    final rootUrl = baseUrl.replaceAll('/api/chores', '');
     final response = await http.get(
       Uri.parse('$rootUrl/api/auth/parent/$parentId/children'),
       headers: {
@@ -260,9 +260,9 @@ class ChoreService {
     required int keys,
     required String childId,
     required String parentId,
-    String type = 'One-time', 
-    String? assignedDay, 
-    String? assignedTime, 
+    String type = 'One-time',
+    String? assignedDay,
+    String? assignedTime,
   }) async {
     final token = await _getToken();
     final response = await http.post(
@@ -312,7 +312,7 @@ class ChoreService {
   }) async {
     final token = await _getToken();
     final response = await http.put(
-      Uri.parse('$baseUrl/$choreId/details'), 
+      Uri.parse('$baseUrl/$choreId/details'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -333,13 +333,11 @@ class ChoreService {
   Future<void> completeChore(String choreId, File proofImage) async {
     final token = await _getToken();
     var uri = Uri.parse('$baseUrl/$choreId/complete');
-    
+
     // إنشاء طلب متعدد الأجزاء لرفع الملفات
     var request = http.MultipartRequest('PATCH', uri);
-    
-    request.headers.addAll({
-      'Authorization': 'Bearer $token',
-    });
+
+    request.headers.addAll({'Authorization': 'Bearer $token'});
 
     // إضافة ملف الصورة
     var multipartFile = await http.MultipartFile.fromPath(
@@ -357,7 +355,7 @@ class ChoreService {
     }
   }
 
-// ✅ دالة رفض المهمة
+  // ✅ دالة رفض المهمة
   Future<void> rejectChore(String choreId, String reason) async {
     final token = await _getToken();
     final response = await http.patch(
@@ -374,5 +372,19 @@ class ChoreService {
     }
   }
 
+  // ✅ دالة حذف المهمة
+  Future<void> deleteChore(String choreId) async {
+    final token = await _getToken();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/$choreId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
+    if (response.statusCode != 200) {
+      throw Exception("Failed to delete chore");
+    }
+  }
 }

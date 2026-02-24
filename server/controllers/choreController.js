@@ -177,3 +177,25 @@ export const rejectChore = async (req, res) => {
     return res.status(500).json({ error: "Failed to reject chore" });
   }
 };
+
+// 8. حذف المهمة 
+export const deleteChore = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await sql`
+      DELETE FROM "Chore" 
+      WHERE "choreid" = ${id} 
+      RETURNING *
+    `;
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
+    return res.json({ message: "Chore deleted successfully", chore: deleted[0] });
+  } catch (err) {
+    console.error("❌ Error deleting chore:", err);
+    return res.status(500).json({ error: "Failed to delete chore" });
+  }
+};

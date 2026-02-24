@@ -11,7 +11,8 @@ import {
   updateChoreStatus,
   updateChoreDetails,
   completeChore,
-  rejectChore // 👈 دالة الرفض مضافة هنا مع البقية
+  rejectChore, // 👈 دالة الرفض مضافة هنا مع البقية
+  deleteChore 
 } from "../controllers/choreController.js";
 
 import { protect } from "../middleware/authMiddleware.js"; 
@@ -37,7 +38,7 @@ router.post("/create", protect, createChore);
 router.patch("/:id/status", protect, updateChoreStatus);
 router.put("/:id/details", protect, updateChoreDetails);
 router.patch("/:id/complete", protect, upload.single('proof'), completeChore);
-
+router.delete("/:id", protect, deleteChore); // مسار الحذف
 // 👇 مسار رفض المهمة الجديد
 router.patch("/:id/reject", protect, rejectChore);
 

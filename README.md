@@ -3,7 +3,7 @@
 <h2>📖 Introduction</h2>
 Our project, حصّالة, is an intelligent FinTech application designed to enhance the financial experience of Saudi families and strengthen financial awareness among children and teenagers.
 
-The app provides a secure and user-friendly digital environment that enables parents to manage allowances, monitor spending, organize tasks, and promote responsible financial behavior in an engaging and simple way.
+The app provides a user-friendly digital environment that enables parents to manage allowances, monitor spending, organize tasks, and promote responsible financial behavior in an engaging and simple way.
 
 It also empowers children to learn essential financial skills—such as saving, goal-setting, and making thoughtful spending decisions supported by AI-driven analytics that provide accurate insights into their financial habits.
 
@@ -13,15 +13,15 @@ Our project aligns with the goals of Saudi Vision 2030 by promoting digital empo
 
 ✨ Full parental control over all financial and behavioral aspects, including allowances, spending, goals, tasks, and approvals.
 
-✨ Smooth and secure Parent → Child wallet transfers with real-time tracking.
+✨ Smooth Parent → Child wallet transfers with real-time tracking.
 
 ✨ Instant payment approval system, allowing parents to approve or reject a child’s money request immediately.
 
 ✨ Smart rewards system with gamification, encouraging positive financial behavior and motivating children consistently.
 
-✨ Daily and weekly chore management, linking completed tasks to earnings and rewards.
+✨ One time and weekly chore management, linking completed tasks to earnings and rewards.
 
-✨ Intelligent saving goals for children, enabling them to create personalized financial goals with clear and simple progress tracking.
+✨ Saving goals for children, enabling them to create personalized financial goals with clear and simple progress tracking.
 
 ✨ AI-powered smart reports, providing parents with accurate insights into their children’s financial behavior and spending patterns.
 
