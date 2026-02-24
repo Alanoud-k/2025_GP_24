@@ -3,7 +3,7 @@
 <h2>📖 Introduction</h2>
 Our project, حصّالة, is an intelligent FinTech application designed to enhance the financial experience of Saudi families and strengthen financial awareness among children and teenagers.
 
-The app provides a secure and user-friendly digital environment that enables parents to manage allowances, monitor spending, organize tasks, and promote responsible financial behavior in an engaging and simple way.
+The app provides a user-friendly digital environment that enables parents to manage allowances, monitor spending, organize tasks, and promote responsible financial behavior in an engaging and simple way.
 
 It also empowers children to learn essential financial skills—such as saving, goal-setting, and making thoughtful spending decisions supported by AI-driven analytics that provide accurate insights into their financial habits.
 
