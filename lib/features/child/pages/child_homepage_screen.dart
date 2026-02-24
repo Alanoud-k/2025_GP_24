@@ -223,23 +223,54 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           ],
         ),
         GestureDetector(
-          onTap: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChildNotificationsScreen(
-                  childId: widget.childId,
-                  token: widget.token,
-                ),
+  onTap: () async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChildNotificationsScreen(
+          childId: widget.childId,
+          token: widget.token,
+        ),
+      ),
+    );
+
+    // ✅ لما يرجع من صفحة الإشعارات: حدث العداد
+    await _fetchUnreadCount();
+  },
+  child: Stack(
+    clipBehavior: Clip.none,
+    children: [
+      const Icon(
+        Icons.notifications_none_rounded,
+        size: 30,
+        color: Colors.black87,
+      ),
+
+      // ✅ Badge (يطلع فقط لو عندك Unread)
+      if (unreadCount > 0)
+        Positioned(
+          right: -2,
+          top: -2,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE53935), // أحمر
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: Text(
+              unreadCount > 99 ? "99+" : unreadCount.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
               ),
-            );
-          },
-          child: const Icon(
-            Icons.notifications_none_rounded,
-            size: 30,
-            color: Colors.black87,
+            ),
           ),
         ),
+    ],
+  ),
+),
       ],
     );
   }

@@ -229,7 +229,49 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       });
     }
   }
+Widget _notifIconWithBadge({
+  required int unread,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(30),
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        const Icon(
+          Icons.notifications_none_rounded,
+          size: 28,
+          color: Colors.black87,
+        ),
 
+        if (unread > 0)
+          Positioned(
+            right: -2,
+            top: -4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              child: Center(
+                child: Text(
+                  unread > 99 ? "99+" : unread.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -268,25 +310,54 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                       backgroundColor: Colors.teal,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
+GestureDetector(
+  onTap: () async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ParentNotificationsScreen(
+          parentId: parentId,
+          token: token,
+        ),
+      ),
+    );
 
-                    GestureDetector(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ParentNotificationsScreen(
-                              parentId: parentId,
-                              token: token,
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        size: 28,
-                        color: Colors.black87,
-                      ),
-                    ),
+    // ✅ بعد الرجوع حدّث العداد
+    await _fetchUnread();
+  },
+  child: Stack(
+    clipBehavior: Clip.none,
+    children: [
+      const Icon(
+        Icons.notifications_none_rounded,
+        size: 28,
+        color: Colors.black87,
+      ),
+
+      if (unreadCount > 0)
+        Positioned(
+          right: -2,
+          top: -2,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE53935),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: Text(
+              unreadCount > 99 ? "99+" : unreadCount.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+    ],
+  ),
+),
                   ],
                 ),
 

@@ -315,6 +315,22 @@ export const markChildNotificationsRead = async (req, res) => {
   }
 };
 
+export const markSingleNotificationRead = async (req, res) => {
+  const { notificationId } = req.params;
+
+  try {
+    await sql`
+      UPDATE "Notification"
+      SET isread = TRUE
+      WHERE notificationid = ${notificationId}
+    `;
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("❌ Error marking single notification as read:", err);
+    res.status(500).json({ error: "Failed to update notification" });
+  }
+};
 // === CREATE NOTIFICATION ===
 export const createNotification = async (parentId, childId, type, message, moneyRequestId = null, choreId = null) => {
   try {
