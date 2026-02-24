@@ -2,8 +2,8 @@ import { spawn } from "node:child_process";
 
 export function predictWithPython(merchantText) {
   return new Promise((resolve, reject) => {
-    const py = spawn("python", ["./ml_service/predict.py"], {
-      cwd: process.cwd(), // داخل server
+    const py = spawn("python", ["./ml_service/main.py"], {
+      cwd: process.cwd(), 
       stdio: ["pipe", "pipe", "pipe"],
     });
 
