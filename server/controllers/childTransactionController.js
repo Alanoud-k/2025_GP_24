@@ -24,40 +24,28 @@ async function getChildAccountIds(childId) {
 export const getChildTransactions = async (req, res) => {
   try {
     const childId = Number(req.params.childId);
-    if (!childId) return res.status(400).json({ error: "Invalid childId" });
+    if (!childId) return res.status(400).json({ message: "Invalid childId" });
 
     const accountIds = await getChildAccountIds(childId);
-    if (accountIds.length === 0) return res.json([]);
 
-    const tx = await sql`
+    if (accountIds.length === 0) {
+      return res.status(200).json({ status: "success", data: [] });
+    }
+
+    const rows = await sql`
       SELECT
-        t."transactionid",
-        t."transactiontype",
-        t."amount",
-        t."transactiondate",
-        t."transactionstatus",
-        t."merchantname",
-        t."sourcetype",
-        t."transactioncategory",
-        t."senderAccountId",
-        t."receiverAccountId"
-      FROM "Transaction" t
-      JOIN "Account" a_sender
-        ON a_sender."accountid" = t."senderAccountId"
-      JOIN "Wallet" w_sender
-        ON w_sender."walletid" = a_sender."walletid"
-      WHERE t."receiverAccountId" = ANY(${accountIds})
-        AND w_sender."parentid" IS NOT NULL
-        AND t."transactioncategory" IS NOT NULL
-        AND btrim(t."transactioncategory") <> ''
-        AND LOWER(btrim(t."transactioncategory")) <> 'uncategorized'
-      ORDER BY t."transactiondate" DESC
+        "transactionid","transactiontype","amount","transactiondate",
+        "transactionstatus","merchantname","sourcetype","transactioncategory",
+        "senderAccountId","receiverAccountId"
+      FROM "Transaction"
+      WHERE "receiverAccountId" = ANY(${accountIds})
+      ORDER BY "transactiondate" DESC
       LIMIT 200
     `;
 
-    return res.json(tx);
+    return res.status(200).json({ status: "success", data: rows });
   } catch (err) {
     console.error("getChildTransactions error:", err);
-    return res.status(500).json({ error: "Failed to load child transactions" });
+    return res.status(500).json({ message: "Failed to load child transactions", error: err.message });
   }
 };
