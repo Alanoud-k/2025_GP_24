@@ -22,8 +22,27 @@ import 'package:my_app/features/child/widgets/child_shell.dart';
 import 'package:my_app/features/child/pages/child_request_money_screen.dart';
 import 'package:my_app/features/child/pages/child_security_settings_page.dart';
 
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:my_app/notifications/notification_service.dart';
+
+
+Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+}
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase init
+  await Firebase.initializeApp();
+
+  // Background handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+
+  //  Local notifications setup
+  await NotificationService().init();
+  await NotificationService().requestPermissions();
 
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString("token");
