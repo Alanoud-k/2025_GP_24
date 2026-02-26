@@ -1,16 +1,23 @@
-// server/controllers/qrPaymentController.js
 import { sql } from "../config/db.js";
 import { generateToken, buildQrString } from "../utils/qrToken.js";
 
-/**
- * POST /api/qr/create
- * Body: { merchantName, amount, receiverAccountId?, expiresInMinutes? }
- * Returns: { token, qrString, expiresAt }
- *
- * Notes:
- * - For demo: if receiverAccountId is not provided, you MUST provide it
- *   OR choose a default merchant receiving account in DB.
- */
+async function predictCategory(merchantName) {
+  const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
+  const name = String(merchantName || "").trim();
+  if (!name) return null;
+
+  const r = await fetch(`${mlUrl}/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ merchant_name: name }),
+  });
+
+  if (!r.ok) return null;
+
+  const j = await r.json();
+  return j?.predicted_category || j?.category || null;
+}
+
 export async function createQrRequest(req, res) {
   try {
     const { merchantName, amount, expiresInMinutes } = req.body;
@@ -24,7 +31,6 @@ export async function createQrRequest(req, res) {
       return res.status(400).json({ error: "amount must be > 0." });
     }
 
-    // 1) Find merchant by name
     const mRows = await sql`
       SELECT merchantid, merchantname
       FROM "Merchant"
@@ -38,7 +44,6 @@ export async function createQrRequest(req, res) {
 
     const merchantId = Number(mRows[0].merchantid);
 
-    // 2) Find merchant wallet
     const wRows = await sql`
       SELECT walletid
       FROM "Wallet"
@@ -52,7 +57,6 @@ export async function createQrRequest(req, res) {
 
     const walletId = Number(wRows[0].walletid);
 
-    // 3) Find merchant receiving account
     const aRows = await sql`
       SELECT accountid
       FROM "Account"
@@ -67,7 +71,6 @@ export async function createQrRequest(req, res) {
 
     const receiverAccountId = Number(aRows[0].accountid);
 
-    // 4) Create QR request
     const token = generateToken();
     const mins = Number.isFinite(Number(expiresInMinutes)) ? Number(expiresInMinutes) : 10;
     const expiresAt = new Date(Date.now() + mins * 60 * 1000);
@@ -83,7 +86,7 @@ export async function createQrRequest(req, res) {
       token,
       qrString: buildQrString(token),
       expiresAt: expiresAt.toISOString(),
-      receiverAccountId, // optional but useful for debugging
+      receiverAccountId,
     });
   } catch (e) {
     console.error("createQrRequest error:", e);
@@ -91,11 +94,6 @@ export async function createQrRequest(req, res) {
   }
 }
 
-
-/**
- * GET /api/qr/resolve?token=...
- * Returns minimal info for confirmation screen.
- */
 export async function resolveQrToken(req, res) {
   try {
     const { token } = req.query;
@@ -123,7 +121,6 @@ export async function resolveQrToken(req, res) {
 
     const qr = rows[0];
 
-    // Basic checks
     const expiresAt = new Date(qr.expiresat);
     if (qr.status !== "PENDING") {
       return res.status(409).json({ error: `QR is not payable (status: ${qr.status}).` });
@@ -132,12 +129,11 @@ export async function resolveQrToken(req, res) {
       return res.status(409).json({ error: "QR request expired." });
     }
 
-    // Match Flutter keys you used: merchantname, amount, expiresat
     return res.json({
       merchantname: qr.merchantname,
       amount: Number(qr.amount),
       expiresat: new Date(qr.expiresat).toISOString(),
-      receiveraccountid: qr.receiveraccountid, // optional
+      receiveraccountid: qr.receiveraccountid,
       status: qr.status,
     });
   } catch (e) {
@@ -146,18 +142,6 @@ export async function resolveQrToken(req, res) {
   }
 }
 
-/**
- * POST /api/qr/confirm
- * Body: { token, childId }
- * Does:
- *  - validate QR request
- *  - find child's SpendingAccount
- *  - enforce sufficient balance (+ optional limit)
- *  - create Transaction row (type=Payment)
- *  - update balances
- *  - mark QR request PAID
- * Returns: { transactionId }
- */
 export async function confirmQrPayment(req, res) {
   try {
     const { token, childId } = req.body;
@@ -169,7 +153,6 @@ export async function confirmQrPayment(req, res) {
       return res.status(400).json({ error: "childId is required." });
     }
 
-    // 1) Load QR request
     const qrRows = await sql`
       SELECT
         token,
@@ -200,7 +183,6 @@ export async function confirmQrPayment(req, res) {
     const amount = Number(qr.amount);
     const receiverAccountId = Number(qr.receiveraccountid);
 
-    // 2) Find child's SpendingAccount (based on your schema: Wallet(childid) -> Account(walletid))
     const senderRows = await sql`
       SELECT a.accountid, a.balance, a.limitamount
       FROM "Wallet" w
@@ -218,7 +200,6 @@ export async function confirmQrPayment(req, res) {
     const senderAccountId = Number(sender.accountid);
     const senderBalance = Number(sender.balance);
 
-    // Optional: enforce limitamount (if you mean "max allowed per payment")
     const limit = Number(sender.limitamount ?? 0);
     if (limit > 0 && amount > limit) {
       return res.status(403).json({ error: "Payment exceeds spending limit." });
@@ -228,17 +209,16 @@ export async function confirmQrPayment(req, res) {
       return res.status(403).json({ error: "Insufficient balance." });
     }
 
-    // 3) Update balances + create transaction + mark QR paid
-    // Neon serverless often supports multi statements; if it doesn’t in your env,
-    // we’ll refactor to safer steps. Start with this simplest version.
-const txnRows = await sql`
-  INSERT INTO "Transaction"
-    (transactiontype, amount, merchantname, "senderAccountId", "receiverAccountId", transactionstatus, sourcetype)
-  VALUES
-    ('Payment', ${amount}, ${qr.merchantname}, ${senderAccountId}, ${receiverAccountId}, 'Completed', 'QR')
-  RETURNING transactionid
-`;
+    const category = (await predictCategory(qr.merchantname)) || "Uncategorized";
+    const categorySource = category === "Uncategorized" ? null : "ML";
 
+    const txnRows = await sql`
+      INSERT INTO "Transaction"
+        (transactiontype, amount, merchantname, "senderAccountId", "receiverAccountId", transactionstatus, sourcetype, transactioncategory, categorysource)
+      VALUES
+        ('Payment', ${amount}, ${qr.merchantname}, ${senderAccountId}, ${receiverAccountId}, 'Completed', 'QR', ${category}, ${categorySource})
+      RETURNING transactionid
+    `;
 
     const transactionId = txnRows?.[0]?.transactionid;
 
@@ -260,7 +240,7 @@ const txnRows = await sql`
       WHERE token = ${token}
     `;
 
-    return res.json({ transactionId });
+    return res.json({ transactionId, category });
   } catch (e) {
     console.error("confirmQrPayment error:", e);
     return res.status(500).json({ error: "Server error confirming payment." });
