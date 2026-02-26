@@ -34,11 +34,20 @@ export const getChildTransactions = async (req, res) => {
 
     const rows = await sql`
       SELECT
-        "transactionid","transactiontype","amount","transactiondate",
-        "transactionstatus","merchantname","sourcetype","transactioncategory",
-        "senderAccountId","receiverAccountId"
+        "transactionid",
+        "transactiontype",
+        "amount",
+        "transactiondate",
+        "transactionstatus",
+        "merchantname",
+        "sourcetype",
+        "transactioncategory",
+        "senderAccountId",
+        "receiverAccountId",
+        "categorysource"
       FROM "Transaction"
-      WHERE "receiverAccountId" = ANY(${accountIds})
+      WHERE "senderAccountId" = ANY(${accountIds})
+         OR "receiverAccountId" = ANY(${accountIds})
       ORDER BY "transactiondate" DESC
       LIMIT 200
     `;
@@ -46,6 +55,9 @@ export const getChildTransactions = async (req, res) => {
     return res.status(200).json({ status: "success", data: rows });
   } catch (err) {
     console.error("getChildTransactions error:", err);
-    return res.status(500).json({ message: "Failed to load child transactions", error: err.message });
+    return res.status(500).json({
+      message: "Failed to load child transactions",
+      error: err.message,
+    });
   }
 };
