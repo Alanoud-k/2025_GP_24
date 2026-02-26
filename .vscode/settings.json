@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/Developement/2025_GP_24/linux"
+    "cmake.sourceDirectory": "C:/Developement/2025_GP_24/linux",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
