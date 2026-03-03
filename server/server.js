@@ -21,7 +21,7 @@ import choreRoutes from "./routes/choreRoutes.js"; // 👈 استدعاء الم
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 import qrRoutes from "./routes/qrRoutes.js";
-const insightRoutes = require('./routes/insightRoutes');
+import insightRoutes from './routes/insightRoutes.js';
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

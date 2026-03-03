@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { getInsights } from '../controllers/insightController.js';
+
 const router = express.Router();
-const insightController = require('../controllers/insightController');
 
-router.get('/:childId', insightController.getInsights);
+router.get('/:childId', getInsights);
 
-module.exports = router;
+export default router;

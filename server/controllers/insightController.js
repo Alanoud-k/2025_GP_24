@@ -1,18 +1,11 @@
-const insightService = require('../services/insightService');
+import { getChildInsights } from '../services/insightService.js';
 
-async function getInsights(req, res) {
+export async function getInsights(req, res) {
     try {
         const childId = req.params.childId;
-
-        const insights = await insightService.getChildInsights(childId);
-
+        const insights = await getChildInsights(childId);
         res.status(200).json(insights);
-
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch insights" });
     }
 }
-
-module.exports = {
-    getInsights
-};

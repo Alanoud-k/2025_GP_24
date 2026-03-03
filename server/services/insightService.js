@@ -1,36 +1,33 @@
-const pool = require('../config/db'); // adjust if your DB connection file is different
+// services/insightService.js
 
-async function getChildInsights(childId) {
+import { sql } from '../config/db.js';
+
+export async function getChildInsights(childId) {
     try {
 
-        // 1️⃣ Get child spending account
-        const spendingAccountQuery = `
+        const spendingAccounts = await sql`
             SELECT a.accountid
             FROM Account a
             JOIN Wallet w ON a.walletid = w.walletid
-            WHERE w.childid = $1
+            WHERE w.childid = ${childId}
             AND a.accounttype = 'Spending'
         `;
 
-        const spendingResult = await pool.query(spendingAccountQuery, [childId]);
-
-        if (spendingResult.rows.length === 0) {
+        if (spendingAccounts.length === 0) {
             return [];
         }
 
-        const spendingAccountId = spendingResult.rows[0].accountid;
+        const spendingAccountId = spendingAccounts[0].accountid;
 
-        // 2️⃣ Get this week total spending
-        const weeklySpendingQuery = `
+        const weeklySpending = await sql`
             SELECT SUM(amount) AS total
             FROM Transaction
-            WHERE senderAccountId = $1
+            WHERE senderAccountId = ${spendingAccountId}
             AND transactiondate >= date_trunc('week', CURRENT_DATE)
             AND transactiontype = 'Payment'
         `;
 
-        const weeklyResult = await pool.query(weeklySpendingQuery, [spendingAccountId]);
-        const totalSpending = weeklyResult.rows[0].total || 0;
+        const totalSpending = weeklySpending[0].total || 0;
 
         const insights = [];
 
@@ -48,7 +45,3 @@ async function getChildInsights(childId) {
         throw error;
     }
 }
-
-module.exports = {
-    getChildInsights
-};
