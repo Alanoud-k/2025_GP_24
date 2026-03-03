@@ -1,33 +1,29 @@
-// services/insightService.js
-
 import { sql } from '../config/db.js';
 
 export async function getChildInsights(childId) {
     try {
 
         const spendingAccounts = await sql`
-            SELECT a.accountid
-            FROM Account a
-            JOIN Wallet w ON a.walletid = w.walletid
-            WHERE w.childid = ${childId}
-            AND a.accounttype = 'Spending'
+            SELECT a."accountid"
+            FROM "Account" a
+            JOIN "Wallet" w ON a."walletid" = w."walletid"
+            WHERE w."childid" = ${childId}
+            AND a."accounttype" = 'SpendingAccount'
         `;
 
-        if (spendingAccounts.length === 0) {
-            return [];
-        }
+        if (spendingAccounts.length === 0) return [];
 
         const spendingAccountId = spendingAccounts[0].accountid;
 
         const weeklySpending = await sql`
-            SELECT SUM(amount) AS total
-            FROM Transaction
-            WHERE senderAccountId = ${spendingAccountId}
-            AND transactiondate >= date_trunc('week', CURRENT_DATE)
-            AND transactiontype = 'Payment'
+            SELECT SUM("amount") AS total
+            FROM "Transaction"
+            WHERE "senderAccountId" = ${spendingAccountId}
+            AND "transactiondate" >= date_trunc('week', CURRENT_DATE)
+            AND "transactiontype" = 'Transfer'
         `;
 
-        const totalSpending = weeklySpending[0].total || 0;
+        const totalSpending = Number(weeklySpending[0].total ?? 0);
 
         const insights = [];
 
