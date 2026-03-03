@@ -12,27 +12,16 @@ import parentRoutes from "./routes/parentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import moneyRequestRoutes from "./routes/moneyRequestRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import allowanceRoutes from "./routes/allowanceRoutes.js";
-import childRoutes from "./routes/childRoutes.js";
-import categorizeRoutes from "./routes/categorizeRoutes.js";
-import rewardRoutes from "./routes/rewardRoutes.js"; 
-
-
-
 //import transactionRoutes from "./routes/transactionRoutes.js";
 import childTransactionRoutes from "./routes/childTransactionRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import parentTransactionRoutes from "./routes/parentTransactionRoutes.js";
-import choreRoutes from "./routes/choreRoutes.js"; 
+import choreRoutes from "./routes/choreRoutes.js"; // 👈 استدعاء الملف
 // PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 import qrRoutes from "./routes/qrRoutes.js";
-
-
-import { startWeeklyAllowanceCron } from "./cron/weeklyAllowanceCron.js";
-import { startChoreCron } from "./cron/choreCron.js";
-
+const insightRoutes = require('./routes/insightRoutes');
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,7 +85,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api", goalRoutes);
 app.use("/api", moneyRequestRoutes);
 app.use("/api/payment", paymentRoutes);
-app.use("/api/child", childRoutes);
 //app.use("/api/transaction", transactionRoutes);
 app.use("/api/child", childTransactionRoutes);
 app.use("/api/notifications", notificationRoutes);
@@ -104,11 +92,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/parent", parentTransactionRoutes);
 app.use("/api", parentRoutes);
 app.use('/api/chores', choreRoutes);
-app.use("/api/allowance", allowanceRoutes);
-app.use("/api", categorizeRoutes);
-app.use("/api/rewards", rewardRoutes);
-
-
+app.use("/api/qr", qrRoutes);
+app.use('/api/insights', insightRoutes);
 
 // Create payment
 app.post("/api/create-payment/:parentId", createPayment);
@@ -205,35 +190,10 @@ app.get("/", (_req, res) => {
   res.send("Hassalah API is running.");
 });
 
-
-app.use("/api/qr", qrRoutes);
-
-
-// const PORT = process.env.PORT || 3000;
-// //app.listen(PORT, () => {
-//   //console.log(`Server running on http://localhost:${PORT}`);
-//   //startWeeklyAllowanceCron();
-// //});
-
-
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`);
-//   startWeeklyAllowanceCron();
-//   startChoreCron(); 
-// });
-
 const PORT = process.env.PORT || 3000;
-
-console.log("✅ Reached before listen");
-
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  
-  startWeeklyAllowanceCron();
-  
-  if (typeof startChoreCron === 'function') {
-      startChoreCron();
-  }
+  console.log(`Server running on http://localhost:${PORT}`);
 });
+
 ////////////////////////////
 
