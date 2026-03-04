@@ -90,14 +90,14 @@ export async function getParentChartData(parentId) {
             JOIN "Account" a ON t."senderAccountId" = a.accountid
             JOIN "Wallet" w ON a.walletid = w.walletid
             JOIN "Child" c ON w.childid = c.childid
-            WHERE w.parentid = ${parentId}
+            -- التعديل هنا: نبحث عن الأب من خلال جدول الطفل وليس جدول المحفظة
+            WHERE c.parentid = ${parentId}
             AND t.transactiontype::text = 'Payment'
             GROUP BY c.firstname
         `;
 
         const result = {};
         childrenSpending.forEach(row => {
-            // في حال كان الاسم فارغاً لسبب ما، نعرض كلمة Child كبديل آمن
             const childName = row.name || "Child"; 
             result[childName] = Number(row.total ?? 0);
         });
