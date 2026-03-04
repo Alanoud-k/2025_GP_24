@@ -97,47 +97,55 @@ export async function getChildInsights(childId) {
         // --------------------------------------------------
 
 const goal = await sql`
-    SELECT g.goalname,
-           g.targetamount,
-           a.balance
-    FROM "Goal" g
-    JOIN "Account" a ON g.accountid = a.accountid
-    WHERE g.childid = ${childId}
-    AND g.goalstatus = 'InProgress'
-    LIMIT 1
+SELECT 
+    g.goalname,
+    g.targetamount,
+    a.balance
+FROM "Goal" g
+JOIN "Account" a ON g.accountid = a.accountid
+WHERE g.childid = ${childId}
+AND g.goalstatus = 'InProgress'
+ORDER BY g.goalid DESC
+LIMIT 1
 `;
 
 if (goal.length > 0) {
+
     const goalName = goal[0].goalname;
     const target = Number(goal[0].targetamount ?? 0);
     const saved = Number(goal[0].balance ?? 0);
 
     if (target > 0) {
+
         const progress = Math.round((saved / target) * 100);
 
-        if (progress > 0 && progress < 100) {
+        if (progress === 0) {
+
+            insights.push({
+                type: "goal-start",
+                message: `Start saving to reach your ${goalName} goal!`
+            });
+
+        } else if (progress >= 80 && progress < 100) {
+
+            const remaining = target - saved;
+
+            insights.push({
+                type: "goal-close",
+                message: `Only ${remaining.toFixed(0)} SAR left to reach your ${goalName}!`
+            });
+
+        } else if (progress > 0 && progress < 80) {
+
             insights.push({
                 type: "goal-progress",
                 message: `Great progress! You're ${progress}% closer to your ${goalName} goal.`
             });
+
         }
 
-        if (progress >= 80 && progress < 100) {
-    const remaining = target - saved;
-
-    insights.push({
-        type: "goal-close",
-        message: `Only ${remaining.toFixed(0)} SAR left to reach your ${goalName}!`
-    });
-} else if (progress > 0 && progress < 80) {
-    insights.push({
-        type: "goal-progress",
-        message: `Great progress! You're ${progress}% closer to your ${goalName} goal.`
-    });
-}
     }
 }
-
         // --------------------------------------------------
         // 4️⃣ Category change vs last week
         // --------------------------------------------------
