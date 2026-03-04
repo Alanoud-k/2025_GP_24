@@ -174,7 +174,7 @@ Future<void> _fetchInsights() async {
               ),
               const SizedBox(height: 10),
               const Text(
-                "See which child is spending the most this month.",
+                "See which child is spending the most.",
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
 
