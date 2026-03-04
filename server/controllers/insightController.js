@@ -1,5 +1,7 @@
-import { getChildInsights } from '../services/insightService.js';
+// استيراد واحد يجمع كل الدوال
+import { getChildInsights, getChildChartData, getParentChartData } from '../services/insightService.js';
 
+// 1.   (الرسائل الذكية)
 export async function getInsights(req, res) {
     try {
         const childId = req.params.childId;
@@ -10,9 +12,7 @@ export async function getInsights(req, res) {
     }
 }
 
-// في insightController.js
-import { getChildInsights, getChildChartData, getParentChartData } from '../services/insightService.js';
-
+// 2.   (الرسم البياني للطفل)
 export async function getChildChart(req, res) {
     try {
         const chartData = await getChildChartData(req.params.childId);
@@ -22,6 +22,7 @@ export async function getChildChart(req, res) {
     }
 }
 
+// 3.   (الرسم البياني للأب)
 export async function getParentChart(req, res) {
     try {
         const chartData = await getParentChartData(req.params.parentId);
