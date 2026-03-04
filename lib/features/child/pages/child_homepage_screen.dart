@@ -9,7 +9,7 @@ import 'package:my_app/utils/check_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'child_notifications_screen.dart';
 import 'child_chores_screen.dart';
-import 'child_transactions_screen.dart'; 
+import 'child_transactions_screen.dart';
 
 class ChildHomePageScreen extends StatefulWidget {
   final int childId;
@@ -59,6 +59,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     _fetchChildInfo();
     _fetchChildChartData();
     _fetchUnreadCount();
+    _fetchInsights();
   }
 
   @override
@@ -105,8 +106,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           savingBalance = _toDouble(data['saving']);
           currentPoints = data['rewardKeys'] ?? 0.toInt();
 
-          
-
           _loading = false;
         });
       } else {
@@ -117,14 +116,12 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     }
   }
 
-
-Future<void> _fetchChildChartData() async {
+  Future<void> _fetchChildChartData() async {
     final url = Uri.parse(
       '${widget.baseUrl}/api/insights/child-chart/${widget.childId}',
     );
 
     try {
-      
       final response = await http.get(
         url,
         headers: {
@@ -136,13 +133,15 @@ Future<void> _fetchChildChartData() async {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         print("💡 CHART DATA FROM SERVER: $data"); // أضيفي هذا السطر
-        
+
         double totalSpending = 0.0;
         Map<String, double> amounts = {};
 
         // حساب إجمالي الصرف من الفئات
         data.forEach((key, value) {
-          double val = (value is num) ? value.toDouble() : (double.tryParse(value.toString()) ?? 0.0);
+          double val = (value is num)
+              ? value.toDouble()
+              : (double.tryParse(value.toString()) ?? 0.0);
           amounts[key] = val;
           totalSpending += val;
         });
@@ -163,8 +162,6 @@ Future<void> _fetchChildChartData() async {
           });
         }
       }
-
-      
     } catch (e) {
       debugPrint("Error fetching chart data: $e");
     }
@@ -193,7 +190,43 @@ Future<void> _fetchChildChartData() async {
     } catch (e) {}
   }
 
-@override
+  /////////////////////////////////
+  List<String> insights = [];
+
+  Future<void> _fetchInsights() async {
+    final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
+
+    print("INSIGHTS URL: $url");
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
+
+      print("INSIGHTS STATUS: ${response.statusCode}");
+      print("INSIGHTS BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          insights = List<String>.from(data.map((item) => item["message"]));
+        });
+
+        print("INSIGHTS LIST: $insights");
+      }
+    } catch (e) {
+      print("INSIGHTS ERROR: $e");
+    }
+  }
+
+  ///////////////////////////////////
+
+  @override
   Widget build(BuildContext context) {
     const bg1 = Color(0xFFF7FAFC);
     const bg2 = Color(0xFFE6F4F3);
@@ -210,7 +243,8 @@ Future<void> _fetchChildChartData() async {
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator( // ✅ 1. إضافة RefreshIndicator
+              : RefreshIndicator(
+                  // ✅ 1. إضافة RefreshIndicator
                   onRefresh: () async {
                     // عند السحب، نعيد جلب بيانات الطفل (بما فيها المفاتيح)
                     await _fetchChildInfo();
@@ -218,7 +252,8 @@ Future<void> _fetchChildChartData() async {
                     await _fetchUnreadCount();
                   },
                   child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(), // ✅ ضروري لعمل السحب
+                    physics:
+                        const AlwaysScrollableScrollPhysics(), // ✅ ضروري لعمل السحب
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 16,
@@ -233,7 +268,9 @@ Future<void> _fetchChildChartData() async {
                         _keysBadge(), // هذا سيتحدث تلقائياً بعد السحب
                         const SizedBox(height: 24),
                         _actionsGrid(),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
+                        _insightCard(),
+                        const SizedBox(height: 20),
                         _breakdownCard(),
                       ],
                     ),
@@ -276,54 +313,57 @@ Future<void> _fetchChildChartData() async {
           ],
         ),
         GestureDetector(
-  onTap: () async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChildNotificationsScreen(
-          childId: widget.childId,
-          token: widget.token,
-        ),
-      ),
-    );
-
-    // ✅ لما يرجع من صفحة الإشعارات: حدث العداد
-    await _fetchUnreadCount();
-  },
-  child: Stack(
-    clipBehavior: Clip.none,
-    children: [
-      const Icon(
-        Icons.notifications_none_rounded,
-        size: 30,
-        color: Colors.black87,
-      ),
-
-      // ✅ Badge (يطلع فقط لو عندك Unread)
-      if (unreadCount > 0)
-        Positioned(
-          right: -2,
-          top: -2,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE53935), // أحمر
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Text(
-              unreadCount > 99 ? "99+" : unreadCount.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChildNotificationsScreen(
+                  childId: widget.childId,
+                  token: widget.token,
+                ),
               ),
-            ),
+            );
+
+            // ✅ لما يرجع من صفحة الإشعارات: حدث العداد
+            await _fetchUnreadCount();
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                size: 30,
+                color: Colors.black87,
+              ),
+
+              // ✅ Badge (يطلع فقط لو عندك Unread)
+              if (unreadCount > 0)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE53935), // أحمر
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      unreadCount > 99 ? "99+" : unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-    ],
-  ),
-),
       ],
     );
   }
@@ -427,11 +467,7 @@ Future<void> _fetchChildChartData() async {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.vpn_key_rounded,
-              size: 18,
-              color: Colors.amber.shade800,
-            ),
+            Icon(Icons.vpn_key_rounded, size: 18, color: Colors.amber.shade800),
             const SizedBox(width: 6),
             Text(
               "$currentPoints Keys",
@@ -516,6 +552,71 @@ Future<void> _fetchChildChartData() async {
     );
   }
 
+  //////////////////////////////////////////
+  Widget _insightCard() {
+    if (insights.isEmpty) return const SizedBox();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F7F6),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.lightbulb_rounded,
+            color: Color(0xFF2EA49E),
+            size: 26,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Smart Insights",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                ...insights
+                    .take(3)
+                    .map(
+                      (msg) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          "• $msg",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /////////////////////////////////////////////
+
   Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -592,7 +693,7 @@ Future<void> _fetchChildChartData() async {
             ],
           ),
           const SizedBox(height: 16),
-SizedBox(
+          SizedBox(
             height: 210,
             child: PieChart(
               PieChartData(
@@ -606,10 +707,13 @@ SizedBox(
                           color: Colors.grey.shade300,
                           title: '0%',
                           radius: 55,
-                          titleStyle: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
-                        )
+                          titleStyle: const TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ]
-                    : _buildPieSections(), 
+                    : _buildPieSections(),
               ),
             ),
           ),
@@ -620,7 +724,7 @@ SizedBox(
     );
   }
 
- Widget _legend() {
+  Widget _legend() {
     final List<String> ordered = [
       'Food & Restaurants',
       'Grocery & Markets',
@@ -634,28 +738,30 @@ SizedBox(
       alignment: WrapAlignment.center,
       spacing: 24,
       runSpacing: 12,
-      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map((cat) {
-        final color = _getColorForCategory(cat);
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              cat,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2C3E50),
+      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map(
+        (cat) {
+          final color = _getColorForCategory(cat);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
-            ),
-          ],
-        );
-      }).toList(),
+              const SizedBox(width: 6),
+              Text(
+                cat,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ],
+          );
+        },
+      ).toList(),
     );
   }
 
@@ -678,22 +784,25 @@ SizedBox(
     }
   }
 
-List<PieChartSectionData> _buildPieSections() {
+  List<PieChartSectionData> _buildPieSections() {
     return categoryPercentages.entries
-        .where((entry) => entry.value > 0) // إخفاء الفئات التي لم يصرف فيها الطفل
+        .where(
+          (entry) => entry.value > 0,
+        ) // إخفاء الفئات التي لم يصرف فيها الطفل
         .map((entry) {
-      return PieChartSectionData(
-        value: entry.value,
-        color: _getColorForCategory(entry.key),
-        title: '${entry.value.toStringAsFixed(0)}%',
-        radius: 55,
-        titleStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          fontSize: 14,
-        ),
-      );
-    }).toList();
+          return PieChartSectionData(
+            value: entry.value,
+            color: _getColorForCategory(entry.key),
+            title: '${entry.value.toStringAsFixed(0)}%',
+            radius: 55,
+            titleStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          );
+        })
+        .toList();
   }
 
   // Color _getColorForCategory(String category) {
