@@ -45,7 +45,6 @@ export async function getChildInsights(childId) {
 
 export async function getChildChartData(childId) {
     try {
-        // 1. جلب حساب الصرف للطفل
         const spendingAccounts = await sql`
             SELECT a."accountid"
             FROM "Account" a
@@ -58,20 +57,20 @@ export async function getChildChartData(childId) {
 
         const spendingAccountId = spendingAccounts[0].accountid;
 
-        // 2. تجميع المصروفات بناءً على الفئة (Category)
+        // التعديل هنا: استخدام transactioncategory و Payment
         const categoriesData = await sql`
-            SELECT "category", SUM("amount") AS total
+            SELECT "transactioncategory", SUM("amount") AS total
             FROM "Transaction"
             WHERE "senderAccountId" = ${spendingAccountId}
-            AND "transactiontype" = 'Expense' -- تأكدي من اسم نوع العملية في قاعدتكم
-            GROUP BY "category"
+            AND "transactiontype" IN ('Payment', 'Spend', 'Expense') 
+            GROUP BY "transactioncategory"
         `;
 
-        // 3. تحويل النتيجة إلى Object يسهل على Flutter قراءته
         const result = {};
         categoriesData.forEach(row => {
-            if(row.category) {
-                result[row.category] = Number(row.total);
+            // تجاهل العمليات غير المصنفة حتى لا تكسر الرسم البياني
+            if(row.transactioncategory && row.transactioncategory !== "Uncategorized") {
+                result[row.transactioncategory] = Number(row.total);
             }
         });
 

@@ -1,21 +1,53 @@
 import { sql } from "../config/db.js";
 import { generateToken, buildQrString } from "../utils/qrToken.js";
+import keywordMap from "../ml_service/keywordMap.js";
+
+// async function predictCategory(merchantName) {
+//   const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
+//   const name = String(merchantName || "").trim();
+//   if (!name) return null;
+
+//   const r = await fetch(`${mlUrl}/predict`, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ merchant_name: name }),
+//   });
+
+//   if (!r.ok) return null;
+
+//   const j = await r.json();
+//   return j?.predicted_category || j?.category || null;
+// }
 
 async function predictCategory(merchantName) {
-  const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
   const name = String(merchantName || "").trim();
   if (!name) return null;
 
-  const r = await fetch(`${mlUrl}/predict`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ merchant_name: name }),
-  });
+  // 1. المرحلة الأولى: البحث بالكلمات المفتاحية (كما في توثيق مشروعكم)
+  const keywordCategory = keywordMap(name);
+  if (keywordCategory) {
+      console.log(`Categorized by Keyword: ${keywordCategory}`);
+      return keywordCategory;
+  }
 
-  if (!r.ok) return null;
+  // 2. المرحلة الثانية: الذكاء الاصطناعي (في حال لم يطابق أي كلمة مفتاحية)
+  try {
+      const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
+      const r = await fetch(`${mlUrl}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_name: name }),
+      });
 
-  const j = await r.json();
-  return j?.predicted_category || j?.category || null;
+      if (r.ok) {
+          const j = await r.json();
+          return j?.predicted_category || j?.category || null;
+      }
+  } catch (error) {
+      console.error("ML Prediction failed:", error);
+  }
+  
+  return null;
 }
 
 export async function createQrRequest(req, res) {
