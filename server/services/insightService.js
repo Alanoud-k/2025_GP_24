@@ -85,20 +85,21 @@ export async function getChildChartData(childId) {
 export async function getParentChartData(parentId) {
     try {
         const childrenSpending = await sql`
-            SELECT c."firstName" AS name, SUM(t."amount") AS total
+            SELECT c.firstname AS name, SUM(t.amount) AS total
             FROM "Transaction" t
-            JOIN "Account" a ON t."senderAccountId" = a."accountid"
-            JOIN "Wallet" w ON a."walletid" = w."walletid"
-            JOIN "Child" c ON w."childid" = c."id"
-            WHERE c."parentId" = ${parentId}
-            -- التعديل هنا: البحث عن Payment واستخدام ::text لتجنب الكراش
-            AND t."transactiontype"::text = 'Payment'
-            GROUP BY c."firstName"
+            JOIN "Account" a ON t."senderAccountId" = a.accountid
+            JOIN "Wallet" w ON a.walletid = w.walletid
+            JOIN "Child" c ON w.childid = c.childid
+            WHERE w.parentid = ${parentId}
+            AND t.transactiontype::text = 'Payment'
+            GROUP BY c.firstname
         `;
 
         const result = {};
         childrenSpending.forEach(row => {
-            result[row.name] = Number(row.total ?? 0);
+            // في حال كان الاسم فارغاً لسبب ما، نعرض كلمة Child كبديل آمن
+            const childName = row.name || "Child"; 
+            result[childName] = Number(row.total ?? 0);
         });
 
         return result;
