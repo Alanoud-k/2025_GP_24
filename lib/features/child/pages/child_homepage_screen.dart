@@ -38,12 +38,12 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   double savingBalance = 0.0;
 
   Map<String, double> categoryPercentages = {
-    'Food': 25,
-    'Education': 10,
-    'Entertainment': 25,
-    'Shopping': 30,
-    'Gifts': 5,
-    'Others': 5,
+    'Food & Restaurants': 0.0,
+    'Grocery & Markets': 0.0,
+    'Retail & Shopping': 0.0,
+    'Transport': 0.0,
+    'Medical': 0.0,
+    'Digital & Subscriptions': 0.0,
   };
 
   static const String _sarIconPath = 'assets/icons/riyal.png';
@@ -57,6 +57,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     });
 
     _fetchChildInfo();
+    _fetchChildChartData();
     _fetchUnreadCount();
   }
 
@@ -118,6 +119,55 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     }
   }
 
+
+Future<void> _fetchChildChartData() async {
+    final url = Uri.parse(
+      '${widget.baseUrl}/api/insights/child-chart/${widget.childId}',
+    );
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        
+        double totalSpending = 0.0;
+        Map<String, double> amounts = {};
+
+        // حساب إجمالي الصرف من الفئات
+        data.forEach((key, value) {
+          double val = (value is num) ? value.toDouble() : (double.tryParse(value.toString()) ?? 0.0);
+          amounts[key] = val;
+          totalSpending += val;
+        });
+
+        if (mounted) {
+          setState(() {
+            // تصفير النسب القديمة أولاً
+            categoryPercentages.updateAll((key, value) => 0.0);
+
+            // حساب النسبة المئوية لكل فئة وتحديث الخريطة
+            if (totalSpending > 0) {
+              amounts.forEach((key, value) {
+                if (categoryPercentages.containsKey(key)) {
+                  categoryPercentages[key] = (value / totalSpending) * 100;
+                }
+              });
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching chart data: $e");
+    }
+  }
+
   Future<void> _fetchUnreadCount() async {
     final url = Uri.parse(
       "${ApiConfig.baseUrl}/api/notifications/unread/child/${widget.childId}",
@@ -162,6 +212,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                   onRefresh: () async {
                     // عند السحب، نعيد جلب بيانات الطفل (بما فيها المفاتيح)
                     await _fetchChildInfo();
+                    await _fetchChildChartData();
                     await _fetchUnreadCount();
                   },
                   child: SingleChildScrollView(
@@ -539,54 +590,24 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
+SizedBox(
             height: 210,
             child: PieChart(
               PieChartData(
                 centerSpaceRadius: 40,
                 sectionsSpace: 3,
-                sections: [
-                  PieChartSectionData(
-                    value: 30,
-                    color: Colors.pinkAccent,
-                    radius: 55,
-                    title: '30%',
-                    titleStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  PieChartSectionData(
-                    value: 25,
-                    color: Colors.orangeAccent,
-                    radius: 55,
-                    title: '25%',
-                    titleStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  PieChartSectionData(
-                    value: 20,
-                    color: Colors.lightBlueAccent,
-                    radius: 55,
-                    title: '20%',
-                    titleStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  PieChartSectionData(
-                    value: 25,
-                    color: Colors.greenAccent,
-                    radius: 55,
-                    title: '25%',
-                    titleStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                // إذا لم يكن هناك صرف، نعرض دائرة رمادية فارغة
+                sections: categoryPercentages.values.every((v) => v == 0)
+                    ? [
+                        PieChartSectionData(
+                          value: 100,
+                          color: Colors.grey.shade300,
+                          title: '0%',
+                          radius: 55,
+                          titleStyle: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                        )
+                      ]
+                    : _buildPieSections(), 
               ),
             ),
           ),
@@ -597,39 +618,35 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _legend() {
+ Widget _legend() {
     final List<String> ordered = [
-      'Food',
-      'Education',
-      'Entertainment',
-      'Shopping',
-      'Gifts',
-      'Others',
+      'Food & Restaurants',
+      'Grocery & Markets',
+      'Retail & Shopping',
+      'Transport',
+      'Medical',
+      'Digital & Subscriptions',
     ];
 
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 24,
       runSpacing: 12,
-      children: ordered.map((cat) {
+      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map((cat) {
         final color = _getColorForCategory(cat);
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 18,
-              height: 18,
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(shape: BoxShape.circle),
-              child: Container(
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 6),
             Text(
               cat,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF2C3E50),
               ),
@@ -640,8 +657,29 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  List<PieChartSectionData> _buildPieSections() {
-    return categoryPercentages.entries.map((entry) {
+  Color _getColorForCategory(String category) {
+    switch (category) {
+      case 'Food & Restaurants':
+        return Colors.orangeAccent;
+      case 'Grocery & Markets':
+        return Colors.greenAccent;
+      case 'Retail & Shopping':
+        return Colors.pinkAccent;
+      case 'Transport':
+        return Colors.lightBlueAccent;
+      case 'Medical':
+        return Colors.redAccent;
+      case 'Digital & Subscriptions':
+        return Colors.purpleAccent;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
+List<PieChartSectionData> _buildPieSections() {
+    return categoryPercentages.entries
+        .where((entry) => entry.value > 0) // إخفاء الفئات التي لم يصرف فيها الطفل
+        .map((entry) {
       return PieChartSectionData(
         value: entry.value,
         color: _getColorForCategory(entry.key),
@@ -656,20 +694,20 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     }).toList();
   }
 
-  Color _getColorForCategory(String category) {
-    switch (category) {
-      case 'Food':
-        return Colors.orangeAccent;
-      case 'Education':
-        return Colors.greenAccent;
-      case 'Entertainment':
-        return Colors.lightBlueAccent;
-      case 'Shopping':
-        return Colors.pinkAccent;
-      case 'Gifts':
-        return Colors.purpleAccent;
-      default:
-        return Colors.blueGrey;
-    }
-  }
+  // Color _getColorForCategory(String category) {
+  //   switch (category) {
+  //     case 'Food':
+  //       return Colors.orangeAccent;
+  //     case 'Education':
+  //       return Colors.greenAccent;
+  //     case 'Entertainment':
+  //       return Colors.lightBlueAccent;
+  //     case 'Shopping':
+  //       return Colors.pinkAccent;
+  //     case 'Gifts':
+  //       return Colors.purpleAccent;
+  //     default:
+  //       return Colors.blueGrey;
+  //   }
+  // }
 }
