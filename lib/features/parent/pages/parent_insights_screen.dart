@@ -60,38 +60,74 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
     await _fetchInsights();
   }
 
-  Future<void> _fetchInsights() async {
-    try {
-      // --- MOCK DATA (Replace with API logic later) ---
-      // This simulates fetching spending sum for each child
-      await Future.delayed(const Duration(seconds: 1)); 
+  // Future<void> _fetchInsights() async {
+  //   try {
+  //     // --- MOCK DATA (Replace with API logic later) ---
+  //     // This simulates fetching spending sum for each child
+  //     await Future.delayed(const Duration(seconds: 1)); 
       
-      final Map<String, double> mockData = {
-        "Ahmed": 450.0,
-        "Sara": 320.0,
-        "Khalid": 120.0,
-      };
+  //     final Map<String, double> mockData = {
+  //       "Ahmed": 450.0,
+  //       "Sara": 320.0,
+  //       "Khalid": 120.0,
+  //     };
       
-      double total = 0;
-      mockData.forEach((key, value) => total += value);
+  //     double total = 0;
+  //     mockData.forEach((key, value) => total += value);
 
-      if (mounted) {
-        setState(() {
-          _childSpending = mockData;
-          _totalSpent = total; // Kept for calculation
-          _loading = false;
+  //     if (mounted) {
+  //       setState(() {
+  //         _childSpending = mockData;
+  //         _totalSpent = total; // Kept for calculation
+  //         _loading = false;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() => _loading = false);
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Error loading insights: $e')),
+  //       );
+  //     }
+  //   }
+  // }
+Future<void> _fetchInsights() async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/insights/parent-chart/${widget.parentId}');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        Map<String, double> realData = {};
+        double total = 0;
+
+        data.forEach((key, value) {
+          double val = (value is num) ? value.toDouble() : (double.tryParse(value.toString()) ?? 0.0);
+          realData[key] = val;
+          total += val;
         });
+
+        if (mounted) {
+          setState(() {
+            _childSpending = realData;
+            _totalSpent = total;
+            _loading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _loading = false);
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading insights: $e')),
-        );
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     const hassalaGreen1 = Color(0xFF37C4BE);
