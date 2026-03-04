@@ -91,7 +91,8 @@ export async function getParentChartData(parentId) {
             JOIN "Wallet" w ON a."walletid" = w."walletid"
             JOIN "Child" c ON w."childid" = c."id"
             WHERE c."parentId" = ${parentId}
-            AND t."transactiontype" = 'Expense'
+            -- التعديل هنا: البحث عن Payment واستخدام ::text لتجنب الكراش
+            AND t."transactiontype"::text = 'Payment'
             GROUP BY c."firstName"
         `;
 
