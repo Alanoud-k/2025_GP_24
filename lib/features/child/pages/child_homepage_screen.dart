@@ -105,9 +105,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           savingBalance = _toDouble(data['saving']);
           currentPoints = data['rewardKeys'] ?? 0.toInt();
 
-          categoryPercentages = Map<String, double>.from(
-            data['categories'] ?? categoryPercentages,
-          );
+          
 
           _loading = false;
         });
@@ -126,6 +124,7 @@ Future<void> _fetchChildChartData() async {
     );
 
     try {
+      
       final response = await http.get(
         url,
         headers: {
@@ -136,6 +135,7 @@ Future<void> _fetchChildChartData() async {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
+        print("💡 CHART DATA FROM SERVER: $data"); // أضيفي هذا السطر
         
         double totalSpending = 0.0;
         Map<String, double> amounts = {};
@@ -163,6 +163,8 @@ Future<void> _fetchChildChartData() async {
           });
         }
       }
+
+      
     } catch (e) {
       debugPrint("Error fetching chart data: $e");
     }

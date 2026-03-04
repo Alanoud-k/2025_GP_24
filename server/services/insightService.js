@@ -57,12 +57,12 @@ export async function getChildChartData(childId) {
 
         const spendingAccountId = spendingAccounts[0].accountid;
 
-        // التعديل هنا: استخدام transactioncategory و Payment
+      // التعديل هنا: استخدمنا ::text لتخطي صرامة الـ ENUM وبحثنا عن Payment
         const categoriesData = await sql`
             SELECT "transactioncategory", SUM("amount") AS total
             FROM "Transaction"
             WHERE "senderAccountId" = ${spendingAccountId}
-            AND "transactiontype" IN ('Payment', 'Spend', 'Expense') 
+            AND "transactiontype"::text = 'Payment'
             GROUP BY "transactioncategory"
         `;
 
