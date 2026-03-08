@@ -24,17 +24,25 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
   bool _loading = true;
   String? token;
 
-  // Data: Key = Child Name, Value = Amount Spent
-  Map<String, double> _childSpending = {};
-  double _totalSpent = 0.0; // Used for percentage calculation only
+  int selectedMonth = DateTime.now().month;
+  int selectedYear = DateTime.now().year;
+  String selectedChild = "All";
+  List<String> childrenNames = ["All"];
 
-  // Colors for each child
+  final List<String> monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  Map<String, double> _chartData = {};
+  double _totalSpent = 0.0; 
+
   final List<Color> _chartColors = [
-    const Color(0xFF37C4BE), // Teal (Ahmed)
-    const Color(0xFF7E57C2), // Purple (Sara)
-    const Color(0xFFFFB74D), // Orange (Khalid)
-    const Color(0xFFEF5350), // Red
-    const Color(0xFF42A5F5), // Blue
+    const Color(0xFF37C4BE),
+    const Color(0xFF7E57C2),
+    const Color(0xFFFFB74D),
+    const Color(0xFFEF5350),
+    const Color(0xFF42A5F5),
   ];
 
   @override
@@ -57,42 +65,45 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
       return;
     }
 
+    await _fetchChildrenList();
     await _fetchInsights();
   }
 
-  // Future<void> _fetchInsights() async {
-  //   try {
-  //     // --- MOCK DATA (Replace with API logic later) ---
-  //     // This simulates fetching spending sum for each child
-  //     await Future.delayed(const Duration(seconds: 1)); 
-      
-  //     final Map<String, double> mockData = {
-  //       "Ahmed": 450.0,
-  //       "Sara": 320.0,
-  //       "Khalid": 120.0,
-  //     };
-      
-  //     double total = 0;
-  //     mockData.forEach((key, value) => total += value);
+  Future<void> _fetchChildrenList() async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/auth/parent/${widget.parentId}/children');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
 
-  //     if (mounted) {
-  //       setState(() {
-  //         _childSpending = mockData;
-  //         _totalSpent = total; // Kept for calculation
-  //         _loading = false;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     if (mounted) {
-  //       setState(() => _loading = false);
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Error loading insights: $e')),
-  //       );
-  //     }
-  //   }
-  // }
-Future<void> _fetchInsights() async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/api/insights/parent-chart/${widget.parentId}');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        List<dynamic> list = [];
+        if (data is Map && data.containsKey('data')) {
+          list = data['data'];
+        } else if (data is List) {
+          list = data;
+        }
+        
+        final names = list.map((c) => c['firstName'].toString()).toList();
+        if (mounted) {
+          setState(() {
+            childrenNames = ["All", ...names];
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching children list: $e");
+    }
+  }
+
+  Future<void> _fetchInsights() async {
+    setState(() => _loading = true);
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/insights/parent-chart/${widget.parentId}?month=$selectedMonth&year=$selectedYear&childName=$selectedChild');
 
     try {
       final response = await http.get(
@@ -116,7 +127,7 @@ Future<void> _fetchInsights() async {
 
         if (mounted) {
           setState(() {
-            _childSpending = realData;
+            _chartData = realData;
             _totalSpent = total;
             _loading = false;
           });
@@ -128,21 +139,118 @@ Future<void> _fetchInsights() async {
       if (mounted) setState(() => _loading = false);
     }
   }
+
+  void _showMonthYearPicker() {
+    int tempMonth = selectedMonth;
+    int tempYear = selectedYear;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Text(
+                "Select Date",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18),
+              ),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(12)),
+                    child: DropdownButton<int>(
+                      value: tempMonth,
+                      underline: const SizedBox(),
+                      dropdownColor: Colors.white,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF37C4BE)),
+                      items: List.generate(12, (index) {
+                        return DropdownMenuItem(
+                          value: index + 1,
+                          child: Text(monthNames[index], style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))),
+                        );
+                      }),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => tempMonth = val);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(12)),
+                    child: DropdownButton<int>(
+                      value: tempYear,
+                      underline: const SizedBox(),
+                      dropdownColor: Colors.white,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF37C4BE)),
+                      items: List.generate(10, (index) {
+                        int year = DateTime.now().year - 5 + index;
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text(year.toString(), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))),
+                        );
+                      }),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => tempYear = val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              actionsAlignment: MainAxisAlignment.spaceEvenly,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF37C4BE),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      selectedMonth = tempMonth;
+                      selectedYear = tempYear;
+                    });
+                    _fetchInsights();
+                    Navigator.pop(context); 
+                  },
+                  child: const Text("Apply", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Color _getColorForCategory(String category) {
+    switch (category) {
+      case 'Food & Restaurants': return Colors.orangeAccent;
+      case 'Grocery & Markets': return Colors.greenAccent;
+      case 'Retail & Shopping': return Colors.pinkAccent;
+      case 'Transport': return Colors.lightBlueAccent;
+      case 'Medical': return Colors.redAccent;
+      case 'Digital & Subscriptions': return Colors.purpleAccent;
+      default: return Colors.blueGrey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    const hassalaGreen1 = Color(0xFF37C4BE);
-    const bgColor = Color(0xFFF7FAFC);
     const textColor = Color(0xFF2C3E50);
 
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: bgColor,
-        body: Center(child: CircularProgressIndicator(color: hassalaGreen1)),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: const Color(0xFFF7FAFC),
       appBar: AppBar(
         title: const Text(
           "Spending Insights",
@@ -157,182 +265,226 @@ Future<void> _fetchInsights() async {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              
-              // 1. Title
-              const Text(
-                "Spending by Child",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "See which child is spending the most.",
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-
-              const SizedBox(height: 30),
-
-              // 2. Pie Chart Section
-              if (_childSpending.isNotEmpty) ...[
-                SizedBox(
-                  height: 250,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      PieChart(
-                        PieChartData(
-                          sectionsSpace: 4, // Space between sections
-                          centerSpaceRadius: 60,
-                          sections: _buildChartSections(),
-                        ),
-                      ),
-                      // Inner Text (Total or Label)
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.people_outline, size: 30, color: Colors.grey),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${_childSpending.length} Kids",
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+        child: _loading 
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF37C4BE)))
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    
+                    // TOP ROW: Child Selector & Date Selector
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Child Dropdown - التنسيق الجديد
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE6F4F3), // لون خلفية أخضر فاتح متناسق
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
+                          child: DropdownButton<String>(
+                            value: selectedChild,
+                            underline: const SizedBox(),
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
+                            dropdownColor: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            items: childrenNames.map((name) {
+                              return DropdownMenuItem(
+                                value: name,
+                                child: Text(
+                                  name == "All" ? "All Children" : name, 
+                                  style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2EA49E), fontSize: 14),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => selectedChild = val);
+                                _fetchInsights();
+                              }
+                            },
+                          ),
+                        ),
 
-                const SizedBox(height: 40),
-
-                // 3. Child List (Legend & Details)
-                const Text(
-                  "Breakdown",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                ..._childSpending.entries.map((entry) {
-                  final index = _childSpending.keys.toList().indexOf(entry.key);
-                  final color = _chartColors[index % _chartColors.length];
-                  // Calculate percentage
-                  final percent = _totalSpent > 0 
-                      ? (entry.value / _totalSpent * 100).toStringAsFixed(1) 
-                      : "0.0";
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                        // Date Selector
+                        GestureDetector(
+                          onTap: _showMonthYearPicker,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today_rounded, size: 16, color: Colors.grey),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "${monthNames[selectedMonth - 1]} $selectedYear",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2EA49E), fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: Row(
-                      children: [
-                        // Color Indicator (Avatar-like)
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.person, color: color, size: 20),
+
+                    const SizedBox(height: 30),
+
+                    Text(
+                      selectedChild == "All" ? "Comparison by Child" : "$selectedChild's Category Breakdown",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      selectedChild == "All" 
+                          ? "See which child is spending the most." 
+                          : "Track where $selectedChild's money goes.",
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    if (_chartData.isNotEmpty) ...[
+                      SizedBox(
+                        height: 250,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            PieChart(
+                              PieChartData(
+                                sectionsSpace: 4, 
+                                centerSpaceRadius: 60,
+                                sections: _buildChartSections(),
+                              ),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(selectedChild == "All" ? Icons.people_outline : Icons.category_outlined, size: 30, color: Colors.grey),
+                                const SizedBox(height: 4),
+                                // إضافة أيقونة الريال في إجمالي الصرف
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset('assets/icons/riyal.png', height: 14),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _totalSpent.toStringAsFixed(0),
+                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        
-                        // Child Name & Percent
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      const Text(
+                        "Details",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      ..._chartData.entries.map((entry) {
+                        final index = _chartData.keys.toList().indexOf(entry.key);
+                        final color = selectedChild == "All" ? _chartColors[index % _chartColors.length] : _getColorForCategory(entry.key);
+                        final percent = _totalSpent > 0 ? (entry.value / _totalSpent * 100).toStringAsFixed(1) : "0.0";
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3)),
+                            ],
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                entry.key, // Child Name
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
+                                child: Icon(selectedChild == "All" ? Icons.person : Icons.label_important_rounded, color: color, size: 20),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.key, 
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
+                                    ),
+                                    Text(
+                                      "$percent% of total",
+                                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Text(
-                                "$percent% of total",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
+                              // إضافة أيقونة الريال في تفاصيل الفئات
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset('assets/icons/riyal.png', height: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    entry.value.toStringAsFixed(0),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ] else
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 50),
+                          child: Column(
+                            children: [
+                              Icon(Icons.inbox_rounded, size: 60, color: Colors.grey.shade300),
+                              const SizedBox(height: 12),
+                              const Text(
+                                "No spending data available for this date.",
+                                style: TextStyle(color: Colors.grey, fontSize: 15),
                               ),
                             ],
                           ),
                         ),
-                        
-                        // Amount Spent
-                        Text(
-                          "${entry.value.toStringAsFixed(0)} SAR",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: color, // Matching the chart color
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ] else
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 50),
-                    child: Text(
-                      "No spending data available yet.",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-        ),
+              ),
       ),
     );
   }
 
-  // Helper to build Pie Chart sections based on Children
   List<PieChartSectionData> _buildChartSections() {
     int i = 0;
-    return _childSpending.entries.map((entry) {
-      final isLarge = i == 0; // Highlight the first one slightly
-      final color = _chartColors[i % _chartColors.length];
-      
+    return _chartData.entries.map((entry) {
+      final isLarge = i == 0; 
+      final color = selectedChild == "All" ? _chartColors[i % _chartColors.length] : _getColorForCategory(entry.key);
       final percentVal = _totalSpent > 0 ? (entry.value / _totalSpent * 100) : 0.0;
       
       i++;
       return PieChartSectionData(
         color: color,
         value: entry.value,
-        title: '${percentVal.toStringAsFixed(0)}%', // Show % on chart
+        title: '${percentVal.toStringAsFixed(0)}%', 
         radius: isLarge ? 55 : 50,
-        titleStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
+        titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
       );
     }).toList();
   }

@@ -588,9 +588,9 @@ class _SavingSpendingPill extends StatelessWidget {
             ),
             child: Icon(
               label == "Saving"
-                  ? Icons.savings_outlined
-                  : Icons.wallet_outlined,
-              size: 16,
+                  ? Icons.shopping_bag_outlined
+                  : Icons.account_balance_wallet_rounded,
+              size: 19,
               color: color,
             ),
           ),
