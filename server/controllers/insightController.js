@@ -1,7 +1,6 @@
-// استيراد واحد يجمع كل الدوال
 import { getChildInsights, getChildChartData, getParentChartData } from '../services/insightService.js';
 
-// 1.   (الرسائل الذكية)
+// 1. (الرسائل الذكية)
 export async function getInsights(req, res) {
     try {
         const childId = req.params.childId;
@@ -12,20 +11,30 @@ export async function getInsights(req, res) {
     }
 }
 
-// 2.   (الرسم البياني للطفل)
+// 2. (الرسم البياني للطفل)
 export async function getChildChart(req, res) {
     try {
-        const chartData = await getChildChartData(req.params.childId);
+        const childId = req.params.childId;
+        // جلب الشهر والسنة من الرابط، أو استخدام التاريخ الحالي كافتراضي
+        const month = req.query.month ? Number(req.query.month) : new Date().getMonth() + 1;
+        const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
+
+        const chartData = await getChildChartData(childId, month, year);
         res.status(200).json(chartData);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch child chart data" });
     }
 }
 
-// 3.   (الرسم البياني للأب)
+// 3. (الرسم البياني للأب)
 export async function getParentChart(req, res) {
     try {
-        const chartData = await getParentChartData(req.params.parentId);
+        const parentId = req.params.parentId;
+        // جلب الشهر والسنة من الرابط، أو استخدام التاريخ الحالي كافتراضي
+        const month = req.query.month ? Number(req.query.month) : new Date().getMonth() + 1;
+        const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
+
+        const chartData = await getParentChartData(parentId, month, year);
         res.status(200).json(chartData);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch parent chart data" });

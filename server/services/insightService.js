@@ -201,7 +201,8 @@ if (goal.length > 0) {
 }
 
 
-export async function getChildChartData(childId) {
+// دالة الطفل المحدثة
+export async function getChildChartData(childId, month, year) {
     try {
         const spendingAccounts = await sql`
             SELECT a."accountid"
@@ -215,18 +216,19 @@ export async function getChildChartData(childId) {
 
         const spendingAccountId = spendingAccounts[0].accountid;
 
-      // التعديل هنا: استخدمنا ::text لتخطي صرامة الـ ENUM وبحثنا عن Payment
+        // التعديل هنا: فلترة العمليات بالشهر والسنة المطلوبة
         const categoriesData = await sql`
             SELECT "transactioncategory", SUM("amount") AS total
             FROM "Transaction"
             WHERE "senderAccountId" = ${spendingAccountId}
             AND "transactiontype"::text = 'Payment'
+            AND EXTRACT(MONTH FROM "transactiondate") = ${month}
+            AND EXTRACT(YEAR FROM "transactiondate") = ${year}
             GROUP BY "transactioncategory"
         `;
 
         const result = {};
         categoriesData.forEach(row => {
-            // تجاهل العمليات غير المصنفة حتى لا تكسر الرسم البياني
             if(row.transactioncategory && row.transactioncategory !== "Uncategorized") {
                 result[row.transactioncategory] = Number(row.total);
             }
@@ -239,8 +241,8 @@ export async function getChildChartData(childId) {
     }
 }
 
-
-export async function getParentChartData(parentId) {
+// دالة الأب المحدثة
+export async function getParentChartData(parentId, month, year) {
     try {
         const childrenSpending = await sql`
             SELECT c.firstname AS name, SUM(t.amount) AS total
@@ -248,9 +250,10 @@ export async function getParentChartData(parentId) {
             JOIN "Account" a ON t."senderAccountId" = a.accountid
             JOIN "Wallet" w ON a.walletid = w.walletid
             JOIN "Child" c ON w.childid = c.childid
-            -- التعديل هنا: نبحث عن الأب من خلال جدول الطفل وليس جدول المحفظة
             WHERE c.parentid = ${parentId}
             AND t.transactiontype::text = 'Payment'
+            AND EXTRACT(MONTH FROM t.transactiondate) = ${month}
+            AND EXTRACT(YEAR FROM t.transactiondate) = ${year}
             GROUP BY c.firstname
         `;
 
