@@ -28,6 +28,15 @@ class ChildHomePageScreen extends StatefulWidget {
 }
 
 class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
+  int selectedMonth = DateTime.now().month;
+  int selectedYear = DateTime.now().year;
+  double monthTotalSpent = 0.0; 
+
+  final List<String> monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
   double currentBalance = 0.0;
   int currentPoints = 0;
   String childName = '';
@@ -65,7 +74,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (mounted) _fetchChildInfo();
   }
 
@@ -95,7 +103,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(data);
 
         double _toDouble(dynamic v) =>
             (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
@@ -118,7 +125,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
   Future<void> _fetchChildChartData() async {
     final url = Uri.parse(
-      '${widget.baseUrl}/api/insights/child-chart/${widget.childId}',
+      '${widget.baseUrl}/api/insights/child-chart/${widget.childId}?month=$selectedMonth&year=$selectedYear',
     );
 
     try {
@@ -132,12 +139,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        print("💡 CHART DATA FROM SERVER: $data"); // أضيفي هذا السطر
 
         double totalSpending = 0.0;
         Map<String, double> amounts = {};
 
-        // حساب إجمالي الصرف من الفئات
         data.forEach((key, value) {
           double val = (value is num)
               ? value.toDouble()
@@ -148,10 +153,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
         if (mounted) {
           setState(() {
-            // تصفير النسب القديمة أولاً
+            monthTotalSpent = totalSpending;
             categoryPercentages.updateAll((key, value) => 0.0);
 
-            // حساب النسبة المئوية لكل فئة وتحديث الخريطة
             if (totalSpending > 0) {
               amounts.forEach((key, value) {
                 if (categoryPercentages.containsKey(key)) {
@@ -190,13 +194,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     } catch (e) {}
   }
 
-  /////////////////////////////////
   List<String> insights = [];
 
   Future<void> _fetchInsights() async {
     final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
-
-    print("INSIGHTS URL: $url");
 
     try {
       final response = await http.get(
@@ -207,24 +208,16 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         },
       );
 
-      print("INSIGHTS STATUS: ${response.statusCode}");
-      print("INSIGHTS BODY: ${response.body}");
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         setState(() {
           insights = List<String>.from(data.map((item) => item["message"]));
         });
-
-        print("INSIGHTS LIST: $insights");
       }
     } catch (e) {
-      print("INSIGHTS ERROR: $e");
+      debugPrint("INSIGHTS ERROR: $e");
     }
   }
-
-  ///////////////////////////////////
 
   @override
   Widget build(BuildContext context) {
@@ -244,16 +237,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                  // ✅ 1. إضافة RefreshIndicator
                   onRefresh: () async {
-                    // عند السحب، نعيد جلب بيانات الطفل (بما فيها المفاتيح)
                     await _fetchChildInfo();
                     await _fetchChildChartData();
                     await _fetchUnreadCount();
                   },
                   child: SingleChildScrollView(
-                    physics:
-                        const AlwaysScrollableScrollPhysics(), // ✅ ضروري لعمل السحب
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 16,
@@ -264,14 +254,15 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                         _header(),
                         const SizedBox(height: 20),
                         _balancesRow(),
-                        const SizedBox(height: 10),
-                        _keysBadge(), // هذا سيتحدث تلقائياً بعد السحب
+                        const SizedBox(height: 12),
+                        _keysBadge(),
                         const SizedBox(height: 24),
                         _actionsGrid(),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         _insightCard(),
                         const SizedBox(height: 20),
                         _breakdownCard(),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -323,8 +314,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 ),
               ),
             );
-
-            // ✅ لما يرجع من صفحة الإشعارات: حدث العداد
             await _fetchUnreadCount();
           },
           child: Stack(
@@ -335,8 +324,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 size: 30,
                 color: Colors.black87,
               ),
-
-              // ✅ Badge (يطلع فقط لو عندك Unread)
               if (unreadCount > 0)
                 Positioned(
                   right: -2,
@@ -347,7 +334,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE53935), // أحمر
+                      color: const Color(0xFFE53935),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -552,7 +539,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  //////////////////////////////////////////
   Widget _insightCard() {
     if (insights.isEmpty) return const SizedBox();
 
@@ -573,9 +559,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ),
           ],
         ),
-
         const SizedBox(height: 12),
-
         SizedBox(
           height: 85,
           child: ListView.builder(
@@ -617,9 +601,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                         size: 20,
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
                       child: Text(
                         msg,
@@ -640,8 +622,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       ],
     );
   }
-
-  /////////////////////////////////////////////
 
   Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
     return GestureDetector(
@@ -705,15 +685,97 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       child: Column(
         children: [
           Row(
-            children: const [
-              Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
-              SizedBox(width: 6),
-              Text(
-                'Spending Breakdown',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF2C3E50),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Breakdown',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Month and Year Selector
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7FAFC),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    // زر السهم لليسار (الشهر السابق)
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (selectedMonth == 1) {
+                            selectedMonth = 12;
+                            selectedYear--;
+                          } else {
+                            selectedMonth--;
+                          }
+                        });
+                        _fetchChildChartData();
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.chevron_left_rounded, size: 24, color: Colors.black54),
+                      ),
+                    ),
+                    
+                    // النص القابل للنقر لفتح القائمة
+                    GestureDetector(
+                      onTap: _showMonthYearPicker,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              "${monthNames[selectedMonth - 1]} $selectedYear",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold, 
+                                color: Color(0xFF2EA49E),
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFF2EA49E)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    // زر السهم لليمين (الشهر التالي)
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (selectedMonth == 12) {
+                            selectedMonth = 1;
+                            selectedYear++;
+                          } else {
+                            selectedMonth++;
+                          }
+                        });
+                        _fetchChildChartData();
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.chevron_right_rounded, size: 24, color: Colors.black54),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -725,7 +787,6 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               PieChartData(
                 centerSpaceRadius: 40,
                 sectionsSpace: 3,
-                // إذا لم يكن هناك صرف، نعرض دائرة رمادية فارغة
                 sections: categoryPercentages.values.every((v) => v == 0)
                     ? [
                         PieChartSectionData(
@@ -747,6 +808,108 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           _legend(),
         ],
       ),
+    );
+  }
+
+  void _showMonthYearPicker() {
+    int tempMonth = selectedMonth;
+    int tempYear = selectedYear;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Text(
+                "Select Date",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18),
+              ),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // قائمة الأشهر
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButton<int>(
+                      value: tempMonth,
+                      underline: const SizedBox(),
+                      dropdownColor: Colors.white,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
+                      items: List.generate(12, (index) {
+                        return DropdownMenuItem(
+                          value: index + 1,
+                          child: Text(monthNames[index], style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))),
+                        );
+                      }),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => tempMonth = val);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // قائمة السنوات
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButton<int>(
+                      value: tempYear,
+                      underline: const SizedBox(),
+                      dropdownColor: Colors.white,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
+                      items: List.generate(10, (index) {
+                        // نعرض 10 سنوات (من السنة الحالية وقبلها بـ 5 سنوات وبعدها)
+                        int year = DateTime.now().year - 5 + index;
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text(year.toString(), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))),
+                        );
+                      }),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => tempYear = val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              actionsAlignment: MainAxisAlignment.spaceEvenly,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF37C4BE),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      selectedMonth = tempMonth;
+                      selectedYear = tempYear;
+                    });
+                    _fetchChildChartData(); // نجلب بيانات التاريخ الجديد
+                    Navigator.pop(context); // نغلق النافذة
+                  },
+                  child: const Text("Apply", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -814,7 +977,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     return categoryPercentages.entries
         .where(
           (entry) => entry.value > 0,
-        ) // إخفاء الفئات التي لم يصرف فيها الطفل
+        ) 
         .map((entry) {
           return PieChartSectionData(
             value: entry.value,
@@ -830,21 +993,4 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         })
         .toList();
   }
-
-  // Color _getColorForCategory(String category) {
-  //   switch (category) {
-  //     case 'Food':
-  //       return Colors.orangeAccent;
-  //     case 'Education':
-  //       return Colors.greenAccent;
-  //     case 'Entertainment':
-  //       return Colors.lightBlueAccent;
-  //     case 'Shopping':
-  //       return Colors.pinkAccent;
-  //     case 'Gifts':
-  //       return Colors.purpleAccent;
-  //     default:
-  //       return Colors.blueGrey;
-  //   }
-  // }
 }

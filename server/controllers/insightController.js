@@ -30,11 +30,11 @@ export async function getChildChart(req, res) {
 export async function getParentChart(req, res) {
     try {
         const parentId = req.params.parentId;
-        // جلب الشهر والسنة من الرابط، أو استخدام التاريخ الحالي كافتراضي
         const month = req.query.month ? Number(req.query.month) : new Date().getMonth() + 1;
         const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
+        const childName = req.query.childName; // إضافة استقبال اسم الطفل
 
-        const chartData = await getParentChartData(parentId, month, year);
+        const chartData = await getParentChartData(parentId, month, year, childName);
         res.status(200).json(chartData);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch parent chart data" });

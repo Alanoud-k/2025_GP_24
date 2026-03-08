@@ -242,28 +242,54 @@ export async function getChildChartData(childId, month, year) {
 }
 
 // دالة الأب المحدثة
-export async function getParentChartData(parentId, month, year) {
+export async function getParentChartData(parentId, month, year, childName) {
     try {
-        const childrenSpending = await sql`
-            SELECT c.firstname AS name, SUM(t.amount) AS total
-            FROM "Transaction" t
-            JOIN "Account" a ON t."senderAccountId" = a.accountid
-            JOIN "Wallet" w ON a.walletid = w.walletid
-            JOIN "Child" c ON w.childid = c.childid
-            WHERE c.parentid = ${parentId}
-            AND t.transactiontype::text = 'Payment'
-            AND EXTRACT(MONTH FROM t.transactiondate) = ${month}
-            AND EXTRACT(YEAR FROM t.transactiondate) = ${year}
-            GROUP BY c.firstname
-        `;
+        // إذا تم تحديد طفل معين، نجلب تفاصيل تصنيفات مصروفاته
+        if (childName && childName !== "All") {
+            const categoriesData = await sql`
+                SELECT t."transactioncategory" AS name, SUM(t."amount") AS total
+                FROM "Transaction" t
+                JOIN "Account" a ON t."senderAccountId" = a.accountid
+                JOIN "Wallet" w ON a.walletid = w.walletid
+                JOIN "Child" c ON w.childid = c.childid
+                WHERE c.parentid = ${parentId}
+                AND c.firstname = ${childName}
+                AND t.transactiontype::text = 'Payment'
+                AND EXTRACT(MONTH FROM t.transactiondate) = ${month}
+                AND EXTRACT(YEAR FROM t.transactiondate) = ${year}
+                GROUP BY t."transactioncategory"
+            `;
 
-        const result = {};
-        childrenSpending.forEach(row => {
-            const childName = row.name || "Child"; 
-            result[childName] = Number(row.total ?? 0);
-        });
+            const result = {};
+            categoriesData.forEach(row => {
+                if(row.name && row.name !== "Uncategorized") {
+                    result[row.name] = Number(row.total ?? 0);
+                }
+            });
+            return result;
+        } 
+        // أما إذا كان الخيار "All"، نجلب إجمالي صرف كل طفل للمقارنة بينهم
+        else {
+            const childrenSpending = await sql`
+                SELECT c.firstname AS name, SUM(t.amount) AS total
+                FROM "Transaction" t
+                JOIN "Account" a ON t."senderAccountId" = a.accountid
+                JOIN "Wallet" w ON a.walletid = w.walletid
+                JOIN "Child" c ON w.childid = c.childid
+                WHERE c.parentid = ${parentId}
+                AND t.transactiontype::text = 'Payment'
+                AND EXTRACT(MONTH FROM t.transactiondate) = ${month}
+                AND EXTRACT(YEAR FROM t.transactiondate) = ${year}
+                GROUP BY c.firstname
+            `;
 
-        return result;
+            const result = {};
+            childrenSpending.forEach(row => {
+                const cName = row.name || "Child"; 
+                result[cName] = Number(row.total ?? 0);
+            });
+            return result;
+        }
     } catch (error) {
         console.error("Parent Chart Service Error:", error);
         throw error;
