@@ -249,8 +249,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   //////////////////////////////////////
   Future<void> _fetchGoalInsights() async {
-    final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
-
+    final url = Uri.parse(
+      "${widget.baseUrl}/api/insights/goals/${widget.childId}",
+    );
     try {
       final res = await http.get(url, headers: _headers);
 
@@ -260,16 +261,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
         if (!mounted) return;
 
         setState(() {
-          _goalInsights = List<String>.from(
-            data
-                .where(
-                  (i) =>
-                      i["type"] == "goal-progress" ||
-                      i["type"] == "goal-close" ||
-                      i["type"] == "goal-start",
-                )
-                .map((i) => i["message"]),
-          );
+          _goalInsights = List<String>.from(data.map((i) => i["message"]));
         });
       }
     } catch (e) {

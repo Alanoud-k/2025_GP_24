@@ -40,3 +40,21 @@ export async function getParentChart(req, res) {
         res.status(500).json({ error: "Failed to fetch parent chart data" });
     }
 }
+
+import { getGoalInsights } from '../services/insightService.js';
+
+export async function getGoalsInsights(req, res) {
+    try {
+
+        const childId = req.params.childId;
+        const insights = await getGoalInsights(childId);
+
+        res.status(200).json(insights);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).json({ error: "Failed to fetch goal insights" });
+
+    }
+}

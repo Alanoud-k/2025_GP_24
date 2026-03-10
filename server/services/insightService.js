@@ -206,6 +206,60 @@ if (goal.length > 0) {
 }
 
 
+export async function getGoalInsights(childId) {
+
+    const goals = await sql`
+        SELECT 
+            g.goalname,
+            g.targetamount,
+            a.balance
+        FROM "Goal" g
+        JOIN "Account" a ON g.accountid = a.accountid
+        WHERE g.childid = ${childId}
+        AND g.goalstatus = 'InProgress'
+        ORDER BY g.goalid DESC
+        LIMIT 3
+    `;
+
+    const insights = [];
+
+    goals.forEach(goal => {
+
+        const goalName = goal.goalname;
+        const target = Number(goal.targetamount ?? 0);
+        const saved = Number(goal.balance ?? 0);
+
+        if (target <= 0) return;
+
+        const progress = Math.round((saved / target) * 100);
+
+        if (progress === 0) {
+            insights.push({
+                type: "goal-start",
+                message: `Start saving for your ${goalName}!`
+            });
+
+        } else if (progress >= 80 && progress < 100) {
+
+            const remaining = target - saved;
+
+            insights.push({
+                type: "goal-close",
+                message: `Only ${remaining.toFixed(0)} SAR left to reach your ${goalName}!`
+            });
+
+        } else {
+            insights.push({
+                type: "goal-progress",
+                message: `You're ${progress}% closer to your ${goalName}!`
+            });
+        }
+
+    });
+
+    return insights;
+}
+
 // دالة الطفل المحدثة
 export async function getChildChartData(childId, month, year) {
     try {

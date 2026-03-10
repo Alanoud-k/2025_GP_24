@@ -9,5 +9,5 @@ router.get('/parent-chart/:parentId', getParentChart);
 
 // المسار القديم الخاص بالرسائل الذكية
 router.get('/:childId', getInsights);
-
+router.get('/goals/:childId', getGoalsInsights);
 export default router;
