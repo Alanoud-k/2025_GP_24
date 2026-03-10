@@ -205,6 +205,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   }
 
   List<String> insights = [];
+  int currentInsight = 0;
 
   Future<void> _fetchInsights() async {
     final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
@@ -559,6 +560,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       const Color(0xFF42A5F5),
     ];
 
+    final msg = insights[currentInsight];
+    final color = colors[currentInsight % colors.length];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -576,74 +580,90 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ),
           ],
         ),
+
         const SizedBox(height: 14),
 
-        SizedBox(
-          height: 120,
-          child: PageView.builder(
-            controller: PageController(viewportFraction: 0.85),
-            itemCount: insights.length,
-            itemBuilder: (context, index) {
-              final color = colors[index % colors.length];
-              final msg = insights[index];
-
-              return Transform.scale(
-                scale: index == 0 ? 1 : 0.94,
-                child: Container(
-                  margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [color, color.withOpacity(0.75)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(26),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withOpacity(0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-
-                  child: Row(
-                    children: [
-                      Container(
-                        height: 42,
-                        width: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.auto_awesome,
-                          color: Colors.white,
-                        ),
-                      ),
-
-                      const SizedBox(width: 14),
-
-                      Expanded(
-                        child: Text(
-                          msg,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                    ],
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            /// BACK CARD
+            if (insights.length > 1)
+              Positioned(
+                top: 10,
+                child: Transform.scale(
+                  scale: 0.9,
+                  child: _buildInsightCard(
+                    colors[(currentInsight + 1) % colors.length],
+                    insights[(currentInsight + 1) % insights.length],
+                    faded: true,
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+
+            /// FRONT CARD
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  currentInsight = (currentInsight + 1) % insights.length;
+                });
+              },
+              child: _buildInsightCard(color, msg),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildInsightCard(Color color, String msg, {bool faded = false}) {
+    return Container(
+      height: 120,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [color, color.withOpacity(0.75)]),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 42,
+            width: 42,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.25),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white),
+          ),
+
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Text(
+              msg,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            ),
+          ),
+
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 18,
+            color: Colors.white,
+          ),
+        ],
+      ),
     );
   }
 
