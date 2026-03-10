@@ -32,11 +32,16 @@ export async function getChildInsights(childId) {
         const totalSpending = Number(weeklySpending[0].total ?? 0);
 
         if (totalSpending > 0) {
-            insights.push({
-                type: "weekly",
-                message: `You spent ${totalSpending.toFixed(2)} SAR this week.`
-            });
-        }
+    insights.push({
+        type: "weekly",
+        message: `You spent ${totalSpending.toFixed(2)} SAR this week.`
+    });
+} else {
+    insights.push({
+        type: "weekly-none",
+        message: "You haven't spent anything yet this week."
+    });
+}
 
         // --------------------------------------------------
         // 2️⃣ Category percentage

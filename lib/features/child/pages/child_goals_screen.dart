@@ -39,7 +39,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   bool _loading = true;
   List<Goal> _goals = [];
-
+  List<String> _goalInsights = [];
   double _savingBalance = 0.0;
   double _spendingBalance = 0.0;
 
@@ -70,6 +70,8 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
     try {
       final goals = await _api.listGoals(widget.childId);
       final balances = await _fetchBalances();
+
+      await _fetchGoalInsights();
 
       if (!mounted) return;
 
@@ -244,6 +246,37 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
       ),
     );
   }
+
+  //////////////////////////////////////
+  Future<void> _fetchGoalInsights() async {
+    final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
+
+    try {
+      final res = await http.get(url, headers: _headers);
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+
+        if (!mounted) return;
+
+        setState(() {
+          _goalInsights = List<String>.from(
+            data
+                .where(
+                  (i) =>
+                      i["type"] == "goal-progress" ||
+                      i["type"] == "goal-close" ||
+                      i["type"] == "goal-start",
+                )
+                .map((i) => i["message"]),
+          );
+        });
+      }
+    } catch (e) {
+      print("Goal insight error: $e");
+    }
+  }
+  ////////////////////////////////////////
 
   /// ---------------- MOVE SAVING <-> SPENDING ----------------
   Future<void> _moveAmount(String type) async {
@@ -432,7 +465,9 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 14),
+
+                    _GoalInsights(insights: _goalInsights),
 
                     // -------- Add Goal Button ----------
                     InkWell(
@@ -977,6 +1012,66 @@ class SarAmount extends StatelessWidget {
         const SizedBox(width: 4),
         Text(amount.toStringAsFixed(decimals), style: style),
       ],
+    );
+  }
+}
+
+//////////////////////////////////////////
+/// GOALS INSIGHTS /////////
+class _GoalInsights extends StatelessWidget {
+  final List<String> insights;
+
+  const _GoalInsights({required this.insights});
+
+  @override
+  Widget build(BuildContext context) {
+    if (insights.isEmpty) return const SizedBox();
+
+    return SizedBox(
+      height: 80,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemBuilder: (context, i) {
+          return Container(
+            width: 260,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: kMintSoft,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: kHassalaGreen.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.lightbulb_outline,
+                    color: kHassalaGreen,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    insights[i],
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemCount: insights.length,
+      ),
     );
   }
 }
