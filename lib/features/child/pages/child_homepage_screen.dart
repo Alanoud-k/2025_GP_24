@@ -552,6 +552,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _insightCard() {
     if (insights.isEmpty) return const SizedBox();
 
+    final colors = [
+      const Color(0xFF37C4BE),
+      const Color(0xFF7E57C2),
+      const Color(0xFFFFA726),
+      const Color(0xFF42A5F5),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -569,62 +576,68 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
+
         SizedBox(
-          height: 95,
+          height: 120,
           child: PageView.builder(
-            controller: PageController(viewportFraction: 0.92),
+            controller: PageController(viewportFraction: 0.85),
             itemCount: insights.length,
             itemBuilder: (context, index) {
+              final color = colors[index % colors.length];
               final msg = insights[index];
 
-              return Container(
-                margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12.withOpacity(0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+              return Transform.scale(
+                scale: index == 0 ? 1 : 0.94,
+                child: Container(
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [color, color.withOpacity(0.75)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      height: 36,
-                      width: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2EA49E).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
                       ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: Color(0xFF2EA49E),
-                        size: 20,
-                      ),
-                    ),
+                    ],
+                  ),
 
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: Text(
-                        msg,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2C3E50),
-                          height: 1.3,
+                  child: Row(
+                    children: [
+                      Container(
+                        height: 42,
+                        width: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          color: Colors.white,
                         ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(width: 14),
+
+                      Expanded(
+                        child: Text(
+                          msg,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
