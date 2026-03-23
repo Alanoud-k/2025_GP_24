@@ -261,49 +261,39 @@ export async function getGoalInsights(childId) {
 }
 
 // دالة الطفل المحدثة
-export async function getChildChartData(childId, month, year) {
+export async function getChildChartData(childId, month, year, period = 'month') {
     try {
         const spendingAccounts = await sql`
-            SELECT a."accountid"
-            FROM "Account" a
-            JOIN "Wallet" w ON a."walletid" = w."walletid"
-            WHERE w."childid" = ${childId}
-            AND a."accounttype" = 'SpendingAccount'
+            SELECT a."accountid" FROM "Account" a JOIN "Wallet" w ON a."walletid" = w."walletid"
+            WHERE w."childid" = ${childId} AND a."accounttype" = 'SpendingAccount'
         `;
-
         if (spendingAccounts.length === 0) return {};
-
         const spendingAccountId = spendingAccounts[0].accountid;
 
-        // التعديل هنا: فلترة العمليات بالشهر والسنة المطلوبة
         const categoriesData = await sql`
             SELECT "transactioncategory", SUM("amount") AS total
             FROM "Transaction"
             WHERE "senderAccountId" = ${spendingAccountId}
             AND "transactiontype"::text = 'Payment'
-            AND EXTRACT(MONTH FROM "transactiondate") = ${month}
-            AND EXTRACT(YEAR FROM "transactiondate") = ${year}
+            AND (
+                (${period} = 'week' AND "transactiondate" >= date_trunc('week', CURRENT_DATE)) OR
+                (${period} = 'month' AND EXTRACT(MONTH FROM "transactiondate") = ${month} AND EXTRACT(YEAR FROM "transactiondate") = ${year}) OR
+                (${period} = 'year' AND EXTRACT(YEAR FROM "transactiondate") = ${year})
+            )
             GROUP BY "transactioncategory"
         `;
 
         const result = {};
         categoriesData.forEach(row => {
-            if(row.transactioncategory && row.transactioncategory !== "Uncategorized") {
-                result[row.transactioncategory] = Number(row.total);
-            }
+            if(row.transactioncategory && row.transactioncategory !== "Uncategorized") result[row.transactioncategory] = Number(row.total);
         });
-
         return result;
-    } catch (error) {
-        console.error("Child Chart Service Error:", error);
-        throw error;
-    }
+    } catch (error) { console.error("Child Chart Error:", error); throw error; }
 }
 
 // دالة الأب المحدثة
-export async function getParentChartData(parentId, month, year, childName) {
+export async function getParentChartData(parentId, month, year, childName, period = 'month') {
     try {
-        // إذا تم تحديد طفل معين، نجلب تفاصيل تصنيفات مصروفاته
         if (childName && childName !== "All") {
             const categoriesData = await sql`
                 SELECT t."transactioncategory" AS name, SUM(t."amount") AS total
@@ -314,21 +304,19 @@ export async function getParentChartData(parentId, month, year, childName) {
                 WHERE c.parentid = ${parentId}
                 AND c.firstname = ${childName}
                 AND t.transactiontype::text = 'Payment'
-                AND EXTRACT(MONTH FROM t.transactiondate) = ${month}
-                AND EXTRACT(YEAR FROM t.transactiondate) = ${year}
+                AND (
+                    (${period} = 'week' AND t.transactiondate >= date_trunc('week', CURRENT_DATE)) OR
+                    (${period} = 'month' AND EXTRACT(MONTH FROM t.transactiondate) = ${month} AND EXTRACT(YEAR FROM t.transactiondate) = ${year}) OR
+                    (${period} = 'year' AND EXTRACT(YEAR FROM t.transactiondate) = ${year})
+                )
                 GROUP BY t."transactioncategory"
             `;
-
             const result = {};
             categoriesData.forEach(row => {
-                if(row.name && row.name !== "Uncategorized") {
-                    result[row.name] = Number(row.total ?? 0);
-                }
+                if(row.name && row.name !== "Uncategorized") result[row.name] = Number(row.total ?? 0);
             });
             return result;
-        } 
-        // أما إذا كان الخيار "All"، نجلب إجمالي صرف كل طفل للمقارنة بينهم
-        else {
+        } else {
             const childrenSpending = await sql`
                 SELECT c.firstname AS name, SUM(t.amount) AS total
                 FROM "Transaction" t
@@ -337,11 +325,13 @@ export async function getParentChartData(parentId, month, year, childName) {
                 JOIN "Child" c ON w.childid = c.childid
                 WHERE c.parentid = ${parentId}
                 AND t.transactiontype::text = 'Payment'
-                AND EXTRACT(MONTH FROM t.transactiondate) = ${month}
-                AND EXTRACT(YEAR FROM t.transactiondate) = ${year}
+                AND (
+                    (${period} = 'week' AND t.transactiondate >= date_trunc('week', CURRENT_DATE)) OR
+                    (${period} = 'month' AND EXTRACT(MONTH FROM t.transactiondate) = ${month} AND EXTRACT(YEAR FROM t.transactiondate) = ${year}) OR
+                    (${period} = 'year' AND EXTRACT(YEAR FROM t.transactiondate) = ${year})
+                )
                 GROUP BY c.firstname
             `;
-
             const result = {};
             childrenSpending.forEach(row => {
                 const cName = row.name || "Child"; 
@@ -349,8 +339,5 @@ export async function getParentChartData(parentId, month, year, childName) {
             });
             return result;
         }
-    } catch (error) {
-        console.error("Parent Chart Service Error:", error);
-        throw error;
-    }
+    } catch (error) { console.error("Parent Chart Error:", error); throw error; }
 }
