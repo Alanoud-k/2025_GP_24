@@ -52,3 +52,13 @@ export async function getGoalsInsights(req, res) {
         res.status(500).json({ error: "Failed to fetch goal insights" });
     }
 }
+
+export async function getParentInsightsController(req, res) {
+    try {
+        const parentId = req.params.parentId;
+        const insights = await getParentInsights(parentId);
+        res.json(insights);
+    } catch {
+        res.status(500).json({ error: "Failed to fetch parent insights" });
+    }
+}

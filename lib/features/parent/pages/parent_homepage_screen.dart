@@ -35,7 +35,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   int unreadCount = 0;
   String get token => widget.token;
   int get parentId => widget.parentId;
-
+  List<String> insights = [];
   static const TextStyle fintechLabelStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,
@@ -50,6 +50,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initialize();
       _fetchUnread();
+      _fetchInsights();
     });
   }
 
@@ -229,49 +230,68 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       });
     }
   }
-Widget _notifIconWithBadge({
-  required int unread,
-  required VoidCallback onTap,
-}) {
-  return InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(30),
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        const Icon(
-          Icons.notifications_none_rounded,
-          size: 28,
-          color: Colors.black87,
-        ),
 
-        if (unread > 0)
-          Positioned(
-            right: -2,
-            top: -4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              child: Center(
-                child: Text(
-                  unread > 99 ? "99+" : unread.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+  Widget _notifIconWithBadge({
+    required int unread,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(
+            Icons.notifications_none_rounded,
+            size: 28,
+            color: Colors.black87,
+          ),
+
+          if (unread > 0)
+            Positioned(
+              right: -2,
+              top: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                child: Center(
+                  child: Text(
+                    unread > 99 ? "99+" : unread.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
+
+  Future<void> _fetchInsights() async {
+    final url = Uri.parse("${ApiConfig.baseUrl}/api/insights/parent/$parentId");
+
+    final res = await http.get(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      setState(() {
+        insights = List<String>.from(data.map((i) => i["message"]));
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -310,54 +330,62 @@ Widget _notifIconWithBadge({
                       backgroundColor: Colors.teal,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-GestureDetector(
-  onTap: () async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ParentNotificationsScreen(
-          parentId: parentId,
-          token: token,
-        ),
-      ),
-    );
+                    GestureDetector(
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ParentNotificationsScreen(
+                              parentId: parentId,
+                              token: token,
+                            ),
+                          ),
+                        );
 
-    // ✅ بعد الرجوع حدّث العداد
-    await _fetchUnread();
-  },
-  child: Stack(
-    clipBehavior: Clip.none,
-    children: [
-      const Icon(
-        Icons.notifications_none_rounded,
-        size: 28,
-        color: Colors.black87,
-      ),
+                        // ✅ بعد الرجوع حدّث العداد
+                        await _fetchUnread();
+                      },
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(
+                            Icons.notifications_none_rounded,
+                            size: 28,
+                            color: Colors.black87,
+                          ),
 
-      if (unreadCount > 0)
-        Positioned(
-          right: -2,
-          top: -2,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE53935),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Text(
-              unreadCount > 99 ? "99+" : unreadCount.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ),
-    ],
-  ),
-),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: -2,
+                              top: -2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE53935),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Text(
+                                  unreadCount > 99
+                                      ? "99+"
+                                      : unreadCount.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
 
@@ -552,6 +580,10 @@ GestureDetector(
 
                 const SizedBox(height: 18),
 
+                if (insights.isNotEmpty) _insightsSection(),
+
+                const SizedBox(height: 18),
+
                 // My Children
                 InkWell(
                   borderRadius: BorderRadius.circular(16),
@@ -605,6 +637,84 @@ GestureDetector(
           ),
         ),
       ),
+    );
+  }
+
+  Widget _insightsSection() {
+    final colors = [
+      Color(0xFF37C4BE),
+      Color(0xFF7E57C2),
+      Color(0xFFFFA726),
+      Color(0xFF42A5F5),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+
+        const Row(
+          children: [
+            Icon(Icons.lightbulb_rounded, color: Color(0xFF2EA49E)),
+            SizedBox(width: 6),
+            Text(
+              "Smart Insights",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: insights.length,
+            itemBuilder: (context, i) {
+              final color = colors[i % colors.length];
+
+              return Container(
+                width: 260,
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, color.withOpacity(0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        insights[i],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
