@@ -344,189 +344,193 @@ export async function getParentChartData(parentId, month, year, childName, perio
 
 export async function getParentInsights(parentId) {
     try {
-
         const insights = [];
 
-        // ---------------------------------------
-        // Get ALL children spending this week
-        // ---------------------------------------
+        // ----------------------------------------
+        // Get children
+        // ----------------------------------------
         const children = await sql`
+            SELECT c.childid, c.firstname
+            FROM "Child" c
+            WHERE c.parentid = ${parentId}
+        `;
+
+        // ----------------------------------------
+        // 🟥 NO CHILDREN
+        // ----------------------------------------
+        if (children.length === 0) {
+            return [
+                { message: "You haven’t added any children yet" },
+                { message: "Add a child to start tracking spending" },
+                { message: "Insights will appear once activity begins" },
+            ];
+        }
+
+        const childIds = children.map(c => c.childid);
+
+        // ----------------------------------------
+        // Get all spending accounts
+        // ----------------------------------------
+        const accounts = await sql`
+            SELECT a.accountid, w.childid
+            FROM "Account" a
+            JOIN "Wallet" w ON a.walletid = w.walletid
+            WHERE w.childid = ANY(${childIds})
+            AND a.accounttype = 'SpendingAccount'
+        `;
+
+        if (accounts.length === 0) {
+            return [{ message: "No spending data available yet" }];
+        }
+
+        const accountIds = accounts.map(a => a.accountid);
+
+        // ----------------------------------------
+        // WEEKLY TOTAL
+        // ----------------------------------------
+        const weekly = await sql`
             SELECT 
-                c.firstname,
-                SUM(t.amount) AS total
+                w.childid,
+                SUM(t.amount) as total
             FROM "Transaction" t
             JOIN "Account" a ON t."senderAccountId" = a.accountid
             JOIN "Wallet" w ON a.walletid = w.walletid
-            JOIN "Child" c ON w.childid = c.childid
-            WHERE c.parentid = ${parentId}
-            AND t.transactiontype::text = 'Payment'
+            WHERE a.accountid = ANY(${accountIds})
+            AND t.transactiontype = 'Payment'
             AND t.transactiondate >= date_trunc('week', CURRENT_DATE)
-            GROUP BY c.firstname
+            GROUP BY w.childid
         `;
 
-        const totals = children.map(c => Number(c.total ?? 0));
-        const totalSpending = totals.reduce((a, b) => a + b, 0);
+        const totalSpending = weekly.reduce((sum, r) => sum + Number(r.total || 0), 0);
 
-        // ---------------------------------------
-        // 1️⃣ Total weekly spending (ALWAYS)
-        // ---------------------------------------
-        if (totalSpending > 0) {
-            insights.push({
-                type: "weekly",
-                message: `Total spending this week is ${totalSpending.toFixed(0)} SAR`
-            });
+        // ----------------------------------------
+        // 🟩 1. TOP SPENDER
+        // ----------------------------------------
+        if (totalSpending === 0) {
+            insights.push({ message: "No spending recorded this week" });
         } else {
-            insights.push({
-                type: "weekly",
-                message: "No spending recorded this week"
-            });
-        }
+            const sorted = weekly.sort((a, b) => Number(b.total) - Number(a.total));
 
-        // ---------------------------------------
-        // 2️⃣ Highest spending child
-        // ---------------------------------------
-        if (children.length > 0) {
-            let maxChild = children[0];
-
-            children.forEach(c => {
-                if (Number(c.total ?? 0) > Number(maxChild.total ?? 0)) {
-                    maxChild = c;
-                }
-            });
-
-            if (Number(maxChild.total) > 0) {
+            if (children.length === 1) {
                 insights.push({
-                    type: "top-child",
-                    message: `${maxChild.firstname} spent the most this week (${Number(maxChild.total).toFixed(0)} SAR)`
+                    message: `${children[0].firstname} spent ${Number(sorted[0].total).toFixed(0)} SAR this week`
                 });
             } else {
-                insights.push({
-                    type: "top-child",
-                    message: "Spending is evenly distributed among children"
-                });
+                const top = sorted[0];
+                const second = sorted[1];
+
+                if (second && Number(top.total) === Number(second.total)) {
+                    insights.push({
+                        message: "All children spent similar amounts this week"
+                    });
+                } else {
+                    const name = children.find(c => c.childid === top.childid)?.firstname;
+                    insights.push({
+                        message: `${name} spent the most this week (${Number(top.total).toFixed(0)} SAR)`
+                    });
+                }
             }
         }
 
-        // ---------------------------------------
-        // 3️⃣ Average per child
-        // ---------------------------------------
-        if (children.length > 0) {
+        // ----------------------------------------
+        // 🟩 2. AVERAGE (only if >1 child & spending)
+        // ----------------------------------------
+        if (children.length > 1 && totalSpending > 0) {
             const avg = totalSpending / children.length;
-
             insights.push({
-                type: "average",
                 message: `Average spending per child is ${avg.toFixed(0)} SAR`
             });
         }
 
-        // ---------------------------------------
-        // 4️⃣ Category insight
-        // ---------------------------------------
-        const categories = await sql`
-            SELECT "transactioncategory", SUM("amount") AS total
-            FROM "Transaction" t
-            JOIN "Account" a ON t."senderAccountId" = a.accountid
-            JOIN "Wallet" w ON a.walletid = w.walletid
-            JOIN "Child" c ON w.childid = c.childid
-            WHERE c.parentid = ${parentId}
-            AND t.transactiontype::text = 'Payment'
-            AND t.transactiondate >= date_trunc('week', CURRENT_DATE)
-            GROUP BY "transactioncategory"
-        `;
+        // ----------------------------------------
+        // 🟩 3. CATEGORY (MOST IMPORTANT)
+        // ----------------------------------------
+        if (totalSpending > 0) {
+            const categories = await sql`
+                SELECT t.transactioncategory, SUM(t.amount) as total
+                FROM "Transaction" t
+                WHERE t."senderAccountId" = ANY(${accountIds})
+                AND t.transactiontype = 'Payment'
+                AND t.transactiondate >= date_trunc('week', CURRENT_DATE)
+                GROUP BY t.transactioncategory
+            `;
 
-        let maxCategory = null;
-        let maxAmount = 0;
+            let max = 0;
+            let topCategory = null;
 
-        categories.forEach(c => {
-            const amount = Number(c.total ?? 0);
-            if (amount > maxAmount) {
-                maxAmount = amount;
-                maxCategory = c.transactioncategory;
-            }
-        });
-
-        if (maxCategory && totalSpending > 0) {
-            const percent = Math.round((maxAmount / totalSpending) * 100);
-
-            insights.push({
-                type: "category",
-                message: `${percent}% of spending was on ${maxCategory}`
+            categories.forEach(c => {
+                const val = Number(c.total || 0);
+                if (val > max) {
+                    max = val;
+                    topCategory = c.transactioncategory;
+                }
             });
-        } else {
+
+            if (topCategory && totalSpending > 0) {
+                const percent = Math.round((max / totalSpending) * 100);
+
+                insights.push({
+                    message: `${percent}% of spending was on ${topCategory}`
+                });
+            } else {
+                insights.push({
+                    message: "Spending is balanced across categories"
+                });
+            }
+        }
+
+        // ----------------------------------------
+        // 🟩 4. TOTAL
+        // ----------------------------------------
+        if (totalSpending > 0) {
             insights.push({
-                type: "category",
-                message: "Spending is evenly distributed across categories"
+                message: `Total spending this week is ${totalSpending.toFixed(0)} SAR`
             });
         }
 
-        // ---------------------------------------
-        // 5️⃣ Comparison with last week
-        // ---------------------------------------
+        // ----------------------------------------
+        // 🟩 5. TREND (vs last week)
+        // ----------------------------------------
         const lastWeek = await sql`
-            SELECT SUM(t.amount) AS total
+            SELECT SUM(t.amount) as total
             FROM "Transaction" t
-            JOIN "Account" a ON t."senderAccountId" = a.accountid
-            JOIN "Wallet" w ON a.walletid = w.walletid
-            JOIN "Child" c ON w.childid = c.childid
-            WHERE c.parentid = ${parentId}
-            AND t.transactiontype::text = 'Payment'
+            WHERE t."senderAccountId" = ANY(${accountIds})
+            AND t.transactiontype = 'Payment'
             AND t.transactiondate >= date_trunc('week', CURRENT_DATE) - INTERVAL '1 week'
             AND t.transactiondate < date_trunc('week', CURRENT_DATE)
         `;
 
-        const prev = Number(lastWeek[0].total ?? 0);
+        const last = Number(lastWeek[0].total || 0);
 
-        if (prev > 0) {
-            const change = ((totalSpending - prev) / prev) * 100;
+        if (last === 0 && totalSpending > 0) {
+            insights.push({
+                message: "This is the first week with recorded spending"
+            });
+        } else if (last > 0) {
+            const change = ((totalSpending - last) / last) * 100;
 
-            if (Math.abs(change) > 20) {
+            if (Math.abs(change) < 5) {
                 insights.push({
-                    type: "change",
-                    message: `Spending changed by ${Math.round(change)}% compared to last week`
+                    message: "Spending remained consistent compared to last week"
+                });
+            } else if (change > 0) {
+                insights.push({
+                    message: `Spending increased by ${Math.round(change)}% compared to last week`
                 });
             } else {
                 insights.push({
-                    type: "change",
-                    message: "Spending is stable compared to last week"
+                    message: `Spending decreased by ${Math.round(Math.abs(change))}% compared to last week`
                 });
             }
         }
 
-        // ---------------------------------------
-        // 6️⃣ Behavior insight (yesterday)
-        // ---------------------------------------
-        const yesterday = await sql`
-            SELECT COUNT(*) AS count
-            FROM "Transaction" t
-            JOIN "Account" a ON t."senderAccountId" = a.accountid
-            JOIN "Wallet" w ON a.walletid = w.walletid
-            JOIN "Child" c ON w.childid = c.childid
-            WHERE c.parentid = ${parentId}
-            AND DATE(t.transactiondate) = CURRENT_DATE - INTERVAL '1 day'
-            AND t.transactiontype::text = 'Payment'
-        `;
-
-        const y = Number(yesterday[0].count ?? 0);
-
-        if (y === 0) {
-            insights.push({
-                type: "behavior",
-                message: "No spending yesterday — good control"
-            });
-        } else {
-            insights.push({
-                type: "behavior",
-                message: "Spending activity was recorded yesterday"
-            });
-        }
-
-        // ---------------------------------------
-        // LIMIT to 6 clean insights
-        // ---------------------------------------
-        return insights.slice(0, 6);
+        // ----------------------------------------
+        // LIMIT TO 5 INSIGHTS
+        // ----------------------------------------
+        return insights.slice(0, 5);
 
     } catch (error) {
-        console.error("PARENT INSIGHTS ERROR:", error);
+        console.error("Parent Insights Error:", error);
         throw error;
     }
 }
