@@ -290,6 +290,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
         insights = List<String>.from(data.map((i) => i["message"]));
       });
     }
+    print("INSIGHTS RESPONSE:");
+    print(res.body);
   }
 
   @override
