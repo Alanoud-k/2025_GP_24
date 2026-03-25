@@ -642,6 +642,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     );
   }
 
+  int _currentPage = 0;
+
   Widget _insightsSection() {
     final gradients = [
       [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
@@ -650,65 +652,97 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       [Color(0xFF42A5F5), Color(0xFF90CAF9)],
     ];
 
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: insights.length,
-        itemBuilder: (context, i) {
-          final gradient = gradients[i % gradients.length];
+    final controller = PageController(viewportFraction: 0.88);
 
-          return Container(
-            width: 270,
-            margin: const EdgeInsets.only(right: 14),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: gradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(26),
-              boxShadow: [
-                BoxShadow(
-                  color: gradient[0].withOpacity(0.35),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(14),
+    return Column(
+      children: [
+        SizedBox(
+          height: 150,
+          child: PageView.builder(
+            controller: controller,
+            itemCount: insights.length,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
+            itemBuilder: (context, i) {
+              final gradient = gradients[i % gradients.length];
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    insights[i],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient[0].withOpacity(0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 12),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        insights[i],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // ✅ DOTS HERE (outside cards)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(insights.length, (index) {
+            final isActive = index == _currentPage;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 14 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFF37C4BE)
+                    : Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }

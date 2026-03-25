@@ -526,11 +526,7 @@ export async function getParentInsights(parentId) {
 
         const last = Number(lastWeek[0].total || 0);
 
-        if (last === 0 && totalSpending > 0) {
-            insights.push({
-                message: "This is the first week with recorded spending"
-            });
-        } else if (last > 0) {
+          if (last > 0) {
             const change = ((totalSpending - last) / last) * 100;
 
             if (Math.abs(change) < 5) {
