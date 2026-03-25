@@ -407,8 +407,32 @@ export async function getParentInsights(parentId) {
         // 🟩 1. TOP SPENDER
         // ----------------------------------------
         if (totalSpending === 0) {
-            insights.push({ message: "No spending recorded this week" });
-        } else {
+
+    // check last week
+    const lastWeek = await sql`
+        SELECT SUM(t.amount) as total
+        FROM "Transaction" t
+        WHERE t."senderAccountId" = ANY(${accountIds})
+        AND t.transactiontype = 'Payment'
+        AND t.transactiondate >= date_trunc('week', CURRENT_DATE) - INTERVAL '1 week'
+        AND t.transactiondate < date_trunc('week', CURRENT_DATE)
+    `;
+
+    const last = Number(lastWeek[0].total || 0);
+
+    // ✅ Always return ONLY 2 messages
+    if (last > 0) {
+        return [
+            { message: "No spending recorded this week" },
+            { message: "Spending decreased compared to last week" },
+        ];
+    } else {
+        return [
+            { message: "No spending recorded this week" },
+            { message: "Insights will appear once activity begins" },
+        ];
+    }
+} else {
             const sorted = weekly.sort((a, b) => Number(b.total) - Number(a.total));
 
             if (children.length === 1) {
