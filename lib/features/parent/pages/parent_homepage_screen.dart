@@ -461,6 +461,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
 
                 const SizedBox(height: 22),
 
+                if (insights.isNotEmpty) _insightsSection(),
+
+                const SizedBox(height: 18),
+
                 // Actions row 1
                 Row(
                   children: [
@@ -582,10 +586,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
 
                 const SizedBox(height: 18),
 
-                if (insights.isNotEmpty) _insightsSection(),
-
-                const SizedBox(height: 18),
-
                 // My Children
                 InkWell(
                   borderRadius: BorderRadius.circular(16),
@@ -643,80 +643,72 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   }
 
   Widget _insightsSection() {
-    final colors = [
-      Color(0xFF37C4BE),
-      Color(0xFF7E57C2),
-      Color(0xFFFFA726),
-      Color(0xFF42A5F5),
+    final gradients = [
+      [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
+      [Color(0xFF7E57C2), Color(0xFFB39DDB)],
+      [Color(0xFFFF8A65), Color(0xFFFFB199)],
+      [Color(0xFF42A5F5), Color(0xFF90CAF9)],
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 20),
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: insights.length,
+        itemBuilder: (context, i) {
+          final gradient = gradients[i % gradients.length];
 
-        const Row(
-          children: [
-            Icon(Icons.lightbulb_rounded, color: Color(0xFF2EA49E)),
-            SizedBox(width: 6),
-            Text(
-              "Smart Insights",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2C3E50),
+          return Container(
+            width: 270,
+            margin: const EdgeInsets.only(right: 14),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: [
+                BoxShadow(
+                  color: gradient[0].withOpacity(0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-          ],
-        ),
-
-        const SizedBox(height: 12),
-
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: insights.length,
-            itemBuilder: (context, i) {
-              final color = colors[i % colors.length];
-
-              return Container(
-                width: 260,
-                margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color, color.withOpacity(0.7)],
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.auto_awesome, color: Colors.white),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        insights[i],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    insights[i],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
                     ),
-                  ],
+                  ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
