@@ -290,15 +290,24 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
     final expired = DateTime.now().isAfter(widget.expiresAt);
     final expiresText = _formatDateTime(widget.expiresAt);
 
+    const primary = Color(0xFF37C4BE);
     const bg1 = Color(0xFFF7FAFC);
     const bg2 = Color(0xFFE6F4F3);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Confirm Payment'),
+        title: const Text(
+          "Confirm Payment",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -314,87 +323,114 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Details card
+                // 🔥 TOP AMOUNT CARD
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black12.withOpacity(0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 6),
+                        color: primary.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.merchantName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2C3E50),
+                      const Text(
+                        "You are about to pay",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.amount.toStringAsFixed(2),
+                            style: const TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // ✅ WHITE RIYAL ICON
+                          ColorFiltered(
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                            child: _sarIcon(size: 26),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // 🔹 DETAILS CARD
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _summaryRow("Merchant", widget.merchantName),
+                      const SizedBox(height: 10),
+                      _amountSummaryRow(widget.amount),
+
                       const SizedBox(height: 10),
 
                       Row(
                         children: [
                           const Icon(
-                            Icons.payments_rounded,
-                            color: Color(0xFF2EA49E),
-                          ),
-                          const SizedBox(width: 8),
-                          // ✅ Big clear amount with Riyal icon (kid-friendly)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                widget.amount.toStringAsFixed(2),
-                                style: const TextStyle(
-                                  fontSize: 34,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF2C3E50),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              _sarIcon(size: 22),
-                            ],
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      Row(
-                        children: [
-                          Icon(
                             Icons.schedule_rounded,
-                            color: expired ? Colors.red : Colors.black54,
+                            color: Colors.black54,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'Expires: $expiresText',
-                            style: TextStyle(
-                              color: expired ? Colors.red : Colors.black54,
-                              fontWeight: expired
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
+                          Expanded(
+                            child: Text(
+                              'Expires: $expiresText',
+                              style: TextStyle(
+                                color: expired ? Colors.red : Colors.black54,
+                                fontWeight: expired
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 10),
                     ],
                   ),
                 ),
 
                 const SizedBox(height: 14),
 
+                // ❌ ERROR BOX
                 if (_error != null)
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -418,32 +454,43 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
 
                 const Spacer(),
 
-                ElevatedButton(
-                  onPressed: (_paying || expired) ? null : _confirmPay,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2EA49E),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                // 🔥 PAY BUTTON
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: (_paying || expired) ? null : _confirmPay,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      _paying ? 'Processing...' : 'Pay Now',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                  child: Text(_paying ? 'Paying...' : 'Pay Now'),
                 ),
 
                 const SizedBox(height: 10),
 
+                // CANCEL BUTTON
                 OutlinedButton(
                   onPressed: _paying ? null : () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2EA49E),
-                    side: const BorderSide(color: Color(0xFF2EA49E)),
+                    foregroundColor: primary,
+                    side: BorderSide(color: primary),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: const Text("Cancel"),
                 ),
               ],
             ),
