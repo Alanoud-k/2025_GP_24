@@ -642,6 +642,46 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     );
   }
 
+  Widget _buildInsightText(String message) {
+    final parts = message.split("SAR");
+
+    const textStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 15,
+      fontWeight: FontWeight.w800,
+      height: 1.35,
+    );
+
+    // No SAR → normal text
+    if (parts.length == 1) {
+      return Text(message, style: textStyle);
+    }
+
+    List<InlineSpan> spans = [];
+
+    for (int i = 0; i < parts.length; i++) {
+      spans.add(TextSpan(text: parts[i], style: textStyle));
+
+      if (i != parts.length - 1) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Image.asset(
+                "assets/icons/Sar.png",
+                height: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
   int _currentPage = 0;
 
   Widget _insightsSection() {
@@ -702,17 +742,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                       ),
                     ),
                     const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        insights[i],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
+                    Expanded(child: _buildInsightText(insights[i])),
                   ],
                 ),
               );
@@ -722,7 +752,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
 
         const SizedBox(height: 8),
 
-        // ✅ DOTS HERE (outside cards)
+        // Dots indicator
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(insights.length, (index) {

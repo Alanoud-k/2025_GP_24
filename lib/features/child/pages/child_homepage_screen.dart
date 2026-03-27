@@ -1511,7 +1511,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Image.asset(_sarIconPath, height: 20),
+              Image.asset(_sarIconPath, height: 20, color: Colors.white),
               const SizedBox(width: 4),
               Text(
                 amount.toStringAsFixed(2),
@@ -1633,6 +1633,45 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
+  Widget _buildInsightText(String message) {
+    final parts = message.split("SAR");
+
+    const textStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 15,
+      fontWeight: FontWeight.w800,
+      height: 1.35,
+    );
+
+    if (parts.length == 1) {
+      return Text(message, style: textStyle);
+    }
+
+    List<InlineSpan> spans = [];
+
+    for (int i = 0; i < parts.length; i++) {
+      spans.add(TextSpan(text: parts[i], style: textStyle));
+
+      if (i != parts.length - 1) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Image.asset(
+                "assets/icons/Sar.png", // 👈 same icon as parent
+                height: 16,
+                color: Colors.white, // 👈 fixes black icon
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
   int _currentPage = 0;
 
   Widget _insightsSection() {
@@ -1692,17 +1731,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        insights[i],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
+                    Expanded(child: _buildInsightText(insights[i])),
                   ],
                 ),
               );
