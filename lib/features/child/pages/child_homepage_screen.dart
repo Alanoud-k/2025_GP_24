@@ -1196,8 +1196,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       if (response.statusCode == 401) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-        if (mounted)
+        if (mounted) {
           Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        }
         return;
       }
       if (response.statusCode == 200) {
@@ -1208,7 +1209,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           childName = data['firstName'] ?? '';
           spendBalance = _toDouble(data['spend']);
           savingBalance = _toDouble(data['saving']);
-          currentPoints = data['rewardKeys'] ?? 0.toInt();
+          currentPoints = data['rewardKeys'] ?? 0;
           _loading = false;
         });
       } else {
@@ -1223,8 +1224,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     String p = selectedPeriod == 'Weekly'
         ? 'week'
         : selectedPeriod == 'Yearly'
-        ? 'year'
-        : 'month';
+            ? 'year'
+            : 'month';
     final url = Uri.parse(
       '${widget.baseUrl}/api/insights/child-chart/${widget.childId}?month=$selectedMonth&year=$selectedYear&period=$p',
     );
@@ -1256,8 +1257,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             categoryPercentages.updateAll((key, value) => 0.0);
             if (totalSpending > 0) {
               amounts.forEach((key, value) {
-                if (categoryPercentages.containsKey(key))
+                if (categoryPercentages.containsKey(key)) {
                   categoryPercentages[key] = (value / totalSpending) * 100;
+                }
               });
             }
           });
@@ -1284,7 +1286,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         final data = jsonDecode(response.body);
         setState(() => unreadCount = data["unread"] ?? 0);
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   List<String> insights = [];
@@ -1302,10 +1304,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(
-          () =>
-              insights = List<String>.from(data.map((item) => item["message"])),
-        );
+        setState(() {
+          insights = List<String>.from(data.map((item) => item["message"]));
+        });
       }
     } catch (e) {
       debugPrint("INSIGHTS ERROR: $e");
@@ -1367,35 +1368,44 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
   Widget _header() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.grey,
-              child: Icon(Icons.person, size: 26, color: Colors.white),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Welcome back,",
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
+        Expanded(
+          child: Row(
+            children: [
+              const CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.grey,
+                child: Icon(Icons.person, size: 26, color: Colors.white),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Welcome back,",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                    Text(
+                      childName.isNotEmpty ? childName : 'Child',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  childName.isNotEmpty ? childName : 'Child',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2C3E50),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         GestureDetector(
           onTap: () async {
             await Navigator.push(
@@ -1422,8 +1432,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                   right: -2,
                   top: -2,
                   child: Container(
+                    constraints: const BoxConstraints(minWidth: 18),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
+                      horizontal: 5,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
@@ -1433,9 +1444,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     ),
                     child: Text(
                       unreadCount > 99 ? "99+" : unreadCount.toString(),
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -1479,7 +1491,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     required IconData leadingIcon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: gradientColors,
@@ -1500,25 +1512,36 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         children: [
           Row(
             children: [
-              Icon(leadingIcon, size: 20, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 13, color: Colors.white70),
+              Icon(leadingIcon, size: 18, color: Colors.white),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.white70,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Image.asset(_sarIconPath, height: 20, color: Colors.white),
+              Image.asset(_sarIconPath, height: 18, color: Colors.white),
               const SizedBox(width: 4),
-              Text(
-                amount.toStringAsFixed(2),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+              Expanded(
+                child: Text(
+                  amount.toStringAsFixed(2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -1550,12 +1573,16 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           children: [
             Icon(Icons.vpn_key_rounded, size: 18, color: Colors.amber.shade800),
             const SizedBox(width: 6),
-            Text(
-              "$currentPoints Keys",
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2C3E50),
+            Flexible(
+              child: Text(
+                "$currentPoints Keys",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
               ),
             ),
           ],
@@ -1644,7 +1671,12 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
 
     if (parts.length == 1) {
-      return Text(message, style: textStyle);
+      return Text(
+        message,
+        maxLines: 4,
+        overflow: TextOverflow.ellipsis,
+        style: textStyle,
+      );
     }
 
     List<InlineSpan> spans = [];
@@ -1659,9 +1691,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Image.asset(
-                "assets/icons/Sar.png", // 👈 same icon as parent
+                "assets/icons/Sar.png",
                 height: 16,
-                color: Colors.white, // 👈 fixes black icon
+                color: Colors.white,
               ),
             ),
           ),
@@ -1669,17 +1701,21 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       }
     }
 
-    return RichText(text: TextSpan(children: spans));
+    return RichText(
+      maxLines: 4,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(children: spans),
+    );
   }
 
   int _currentPage = 0;
 
   Widget _insightsSection() {
     final gradients = [
-      [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
-      [Color(0xFF7E57C2), Color(0xFFB39DDB)],
-      [Color(0xFFFF8A65), Color(0xFFFFB199)],
-      [Color(0xFF42A5F5), Color(0xFF90CAF9)],
+      [const Color(0xFF37C4BE), const Color(0xFF6EE7DF)],
+      [const Color(0xFF7E57C2), const Color(0xFFB39DDB)],
+      [const Color(0xFFFF8A65), const Color(0xFFFFB199)],
+      [const Color(0xFF42A5F5), const Color(0xFF90CAF9)],
     ];
 
     final controller = PageController(viewportFraction: 0.88);
@@ -1738,9 +1774,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             },
           ),
         ),
-
         const SizedBox(height: 8),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(insights.length, (index) {
@@ -1781,7 +1815,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: [
             Container(
@@ -1793,12 +1827,14 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               ),
               child: Icon(icon, size: 22, color: const Color(0xFF2EA49E)),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 text,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF2C3E50),
                 ),
@@ -1839,6 +1875,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 child: Center(
                   child: Text(
                     p,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black54,
                       fontWeight: FontWeight.bold,
@@ -1872,96 +1910,104 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         ),
       );
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFC),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                if (selectedPeriod == 'Yearly')
-                  selectedYear--;
-                else {
-                  if (selectedMonth == 1) {
-                    selectedMonth = 12;
-                    selectedYear--;
-                  } else {
-                    selectedMonth--;
-                  }
-                }
-              });
-              _fetchChildChartData();
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(
-                Icons.chevron_left_rounded,
-                size: 24,
-                color: Colors.black54,
-              ),
-            ),
+
+    return Flexible(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7FAFC),
+            borderRadius: BorderRadius.circular(20),
           ),
-          GestureDetector(
-            onTap: _showMonthYearPicker,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    selectedPeriod == 'Yearly'
-                        ? "$selectedYear"
-                        : "${monthNames[selectedMonth - 1]} $selectedYear",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2EA49E),
-                      fontSize: 13,
-                    ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (selectedPeriod == 'Yearly') {
+                      selectedYear--;
+                    } else {
+                      if (selectedMonth == 1) {
+                        selectedMonth = 12;
+                        selectedYear--;
+                      } else {
+                        selectedMonth--;
+                      }
+                    }
+                  });
+                  _fetchChildChartData();
+                },
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    Icons.chevron_left_rounded,
+                    size: 24,
+                    color: Colors.black54,
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 16,
-                    color: Color(0xFF2EA49E),
+                ),
+              ),
+              GestureDetector(
+                onTap: _showMonthYearPicker,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      Text(
+                        selectedPeriod == 'Yearly'
+                            ? "$selectedYear"
+                            : "${monthNames[selectedMonth - 1]} $selectedYear",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2EA49E),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: Color(0xFF2EA49E),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                if (selectedPeriod == 'Yearly')
-                  selectedYear++;
-                else {
-                  if (selectedMonth == 12) {
-                    selectedMonth = 1;
-                    selectedYear++;
-                  } else {
-                    selectedMonth++;
-                  }
-                }
-              });
-              _fetchChildChartData();
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(
-                Icons.chevron_right_rounded,
-                size: 24,
-                color: Colors.black54,
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (selectedPeriod == 'Yearly') {
+                      selectedYear++;
+                    } else {
+                      if (selectedMonth == 12) {
+                        selectedMonth = 1;
+                        selectedYear++;
+                      } else {
+                        selectedMonth++;
+                      }
+                    }
+                  });
+                  _fetchChildChartData();
+                },
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 24,
+                    color: Colors.black54,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1986,22 +2032,30 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           _buildPeriodToggle(),
           const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: const [
-                  Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
-                  SizedBox(width: 6),
-                  Text(
-                    'Breakdown',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF2C3E50),
+              const Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
+                    SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Breakdown',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2C3E50),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               _buildDateSelector(),
             ],
           ),
@@ -2091,8 +2145,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                           ),
                         ),
                         onChanged: (val) {
-                          if (val != null)
+                          if (val != null) {
                             setDialogState(() => tempMonth = val);
+                          }
                         },
                       ),
                     ),
@@ -2126,7 +2181,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                         );
                       }),
                       onChanged: (val) {
-                        if (val != null) setDialogState(() => tempYear = val);
+                        if (val != null) {
+                          setDialogState(() => tempYear = val);
+                        }
                       },
                     ),
                   ),
@@ -2189,34 +2246,35 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       'Medical',
       'Digital & Subscriptions',
     ];
+
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 24,
       runSpacing: 12,
-      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map(
-        (cat) {
-          final color = _getColorForCategory(cat);
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      children: ordered
+          .where((cat) => (categoryPercentages[cat] ?? 0) > 0)
+          .map((cat) {
+        final color = _getColorForCategory(cat);
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              cat,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2C3E50),
               ),
-              const SizedBox(width: 6),
-              Text(
-                cat,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-            ],
-          );
-        },
-      ).toList(),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 
@@ -2240,9 +2298,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   }
 
   List<PieChartSectionData> _buildPieSections() {
-    return categoryPercentages.entries.where((entry) => entry.value > 0).map((
-      entry,
-    ) {
+    return categoryPercentages.entries
+        .where((entry) => entry.value > 0)
+        .map((entry) {
       return PieChartSectionData(
         value: entry.value,
         color: _getColorForCategory(entry.key),

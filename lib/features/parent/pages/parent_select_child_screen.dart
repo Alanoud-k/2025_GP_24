@@ -365,14 +365,19 @@ import 'parent_child_overview_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:my_app/core/api_config.dart';
+import 'parent_transfer_screen.dart';
+
 
 class ParentSelectChildScreen extends StatefulWidget {
   final int parentId;
   final String token;
+  final bool transferMode;
+
   const ParentSelectChildScreen({
     super.key,
     required this.parentId,
     required this.token,
+    this.transferMode = false,
   });
 
   @override
@@ -591,19 +596,39 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                         itemBuilder: (context, index) {
                           final kid = _kids[index];
                           return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ParentChildOverviewScreen(
-                                    parentId: widget.parentId,
-                                    childId: kid["id"],
-                                    childName: kid["name"],
-                                    token: widget.token,
-                                  ),
-                                ),
-                              );
-                            },
+                 onTap: () {
+  final childBalance =
+      (kid["balance"] is num)
+          ? (kid["balance"] as num).toDouble()
+          : double.tryParse(kid["balance"].toString()) ?? 0.0;
+
+  if (widget.transferMode) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ParentTransferScreen(
+          parentId: widget.parentId,
+          childId: kid["id"],
+          childName: kid["name"],
+          childBalance: childBalance.toStringAsFixed(2),
+          token: widget.token,
+        ),
+      ),
+    );
+  } else {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ParentChildOverviewScreen(
+          parentId: widget.parentId,
+          childId: kid["id"],
+          childName: kid["name"],
+          token: widget.token,
+        ),
+      ),
+    );
+  }
+},
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 14),
                               padding: const EdgeInsets.all(16),
@@ -651,52 +676,58 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                                         const SizedBox(height: 6),
                                         // ✅✅✅ تم إضافة الأسماء وتوضيحها هنا ✅✅✅
                                         Row(
-                                          children: [
-                                            const Text(
-                                              "Save: ",
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                            Image.asset(
-                                              "assets/icons/riyal.png",
-                                              height: 16,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              kid["saving"].toStringAsFixed(2),
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
+  children: [
+    Expanded(
+      child: Row(
+        children: [
+          const Text(
+            "Save: ",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          Image.asset("assets/icons/riyal.png", height: 16),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              kid["saving"].toStringAsFixed(2),
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
+    ),
 
-                                            const SizedBox(width: 14),
+    const SizedBox(width: 10),
 
-                                            const Text(
-                                              "Spend: ",
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                            Image.asset(
-                                              "assets/icons/riyal.png",
-                                              height: 16,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              kid["spend"].toStringAsFixed(2),
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+    Expanded(
+      child: Row(
+        children: [
+          const Text(
+            "Spend: ",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          Image.asset("assets/icons/riyal.png", height: 16),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              kid["spend"].toStringAsFixed(2),
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ],
+)
                                       ],
                                     ),
                                   ),
