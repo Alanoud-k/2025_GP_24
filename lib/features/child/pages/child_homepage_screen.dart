@@ -1127,8 +1127,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   double monthTotalSpent = 0.0;
 
   final List<String> monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
 
   double currentBalance = 0.0;
@@ -1171,19 +1181,29 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
   Future<void> _fetchChildInfo() async {
     setState(() => _loading = true);
-    final url = Uri.parse('${widget.baseUrl}/api/auth/child/info/${widget.childId}');
+    final url = Uri.parse(
+      '${widget.baseUrl}/api/auth/child/info/${widget.childId}',
+    );
 
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 401) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-        if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        if (mounted)
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
         return;
       }
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        double _toDouble(dynamic v) => (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
+        double _toDouble(dynamic v) =>
+            (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
         setState(() {
           childName = data['firstName'] ?? '';
           spendBalance = _toDouble(data['spend']);
@@ -1200,18 +1220,32 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   }
 
   Future<void> _fetchChildChartData() async {
-    String p = selectedPeriod == 'Weekly' ? 'week' : selectedPeriod == 'Yearly' ? 'year' : 'month';
-    final url = Uri.parse('${widget.baseUrl}/api/insights/child-chart/${widget.childId}?month=$selectedMonth&year=$selectedYear&period=$p');
+    String p = selectedPeriod == 'Weekly'
+        ? 'week'
+        : selectedPeriod == 'Yearly'
+        ? 'year'
+        : 'month';
+    final url = Uri.parse(
+      '${widget.baseUrl}/api/insights/child-chart/${widget.childId}?month=$selectedMonth&year=$selectedYear&period=$p',
+    );
 
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         double totalSpending = 0.0;
         Map<String, double> amounts = {};
 
         data.forEach((key, value) {
-          double val = (value is num) ? value.toDouble() : (double.tryParse(value.toString()) ?? 0.0);
+          double val = (value is num)
+              ? value.toDouble()
+              : (double.tryParse(value.toString()) ?? 0.0);
           amounts[key] = val;
           totalSpending += val;
         });
@@ -1222,7 +1256,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             categoryPercentages.updateAll((key, value) => 0.0);
             if (totalSpending > 0) {
               amounts.forEach((key, value) {
-                if (categoryPercentages.containsKey(key)) categoryPercentages[key] = (value / totalSpending) * 100;
+                if (categoryPercentages.containsKey(key))
+                  categoryPercentages[key] = (value / totalSpending) * 100;
               });
             }
           });
@@ -1234,9 +1269,17 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   }
 
   Future<void> _fetchUnreadCount() async {
-    final url = Uri.parse("${ApiConfig.baseUrl}/api/notifications/unread/child/${widget.childId}");
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/notifications/unread/child/${widget.childId}",
+    );
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() => unreadCount = data["unread"] ?? 0);
@@ -1250,10 +1293,19 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Future<void> _fetchInsights() async {
     final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() => insights = List<String>.from(data.map((item) => item["message"])));
+        setState(
+          () =>
+              insights = List<String>.from(data.map((item) => item["message"])),
+        );
       }
     } catch (e) {
       debugPrint("INSIGHTS ERROR: $e");
@@ -1267,7 +1319,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(colors: [bg1, bg2], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [bg1, bg2],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -1279,7 +1337,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 16,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1291,7 +1352,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                         const SizedBox(height: 24),
                         _actionsGrid(),
                         const SizedBox(height: 24),
-                        _insightCard(),
+                        if (insights.isNotEmpty) _insightsSection(),
                         const SizedBox(height: 20),
                         _breakdownCard(),
                         const SizedBox(height: 40),
@@ -1310,33 +1371,74 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       children: [
         Row(
           children: [
-            const CircleAvatar(radius: 24, backgroundColor: Colors.grey, child: Icon(Icons.person, size: 26, color: Colors.white)),
+            const CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.grey,
+              child: Icon(Icons.person, size: 26, color: Colors.white),
+            ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Welcome back,", style: TextStyle(fontSize: 13, color: Colors.black54)),
-                Text(childName.isNotEmpty ? childName : 'Child', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+                const Text(
+                  "Welcome back,",
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+                Text(
+                  childName.isNotEmpty ? childName : 'Child',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
               ],
             ),
           ],
         ),
         GestureDetector(
           onTap: () async {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => ChildNotificationsScreen(childId: widget.childId, token: widget.token)));
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChildNotificationsScreen(
+                  childId: widget.childId,
+                  token: widget.token,
+                ),
+              ),
+            );
             await _fetchUnreadCount();
           },
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              const Icon(Icons.notifications_none_rounded, size: 30, color: Colors.black87),
+              const Icon(
+                Icons.notifications_none_rounded,
+                size: 30,
+                color: Colors.black87,
+              ),
               if (unreadCount > 0)
                 Positioned(
-                  right: -2, top: -2,
+                  right: -2,
+                  top: -2,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFFE53935), borderRadius: BorderRadius.circular(999), border: Border.all(color: Colors.white, width: 2)),
-                    child: Text(unreadCount > 99 ? "99+" : unreadCount.toString(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE53935),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      unreadCount > 99 ? "99+" : unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -1349,23 +1451,78 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _balancesRow() {
     return Row(
       children: [
-        Expanded(child: _balanceCard(title: 'Spend balance', amount: spendBalance, gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)], leadingIcon: Icons.shopping_bag_outlined)),
+        Expanded(
+          child: _balanceCard(
+            title: 'Spend balance',
+            amount: spendBalance,
+            gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)],
+            leadingIcon: Icons.shopping_bag_outlined,
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _balanceCard(title: 'Save balance', amount: savingBalance, gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)], leadingIcon: Icons.account_balance_wallet_rounded)),
+        Expanded(
+          child: _balanceCard(
+            title: 'Save balance',
+            amount: savingBalance,
+            gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)],
+            leadingIcon: Icons.account_balance_wallet_rounded,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _balanceCard({required String title, required double amount, required List<Color> gradientColors, required IconData leadingIcon}) {
+  Widget _balanceCard({
+    required String title,
+    required double amount,
+    required List<Color> gradientColors,
+    required IconData leadingIcon,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 6))]),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12.withOpacity(0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [Icon(leadingIcon, size: 20, color: Colors.white), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 13, color: Colors.white70))]),
+          Row(
+            children: [
+              Icon(leadingIcon, size: 20, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 13, color: Colors.white70),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
-          Row(children: [Image.asset(_sarIconPath, height: 20), const SizedBox(width: 4), Text(amount.toStringAsFixed(2), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white))]),
+          Row(
+            children: [
+              Image.asset(_sarIconPath, height: 20, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(
+                amount.toStringAsFixed(2),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1376,13 +1533,31 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       alignment: Alignment.centerRight,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 5))]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDEDED)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.vpn_key_rounded, size: 18, color: Colors.amber.shade800),
             const SizedBox(width: 6),
-            Text("$currentPoints Keys", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+            Text(
+              "$currentPoints Keys",
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
           ],
         ),
       ),
@@ -1395,9 +1570,30 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Column(
             children: [
-              _actionButton('Chores', Icons.checklist_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildChoresScreen(childId: widget.childId, token: widget.token))); }),
+              _actionButton('Chores', Icons.checklist_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildChoresScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
               const SizedBox(height: 12),
-              _actionButton('Transactions', Icons.receipt_long_outlined, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildTransactionsScreen(childId: widget.childId, token: widget.token, baseUrl: widget.baseUrl))); }),
+              _actionButton('Transactions', Icons.receipt_long_outlined, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildTransactionsScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                      baseUrl: widget.baseUrl,
+                    ),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -1405,9 +1601,31 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Column(
             children: [
-              _actionButton('Goals', Icons.flag_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildGoalsScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
+              _actionButton('Goals', Icons.flag_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildGoalsScreen(
+                      childId: widget.childId,
+                      baseUrl: widget.baseUrl,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
               const SizedBox(height: 12),
-              _actionButton('Request Money', Icons.payments_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildRequestMoneyScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
+              _actionButton('Request Money', Icons.payments_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildRequestMoneyScreen(
+                      childId: widget.childId,
+                      baseUrl: widget.baseUrl,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -1415,49 +1633,134 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _insightCard() {
-    if (insights.isEmpty) return const SizedBox();
-    final colors = [const Color(0xFF37C4BE), const Color(0xFF7E57C2), const Color(0xFFFFA726), const Color(0xFF42A5F5)];
-    final msg = insights[currentInsight];
-    final color = colors[currentInsight % colors.length];
+  Widget _buildInsightText(String message) {
+    final parts = message.split("SAR");
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            Icon(Icons.lightbulb_rounded, color: Color(0xFF2EA49E)),
-            SizedBox(width: 6),
-            Text("Smart Insights", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            if (insights.length > 1)
-              Positioned(top: 10, child: Transform.scale(scale: 0.9, child: _buildInsightCard(colors[(currentInsight + 1) % colors.length], insights[(currentInsight + 1) % insights.length], faded: true))),
-            GestureDetector(onTap: () { setState(() { currentInsight = (currentInsight + 1) % insights.length; }); }, child: _buildInsightCard(color, msg)),
-          ],
-        ),
-      ],
+    const textStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 15,
+      fontWeight: FontWeight.w800,
+      height: 1.35,
     );
+
+    if (parts.length == 1) {
+      return Text(message, style: textStyle);
+    }
+
+    List<InlineSpan> spans = [];
+
+    for (int i = 0; i < parts.length; i++) {
+      spans.add(TextSpan(text: parts[i], style: textStyle));
+
+      if (i != parts.length - 1) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Image.asset(
+                "assets/icons/Sar.png", // 👈 same icon as parent
+                height: 16,
+                color: Colors.white, // 👈 fixes black icon
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return RichText(text: TextSpan(children: spans));
   }
 
-  Widget _buildInsightCard(Color color, String msg, {bool faded = false}) {
-    return Container(
-      height: 120,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(gradient: LinearGradient(colors: [color, color.withOpacity(0.75)]), borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: color.withOpacity(0.35), blurRadius: 18, offset: const Offset(0, 10))]),
-      child: Row(
-        children: [
-          Container(height: 42, width: 42, decoration: BoxDecoration(color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(14)), child: const Icon(Icons.auto_awesome, color: Colors.white)),
-          const SizedBox(width: 14),
-          Expanded(child: Text(msg, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700, height: 1.3))),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 18, color: Colors.white),
-        ],
-      ),
+  int _currentPage = 0;
+
+  Widget _insightsSection() {
+    final gradients = [
+      [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
+      [Color(0xFF7E57C2), Color(0xFFB39DDB)],
+      [Color(0xFFFF8A65), Color(0xFFFFB199)],
+      [Color(0xFF42A5F5), Color(0xFF90CAF9)],
+    ];
+
+    final controller = PageController(viewportFraction: 0.88);
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 150,
+          child: PageView.builder(
+            controller: controller,
+            itemCount: insights.length,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
+            itemBuilder: (context, i) {
+              final gradient = gradients[i % gradients.length];
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient[0].withOpacity(0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(child: _buildInsightText(insights[i])),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(insights.length, (index) {
+            final isActive = index == _currentPage;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 14 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFF37C4BE)
+                    : Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 
@@ -1466,13 +1769,41 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       onTap: onTap,
       child: Container(
         height: 80,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 5))]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDEDED), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Container(height: 40, width: 40, decoration: BoxDecoration(color: const Color(0xFF2EA49E).withOpacity(0.12), borderRadius: BorderRadius.circular(14)), child: Icon(icon, size: 22, color: const Color(0xFF2EA49E))),
+            Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF37C4BE).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 22, color: const Color(0xFF2EA49E)),
+            ),
             const SizedBox(width: 10),
-            Expanded(child: Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1482,17 +1813,39 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _buildPeriodToggle() {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFC),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: ['Weekly', 'Monthly', 'Yearly'].map((p) {
           final isSelected = selectedPeriod == p;
           return Expanded(
             child: GestureDetector(
-              onTap: () { setState(() { selectedPeriod = p; }); _fetchChildChartData(); },
+              onTap: () {
+                setState(() {
+                  selectedPeriod = p;
+                });
+                _fetchChildChartData();
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(color: isSelected ? const Color(0xFF37C4BE) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-                child: Center(child: Text(p, style: TextStyle(color: isSelected ? Colors.white : Colors.black54, fontWeight: FontWeight.bold, fontSize: 13))),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF37C4BE)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    p,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black54,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
               ),
             ),
           );
@@ -1505,35 +1858,80 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     if (selectedPeriod == 'Weekly') {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(20)),
-        child: const Text("This Week", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2EA49E), fontSize: 13)),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7FAFC),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Text(
+          "This Week",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2EA49E),
+            fontSize: 13,
+          ),
+        ),
       );
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFC),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () {
               setState(() {
-                if (selectedPeriod == 'Yearly') selectedYear--;
-                else { if (selectedMonth == 1) { selectedMonth = 12; selectedYear--; } else { selectedMonth--; } }
+                if (selectedPeriod == 'Yearly')
+                  selectedYear--;
+                else {
+                  if (selectedMonth == 1) {
+                    selectedMonth = 12;
+                    selectedYear--;
+                  } else {
+                    selectedMonth--;
+                  }
+                }
               });
               _fetchChildChartData();
             },
-            child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_left_rounded, size: 24, color: Colors.black54)),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(
+                Icons.chevron_left_rounded,
+                size: 24,
+                color: Colors.black54,
+              ),
+            ),
           ),
           GestureDetector(
             onTap: _showMonthYearPicker,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
               child: Row(
                 children: [
-                  Text(selectedPeriod == 'Yearly' ? "$selectedYear" : "${monthNames[selectedMonth - 1]} $selectedYear", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2EA49E), fontSize: 13)),
+                  Text(
+                    selectedPeriod == 'Yearly'
+                        ? "$selectedYear"
+                        : "${monthNames[selectedMonth - 1]} $selectedYear",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2EA49E),
+                      fontSize: 13,
+                    ),
+                  ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFF2EA49E)),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: Color(0xFF2EA49E),
+                  ),
                 ],
               ),
             ),
@@ -1541,12 +1939,27 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           GestureDetector(
             onTap: () {
               setState(() {
-                if (selectedPeriod == 'Yearly') selectedYear++;
-                else { if (selectedMonth == 12) { selectedMonth = 1; selectedYear++; } else { selectedMonth++; } }
+                if (selectedPeriod == 'Yearly')
+                  selectedYear++;
+                else {
+                  if (selectedMonth == 12) {
+                    selectedMonth = 1;
+                    selectedYear++;
+                  } else {
+                    selectedMonth++;
+                  }
+                }
               });
               _fetchChildChartData();
             },
-            child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_right_rounded, size: 24, color: Colors.black54)),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 24,
+                color: Colors.black54,
+              ),
+            ),
           ),
         ],
       ),
@@ -1556,7 +1969,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _breakdownCard() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.10), blurRadius: 12, offset: const Offset(0, 6))]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEDEDED)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           _buildPeriodToggle(),
@@ -1568,7 +1992,14 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 children: const [
                   Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
                   SizedBox(width: 6),
-                  Text('Breakdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+                  Text(
+                    'Breakdown',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
                 ],
               ),
               _buildDateSelector(),
@@ -1582,7 +2013,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 centerSpaceRadius: 40,
                 sectionsSpace: 3,
                 sections: categoryPercentages.values.every((v) => v == 0)
-                    ? [PieChartSectionData(value: 100, color: Colors.grey.shade300, title: '0%', radius: 55, titleStyle: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold))]
+                    ? [
+                        PieChartSectionData(
+                          value: 100,
+                          color: Colors.grey.shade300,
+                          title: '0%',
+                          radius: 55,
+                          titleStyle: const TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ]
                     : _buildPieSections(),
               ),
             ),
@@ -1605,54 +2047,130 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: const Text("Select Date", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: const Text(
+                "Select Date",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                  fontSize: 18,
+                ),
+              ),
               content: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (selectedPeriod == 'Monthly') ...[
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: DropdownButton<int>(
                         value: tempMonth,
                         underline: const SizedBox(),
                         dropdownColor: Colors.white,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
-                        items: List.generate(12, (index) => DropdownMenuItem(value: index + 1, child: Text(monthNames[index], style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))))),
-                        onChanged: (val) { if (val != null) setDialogState(() => tempMonth = val); },
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF2EA49E),
+                        ),
+                        items: List.generate(
+                          12,
+                          (index) => DropdownMenuItem(
+                            value: index + 1,
+                            child: Text(
+                              monthNames[index],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2C3E50),
+                              ),
+                            ),
+                          ),
+                        ),
+                        onChanged: (val) {
+                          if (val != null)
+                            setDialogState(() => tempMonth = val);
+                        },
                       ),
                     ),
                     const SizedBox(width: 16),
                   ],
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: DropdownButton<int>(
                       value: tempYear,
                       underline: const SizedBox(),
                       dropdownColor: Colors.white,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF2EA49E),
+                      ),
                       items: List.generate(10, (index) {
                         int year = DateTime.now().year - 5 + index;
-                        return DropdownMenuItem(value: year, child: Text(year.toString(), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))));
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text(
+                            year.toString(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2C3E50),
+                            ),
+                          ),
+                        );
                       }),
-                      onChanged: (val) { if (val != null) setDialogState(() => tempYear = val); },
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => tempYear = val);
+                      },
                     ),
                   ),
                 ],
               ),
               actionsAlignment: MainAxisAlignment.spaceEvenly,
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37C4BE), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF37C4BE),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
+                  ),
                   onPressed: () {
-                    setState(() { selectedMonth = tempMonth; selectedYear = tempYear; });
+                    setState(() {
+                      selectedMonth = tempMonth;
+                      selectedYear = tempYear;
+                    });
                     _fetchChildChartData();
                     Navigator.pop(context);
                   },
-                  child: const Text("Apply", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    "Apply",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             );
@@ -1663,40 +2181,79 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   }
 
   Widget _legend() {
-    final List<String> ordered = ['Food & Restaurants', 'Grocery & Markets', 'Retail & Shopping', 'Transport', 'Medical', 'Digital & Subscriptions'];
+    final List<String> ordered = [
+      'Food & Restaurants',
+      'Grocery & Markets',
+      'Retail & Shopping',
+      'Transport',
+      'Medical',
+      'Digital & Subscriptions',
+    ];
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 24,
       runSpacing: 12,
-      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map((cat) {
-        final color = _getColorForCategory(cat);
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 14, height: 14, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-            const SizedBox(width: 6),
-            Text(cat, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))),
-          ],
-        );
-      }).toList(),
+      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map(
+        (cat) {
+          final color = _getColorForCategory(cat);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                cat,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ],
+          );
+        },
+      ).toList(),
     );
   }
 
   Color _getColorForCategory(String category) {
     switch (category) {
-      case 'Food & Restaurants': return Colors.orangeAccent;
-      case 'Grocery & Markets': return Colors.greenAccent;
-      case 'Retail & Shopping': return Colors.pinkAccent;
-      case 'Transport': return Colors.lightBlueAccent;
-      case 'Medical': return Colors.redAccent;
-      case 'Digital & Subscriptions': return Colors.purpleAccent;
-      default: return Colors.blueGrey;
+      case 'Food & Restaurants':
+        return Colors.orangeAccent;
+      case 'Grocery & Markets':
+        return Colors.greenAccent;
+      case 'Retail & Shopping':
+        return Colors.pinkAccent;
+      case 'Transport':
+        return Colors.lightBlueAccent;
+      case 'Medical':
+        return Colors.redAccent;
+      case 'Digital & Subscriptions':
+        return Colors.purpleAccent;
+      default:
+        return Colors.blueGrey;
     }
   }
 
   List<PieChartSectionData> _buildPieSections() {
-    return categoryPercentages.entries.where((entry) => entry.value > 0).map((entry) {
-      return PieChartSectionData(value: entry.value, color: _getColorForCategory(entry.key), title: '${entry.value.toStringAsFixed(0)}%', radius: 55, titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14));
+    return categoryPercentages.entries.where((entry) => entry.value > 0).map((
+      entry,
+    ) {
+      return PieChartSectionData(
+        value: entry.value,
+        color: _getColorForCategory(entry.key),
+        title: '${entry.value.toStringAsFixed(0)}%',
+        radius: 55,
+        titleStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      );
     }).toList();
   }
 }

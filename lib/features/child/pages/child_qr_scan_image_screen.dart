@@ -379,8 +379,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use your app theme colors if you have them
-    const primary = Color(0xFF2EA49E);
+    const primary = Color(0xFF37C4BE);
     const bg = Color(0xFFF7F8FA);
 
     final hasDemo = _demoQrString != null;
@@ -439,7 +438,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
     );
 
     // Segmented tabs like your other page (New Request / History)
-    Widget segmentedTabs() {
+    /* Widget segmentedTabs() {
       return Container(
         height: 52,
         padding: const EdgeInsets.all(6),
@@ -473,205 +472,276 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
           ],
         ),
       );
-    }
+    }*/
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: bg,
-        appBar: AppBar(
-          title: const Text("Pay by QR"),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          elevation: 0,
-          automaticallyImplyLeading: false, // ✅ no back arrow
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: AppBar(
+        title: const Text(
+          "Pay by QR",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800, // 🔥 FIX
+            color: Colors.black87,
+          ),
         ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
-            child: Column(
-              children: [
-                segmentedTabs(),
-                const SizedBox(height: 16),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 🔹 TITLE
+                    const Text(
+                      "Scan to Pay",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
 
-                Expanded(
-                  child: TabBarView(
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      // =========================
-                      // TAB 1: SCAN
-                      // =========================
-                      SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            sectionTitle("Scan QR from Gallery"),
-                            Text(
-                              "Pick an image that contains a QR code.",
-                              style: TextStyle(
-                                color: Colors.black.withOpacity(0.55),
-                              ),
+                    const SizedBox(height: 6),
+
+                    Text(
+                      "Upload a QR code image to complete your payment",
+                      style: TextStyle(
+                        color: Colors.black.withOpacity(0.55),
+                        fontSize: 13,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // 🔥 MAIN SCAN CARD
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
-                            const SizedBox(height: 14),
-
-                            ElevatedButton.icon(
-                              onPressed: (_loading || _creatingQr)
-                                  ? null
-                                  : _pickAndScan,
-                              icon: const Icon(Icons.image_outlined),
-                              label: Text(
-                                _loading ? "Scanning..." : "Choose QR Image",
-                              ),
-                              style: primaryBtnStyle(),
-                            ),
-                            const SizedBox(height: 14),
-
-                            if (_pickedPath != null) ...[
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Image.file(
-                                  File(_pickedPath!),
-                                  height: 240,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ],
-
-                            if (_error != null) errorBox(),
                           ],
                         ),
-                      ),
-
-                      // =========================
-                      // TAB 2: DEMO QR
-                      // =========================
-                      SingleChildScrollView(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            sectionTitle("Demo QR Generator"),
-                            Text(
-                              "Generate a QR then continue to payment confirmation.",
-                              style: TextStyle(
-                                color: Colors.black.withOpacity(0.55),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-
-                            OutlinedButton.icon(
-                              onPressed: (_loading || _creatingQr)
-                                  ? null
-                                  : _openGenerateDialog,
-                              icon: const Icon(Icons.qr_code_2_rounded),
-                              label: Text(
-                                _creatingQr
-                                    ? "Generating..."
-                                    : "Generate Demo QR",
-                              ),
-                              style: outlineBtnStyle(),
-                            ),
-
+                            // =========================
+                            // 🔥 IF DEMO EXISTS → SHOW QR
+                            // =========================
                             if (hasDemo) ...[
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.06),
-                                      blurRadius: 18,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
+                              QrImageView(data: _demoQrString!, size: 180),
+
+                              const SizedBox(height: 12),
+
+                              Text(
+                                '${_demoMerchantName ?? ""} • ${_demoAmount?.toStringAsFixed(2) ?? ""}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF2C3E50),
                                 ),
-                                child: Column(
-                                  children: [
-                                    QrImageView(
-                                      data: _demoQrString!,
-                                      size: 220,
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              if (_demoExpiresAt != null)
+                                Text(
+                                  'Expires: ${_formatDateTime(_demoExpiresAt!)}',
+                                  style: TextStyle(
+                                    color: Colors.black.withOpacity(0.55),
+                                  ),
+                                ),
+
+                              const SizedBox(height: 18),
+
+                              // ✅ USE BUTTON
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: (_loading || _creatingQr)
+                                      ? null
+                                      : _useDemoQr,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
                                     ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                  child: const Text("Use this QR"),
+                                ),
+                              ),
 
-                                    const SizedBox(height: 10),
+                              const SizedBox(height: 10),
 
-                                    if (_demoMerchantName != null &&
-                                        _demoAmount != null)
-                                      // ✅ Merchant + amount + Riyal icon (instead of "SAR")
-                                      Row(
+                              // CLEAR BUTTON
+                              OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _demoQrString = null;
+                                    _demoToken = null;
+                                    _demoExpiresAt = null;
+                                    _demoMerchantName = null;
+                                    _demoAmount = null;
+                                  });
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: primary,
+                                  side: BorderSide(color: primary),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                child: const Text("Clear"),
+                              ),
+                            ]
+                            // =========================
+                            // 🔹 OTHERWISE → NORMAL SCAN UI
+                            // =========================
+                            else ...[
+                              Container(
+                                height: 180,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF4F6F8),
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                    color: Colors.grey.shade200,
+                                  ),
+                                ),
+                                child: _pickedPath != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(22),
+                                        child: Image.file(
+                                          File(_pickedPath!),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : Column(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
+                                          Icon(
+                                            Icons.qr_code_scanner_rounded,
+                                            size: 60,
+                                            color: Colors.grey.shade400,
+                                          ),
+                                          const SizedBox(height: 10),
                                           Text(
-                                            '${_demoMerchantName!} • ',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF2C3E50),
+                                            "No QR selected",
+                                            style: TextStyle(
+                                              color: Colors.grey.shade500,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          Text(
-                                            _demoAmount!.toStringAsFixed(2),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w900,
-                                              color: Color(0xFF2C3E50),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          _sarIcon(size: 16),
                                         ],
                                       ),
+                              ),
 
-                                    const SizedBox(height: 6),
+                              const SizedBox(height: 22),
 
-                                    if (_demoExpiresAt != null)
-                                      Text(
-                                        'Expires: ${_formatDateTime(_demoExpiresAt!)}',
-                                        style: TextStyle(
-                                          color: Colors.black.withOpacity(0.55),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: (_loading || _creatingQr)
+                                      ? null
+                                      : _pickAndScan,
+                                  icon: const Icon(Icons.image_outlined),
+                                  label: Text(
+                                    _loading
+                                        ? "Scanning..."
+                                        : "Choose QR Image",
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+
+                            // ERROR
+                            if (_error != null) ...[
+                              const SizedBox(height: 14),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.10),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        _error!,
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-
-                                    const SizedBox(height: 14),
-
-                                    ElevatedButton(
-                                      onPressed: (_loading || _creatingQr)
-                                          ? null
-                                          : _useDemoQr,
-                                      style: primaryBtnStyle(),
-                                      child: const Text("Continue"),
-                                    ),
-                                    const SizedBox(height: 10),
-
-                                    OutlinedButton(
-                                      onPressed: (_loading || _creatingQr)
-                                          ? null
-                                          : () {
-                                              setState(() {
-                                                _demoQrString = null;
-                                                _demoToken = null;
-                                                _demoExpiresAt = null;
-                                                _demoMerchantName = null;
-                                                _demoAmount = null;
-                                              });
-                                            },
-                                      style: outlineBtnStyle(),
-                                      child: const Text("Clear"),
                                     ),
                                   ],
                                 ),
                               ),
                             ],
-
-                            if (_error != null) errorBox(),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              // 🔥 FLOATING DEMO BUTTON
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: FloatingActionButton(
+                  backgroundColor: primary,
+                  elevation: 6,
+                  onPressed: _openGenerateDialog,
+                  child: const Icon(Icons.qr_code_rounded, color: Colors.white),
+                ),
+              ),
+            ],
           ),
         ),
       ),

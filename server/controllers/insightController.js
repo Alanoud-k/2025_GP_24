@@ -1,4 +1,4 @@
-import { getChildInsights, getChildChartData, getParentChartData, getGoalInsights } from '../services/insightService.js';
+import { getChildInsights, getChildChartData, getParentChartData, getGoalInsights, getParentInsights } from '../services/insightService.js';
 
 // 1. (الرسائل الذكية)
 export async function getInsights(req, res) {
@@ -51,4 +51,15 @@ export async function getGoalsInsights(req, res) {
         console.error(error);
         res.status(500).json({ error: "Failed to fetch goal insights" });
     }
+}
+
+export async function getParentInsightsController(req, res) {
+    try {
+        const parentId = req.params.parentId;
+        const insights = await getParentInsights(parentId);
+        res.json(insights);
+    } catch (error) {
+    console.error("PARENT INSIGHTS ERROR:", error);
+    res.status(500).json({ error: "Failed to fetch parent insights" });
+}
 }

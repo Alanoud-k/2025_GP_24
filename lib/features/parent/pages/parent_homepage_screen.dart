@@ -35,7 +35,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   int unreadCount = 0;
   String get token => widget.token;
   int get parentId => widget.parentId;
-
+  List<String> insights = [];
   static const TextStyle fintechLabelStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,
@@ -50,6 +50,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initialize();
       _fetchUnread();
+      _fetchInsights();
     });
   }
 
@@ -229,49 +230,70 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       });
     }
   }
-Widget _notifIconWithBadge({
-  required int unread,
-  required VoidCallback onTap,
-}) {
-  return InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(30),
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        const Icon(
-          Icons.notifications_none_rounded,
-          size: 28,
-          color: Colors.black87,
-        ),
 
-        if (unread > 0)
-          Positioned(
-            right: -2,
-            top: -4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              child: Center(
-                child: Text(
-                  unread > 99 ? "99+" : unread.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+  Widget _notifIconWithBadge({
+    required int unread,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(
+            Icons.notifications_none_rounded,
+            size: 28,
+            color: Colors.black87,
+          ),
+
+          if (unread > 0)
+            Positioned(
+              right: -2,
+              top: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                child: Center(
+                  child: Text(
+                    unread > 99 ? "99+" : unread.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
+
+  Future<void> _fetchInsights() async {
+    final url = Uri.parse("${ApiConfig.baseUrl}/api/insights/parent/$parentId");
+
+    final res = await http.get(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      setState(() {
+        insights = List<String>.from(data.map((i) => i["message"]));
+      });
+    }
+    print("INSIGHTS RESPONSE:");
+    print(res.body);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -310,54 +332,62 @@ Widget _notifIconWithBadge({
                       backgroundColor: Colors.teal,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-GestureDetector(
-  onTap: () async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ParentNotificationsScreen(
-          parentId: parentId,
-          token: token,
-        ),
-      ),
-    );
+                    GestureDetector(
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ParentNotificationsScreen(
+                              parentId: parentId,
+                              token: token,
+                            ),
+                          ),
+                        );
 
-    // ✅ بعد الرجوع حدّث العداد
-    await _fetchUnread();
-  },
-  child: Stack(
-    clipBehavior: Clip.none,
-    children: [
-      const Icon(
-        Icons.notifications_none_rounded,
-        size: 28,
-        color: Colors.black87,
-      ),
+                        // ✅ بعد الرجوع حدّث العداد
+                        await _fetchUnread();
+                      },
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(
+                            Icons.notifications_none_rounded,
+                            size: 28,
+                            color: Colors.black87,
+                          ),
 
-      if (unreadCount > 0)
-        Positioned(
-          right: -2,
-          top: -2,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE53935),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Text(
-              unreadCount > 99 ? "99+" : unreadCount.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ),
-    ],
-  ),
-),
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: -2,
+                              top: -2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE53935),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Text(
+                                  unreadCount > 99
+                                      ? "99+"
+                                      : unreadCount.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
 
@@ -430,6 +460,10 @@ GestureDetector(
                 ),
 
                 const SizedBox(height: 22),
+
+                if (insights.isNotEmpty) _insightsSection(),
+
+                const SizedBox(height: 18),
 
                 // Actions row 1
                 Row(
@@ -605,6 +639,140 @@ GestureDetector(
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInsightText(String message) {
+    final parts = message.split("SAR");
+
+    const textStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 15,
+      fontWeight: FontWeight.w800,
+      height: 1.35,
+    );
+
+    // No SAR → normal text
+    if (parts.length == 1) {
+      return Text(message, style: textStyle);
+    }
+
+    List<InlineSpan> spans = [];
+
+    for (int i = 0; i < parts.length; i++) {
+      spans.add(TextSpan(text: parts[i], style: textStyle));
+
+      if (i != parts.length - 1) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Image.asset(
+                "assets/icons/Sar.png",
+                height: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  int _currentPage = 0;
+
+  Widget _insightsSection() {
+    final gradients = [
+      [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
+      [Color(0xFF7E57C2), Color(0xFFB39DDB)],
+      [Color(0xFFFF8A65), Color(0xFFFFB199)],
+      [Color(0xFF42A5F5), Color(0xFF90CAF9)],
+    ];
+
+    final controller = PageController(viewportFraction: 0.88);
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 150,
+          child: PageView.builder(
+            controller: controller,
+            itemCount: insights.length,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
+            itemBuilder: (context, i) {
+              final gradient = gradients[i % gradients.length];
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient[0].withOpacity(0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(child: _buildInsightText(insights[i])),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Dots indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(insights.length, (index) {
+            final isActive = index == _currentPage;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 14 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFF37C4BE)
+                    : Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }
