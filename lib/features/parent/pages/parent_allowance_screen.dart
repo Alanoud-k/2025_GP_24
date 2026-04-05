@@ -1,95 +1,10 @@
-// import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:my_app/utils/check_auth.dart'; // ✅ ADD THIS
-
-// class ParentAllowanceScreen extends StatefulWidget {
-//   final int parentId;
-//   final String token;
-
-//   const ParentAllowanceScreen({
-//     super.key,
-//     required this.parentId,
-//     required this.token,
-//   });
-
-//   @override
-//   State<ParentAllowanceScreen> createState() => _ParentAllowanceScreenState();
-// }
-
-// class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
-//   bool _loading = true;
-//   String? token;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initializeAuth();
-//   }
-
-//   Future<void> _initializeAuth() async {
-//     await checkAuthStatus(context);
-
-//     final prefs = await SharedPreferences.getInstance();
-//     token = prefs.getString("token") ?? widget.token;
-
-//     if (token == null || token!.isEmpty) {
-//       _forceLogout();
-//       return;
-//     }
-
-//     if (mounted) setState(() => _loading = false);
-//   }
-
-//   void _forceLogout() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     await prefs.clear();
-
-//     if (mounted) {
-//       Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
-//     }
-//   }
-
-//   Future<void> _handleAuth() async {
-//     await checkAuthStatus(context); // ✅ redirects if token expired
-//     if (mounted) {
-//       setState(() => _loading = false);
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     if (_loading) {
-//       return const Scaffold(
-//         backgroundColor: Color(0xFFF7F8FA),
-//         body: Center(child: CircularProgressIndicator(color: Colors.teal)),
-//       );
-//     }
-
-//     return const Scaffold(
-//       backgroundColor: Color(0xFFF7F8FA),
-//       body: SafeArea(
-//         child: Center(
-//           child: Text(
-//             "Allowance page is empty for now.",
-//             style: TextStyle(
-//               fontSize: 16,
-//               color: Colors.black54,
-//               fontWeight: FontWeight.w500,
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:my_app/core/api_config.dart'; // ✅ NEW
+import 'package:my_app/core/api_config.dart';
 
 class ParentAllowanceScreen extends StatefulWidget {
   final int parentId;
@@ -109,9 +24,8 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
   bool _loading = true;
   String? token;
 
-  // --- State Variables for UI ---
   int _selectedChildIndex = 0;
-  double _savePercentage = 0; // Default 20% Savings
+  double _savePercentage = 0;
   final TextEditingController _amountController = TextEditingController(
     text: "100",
   );
@@ -176,8 +90,8 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
         final List data = (decoded is List)
             ? decoded
             : (decoded is Map && decoded["children"] is List)
-            ? decoded["children"]
-            : [];
+                ? decoded["children"]
+                : [];
 
         setState(() {
           _children = data
@@ -185,18 +99,18 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                 (c) => {
                   'childId': c['childId'] ?? c['id'],
                   'name': c['firstName'] ?? c['firstname'] ?? 'Unnamed',
-                  'defaultSavingRatio': (c['defaultSavingRatio'] ?? 0)
-                      .toDouble(),
+                  'defaultSavingRatio':
+                      (c['defaultSavingRatio'] ?? 0).toDouble(),
                 },
               )
               .toList();
 
           _childrenLoading = false;
           _selectedChildIndex = 0;
+
           if (_children.isNotEmpty) {
             final defaultRatio =
                 (_children[0]['defaultSavingRatio'] ?? 0.0) as double;
-
             _savePercentage = defaultRatio.clamp(0.0, 1.0);
           }
         });
@@ -262,7 +176,6 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     final cleaned = raw.replaceAll(',', '');
     final parsedAmount = double.tryParse(cleaned);
 
-    // Validation
     if (_isAutoTransferEnabled) {
       if (cleaned.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -287,7 +200,6 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     }
 
     final amountToSend = _isAutoTransferEnabled ? parsedAmount! : 0.0;
-    final savePctInt = (_savePercentage * 100).round().clamp(0, 100);
 
     final url = Uri.parse('${ApiConfig.baseUrl}/api/allowance/$childId');
     debugPrint("PUT allowance => $url");
@@ -355,11 +267,12 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
       );
     }
 
-    double amount = double.tryParse(_amountController.text) ?? 0.0;
-    double saveAmount = amount * _savePercentage;
-    double spendAmount = amount - saveAmount;
+    final double amount = double.tryParse(_amountController.text) ?? 0.0;
+    final double saveAmount = amount * _savePercentage;
+    final double spendAmount = amount - saveAmount;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -370,6 +283,9 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -499,10 +415,11 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                       const SizedBox(height: 10),
                       TextField(
                         controller: _amountController,
-                        enabled: _isAutoTransferEnabled, // ✅ NEW
+                        enabled: _isAutoTransferEnabled,
                         keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                          FilteringTextInputFormatter.digitsOnly,
                         ],
                         style: const TextStyle(
                           fontSize: 32,
@@ -518,21 +435,26 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                         ),
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (_) {
+                          if (mounted) setState(() {});
+                        },
                       ),
                       const Divider(height: 30),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            "Allocation Split",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF2C3E50),
+                          const Expanded(
+                            child: Text(
+                              "Allocation Split",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF2C3E50),
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             "${(_savePercentage * 100).toInt()}% Save",
                             style: const TextStyle(
@@ -545,19 +467,23 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
                       const SizedBox(height: 20),
 
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildAllocationBox(
-                            "Spend",
-                            spendAmount,
-                            Icons.shopping_bag_outlined,
-                            const Color(0xFF37C4BE),
+                          Expanded(
+                            child: _buildAllocationBox(
+                              "Spend",
+                              spendAmount,
+                              Icons.shopping_bag_outlined,
+                              const Color(0xFF37C4BE),
+                            ),
                           ),
-                          _buildAllocationBox(
-                            "Save",
-                            saveAmount,
-                            Icons.account_balance_wallet_rounded,
-                            const Color(0xFF7E57C2),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildAllocationBox(
+                              "Save",
+                              saveAmount,
+                              Icons.account_balance_wallet_rounded,
+                              const Color(0xFF7E57C2),
+                            ),
                           ),
                         ],
                       ),
@@ -663,7 +589,6 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     Color color,
   ) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.38,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
@@ -685,6 +610,8 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
           const SizedBox(height: 4),
           Text(
             "${amount.toStringAsFixed(0)} SAR",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

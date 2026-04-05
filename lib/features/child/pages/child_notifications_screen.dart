@@ -1,5 +1,3 @@
-// lib/screens/child_notifications_screen.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -24,7 +22,6 @@ class _ChildNotificationsScreenState
     extends State<ChildNotificationsScreen> {
   bool _loading = true;
   bool _markingRead = false;
-
   List<dynamic> _notifications = [];
 
   @override
@@ -46,15 +43,9 @@ class _ChildNotificationsScreenState
         url,
         headers: {"Authorization": "Bearer ${widget.token}"},
       );
-
-      if (!mounted) return;
-
-      setState(() {
-        for (final n in _notifications) {
-          n["isread"] = true;
-        }
-      });
-    } catch (_) {} finally {
+    } catch (_) {
+      // تجاهل
+    } finally {
       _markingRead = false;
     }
   }
@@ -82,9 +73,6 @@ class _ChildNotificationsScreenState
           _notifications = (list is List) ? list : [];
           _loading = false;
         });
-
-        // بعد ما يفتح الصفحة = تعتبر مقروءة
-        await _markAllRead();
       } else {
         setState(() => _loading = false);
       }
@@ -200,103 +188,119 @@ class _ChildNotificationsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Notifications"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all),
-            onPressed: _notifications.isEmpty ? null : _markAllRead,
-          )
-        ],
-      ),
-      backgroundColor: const Color(0xffF7F8FA),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _notifications.isEmpty
-              ? const Center(child: Text("No notifications yet"))
-              : RefreshIndicator(
-                  onRefresh: _fetchNotifications,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _notifications.length,
-                    itemBuilder: (_, i) {
-                      final n = _notifications[i];
-                      final type = (n["type"] ?? "").toString();
-                      final message = (n["message"] ?? "").toString();
-                      final isRead = n["isread"] == true;
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          _markAllRead();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Notifications"),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.done_all),
+              onPressed: _notifications.isEmpty
+                  ? null
+                  : () async {
+                      await _markAllRead();
+                      if (!mounted) return;
+                      setState(() {
+                        for (final n in _notifications) {
+                          n["isread"] = true;
+                        }
+                      });
+                    },
+            )
+          ],
+        ),
+        backgroundColor: const Color(0xffF7F8FA),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _notifications.isEmpty
+                ? const Center(child: Text("No notifications yet"))
+                : RefreshIndicator(
+                    onRefresh: _fetchNotifications,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _notifications.length,
+                      itemBuilder: (_, i) {
+                        final n = _notifications[i];
+                        final type = (n["type"] ?? "").toString();
+                        final message = (n["message"] ?? "").toString();
+                        final isRead = n["isread"] == true;
 
-                      return Container(
-                        padding: const EdgeInsets.all(14),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: isRead
-                              ? Colors.white
-                              : const Color(0xFFEAF7F6),
-                          borderRadius: BorderRadius.circular(14),
-                          border: isRead
-                              ? null
-                              : Border.all(
-                                  color: const Color(0xFF37C4BE)
-                                      .withOpacity(0.3),
-                                ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12.withOpacity(0.05),
-                              blurRadius: 6,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: _color(type).withOpacity(0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                _icon(type),
-                                color: _color(type),
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  _messageWithSar(message),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    _formatTime(n["createdAt"]),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                    ),
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: isRead
+                                ? Colors.white
+                                : const Color(0xFFEAF7F6),
+                            borderRadius: BorderRadius.circular(14),
+                            border: isRead
+                                ? null
+                                : Border.all(
+                                    color: const Color(0xFF37C4BE)
+                                        .withOpacity(0.3),
                                   ),
-                                ],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12.withOpacity(0.05),
+                                blurRadius: 6,
                               ),
-                            ),
-                            if (!isRead)
+                            ],
+                          ),
+                          child: Row(
+                            children: [
                               Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF37C4BE),
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: _color(type).withOpacity(0.12),
                                   shape: BoxShape.circle,
                                 ),
+                                child: Icon(
+                                  _icon(type),
+                                  color: _color(type),
+                                  size: 22,
+                                ),
                               ),
-                          ],
-                        ),
-                      );
-                    },
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _messageWithSar(message),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      _formatTime(n["createdAt"]),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (!isRead)
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF37C4BE),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
+      ),
     );
   }
 }

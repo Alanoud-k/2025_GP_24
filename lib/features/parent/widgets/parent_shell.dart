@@ -132,51 +132,52 @@ class ParentBottomNavBar extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Left group
-                    Row(
-                      children: [
-                        _NavItem(
-                          asset: "assets/icons/Reward.svg",
-                          label: "Chores",
-                          isSelected: currentIndex == 1,
-                          iconSize: iconSize,
-                          onTap: () => onTap(1),
-                        ),
-                        const SizedBox(width: 20),
-                        _NavItem(
-                          asset: "assets/icons/Card.svg",
-                          label: "Allowance",
-                          isSelected: currentIndex == 2,
-                          iconSize: iconSize,
-                          onTap: () => onTap(2),
-                        ),
-                      ],
-                    ),
+  children: [
+    Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _NavItem(
+            asset: "assets/icons/Reward.svg",
+            label: "Chores",
+            isSelected: currentIndex == 1,
+            iconSize: iconSize,
+            onTap: () => onTap(1),
+          ),
+          _NavItem(
+            asset: "assets/icons/Card.svg",
+            label: "Allowance",
+            isSelected: currentIndex == 2,
+            iconSize: iconSize,
+            onTap: () => onTap(2),
+          ),
+        ],
+      ),
+    ),
 
-                    // Right group
-                    Row(
-                      children: [
-                        _NavItem(
-                          asset: "assets/icons/Gift.svg",
-                          label: "Rewards",
-                          isSelected: currentIndex == 3,
-                          iconSize: iconSize,
-                          onTap: () => onTap(3),
-                        ),
-                        const SizedBox(width: 20),
-                        _NavItem(
-                          asset: "assets/icons/More.svg",
-                          label: "More",
-                          isSelected: currentIndex == 4,
-                          iconSize: iconSize,
-                          onTap: () => onTap(4),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+    Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _NavItem(
+            asset: "assets/icons/Gift.svg",
+            label: "Rewards",
+            isSelected: currentIndex == 3,
+            iconSize: iconSize,
+            onTap: () => onTap(3),
+          ),
+          _NavItem(
+            asset: "assets/icons/More.svg",
+            label: "More",
+            isSelected: currentIndex == 4,
+            iconSize: iconSize,
+            onTap: () => onTap(4),
+          ),
+        ],
+      ),
+    ),
+  ],
+)
               ),
             ),
           ),

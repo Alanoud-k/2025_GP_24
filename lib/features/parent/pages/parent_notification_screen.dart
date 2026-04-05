@@ -1,5 +1,3 @@
-// lib/screens/parent_notifications_screen.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -23,19 +21,12 @@ class ParentNotificationsScreen extends StatefulWidget {
 class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
   bool _loading = true;
   List<dynamic> _notifications = [];
-
   bool _markingRead = false;
 
   @override
   void initState() {
     super.initState();
     _fetchNotifications();
-  }
-
-  // ✅ لا نستخدم dispose للـ mark-read
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   Future<void> _markParentRead() async {
@@ -51,16 +42,8 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
         url,
         headers: {"Authorization": "Bearer ${widget.token}"},
       );
-
-      // ✅ حدّث محليًا عشان الـ UI يبين مقروء
-      if (!mounted) return;
-      setState(() {
-        for (final n in _notifications) {
-          n["isread"] = true;
-        }
-      });
     } catch (_) {
-      // تجاهل (مو لازم نكسر الصفحة)
+      // تجاهل الخطأ
     } finally {
       _markingRead = false;
     }
@@ -89,10 +72,6 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
           _notifications = (list is List) ? list : [];
           _loading = false;
         });
-
-        // ✅ بعد ما تجيبهم وتعرضهم: سوِ mark-all-read
-        // (هذا يحقق: "يصير unread لين أشوف الصفحة")
-        await _markParentRead();
       } else {
         setState(() => _loading = false);
       }
@@ -105,7 +84,6 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
   String _formatCreatedAt(dynamic value) {
     if (value == null) return "";
     final raw = value.toString();
-    // ISO: 2025-11-29T20:15:32.123Z
     return raw.replaceFirst('T', ' ').split('.').first;
   }
 
@@ -186,141 +164,146 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Notifications",
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
-        actions: [
-          // ✅ زر اختياري: Mark all read يدويًا (لو تبينه)
-          IconButton(
-            tooltip: "Mark all as read",
-            icon: const Icon(Icons.done_all_rounded),
-            onPressed: _notifications.isEmpty ? null : _markParentRead,
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          _markParentRead();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            "Notifications",
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
-        ],
-      ),
-      backgroundColor: const Color(0xffF7F8FA),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _notifications.isEmpty
-              ? const Center(
-                  child: Text(
-                    "No notifications yet",
-                    style: TextStyle(fontSize: 16, color: Colors.black54),
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _fetchNotifications,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _notifications.length,
-                    itemBuilder: (_, i) {
-                      final n = _notifications[i];
-                      final type = (n["type"] ?? "").toString();
-                      final color = _typeColor(type);
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 0,
+          actions: [
+            IconButton(
+              tooltip: "Mark all as read",
+              icon: const Icon(Icons.done_all_rounded),
+              onPressed: _notifications.isEmpty
+                  ? null
+                  : () async {
+                      await _markParentRead();
+                      if (!mounted) return;
+                      setState(() {
+                        for (final n in _notifications) {
+                          n["isread"] = true;
+                        }
+                      });
+                    },
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xffF7F8FA),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _notifications.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No notifications yet",
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _fetchNotifications,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _notifications.length,
+                      itemBuilder: (_, i) {
+                        final n = _notifications[i];
+                        final type = (n["type"] ?? "").toString();
+                        final color = _typeColor(type);
+                        final isRead = (n["isread"] == true);
 
-                      final isRead = (n["isread"] == true);
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          // ✅ Unread background
-                          color: isRead
-                              ? Colors.white
-                              : const Color(0xFFEAF7F6),
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12.withOpacity(0.04),
-                              blurRadius: 6,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                          border: isRead
-                              ? null
-                              : Border.all(
-                                  color: const Color(0xFF37C4BE)
-                                      .withOpacity(0.35),
-                                ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Icon circle
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(_typeIcon(type),
-                                  color: color, size: 22),
-                            ),
-                            const SizedBox(width: 12),
-
-                            // Content
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // message
-                                  _messageAmountInline(
-                                    (n["message"] ?? "").toString(),
-                                  ),
-
-                                  const SizedBox(height: 6),
-
-                                  // child name (اختياري)
-                                  if (n["childName"] != null &&
-                                      (n["childName"].toString().trim().isNotEmpty))
-                                    Text(
-                                      "Child: ${n["childName"]}",
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.black54,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-
-                                  const SizedBox(height: 6),
-
-                                  // time
-                                  Text(
-                                    _formatCreatedAt(n["createdAt"]),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black45,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // ✅ Unread dot
-                            if (!isRead) ...[
-                              const SizedBox(width: 10),
-                              Container(
-                                width: 9,
-                                height: 9,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF37C4BE),
-                                  shape: BoxShape.circle,
-                                ),
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isRead
+                                ? Colors.white
+                                : const Color(0xFFEAF7F6),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12.withOpacity(0.04),
+                                blurRadius: 6,
+                                offset: const Offset(0, 4),
                               ),
                             ],
-                          ],
-                        ),
-                      );
-                    },
+                            border: isRead
+                                ? null
+                                : Border.all(
+                                    color: const Color(0xFF37C4BE)
+                                        .withOpacity(0.35),
+                                  ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child:
+                                    Icon(_typeIcon(type), color: color, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _messageAmountInline(
+                                      (n["message"] ?? "").toString(),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    if (n["childName"] != null &&
+                                        (n["childName"]
+                                            .toString()
+                                            .trim()
+                                            .isNotEmpty))
+                                      Text(
+                                        "Child: ${n["childName"]}",
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.black54,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _formatCreatedAt(n["createdAt"]),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black45,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (!isRead) ...[
+                                const SizedBox(width: 10),
+                                Container(
+                                  width: 9,
+                                  height: 9,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF37C4BE),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
+      ),
     );
   }
 }

@@ -89,7 +89,10 @@ export const updateChoreStatus = async (req, res) => {
       RETURNING *
     `;
 
-    if (updatedResult.length === 0) return res.status(404).json({ error: "Chore not found" });
+    if (updatedResult.length === 0) {
+      return res.status(404).json({ error: "Chore not found" });
+    }
+
     const chore = updatedResult[0];
 
     if (status === 'Completed') {
@@ -98,6 +101,15 @@ export const updateChoreStatus = async (req, res) => {
         SET "rewardkeys" = COALESCE("rewardkeys", 0) + ${chore.rewardkeys}
         WHERE "childid" = ${chore.childid}
       `;
+
+      await createNotification(
+        chore.parentid,
+        chore.childid,
+        'CHORE_APPROVED',
+        `Chore approved: ${chore.chorename}`,
+        null,
+        chore.choreid
+      );
     }
 
     return res.json(chore);

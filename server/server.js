@@ -22,6 +22,8 @@ import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
 import qrRoutes from "./routes/qrRoutes.js";
 import insightRoutes from './routes/insightRoutes.js';
+//
+import allowanceRoutes from "./routes/allowanceRoutes.js";
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,7 +96,7 @@ app.use("/api", parentRoutes);
 app.use('/api/chores', choreRoutes);
 app.use("/api/qr", qrRoutes);
 app.use('/api/insights', insightRoutes);
-
+app.use("/api/allowance", allowanceRoutes);
 // Create payment
 app.post("/api/create-payment/:parentId", createPayment);
 
