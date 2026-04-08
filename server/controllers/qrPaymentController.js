@@ -6,14 +6,12 @@ async function predictCategory(merchantName) {
   const name = String(merchantName || "").trim();
   if (!name) return { category: null, source: null };
 
-  // 1) Keyword mapping
   const keywordCategory = keywordMap(name);
   if (keywordCategory) {
     console.log(`[QR ML] Categorized by keyword: ${keywordCategory}`);
     return { category: keywordCategory, source: "KEYWORD" };
   }
 
-  // 2) ML fallback
   try {
     const mlUrl = process.env.ML_URL || "https://hassalah-ai.up.railway.app";
 
@@ -131,7 +129,7 @@ export async function createQrRequest(req, res) {
           ${amount},
           ${receiverAccountId},
           'PENDING',
-          ${expiresAt.toISOString()}
+          ${expiresAt}
         )
     `;
 
