@@ -32,15 +32,13 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   String? _pickedPath;
   String? _error;
 
-  // Demo QR (generated from backend)
   bool _creatingQr = false;
-  String? _demoQrString; // full payload: HASSALA_PAY:1:<token>
+  String? _demoQrString;
   String? _demoToken;
   DateTime? _demoExpiresAt;
   String? _demoMerchantName;
   double? _demoAmount;
 
-  // Inputs for demo QR
   final TextEditingController _merchantCtrl = TextEditingController(
     text: "Demo Merchant",
   );
@@ -56,7 +54,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   }
 
   String _extractToken(String raw) {
-    // Expected format: HASSALA_PAY:1:<token>
     final parts = raw.split(':');
     if (parts.length == 3 && parts[0] == 'HASSALA_PAY' && parts[1] == '1') {
       return parts[2];
@@ -90,7 +87,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
 
       setState(() => _pickedPath = file.path);
 
-      // ---- Scan QR from Image using ML Kit ----
       final inputImage = InputImage.fromFilePath(file.path);
       final scanner = BarcodeScanner(formats: [BarcodeFormat.qrCode]);
 
@@ -126,7 +122,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   Future<void> _goToConfirmFromQrRaw(String raw) async {
     final token = _extractToken(raw);
 
-    // Resolve token from backend (merchant + amount + expiry)
     final info = await _resolveToken(token);
 
     if (!mounted) return;
@@ -158,6 +153,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
         "Content-Type": "application/json",
       },
     );
+
+    print('DEBUG resolve status: ${res.statusCode}');
+    print('DEBUG resolve body: ${res.body}');
 
     if (res.statusCode != 200) {
       try {
@@ -225,9 +223,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 Row(
                   children: [
                     Expanded(
@@ -298,9 +294,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
         throw Exception("Please enter a valid amount.");
       }
 
-      // Backend endpoint you will implement:
-      // POST /api/qr/create
-      // Body: { merchantName, amount }
       final url = Uri.parse('${widget.baseUrl}/api/qr/create');
 
       final res = await http.post(
@@ -309,7 +302,11 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
           "Authorization": "Bearer ${widget.token}",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"merchantName": merchantName, "amount": amount}),
+        body: jsonEncode({
+          "merchantName": merchantName,
+          "amount": amount,
+          "expiresInMinutes": 60,
+        }),
       );
 
       if (res.statusCode != 200) {
@@ -349,6 +346,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   Future<void> _useDemoQr() async {
     if (_demoQrString == null) return;
 
+    print('DEBUG qrString: $_demoQrString');
+    print('DEBUG token: $_demoToken');
+
     setState(() {
       _error = null;
       _loading = true;
@@ -364,10 +364,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
     }
   }
 
-  // ======================
-  // Riyal icon (SAR symbol)
-  // Make sure pubspec.yaml includes: assets/icons/Sar.png
-  // ======================
   Widget _sarIcon({double size = 18}) {
     return Image.asset(
       'assets/icons/Sar.png',
@@ -384,110 +380,22 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
 
     final hasDemo = _demoQrString != null;
 
-    Widget errorBox() {
-      return Container(
-        margin: const EdgeInsets.only(top: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                _error!,
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    Widget sectionTitle(String t) => Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        t,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-          color: Color(0xFF2C3E50),
-        ),
-      ),
-    );
-
-    ButtonStyle primaryBtnStyle() => ElevatedButton.styleFrom(
-      backgroundColor: primary,
-      foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      elevation: 0,
-    );
-
-    ButtonStyle outlineBtnStyle() => OutlinedButton.styleFrom(
-      foregroundColor: primary,
-      side: const BorderSide(color: primary),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-    );
-
-    // Segmented tabs like your other page (New Request / History)
-    /* Widget segmentedTabs() {
-      return Container(
-        height: 52,
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: TabBar(
-          indicatorSize: TabBarIndicatorSize.tab, // ⭐ THIS IS THE FIX
-          indicator: BoxDecoration(
-            color: primary,
-            borderRadius: BorderRadius.circular(22),
-          ),
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.black45,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 15,
-          ),
-          dividerColor: Colors.transparent,
-          tabs: const [
-            Tab(text: "Scan"),
-            Tab(text: "Demo QR"),
-          ],
-        ),
-      );
-    }*/
-
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           "Pay by QR",
           style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.w800, // 🔥 FIX
+            fontWeight: FontWeight.w800,
             color: Colors.black87,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF7FAFC),
         elevation: 0,
+        scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: Container(
@@ -506,7 +414,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🔹 TITLE
                     const Text(
                       "Scan to Pay",
                       style: TextStyle(
@@ -515,9 +422,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                         color: Color(0xFF2C3E50),
                       ),
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       "Upload a QR code image to complete your payment",
                       style: TextStyle(
@@ -525,10 +430,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                         fontSize: 13,
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // 🔥 MAIN SCAN CARD
                     Expanded(
                       child: Container(
                         width: double.infinity,
@@ -547,14 +449,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // =========================
-                            // 🔥 IF DEMO EXISTS → SHOW QR
-                            // =========================
                             if (hasDemo) ...[
                               QrImageView(data: _demoQrString!, size: 180),
-
                               const SizedBox(height: 12),
-
                               Text(
                                 '${_demoMerchantName ?? ""} • ${_demoAmount?.toStringAsFixed(2) ?? ""}',
                                 style: const TextStyle(
@@ -562,9 +459,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                   color: Color(0xFF2C3E50),
                                 ),
                               ),
-
                               const SizedBox(height: 6),
-
                               if (_demoExpiresAt != null)
                                 Text(
                                   'Expires: ${_formatDateTime(_demoExpiresAt!)}',
@@ -572,10 +467,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                     color: Colors.black.withOpacity(0.55),
                                   ),
                                 ),
-
                               const SizedBox(height: 18),
-
-                              // ✅ USE BUTTON
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
@@ -595,10 +487,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                   child: const Text("Use this QR"),
                                 ),
                               ),
-
                               const SizedBox(height: 10),
-
-                              // CLEAR BUTTON
                               OutlinedButton(
                                 onPressed: () {
                                   setState(() {
@@ -621,11 +510,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                 ),
                                 child: const Text("Clear"),
                               ),
-                            ]
-                            // =========================
-                            // 🔹 OTHERWISE → NORMAL SCAN UI
-                            // =========================
-                            else ...[
+                            ] else ...[
                               Container(
                                 height: 180,
                                 width: double.infinity,
@@ -664,9 +549,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                         ],
                                       ),
                               ),
-
                               const SizedBox(height: 22),
-
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
@@ -675,9 +558,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                       : _pickAndScan,
                                   icon: const Icon(Icons.image_outlined),
                                   label: Text(
-                                    _loading
-                                        ? "Scanning..."
-                                        : "Choose QR Image",
+                                    _loading ? "Scanning..." : "Choose QR Image",
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primary,
@@ -692,8 +573,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                 ),
                               ),
                             ],
-
-                            // ERROR
                             if (_error != null) ...[
                               const SizedBox(height: 14),
                               Container(
@@ -729,8 +608,6 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                   ],
                 ),
               ),
-
-              // 🔥 FLOATING DEMO BUTTON
               Positioned(
                 bottom: 20,
                 right: 20,
