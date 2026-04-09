@@ -429,7 +429,6 @@ export async function getParentInsights(parentId) {
     } else {
         return [
             { message: "No spending recorded this week" },
-            { message: "Insights will appear once activity begins" },
         ];
     }
 } else {
