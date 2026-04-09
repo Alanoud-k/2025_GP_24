@@ -1012,116 +1012,119 @@ class SarAmount extends StatelessWidget {
 
 //////////////////////////////////////////
 /// GOALS INSIGHTS /////////
-class _GoalInsights extends StatelessWidget {
+class _GoalInsights extends StatefulWidget {
   final List<String> insights;
 
   const _GoalInsights({required this.insights});
 
   @override
-  Widget build(BuildContext context) {
-    if (insights.isEmpty) return const SizedBox();
+  State<_GoalInsights> createState() => _GoalInsightsState();
+}
 
-    final colors = [
-      const Color(0xFF37C4BE),
-      const Color(0xFF7E57C2),
-      const Color(0xFFFFA726),
-      const Color(0xFF42A5F5),
+class _GoalInsightsState extends State<_GoalInsights> {
+  int _currentPage = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.insights.isEmpty) return const SizedBox();
+
+    final gradients = [
+      [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
+      [Color(0xFF7E57C2), Color(0xFFB39DDB)],
+      [Color(0xFFFF8A65), Color(0xFFFFB199)],
+      [Color(0xFF42A5F5), Color(0xFF90CAF9)],
     ];
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Icon(Icons.lightbulb_rounded, color: Color(0xFF2EA49E)),
-                SizedBox(width: 6),
-                Text(
-                  "Goal Insights",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2C3E50),
+    final controller = PageController(viewportFraction: 0.88);
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 150,
+          child: PageView.builder(
+            controller: controller,
+            itemCount: widget.insights.length,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
+            itemBuilder: (context, i) {
+              final gradient = gradients[i % gradients.length];
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          SizedBox(
-            height: 100,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: insights.length,
-              itemBuilder: (context, i) {
-                final color = colors[i % colors.length];
-
-                return Container(
-                  width: 260,
-                  margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [color, color.withOpacity(0.75)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient[0].withOpacity(0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 12),
                     ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withOpacity(0.35),
-                        blurRadius: 14,
-                        offset: const Offset(0, 8),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ],
-                  ),
-
-                  child: Row(
-                    children: [
-                      Container(
-                        height: 38,
-                        width: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.auto_awesome,
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        widget.insights[i],
+                        style: const TextStyle(
                           color: Colors.white,
-                          size: 20,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          height: 1.35,
                         ),
                       ),
-
-                      const SizedBox(width: 12),
-
-                      Expanded(
-                        child: Text(
-                          insights[i],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // ✅ dots indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(widget.insights.length, (index) {
+            final isActive = index == _currentPage;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 14 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFF37C4BE)
+                    : Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }
