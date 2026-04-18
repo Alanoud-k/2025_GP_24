@@ -17,9 +17,9 @@ export async function getChildChart(req, res) {
         const childId = req.params.childId;
         const month = req.query.month ? Number(req.query.month) : new Date().getMonth() + 1;
         const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
-        const period = req.query.period || 'month'; // week, month, year
-
-        const chartData = await getChildChartData(childId, month, year, period);
+        const day = req.query.day ? Number(req.query.day) : new Date().getDate(); 
+        const period = req.query.period || 'month';
+        const chartData = await getChildChartData(childId, month, year, period, day); 
         res.status(200).json(chartData);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch child chart data" });
@@ -32,10 +32,10 @@ export async function getParentChart(req, res) {
         const parentId = req.params.parentId;
         const month = req.query.month ? Number(req.query.month) : new Date().getMonth() + 1;
         const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
+        const day = req.query.day ? Number(req.query.day) : new Date().getDate(); 
         const childName = req.query.childName; 
-        const period = req.query.period || 'month'; // week, month, year
-
-        const chartData = await getParentChartData(parentId, month, year, childName, period);
+        const period = req.query.period || 'month';
+        const chartData = await getParentChartData(parentId, month, year, childName, period, day); 
         res.status(200).json(chartData);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch parent chart data" });
