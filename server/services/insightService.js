@@ -197,10 +197,10 @@ if (goal.length > 0) {
 
                 if (change > 20) {
                     insights.push({
-  type: "increase",
-  title: "Spending Increase",
-  message: `${row.transactioncategory} spending increased by ${Math.round(change)}% this week.`
-});
+                        type: "increase",
+                        title: "Spending Increase",
+                        message: `${row.transactioncategory} spending increased by ${Math.round(change)}% this week.`
+                });
                 }
             }
         });
@@ -244,6 +244,7 @@ export async function getGoalInsights(childId) {
         if (progress === 0) {
             insights.push({
                 type: "goal-start",
+                title: "Start Saving",
                 message: `Start saving for your ${goalName}!`
             });
 
@@ -253,17 +254,29 @@ export async function getGoalInsights(childId) {
 
             insights.push({
                 type: "goal-close",
+                title: "Almost There",
                 message: `Only ${remaining.toFixed(0)} SAR left to reach your ${goalName}!`
             });
 
         } else {
             insights.push({
                 type: "goal-progress",
+                title: "Goal Progress",
                 message: `You're ${progress}% closer to your ${goalName}!`
             });
         }
 
     });
+
+    if (insights.length === 0) {
+        return [
+            {
+                type: "empty",
+                title: "No Goals Yet",
+                message: "Start your first goal and track your progress here."
+            }
+        ];
+    }
 
     return insights;
 }

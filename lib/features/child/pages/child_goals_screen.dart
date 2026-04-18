@@ -39,7 +39,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
 
   bool _loading = true;
   List<Goal> _goals = [];
-  List<String> _goalInsights = [];
+  List<Map<String, dynamic>> _goalInsights = [];
   double _savingBalance = 0.0;
   double _spendingBalance = 0.0;
 
@@ -261,7 +261,7 @@ class _ChildGoalsScreenState extends State<ChildGoalsScreen> {
         if (!mounted) return;
 
         setState(() {
-          _goalInsights = List<String>.from(data.map((i) => i["message"]));
+          _goalInsights = List<Map<String, dynamic>>.from(data);
         });
       }
     } catch (e) {
@@ -1013,7 +1013,7 @@ class SarAmount extends StatelessWidget {
 //////////////////////////////////////////
 /// GOALS INSIGHTS /////////
 class _GoalInsights extends StatefulWidget {
-  final List<String> insights;
+  final List<Map<String, dynamic>> insights;
 
   const _GoalInsights({required this.insights});
 
@@ -1024,16 +1024,28 @@ class _GoalInsights extends StatefulWidget {
 class _GoalInsightsState extends State<_GoalInsights> {
   int _currentPage = 0;
 
+  final Map<String, Map<String, dynamic>> insightStyles = {
+    "goal-start": {
+      "colors": [Color(0xFF42A5F5), Color(0xFF90CAF9)],
+      "icon": Icons.flag,
+    },
+    "goal-progress": {
+      "colors": [Color(0xFF5C6BC0), Color(0xFF9FA8DA)],
+      "icon": Icons.trending_up,
+    },
+    "goal-close": {
+      "colors": [Color(0xFFFFA726), Color(0xFFFFCC80)],
+      "icon": Icons.emoji_events,
+    },
+    "empty": {
+      "colors": [Color(0xFFB0BEC5), Color(0xFFECEFF1)],
+      "icon": Icons.info_outline,
+    },
+  };
+
   @override
   Widget build(BuildContext context) {
     if (widget.insights.isEmpty) return const SizedBox();
-
-    final gradients = [
-      [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
-      [Color(0xFF7E57C2), Color(0xFFB39DDB)],
-      [Color(0xFFFF8A65), Color(0xFFFFB199)],
-      [Color(0xFF42A5F5), Color(0xFF90CAF9)],
-    ];
 
     final controller = PageController(viewportFraction: 0.88);
 
@@ -1048,7 +1060,15 @@ class _GoalInsightsState extends State<_GoalInsights> {
               setState(() => _currentPage = index);
             },
             itemBuilder: (context, i) {
-              final gradient = gradients[i % gradients.length];
+              final insight = widget.insights[i];
+
+              final type = insight["type"] ?? "empty";
+              final title = insight["title"] ?? "";
+              final message = insight["message"] ?? "";
+
+              final style = insightStyles[type] ?? insightStyles["empty"]!;
+              final gradient = style["colors"] as List<Color>;
+              final icon = style["icon"] as IconData;
 
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
@@ -1068,31 +1088,33 @@ class _GoalInsightsState extends State<_GoalInsights> {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        widget.insights[i],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          height: 1.35,
+                    Row(
+                      children: [
+                        Icon(icon, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        height: 1.35,
                       ),
                     ),
                   ],
