@@ -36,7 +36,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   int unreadCount = 0;
   String get token => widget.token;
   int get parentId => widget.parentId;
-  List<String> insights = [];
+  List<Map<String, dynamic>> insights = [];
   static const TextStyle fintechLabelStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,
@@ -288,7 +288,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       final data = jsonDecode(res.body);
 
       setState(() {
-        insights = List<String>.from(data.map((i) => i["message"]));
+        insights = List<Map<String, dynamic>>.from(data);
       });
     }
     print("INSIGHTS RESPONSE:");
@@ -467,170 +467,170 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                 const SizedBox(height: 18),
 
                 // Actions row 1
-Row(
-  children: [
-    Expanded(
-      child: _ActionCard(
-        title: "Add Money",
-        asset: "assets/icons/addMoney.png",
-        labelStyle: fintechLabelStyle,
-        onTap: () async {
-          if (!parentHasCard) {
-            _showTealInfoBar("Please add a card first");
-            return;
-          }
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionCard(
+                        title: "Add Money",
+                        asset: "assets/icons/addMoney.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () async {
+                          if (!parentHasCard) {
+                            _showTealInfoBar("Please add a card first");
+                            return;
+                          }
 
-          final added = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ParentAddMoneyScreen(
-                parentId: parentId,
-                token: token,
-              ),
-            ),
-          );
+                          final added = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentAddMoneyScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
+                            ),
+                          );
 
-          if (added == true) {
-            await _refreshFromDb();
-          }
-        },
-      ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-      child: _ActionCard(
-        title: "Transactions",
-        asset: "assets/icons/transactions.png",
-        labelStyle: fintechLabelStyle,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ParentTransactionsScreen(
-                parentId: parentId,
-                token: token,
-                baseUrl: ApiConfig.baseUrl,
-              ),
-            ),
-          );
-        },
-      ),
-    ),
-  ],
-),
-
-const SizedBox(height: 12),
-
-// Actions row 2
-Row(
-  children: [
-    Expanded(
-      child: _ActionCard(
-        title: parentHasCard ? "My Card" : "Add Card",
-        asset: parentHasCard
-            ? "assets/icons/myCard.png"
-            : "assets/icons/addCard.png",
-        labelStyle: fintechLabelStyle,
-        onTap: () async {
-          if (parentHasCard) {
-            final updated = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ParentMyCardScreen(
-                  parentId: parentId,
-                  token: token,
+                          if (added == true) {
+                            await _refreshFromDb();
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ActionCard(
+                        title: "Transactions",
+                        asset: "assets/icons/transactions.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentTransactionsScreen(
+                                parentId: parentId,
+                                token: token,
+                                baseUrl: ApiConfig.baseUrl,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            );
-            if (updated == true) {
-              await _refreshFromDb();
-            }
-          } else {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ParentAddCardScreen(
-                  parentId: parentId,
-                  token: token,
+
+                const SizedBox(height: 12),
+
+                // Actions row 2
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionCard(
+                        title: parentHasCard ? "My Card" : "Add Card",
+                        asset: parentHasCard
+                            ? "assets/icons/myCard.png"
+                            : "assets/icons/addCard.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () async {
+                          if (parentHasCard) {
+                            final updated = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ParentMyCardScreen(
+                                  parentId: parentId,
+                                  token: token,
+                                ),
+                              ),
+                            );
+                            if (updated == true) {
+                              await _refreshFromDb();
+                            }
+                          } else {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ParentAddCardScreen(
+                                  parentId: parentId,
+                                  token: token,
+                                ),
+                              ),
+                            );
+                            if (result == true) {
+                              await _refreshFromDb();
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ActionCard(
+                        title: "Insights",
+                        asset: "assets/icons/insights.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentInsightsScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            );
-            if (result == true) {
-              await _refreshFromDb();
-            }
-          }
-        },
-      ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-      child: _ActionCard(
-        title: "Insights",
-        asset: "assets/icons/insights.png",
-        labelStyle: fintechLabelStyle,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ParentInsightsScreen(
-                parentId: parentId,
-                token: token,
-              ),
-            ),
-          );
-        },
-      ),
-    ),
-  ],
-),
 
-const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-// Actions row 3
-Row(
-  children: [
-    Expanded(
-      child: _ActionCard(
-        title: "My Children",
-        asset: "assets/icons/myKids.png",
-        labelStyle: fintechLabelStyle,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ParentSelectChildScreen(
-                parentId: parentId,
-                token: token,
-              ),
-            ),
-          );
-        },
-      ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-      child: _ActionCard(
-        title: "Transfer Money",
-        asset: "assets/icons/transactions.png",
-        labelStyle: fintechLabelStyle,
-        onTap: () {
-          Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => ParentSelectChildScreen(
-      parentId: parentId,
-      token: token,
-      transferMode: true,
-    ),
-  ),
-);
-        },
-      ),
-    ),
-  ],
-),
+                // Actions row 3
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionCard(
+                        title: "My Children",
+                        asset: "assets/icons/myKids.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentSelectChildScreen(
+                                parentId: parentId,
+                                token: token,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ActionCard(
+                        title: "Transfer Money",
+                        asset: "assets/icons/transactions.png",
+                        labelStyle: fintechLabelStyle,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ParentSelectChildScreen(
+                                parentId: parentId,
+                                token: token,
+                                transferMode: true,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
 
-const SizedBox(height: 30),
+                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -681,6 +681,33 @@ const SizedBox(height: 30),
 
   int _currentPage = 0;
 
+  final Map<String, Map<String, dynamic>> insightStyles = {
+    "top-spender": {
+      "colors": [Color(0xFFEF5350), Color(0xFFE57373)],
+      "icon": Icons.emoji_events,
+    },
+    "average": {
+      "colors": [Color(0xFF42A5F5), Color(0xFF90CAF9)],
+      "icon": Icons.bar_chart,
+    },
+    "category": {
+      "colors": [Color(0xFFAB47BC), Color(0xFFCE93D8)],
+      "icon": Icons.pie_chart,
+    },
+    "total": {
+      "colors": [Color(0xFF26A69A), Color(0xFF80CBC4)],
+      "icon": Icons.account_balance_wallet,
+    },
+    "trend": {
+      "colors": [Color(0xFFFF7043), Color(0xFFFFAB91)],
+      "icon": Icons.trending_up,
+    },
+    "empty": {
+      "colors": [Color(0xFFB0BEC5), Color(0xFFECEFF1)],
+      "icon": Icons.info_outline,
+    },
+  };
+
   Widget _insightsSection() {
     final gradients = [
       [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
@@ -702,7 +729,15 @@ const SizedBox(height: 30),
               setState(() => _currentPage = index);
             },
             itemBuilder: (context, i) {
-              final gradient = gradients[i % gradients.length];
+              final insight = insights[i];
+              final type = insight["type"] ?? "empty";
+              final title = insight["title"] ?? "";
+              final message = insight["message"] ?? "";
+
+              final style = insightStyles[type] ?? insightStyles["empty"]!;
+
+              final gradient = style["colors"] as List<Color>;
+              final icon = style["icon"] as IconData;
 
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
@@ -723,23 +758,35 @@ const SizedBox(height: 30),
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: Colors.white,
-                        size: 26,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(icon, color: Colors.white),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(child: _buildInsightText(insights[i])),
+                    const SizedBox(height: 12),
+                    _buildInsightText(message),
                   ],
                 ),
               );

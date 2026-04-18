@@ -360,10 +360,22 @@ export async function getParentInsights(parentId) {
         // ----------------------------------------
         if (children.length === 0) {
             return [
-                { message: "You haven’t added any children yet" },
-                { message: "Add a child to start tracking spending" },
-                { message: "Insights will appear once activity begins" },
-            ];
+    {
+        type: "empty",
+        title: "No Children",
+        message: "You haven’t added any children yet"
+    },
+    {
+        type: "empty",
+        title: "Get Started",
+        message: "Add a child to start tracking spending"
+    },
+    {
+        type: "empty",
+        title: "Insights",
+        message: "Insights will appear once activity begins"
+    },
+];
         }
 
         const childIds = children.map(c => c.childid);
@@ -380,7 +392,13 @@ export async function getParentInsights(parentId) {
         `;
 
         if (accounts.length === 0) {
-            return [{ message: "No spending data available yet" }];
+            return [
+  {
+    type: "empty",
+    title: "No Data",
+    message: "No spending data available yet"
+  }
+];
         }
 
         const accountIds = accounts.map(a => a.accountid);
@@ -422,13 +440,25 @@ export async function getParentInsights(parentId) {
 
     // ✅ Always return ONLY 2 messages
     if (last > 0) {
+    return [
+        {
+            type: "empty",
+            title: "No Activity",
+            message: "No spending recorded this week"
+        },
+        {
+            type: "trend",
+            title: "Spending Trend",
+            message: "Spending decreased compared to last week"
+        },
+    ];
+} else {
         return [
-            { message: "No spending recorded this week" },
-            { message: "Spending decreased compared to last week" },
-        ];
-    } else {
-        return [
-            { message: "No spending recorded this week" },
+        {
+            type: "empty",
+            title: "No Activity",
+            message: "No spending recorded this week"
+        }
         ];
     }
 } else {
@@ -436,21 +466,27 @@ export async function getParentInsights(parentId) {
 
             if (children.length === 1) {
                 insights.push({
-                    message: `${children[0].firstname} spent ${Number(sorted[0].total).toFixed(0)} SAR this week`
-                });
+    type: "top-spender",
+    title: "Weekly Spending",
+    message: `${children[0].firstname} spent ${Number(sorted[0].total).toFixed(0)} SAR this week`
+});
             } else {
                 const top = sorted[0];
                 const second = sorted[1];
 
                 if (second && Number(top.total) === Number(second.total)) {
                     insights.push({
+                        type: "top-spender",
+                      title: "Top Spender",
                         message: "All children spent similar amounts this week"
                     });
                 } else {
                     const name = children.find(c => c.childid === top.childid)?.firstname;
                     insights.push({
-                        message: `${name} spent the most this week (${Number(top.total).toFixed(0)} SAR)`
-                    });
+                     type: "top-spender",
+                      title: "Top Spender",
+                       message: `${name} spent the most this week (${Number(top.total).toFixed(0)} SAR)`
+        });
                 }
             }
         }
@@ -461,8 +497,10 @@ export async function getParentInsights(parentId) {
         if (children.length > 1 && totalSpending > 0) {
             const avg = totalSpending / children.length;
             insights.push({
-                message: `Average spending per child is ${avg.toFixed(0)} SAR`
-            });
+    type: "average",
+    title: "Average Spending",
+    message: `Average spending per child is ${avg.toFixed(0)} SAR`
+});
         }
 
         // ----------------------------------------
@@ -493,10 +531,14 @@ export async function getParentInsights(parentId) {
                 const percent = Math.round((max / totalSpending) * 100);
 
                 insights.push({
-                    message: `${percent}% of spending was on ${topCategory}`
-                });
+    type: "category",
+    title: "Top Category",
+    message: `${percent}% of spending was on ${topCategory}`
+});
             } else {
                 insights.push({
+                    type: "category",
+                    title: "Top Category",
                     message: "Spending is balanced across categories"
                 });
             }
@@ -507,6 +549,8 @@ export async function getParentInsights(parentId) {
         // ----------------------------------------
         if (totalSpending > 0) {
             insights.push({
+                type: "total",
+                title: "Weekly Total",
                 message: `Total spending this week is ${totalSpending.toFixed(0)} SAR`
             });
         }
@@ -530,14 +574,20 @@ export async function getParentInsights(parentId) {
 
             if (Math.abs(change) < 5) {
                 insights.push({
+                    type: "trend",
+                   title: "Spending Trend",
                     message: "Spending remained consistent compared to last week"
                 });
             } else if (change > 0) {
                 insights.push({
+                    type: "trend",
+                    title: "Spending Trend",
                     message: `Spending increased by ${Math.round(change)}% compared to last week`
                 });
             } else {
                 insights.push({
+                    type: "trend",
+                    title: "Spending Trend",
                     message: `Spending decreased by ${Math.round(Math.abs(change))}% compared to last week`
                 });
             }
