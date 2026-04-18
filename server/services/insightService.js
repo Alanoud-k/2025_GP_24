@@ -33,14 +33,16 @@ export async function getChildInsights(childId) {
 
         if (totalSpending > 0) {
     insights.push({
-        type: "weekly",
-        message: `You spent ${totalSpending.toFixed(2)} SAR this week.`
-    });
+  type: "weekly",
+  title: "Weekly Spending",
+  message: `You spent ${totalSpending.toFixed(2)} SAR this week.`
+});
 } else {
     insights.push({
-        type: "weekly-none",
-        message: "You haven't spent anything yet this week."
-    });
+  type: "empty",
+  title: "No Spending",
+  message: "You haven't spent anything yet this week."
+});
 }
 
         // --------------------------------------------------
@@ -71,9 +73,10 @@ export async function getChildInsights(childId) {
             const percentage = Math.round((maxAmount / totalSpending) * 100);
 
             insights.push({
-                type: "category",
-                message: `You spent ${percentage}% of your money on ${maxCategory} this week.`
-            });
+  type: "category",
+  title: "Top Category",
+  message: `You spent ${percentage}% of your money on ${maxCategory} this week.`
+});
         }
 
         // --------------------------------------------------
@@ -92,9 +95,10 @@ export async function getChildInsights(childId) {
 
         if (yesterdayCount === 0) {
             insights.push({
-                type: "self-control",
-                message: "You didn’t spend anything yesterday, nice self-control!"
-            });
+  type: "self-control",
+  title: "Self Control",
+  message: "You didn’t spend anything yesterday, nice self-control!"
+});
         }
 
         // --------------------------------------------------
@@ -127,7 +131,8 @@ if (goal.length > 0) {
         if (progress === 0) {
 
             insights.push({
-                type: "goal-start",
+                type: "goal-start", 
+                title: "Start Saving",
                 message: `Start saving to reach your ${goalName} goal!`
             });
 
@@ -136,7 +141,8 @@ if (goal.length > 0) {
             const remaining = target - saved;
 
             insights.push({
-                type: "goal-close",
+                type: "goal-close", 
+                title: "Almost There",
                 message: `Only ${remaining.toFixed(0)} SAR left to reach your ${goalName}!`
             });
 
@@ -144,6 +150,7 @@ if (goal.length > 0) {
 
             insights.push({
                 type: "goal-progress",
+                title: "Goal Progress",
                 message: `Great progress! You're ${progress}% closer to your ${goalName} goal.`
             });
 
@@ -190,9 +197,10 @@ if (goal.length > 0) {
 
                 if (change > 20) {
                     insights.push({
-                        type: "increase",
-                        message: `${row.transactioncategory} spending increased by ${Math.round(change)}% this week.`
-                    });
+  type: "increase",
+  title: "Spending Increase",
+  message: `${row.transactioncategory} spending increased by ${Math.round(change)}% this week.`
+});
                 }
             }
         });

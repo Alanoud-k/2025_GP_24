@@ -1224,8 +1224,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     String p = selectedPeriod == 'Weekly'
         ? 'week'
         : selectedPeriod == 'Yearly'
-            ? 'year'
-            : 'month';
+        ? 'year'
+        : 'month';
     final url = Uri.parse(
       '${widget.baseUrl}/api/insights/child-chart/${widget.childId}?month=$selectedMonth&year=$selectedYear&period=$p',
     );
@@ -1289,7 +1289,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     } catch (_) {}
   }
 
-  List<String> insights = [];
+  List<Map<String, dynamic>> insights = [];
   int currentInsight = 0;
 
   Future<void> _fetchInsights() async {
@@ -1305,7 +1305,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          insights = List<String>.from(data.map((item) => item["message"]));
+          insights = List<Map<String, dynamic>>.from(data);
         });
       }
     } catch (e) {
@@ -1519,10 +1519,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(fontSize: 12.5, color: Colors.white70),
                 ),
               ),
             ],
@@ -1710,6 +1707,41 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
   int _currentPage = 0;
 
+  final Map<String, Map<String, dynamic>> insightStyles = {
+    "weekly": {
+      "colors": [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
+      "icon": Icons.calendar_today,
+    },
+    "category": {
+      "colors": [Color(0xFFAB47BC), Color(0xFFCE93D8)],
+      "icon": Icons.pie_chart,
+    },
+    "self-control": {
+      "colors": [Color(0xFF66BB6A), Color(0xFFA5D6A7)],
+      "icon": Icons.self_improvement,
+    },
+    "goal-start": {
+      "colors": [Color(0xFF42A5F5), Color(0xFF90CAF9)],
+      "icon": Icons.flag,
+    },
+    "goal-progress": {
+      "colors": [Color(0xFF5C6BC0), Color(0xFF9FA8DA)],
+      "icon": Icons.trending_up,
+    },
+    "goal-close": {
+      "colors": [Color(0xFFFFA726), Color(0xFFFFCC80)],
+      "icon": Icons.emoji_events,
+    },
+    "increase": {
+      "colors": [Color(0xFFFF7043), Color(0xFFFFAB91)],
+      "icon": Icons.trending_up,
+    },
+    "empty": {
+      "colors": [Color(0xFFB0BEC5), Color(0xFFECEFF1)],
+      "icon": Icons.info_outline,
+    },
+  };
+
   Widget _insightsSection() {
     final gradients = [
       [const Color(0xFF37C4BE), const Color(0xFF6EE7DF)],
@@ -1731,7 +1763,14 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               setState(() => _currentPage = index);
             },
             itemBuilder: (context, i) {
-              final gradient = gradients[i % gradients.length];
+              final insight = insights[i];
+              final type = insight["type"] ?? "empty";
+              final title = insight["title"] ?? "";
+              final message = insight["message"] ?? "";
+
+              final style = insightStyles[type] ?? insightStyles["empty"]!;
+              final gradient = style["colors"] as List<Color>;
+              final icon = style["icon"] as IconData;
 
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
@@ -1751,23 +1790,27 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: Colors.white,
-                        size: 26,
-                      ),
+                    Row(
+                      children: [
+                        Icon(icon, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(child: _buildInsightText(insights[i])),
+                    const SizedBox(height: 10),
+                    _buildInsightText(message),
                   ],
                 ),
               );
@@ -1951,8 +1994,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               GestureDetector(
                 onTap: _showMonthYearPicker,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -2251,30 +2296,30 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       alignment: WrapAlignment.center,
       spacing: 24,
       runSpacing: 12,
-      children: ordered
-          .where((cat) => (categoryPercentages[cat] ?? 0) > 0)
-          .map((cat) {
-        final color = _getColorForCategory(cat);
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              cat,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2C3E50),
+      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map(
+        (cat) {
+          final color = _getColorForCategory(cat);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
-            ),
-          ],
-        );
-      }).toList(),
+              const SizedBox(width: 6),
+              Text(
+                cat,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ],
+          );
+        },
+      ).toList(),
     );
   }
 
@@ -2298,9 +2343,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   }
 
   List<PieChartSectionData> _buildPieSections() {
-    return categoryPercentages.entries
-        .where((entry) => entry.value > 0)
-        .map((entry) {
+    return categoryPercentages.entries.where((entry) => entry.value > 0).map((
+      entry,
+    ) {
       return PieChartSectionData(
         value: entry.value,
         color: _getColorForCategory(entry.key),
