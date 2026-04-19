@@ -8,7 +8,9 @@ import {
   getUnreadCountChild,
   markChildNotificationsRead,
   markParentNotificationsRead,  
-  markSingleNotificationRead    /// NEW
+  markSingleNotificationRead,    
+  saveDeviceToken,
+
 } from "../controllers/notificationController.js";
 
 const router = express.Router();
@@ -25,4 +27,7 @@ router.post("/mark-read/parent/:parentId", markParentNotificationsRead);
 router.post("/mark-read/child/:childId", markChildNotificationsRead);
 
 router.post("/mark-read/:notificationId", markSingleNotificationRead);
+
+router.post("/save-device-token", saveDeviceToken);
+
 export default router;

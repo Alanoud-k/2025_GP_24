@@ -43,6 +43,9 @@ void main() async {
   //  Local notifications setup
   await NotificationService().init();
   await NotificationService().requestPermissions();
+  await NotificationService().setupFCM();
+
+  
 
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString("token");
@@ -50,6 +53,21 @@ void main() async {
   final childId = prefs.getInt("childId");
   final parentId = prefs.getInt("parentId");
 
+
+ if (token != null && role != null) {
+    if (role == "Parent" && parentId != null) {
+      await NotificationService().sendTokenToServer(
+        authToken: token,
+        parentId: parentId,
+      );
+    } else if (role == "Child" && childId != null) {
+      await NotificationService().sendTokenToServer(
+        authToken: token,
+        childId: childId,
+      );
+    }
+  }
+  
   Widget startPage = const SplashView();
 
   if (token != null && role != null) {

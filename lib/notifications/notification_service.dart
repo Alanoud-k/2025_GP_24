@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:my_app/core/api_config.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +56,7 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
 
-    // iOS (حتى لو ما تركزون عليه)
+   
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
@@ -89,4 +92,56 @@ class NotificationService {
       payload: message.data.isNotEmpty ? message.data.toString() : null,
     );
   }
+  Future<void> setupFCM() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // طلب الصلاحيات
+  await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  // جلب التوكن
+  String? token = await messaging.getToken();
+
+  print("🔥 FCM TOKEN:");
+  print(token);
+
+  // تحديث التوكن لو تغير
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+    print("🔄 NEW TOKEN:");
+    print(newToken);
+  });
+}
+
+
+Future<void> sendTokenToServer({
+  required String authToken,
+  int? parentId,
+  int? childId,
+}) async {
+  final messaging = FirebaseMessaging.instance;
+  final fcmToken = await messaging.getToken();
+
+  if (fcmToken == null) return;
+
+  final url = Uri.parse('${ApiConfig.baseUrl}/api/notifications/save-device-token');
+
+  final response = await http.post(
+    url,
+    headers: {
+      'Authorization': 'Bearer $authToken',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'parentId': parentId,
+      'childId': childId,
+      'fcmToken': fcmToken,
+    }),
+  );
+
+  debugPrint("SAVE TOKEN STATUS: ${response.statusCode}");
+  debugPrint("SAVE TOKEN BODY: ${response.body}");
+}
 }

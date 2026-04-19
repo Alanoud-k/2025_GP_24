@@ -342,3 +342,26 @@ export const createNotification = async (parentId, childId, type, message, money
     console.error("❌ Failed to create notification:", err);
   }
 };
+export const saveDeviceToken = async (req, res) => {
+  try {
+    const { parentId, childId, fcmToken } = req.body;
+
+    if (!fcmToken) {
+      return res.status(400).json({ error: "Missing fcmToken" });
+    }
+
+    await sql`
+      INSERT INTO "DeviceToken" ("parentid", "childid", "fcmtoken")
+      VALUES (${parentId ?? null}, ${childId ?? null}, ${fcmToken})
+      ON CONFLICT ("fcmtoken")
+      DO UPDATE SET
+        "parentid" = EXCLUDED."parentid",
+        "childid" = EXCLUDED."childid"
+    `;
+
+    return res.status(200).json({ message: "Device token saved successfully" });
+  } catch (err) {
+    console.error("❌ saveDeviceToken error:", err);
+    return res.status(500).json({ error: "Failed to save device token" });
+  }
+};

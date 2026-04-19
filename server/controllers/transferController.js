@@ -1,6 +1,7 @@
 // server/controllers/transferController.js  (ESM)
 
 import { sql } from "../config/db.js";
+    import admin from "../config/firebaseAdmin.js";
 
 /**
  * Ensure parent has a wallet + ParentAccount
@@ -213,7 +214,39 @@ await s`
   )
 `;
 
+console.log("🔥 START PUSH");
 
+const tokens = await sql`
+  SELECT "fcmtoken"
+  FROM "DeviceToken"
+  WHERE "childid" = ${childId}
+`;
+
+console.log("TOKENS:", tokens);
+
+const tokenList = tokens.map(t => t.fcmtoken);
+
+console.log("TOKEN LIST:", tokenList);
+
+if (tokenList.length > 0) {
+  console.log("🚀 SENDING PUSH...");
+
+  try {
+    const response = await admin.messaging().sendEachForMulticast({
+      tokens: tokenList,
+      notification: {
+        title: "Money Received 💰",
+        body: `Your parent sent you SAR ${amt.toFixed(2)}`,
+      },
+    });
+
+    console.log("✅ PUSH RESPONSE:", response);
+  } catch (err) {
+    console.error("❌ PUSH ERROR:", err);
+  }
+} else {
+  console.log("❌ NO TOKENS FOUND");
+}
 
     // 5) Respond
     return res.json({

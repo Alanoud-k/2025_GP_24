@@ -1,4 +1,5 @@
 import { sql } from "../config/db.js";
+import admin from "../config/firebaseAdmin.js";
 
 
 // =============================================
@@ -42,6 +43,24 @@ export const requestMoney = async (req, res) => {
         ${requestId}
       )
     `;
+
+const tokens = await sql`
+  SELECT "fcmtoken"
+  FROM "DeviceToken"
+  WHERE "childid" = ${childId}
+`;
+
+const tokenList = tokens.map(t => t.fcmtoken);
+
+if (tokenList.length > 0) {
+  await admin.messaging().sendEachForMulticast({
+    tokens: tokenList,
+    notification: {
+      title: "Money Received 💰",
+      body: `Your parent sent you SAR ${amt.toFixed(2)}`,
+    },
+  });
+}    
 
 
     res.status(200).json({ message: "Request submitted successfully" });

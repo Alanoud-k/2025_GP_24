@@ -1,5 +1,6 @@
 // server/controllers/rewardController.js
 import { sql } from "../config/db.js";
+    import admin from "../config/firebaseAdmin.js";
 
 // 1. إنشاء مكافأة جديدة (للوالد)
 export const createReward = async (req, res) => {
@@ -119,6 +120,23 @@ export const redeemReward = async (req, res) => {
       VALUES (${child.parentid}, ${childId}, 'REWARD_REDEEMED', ${message}, FALSE, CURRENT_TIMESTAMP)
     `;
 
+const tokens = await sql`
+  SELECT "fcmtoken"
+  FROM "DeviceToken"
+  WHERE "childid" = ${childId}
+`;
+
+const tokenList = tokens.map(t => t.fcmtoken);
+
+if (tokenList.length > 0) {
+  await admin.messaging().sendEachForMulticast({
+    tokens: tokenList,
+    notification: {
+      title: "Money Received 💰",
+      body: `Your parent sent you SAR ${amt.toFixed(2)}`,
+    },
+  });
+}
     res.status(200).json({ message: "Reward redeemed successfully!" });
   } catch (error) {
     console.error("Redeem error:", error);

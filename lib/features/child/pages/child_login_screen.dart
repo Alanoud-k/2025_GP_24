@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/notifications/notification_service.dart';
 
 class ChildLoginScreen extends StatefulWidget {
   const ChildLoginScreen({super.key});
@@ -75,6 +76,11 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
         await prefs.setString("token", data['token']);
         await prefs.setString("role", "Child");
         await prefs.setInt("childId", data['childId']);
+
+      await NotificationService().sendTokenToServer(
+  authToken: data['token'],
+  childId: data['childId'],
+);
 
         await prefs.setInt(
           "tokenIssuedAt",
