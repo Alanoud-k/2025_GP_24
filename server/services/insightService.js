@@ -585,4 +585,261 @@ export async function getChildInsights(childId) {
     }
 }
 
-// ... بقية الملف كما هو (الرسوم البيانية ورسائل الأب) ...
+export async function getGoalInsights(childId) {
+    const goals = await sql`
+        SELECT g.goalname, g.targetamount, a.balance
+        FROM "Goal" g
+        JOIN "Account" a ON g.accountid = a.accountid
+        WHERE g.childid = ${childId}
+        AND g.goalstatus = 'InProgress'
+        ORDER BY g.goalid DESC LIMIT 3
+    `;
+
+    const insights = [];
+    goals.forEach(goal => {
+        const goalName = goal.goalname;
+        const target = Number(goal.targetamount ?? 0);
+        const saved = Number(goal.balance ?? 0);
+
+        if (target <= 0) return;
+        const progress = Math.round((saved / target) * 100);
+
+        if (progress === 0) {
+            insights.push({ type: "goal-start", title: "Start Saving", message: `Start saving for your ${goalName}!` });
+        } else if (progress >= 80 && progress < 100) {
+            const remaining = target - saved;
+            insights.push({ type: "goal-close", title: "Almost There", message: `Only ${remaining.toFixed(0)} SAR left to reach your ${goalName}!` });
+        } else {
+            insights.push({ type: "goal-progress", title: "Goal Progress", message: `You're ${progress}% closer to your ${goalName}!` });
+        }
+    });
+
+    if (insights.length === 0) {
+        return [{ type: "empty", title: "No Goals Yet", message: "Start your first goal and track your progress here." }];
+    }
+    return insights;
+}
+
+export async function getChildChartData(childId, month, year, period = 'month') {
+    try {
+        const spendingAccounts = await sql`
+            SELECT a."accountid" FROM "Account" a JOIN "Wallet" w ON a."walletid" = w."walletid"
+            WHERE w."childid" = ${childId} AND a."accounttype" = 'SpendingAccount'
+        `;
+        if (spendingAccounts.length === 0) return {};
+        const spendingAccountId = spendingAccounts[0].accountid;
+
+        // Ensure "day" is declared if you intend to use it, or adjust the query.
+        // Assuming 'day' might be extracted from somewhere, but currently it's undefined in this scope if period='day'. 
+        // We will default to CURRENT_DATE logic to avoid crashes if 'day' is missing in arguments.
+        
+        const categoriesData = await sql`
+            SELECT "transactioncategory", SUM("amount") AS total
+            FROM "Transaction"
+            WHERE "senderAccountId" = ${spendingAccountId}
+            AND "transactiontype"::text = 'Payment'
+            AND (
+                (${period} = 'week' AND "transactiondate" >= date_trunc('week', CURRENT_DATE)) OR
+                (${period} = 'month' AND EXTRACT(MONTH FROM "transactiondate") = ${month} AND EXTRACT(YEAR FROM "transactiondate") = ${year}) OR
+                (${period} = 'year' AND EXTRACT(YEAR FROM "transactiondate") = ${year}) OR
+                (${period} = 'day' AND DATE("transactiondate") = CURRENT_DATE)
+            )
+            GROUP BY "transactioncategory"
+        `;
+
+        const result = {};
+        categoriesData.forEach(row => {
+            if(row.transactioncategory && row.transactioncategory !== "Uncategorized") result[row.transactioncategory] = Number(row.total);
+        });
+        return result;
+    } catch (error) { console.error("Child Chart Error:", error); throw error; }
+}
+
+export async function getParentChartData(parentId, month, year, childName, period = 'month') {
+    try {
+        if (childName && childName !== "All") {
+            const categoriesData = await sql`
+                SELECT t."transactioncategory" AS name, SUM(t."amount") AS total
+                FROM "Transaction" t
+                JOIN "Account" a ON t."senderAccountId" = a.accountid
+                JOIN "Wallet" w ON a.walletid = w.walletid
+                JOIN "Child" c ON w.childid = c.childid
+                WHERE c.parentid = ${parentId}
+                AND c.firstname = ${childName}
+                AND t.transactiontype::text = 'Payment'
+                AND (
+                    (${period} = 'day' AND DATE(t.transactiondate) = CURRENT_DATE) OR
+                    (${period} = 'week' AND t.transactiondate >= CURRENT_DATE - INTERVAL '7 days') OR
+                    (${period} = 'month' AND EXTRACT(MONTH FROM t.transactiondate) = ${month} AND EXTRACT(YEAR FROM t.transactiondate) = ${year}) OR
+                    (${period} = 'year' AND EXTRACT(YEAR FROM t.transactiondate) = ${year})
+                )
+                GROUP BY t."transactioncategory"
+            `;
+            const result = {};
+            categoriesData.forEach(row => {
+                if(row.name && row.name !== "Uncategorized") result[row.name] = Number(row.total ?? 0);
+            });
+            return result;
+        } else {
+            const childrenSpending = await sql`
+                SELECT c.firstname AS name, SUM(t.amount) AS total
+                FROM "Transaction" t
+                JOIN "Account" a ON t."senderAccountId" = a.accountid
+                JOIN "Wallet" w ON a.walletid = w.walletid
+                JOIN "Child" c ON w.childid = c.childid
+                WHERE c.parentid = ${parentId}
+                AND t.transactiontype::text = 'Payment'
+                AND (
+                (${period} = 'day' AND DATE("transactiondate") = CURRENT_DATE) OR
+                (${period} = 'week' AND "transactiondate" >= date_trunc('week', CURRENT_DATE)) OR
+                (${period} = 'month' AND EXTRACT(MONTH FROM "transactiondate") = ${month} AND EXTRACT(YEAR FROM "transactiondate") = ${year}) OR
+                (${period} = 'year' AND EXTRACT(YEAR FROM "transactiondate") = ${year})
+            )
+                GROUP BY c.firstname
+            `;
+            const result = {};
+            childrenSpending.forEach(row => {
+                const cName = row.name || "Child"; 
+                result[cName] = Number(row.total ?? 0);
+            });
+            return result;
+        }
+    } catch (error) { console.error("Parent Chart Error:", error); throw error; }
+}
+
+export async function getParentInsights(parentId) {
+    try {
+        const insights = [];
+        const children = await sql`
+            SELECT c.childid, c.firstname
+            FROM "Child" c
+            WHERE c.parentid = ${parentId}
+        `;
+
+        if (children.length === 0) {
+            return [
+                { type: "empty", title: "No Children", message: "You haven’t added any children yet" },
+                { type: "empty", title: "Get Started", message: "Add a child to start tracking spending" }
+            ];
+        }
+
+        const childIds = children.map(c => c.childid);
+        const accounts = await sql`
+            SELECT a.accountid, w.childid
+            FROM "Account" a
+            JOIN "Wallet" w ON a.walletid = w.walletid
+            WHERE w.childid = ANY(${childIds})
+            AND a.accounttype = 'SpendingAccount'
+        `;
+
+        if (accounts.length === 0) {
+            return [{ type: "empty", title: "No Data", message: "No spending data available yet" }];
+        }
+
+        const accountIds = accounts.map(a => a.accountid);
+        const weekly = await sql`
+            SELECT w.childid, SUM(t.amount) as total
+            FROM "Transaction" t
+            JOIN "Account" a ON t."senderAccountId" = a.accountid
+            JOIN "Wallet" w ON a.walletid = w.walletid
+            WHERE a.accountid = ANY(${accountIds})
+            AND t.transactiontype = 'Payment'
+            AND t.transactiondate >= CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY w.childid
+        `;
+
+        const totalSpending = weekly.reduce((sum, r) => sum + Number(r.total || 0), 0);
+
+        if (totalSpending === 0) {
+            const lastWeek = await sql`
+                SELECT SUM(t.amount) as total
+                FROM "Transaction" t
+                WHERE t."senderAccountId" = ANY(${accountIds})
+                AND t.transactiontype = 'Payment'
+                AND t.transactiondate >= CURRENT_DATE - INTERVAL '14 days'
+                AND t.transactiondate < CURRENT_DATE - INTERVAL '7 days'
+            `;
+            const last = Number(lastWeek[0].total || 0);
+            if (last > 0) {
+                return [
+                    { type: "empty", title: "No Activity", message: "No spending recorded in the last 7 days" },
+                    { type: "trend", title: "Spending Trend", message: "Spending decreased compared to last week" }
+                ];
+            } else {
+                return [{ type: "empty", title: "No Activity", message: "No spending recorded recently" }];
+            }
+        } else {
+            const sorted = weekly.sort((a, b) => Number(b.total) - Number(a.total));
+            if (children.length === 1) {
+                insights.push({ type: "top-spender", title: "Recent Spending", message: `${children[0].firstname} spent ${Number(sorted[0].total).toFixed(0)} SAR recently` });
+            } else {
+                const top = sorted[0];
+                const second = sorted[1];
+                if (second && Number(top.total) === Number(second.total)) {
+                    insights.push({ type: "top-spender", title: "Top Spender", message: "All children spent similar amounts recently" });
+                } else {
+                    const name = children.find(c => c.childid === top.childid)?.firstname;
+                    insights.push({ type: "top-spender", title: "Top Spender", message: `${name} spent the most recently (${Number(top.total).toFixed(0)} SAR)` });
+                }
+            }
+        }
+
+        if (children.length > 1 && totalSpending > 0) {
+            const avg = totalSpending / children.length;
+            insights.push({ type: "average", title: "Average Spending", message: `Average spending per child is ${avg.toFixed(0)} SAR` });
+        }
+
+        if (totalSpending > 0) {
+            const categories = await sql`
+                SELECT t.transactioncategory, SUM(t.amount) as total
+                FROM "Transaction" t
+                WHERE t."senderAccountId" = ANY(${accountIds})
+                AND t.transactiontype = 'Payment'
+                AND t.transactiondate >= CURRENT_DATE - INTERVAL '7 days'
+                GROUP BY t.transactioncategory
+            `;
+
+            let max = 0;
+            let topCategory = null;
+            categories.forEach(c => {
+                const val = Number(c.total || 0);
+                if (val > max) { max = val; topCategory = c.transactioncategory; }
+            });
+
+            if (topCategory && totalSpending > 0) {
+                const percent = Math.round((max / totalSpending) * 100);
+                insights.push({ type: "category", title: "Top Category", message: `${percent}% of spending was on ${topCategory}` });
+            } else {
+                insights.push({ type: "category", title: "Top Category", message: "Spending is balanced across categories" });
+            }
+            
+            insights.push({ type: "total", title: "Total Spent", message: `Total spending in the last 7 days is ${totalSpending.toFixed(0)} SAR` });
+        }
+
+        const lastWeek = await sql`
+            SELECT SUM(t.amount) as total
+            FROM "Transaction" t
+            WHERE t."senderAccountId" = ANY(${accountIds})
+            AND t.transactiontype = 'Payment'
+            AND t.transactiondate >= CURRENT_DATE - INTERVAL '14 days'
+            AND t.transactiondate < CURRENT_DATE - INTERVAL '7 days'
+        `;
+        const last = Number(lastWeek[0].total || 0);
+
+        if (last > 0) {
+            const change = ((totalSpending - last) / last) * 100;
+            if (Math.abs(change) < 5) {
+                insights.push({ type: "trend", title: "Spending Trend", message: "Spending remained consistent compared to last week" });
+            } else if (change > 0) {
+                insights.push({ type: "trend", title: "Spending Trend", message: `Spending increased by ${Math.round(change)}% compared to last week` });
+            } else {
+                insights.push({ type: "trend", title: "Spending Trend", message: `Spending decreased by ${Math.round(Math.abs(change))}% compared to last week` });
+            }
+        }
+
+        return insights.slice(0, 5);
+    } catch (error) {
+        console.error("Parent Insights Error:", error);
+        throw error;
+    }
+}
