@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class MerchantQrGenerateScreen extends StatefulWidget {
   final String baseUrl;
@@ -37,11 +38,21 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
   String? _token;
   DateTime? _expiresAt;
 
+  bool _initialized = false;
+
   @override
-  void initState() {
-    super.initState();
-    _merchantCtrl.text = widget.defaultMerchantName ?? 'Demo Merchant';
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final l10n = AppLocalizations.of(context)!;
+      // Initialize text only if empty to avoid overwriting on rebuilds
+      if (_merchantCtrl.text.isEmpty) {
+        _merchantCtrl.text = widget.defaultMerchantName ?? l10n.demoMerchant;
+      }
+      _initialized = true;
+    }
   }
+
 
   @override
   void dispose() {
@@ -58,6 +69,7 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
   }
 
   Future<void> _generate() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _loading = true;
       _error = null;
@@ -71,10 +83,10 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
       final amount = double.tryParse(_amountCtrl.text.trim());
 
       if (merchantName.isEmpty) {
-        throw Exception('Enter merchant name.');
+        throw Exception(l10n.enterMerchantName);
       }
       if (amount == null || amount <= 0) {
-        throw Exception('Enter a valid amount.');
+        throw Exception(l10n.enterValidAmount);
       }
 
       final res = await http.post(
@@ -90,10 +102,10 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
         try {
           final body = jsonDecode(res.body);
           throw Exception(
-            body['error'] ?? 'Failed to create QR (${res.statusCode}).',
+            body['error'] ?? l10n.paymentFailedError(res.statusCode),
           );
         } catch (_) {
-          throw Exception('Failed to create QR (${res.statusCode}).');
+          throw Exception(l10n.paymentFailedError(res.statusCode));
         }
       }
 
@@ -103,7 +115,7 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
       final expiresAtStr = data['expiresAt']?.toString();
 
       if (qrString.isEmpty || token.isEmpty || expiresAtStr == null) {
-        throw Exception('Backend response missing qrString/token/expiresAt.');
+        throw Exception(l10n.somethingWentWrongGeneric);
       }
 
       setState(() {
@@ -133,10 +145,11 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
     const bg1 = Color(0xFFF7FAFC);
     const bg2 = Color(0xFFE6F4F3);
     const primary = Color(0xFF2EA49E);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Generate Merchant QR (Demo)'),
+        title: Text(l10n.generateMerchantQR),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
@@ -145,18 +158,18 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [bg1, bg2],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsetsDirectional.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsetsDirectional.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
@@ -171,9 +184,9 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Merchant details',
-                        style: TextStyle(
+                      Text(
+                        l10n.merchantDetails,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF2C3E50),
@@ -184,7 +197,7 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
                       TextField(
                         controller: _merchantCtrl,
                         decoration: InputDecoration(
-                          labelText: 'Merchant name',
+                          labelText: l10n.merchantName,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -198,7 +211,7 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
                           decimal: true,
                         ),
                         decoration: InputDecoration(
-                          labelText: 'Amount (SAR)',
+                          labelText: l10n.amountSAR,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -217,7 +230,7 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: Text(_loading ? 'Generating...' : 'Generate QR'),
+                        child: Text(_loading ? l10n.generating : l10n.generate),
                       ),
 
                       if (_error != null) ...[
@@ -235,7 +248,7 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
 
                 if (_qrString != null) ...[
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsetsDirectional.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -252,12 +265,12 @@ class _MerchantQrGenerateScreenState extends State<MerchantQrGenerateScreen> {
                         QrImageView(data: _qrString!, size: 220),
                         const SizedBox(height: 12),
                         Text(
-                          'Token: ${_token ?? "-"}',
+                          '${l10n.tokenLabel} ${_token ?? "-"}',
                           style: const TextStyle(color: Colors.black54),
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Expires: ${_expiresAt == null ? "-" : _formatDateTime(_expiresAt!)}',
+                          _expiresAt == null ? "-" : l10n.expiresAtLabel(_formatDateTime(_expiresAt!)),
                           style: const TextStyle(color: Colors.black54),
                         ),
                         const SizedBox(height: 10),

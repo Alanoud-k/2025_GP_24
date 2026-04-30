@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 import 'package:my_app/core/api_config.dart';
 
 class ParentAddMoneyScreen extends StatefulWidget {
@@ -25,10 +26,6 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
   bool _loading = false;
   String? token;
   final String baseUrl = ApiConfig.baseUrl;
-
-  // Switch between local and railway when needed
-  //static const String backendUrl = "https://2025gp24-production.up.railway.app";
-  // static const String backendUrl = "http://10.0.2.2:3000";
 
   @override
   void initState() {
@@ -58,13 +55,12 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
   Future<void> _loadToken() async {
     final prefs = await SharedPreferences.getInstance();
-    token = prefs.getString("token") ?? widget.token; // fallback من الwidget
+    token = prefs.getString("token") ?? widget.token; 
   }
 
-  // ✅✅ NEW: Unified Hassala-style message bar (teal / red / green)
   void _showMessageBar(
     String message, {
-    Color backgroundColor = const Color(0xFF37C4BE), // default teal
+    Color backgroundColor = const Color(0xFF37C4BE), 
     Duration duration = const Duration(seconds: 3),
   }) {
     if (!mounted) return;
@@ -74,32 +70,29 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
         content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        margin: const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         duration: duration,
       ),
     );
   }
 
-  // ✅ Colors for consistency (optional helper)
   static const Color _tealMsg = Color(0xFF37C4BE);
   static const Color _redMsg = Color(0xFFE74C3C);
   static const Color _greenMsg = Color(0xFF27AE60);
 
-  // ✅ فتح صفحة الدفع بدون canLaunchUrl + fallback
   Future<void> _openPaymentPage(String redirectUrl) async {
+    final l10n = AppLocalizations.of(context)!;
     final uri = Uri.parse(redirectUrl);
 
-    // 1) افتحيه بمتصفح خارجي
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
-    // 2) لو ما فتح، افتحيه داخل التطبيق
     if (!ok) {
       final ok2 = await launchUrl(uri, mode: LaunchMode.inAppWebView);
 
       if (!ok2 && mounted) {
         _showMessageBar(
-          "Unable to open payment page",
+          l10n.unableToOpenPaymentPage,
           backgroundColor: _redMsg,
         );
       }
@@ -108,16 +101,16 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
   Future<void> _addMoney() async {
     final amountText = _amountController.text.trim();
+    final l10n = AppLocalizations.of(context)!;
     final amount = double.tryParse(amountText);
 
     if (amount == null || amount <= 0) {
-      _showMessageBar("Enter a valid amount", backgroundColor: _redMsg);
+      _showMessageBar(l10n.enterValidAmount, backgroundColor: _redMsg);
       return;
     }
 
     if (token == null || token!.isEmpty) {
-      // ✅ CHANGED: unified popup
-      _showMessageBar("Authentication error", backgroundColor: _redMsg);
+      _showMessageBar(l10n.authenticationError, backgroundColor: _redMsg);
       return;
     }
 
@@ -133,8 +126,8 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
         body: jsonEncode({"parentId": widget.parentId, "amount": amount}),
       );
 
-      print("Add money status: ${res.statusCode}");
-      print("Add money body: ${res.body}");
+      debugPrint("Add money status: ${res.statusCode}");
+      debugPrint("Add money body: ${res.body}");
 
       if (res.statusCode == 401) {
         final prefs = await SharedPreferences.getInstance();
@@ -147,9 +140,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
       final contentType = res.headers["content-type"] ?? "";
       if (!contentType.contains("application/json")) {
-        // ✅ CHANGED: unified popup
+        // ✅ تم إصلاح مشكلة الأقواس هنا
         _showMessageBar(
-          "Server returned non-JSON response (${res.statusCode})",
+          l10n.somethingWentWrong("Server returned non-JSON response (${res.statusCode})"), 
           backgroundColor: _redMsg,
         );
         return;
@@ -160,21 +153,15 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
       if (res.statusCode == 200 && data["success"] == true) {
         final redirectUrl = data["redirectUrl"];
         if (redirectUrl != null && redirectUrl.toString().isNotEmpty) {
-          await _openPaymentPage(redirectUrl);
+          await _openPaymentPage(redirectUrl); 
         } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text("Redirect URL missing")));
+          _showMessageBar(l10n.redirectUrlMissing, backgroundColor: _redMsg);
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data["message"] ?? "Add money failed")),
-        );
+        _showMessageBar(data["message"] ?? l10n.addMoneyFailed, backgroundColor: _redMsg);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      _showMessageBar(l10n.somethingWentWrong(e.toString()), backgroundColor: _redMsg);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -188,18 +175,20 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsetsDirectional.all(24),
             children: [
               // HEADER -------------------------------------------------------
               Row(
@@ -212,9 +201,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 4),
-                  const Text(
-                    "Add Money",
-                    style: TextStyle(
+                  Text(
+                    l10n.addMoney,
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF2C3E50),
@@ -238,13 +227,13 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsetsDirectional.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Enter Amount",
-                      style: TextStyle(
+                    Text(
+                      l10n.enterAmount, 
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF2C3E50),
@@ -260,7 +249,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
                         prefixIcon: Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsetsDirectional.all(12),
                           child: Image.asset(
                             'assets/icons/Sar.png',
                             width: 20,
@@ -268,7 +257,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                             color: Colors.grey,
                           ),
                         ),
-                        //hintText: "e.g. 100",
+                        hintText: l10n.enterAmount,
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
@@ -285,7 +274,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 12), // 👈 small space
+                    const SizedBox(height: 12), 
                     // BUTTON -------------------------------------------------
                     SizedBox(
                       width: double.infinity,
@@ -293,7 +282,7 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                         onPressed: _loading ? null : _addMoney,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF37C4BE),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsetsDirectional.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -307,9 +296,9 @@ class _ParentAddMoneyScreenState extends State<ParentAddMoneyScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
-                                "Proceed to Payment",
-                                style: TextStyle(
+                            : Text(
+                                l10n.proceedToPayment,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,

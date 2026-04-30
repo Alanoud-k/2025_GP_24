@@ -1,5 +1,3 @@
-
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:my_app/core/api_config.dart';
 import 'package:flutter/services.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ParentGiftsScreen extends StatefulWidget {
   final int parentId;
@@ -30,11 +29,18 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeAuth();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeAuth();
+    });
   }
 
   Future<void> _initializeAuth() async {
-    await checkAuthStatus(context);
+    try {
+      await checkAuthStatus(context);
+    } catch (e) {
+      debugPrint("Auth Error: $e");
+    }
+    
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString("token") ?? widget.token;
 
@@ -59,18 +65,24 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
     final url = Uri.parse("${ApiConfig.baseUrl}/api/rewards/parent/${widget.parentId}");
     try {
       final res = await http.get(url, headers: {"Authorization": "Bearer $token"});
-      if (res.statusCode == 200) {
-        setState(() {
-          _rewards = jsonDecode(res.body);
-          _isLoading = false;
-        });
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
+        if (mounted) {
+          setState(() {
+            _rewards = jsonDecode(res.body);
+          });
+        }
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      debugPrint("Fetch rewards error: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _addReward(String title, String subtitle, int points) async {
+    final l10n = AppLocalizations.of(context)!;
     final url = Uri.parse("${ApiConfig.baseUrl}/api/rewards/create");
     try {
       final res = await http.post(
@@ -83,17 +95,26 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
           "requiredKeys": points
         }),
       );
-      if (res.statusCode == 201) {
+      // ✅ قمنا بتعديل الشرط ليقبل أي كود نجاح
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
         _fetchRewards();
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Reward added successfully!'), backgroundColor: Color(0xFF37C4BE)));
+            SnackBar(content: Text(l10n.rewardAddedSuccess), backgroundColor: const Color(0xFF37C4BE)));
+      } else {
+        // ✅ إظهار رسالة الخطأ إذا رفض السيرفر الطلب
+        debugPrint("Add Reward Failed: ${res.statusCode} - ${res.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: ${res.statusCode} - Could not add reward"), backgroundColor: Colors.red));
       }
     } catch (e) {
       debugPrint("Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Network Error: $e"), backgroundColor: Colors.red));
     }
   }
 
   Future<void> _editReward(int rewardId, String title, String subtitle, int points) async {
+    final l10n = AppLocalizations.of(context)!;
     final url = Uri.parse("${ApiConfig.baseUrl}/api/rewards/$rewardId");
     try {
       final res = await http.put(
@@ -105,10 +126,13 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
           "requiredKeys": points
         }),
       );
-      if (res.statusCode == 200) {
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
         _fetchRewards();
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Reward updated!'), backgroundColor: Color(0xFF37C4BE)));
+            SnackBar(content: Text(l10n.rewardUpdated), backgroundColor: const Color(0xFF37C4BE)));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error updating reward"), backgroundColor: Colors.red));
       }
     } catch (e) {
       debugPrint("Error: $e");
@@ -116,13 +140,17 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
   }
 
   Future<void> _deleteReward(int rewardId) async {
+    final l10n = AppLocalizations.of(context)!;
     final url = Uri.parse("${ApiConfig.baseUrl}/api/rewards/$rewardId");
     try {
       final res = await http.delete(url, headers: {"Authorization": "Bearer $token"});
-      if (res.statusCode == 200) {
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
         _fetchRewards();
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Reward deleted!'), backgroundColor: Colors.red));
+            SnackBar(content: Text(l10n.rewardDeleted), backgroundColor: Colors.red));
+      } else {
+         ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error deleting reward"), backgroundColor: Colors.red));
       }
     } catch (e) {
       debugPrint("Error: $e");
@@ -131,20 +159,21 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
 
   // --- Dialogs ---
   void _showDeleteConfirmation(int rewardId) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Delete Reward"),
-        content: const Text("Are you sure you want to delete this reward?"),
+        title: Text(l10n.deleteRewardTitle),
+        content: Text(l10n.deleteRewardWarning),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Navigator.pop(ctx);
               _deleteReward(rewardId);
             },
-            child: const Text("Delete"),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -152,6 +181,7 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
   }
 
   void _showRewardDialog({Map<String, dynamic>? reward}) {
+    final l10n = AppLocalizations.of(context)!;
     final isEditing = reward != null;
     final titleController = TextEditingController(text: reward?['rewardname'] ?? '');
     final subtitleController = TextEditingController(text: reward?['rewarddescription'] ?? '');
@@ -171,26 +201,26 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
               children: [
                 Center(
                   child: Text(
-                    isEditing ? "Edit Reward" : "New Reward",
+                    isEditing ? l10n.editReward : l10n.newReward,
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF2C3E50)),
                   ),
                 ),
                 const SizedBox(height: 25),
-                _buildDialogLabel("Reward Title"),
-                _buildModernTextField(controller: titleController, hint: "e.g. Zoo Trip", icon: Icons.card_giftcard),
+                _buildDialogLabel(l10n.rewardTitleLabel),
+                _buildModernTextField(controller: titleController, hint: l10n.rewardTitleHint, icon: Icons.card_giftcard),
                 const SizedBox(height: 16),
-                _buildDialogLabel("Description"),
-                _buildModernTextField(controller: subtitleController, hint: "Short description...", icon: Icons.description_outlined),
+                _buildDialogLabel(l10n.descriptionLabel),
+                _buildModernTextField(controller: subtitleController, hint: l10n.descriptionHint, icon: Icons.description_outlined),
                 const SizedBox(height: 16),
-                _buildDialogLabel("Cost (Keys)"),
-                _buildModernTextField(controller: pointsController, hint: "e.g. 10", icon: Icons.vpn_key_outlined, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly],),
+                _buildDialogLabel(l10n.costKeysLabel),
+                _buildModernTextField(controller: pointsController, hint: l10n.costKeysHint, icon: Icons.vpn_key_outlined, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
                 const SizedBox(height: 30),
                 Row(
                   children: [
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel", style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey, fontSize: 16)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -200,7 +230,7 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
                           if (titleController.text.isEmpty || pointsController.text.isEmpty) return;
                           final points = int.tryParse(pointsController.text) ?? 0;
                           if (points <= 0) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Keys must be greater than 0")));
+                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.keysMustBeGreater)));
                              return;
                           }
                           Navigator.pop(context);
@@ -216,7 +246,7 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         child: Text(
-                          isEditing ? "Save" : "Add",
+                          isEditing ? l10n.saveBtn : l10n.add,
                           style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -233,7 +263,7 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
 
   Widget _buildDialogLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: 8, start: 4),
       child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF607D8B))),
     );
   }
@@ -268,6 +298,8 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: Padding(
@@ -282,41 +314,42 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 0),
+            padding: const EdgeInsetsDirectional.fromSTEB(22, 18, 22, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Manage Rewards", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF2C3E50))),
+                Text(l10n.manageRewards, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF2C3E50))),
                 const SizedBox(height: 8),
-                const Text("Create fun rewards for your children to earn!", style: TextStyle(fontSize: 15, color: Colors.black54)),
+                Text(l10n.createFunRewards, style: const TextStyle(fontSize: 15, color: Colors.black54)),
                 const SizedBox(height: 28),
                 Expanded(
                   child: _isLoading 
                   ? const Center(child: CircularProgressIndicator())
                   : _rewards.isEmpty 
-                    ? _buildEmptyState()
+                    ? _buildEmptyState(l10n)
                     : ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 100),
+                        padding: const EdgeInsetsDirectional.only(bottom: 100),
                         itemCount: _rewards.length,
                         itemBuilder: (context, index) {
                           final reward = _rewards[index];
                           final isRedeemed = reward['rewardstatus'] == 'Redeemed';
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsetsDirectional.only(bottom: 16),
                             child: _rewardCard(
                               title: reward['rewardname'],
                               subtitle: reward['rewarddescription'],
                               points: reward['requiredkeys'],
                               isRedeemed: isRedeemed,
-                              redeemedByName: reward['redeemed_by_name'],
+                              redeemedByName: reward['redeemed_by_name'] ?? "",
                               onEdit: isRedeemed ? null : () => _showRewardDialog(reward: reward),
                               onDelete: () => _showDeleteConfirmation(reward['rewardid']),
+                              l10n: l10n,
                             ),
                           );
                         },
@@ -330,14 +363,14 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.card_giftcard, size: 80, color: Colors.black12),
-          SizedBox(height: 16),
-          Text("No rewards yet", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black38)),
+        children: [
+          const Icon(Icons.card_giftcard, size: 80, color: Colors.black12),
+          const SizedBox(height: 16),
+          Text(l10n.noRewardsYet, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black38)),
         ],
       ),
     );
@@ -348,9 +381,10 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
     required String subtitle,
     required int points,
     required bool isRedeemed,
-    String? redeemedByName,
+    required String redeemedByName,
     VoidCallback? onEdit,
     required VoidCallback onDelete,
+    required AppLocalizations l10n,
   }) {
     const Color gold = Color(0xFFF6C44B);
     final Color cardColor = isRedeemed ? const Color(0xFFF5F5F5) : Colors.white;
@@ -405,22 +439,22 @@ class _ParentGiftsScreenState extends State<ParentGiftsScreen> {
                       children: [
                         const Icon(Icons.check_circle, size: 16, color: Color(0xFF2EA49E)),
                         const SizedBox(width: 6),
-                        Text("Redeemed by $redeemedByName", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2EA49E))),
+                        Text(l10n.redeemedBy(redeemedByName), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2EA49E))),
                       ],
                     ),
                   )
                 else
-                  const Text("Tap to edit", style: TextStyle(fontSize: 12, color: Colors.black26)),
+                  Text(l10n.tapToEdit, style: const TextStyle(fontSize: 12, color: Colors.black26)),
                 InkWell(
                   onTap: onDelete,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                        SizedBox(width: 4),
-                        Text("Delete", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.red)),
+                        const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                        const SizedBox(width: 4),
+                        Text(l10n.delete, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.red)),
                       ],
                     ),
                   ),

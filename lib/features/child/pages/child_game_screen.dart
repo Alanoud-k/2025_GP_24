@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 import 'package:my_app/utils/check_auth.dart';
 
 class ChildGameScreen extends StatefulWidget {
@@ -39,8 +40,10 @@ class _ChildGameScreenState extends State<ChildGameScreen> {
       return const Center(child: CircularProgressIndicator(color: Colors.teal));
     }
 
-    return const Center(
-      child: Text('Game Screen', style: TextStyle(fontSize: 18)),
+    final l10n = AppLocalizations.of(context)!;
+
+    return Center(
+      child: Text(l10n.gameScreen, style: const TextStyle(fontSize: 18)),
     );
   }
 }

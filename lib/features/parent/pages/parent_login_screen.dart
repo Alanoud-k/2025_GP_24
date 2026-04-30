@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 import 'package:my_app/features/auth/pages/forget_password_screen.dart';
 import 'package:my_app/features/parent/widgets/parent_shell.dart';
 
@@ -53,10 +54,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
     } catch (_) {}
   }
 
-  // =========================================================
-  // ✅ ADDED: Unified Hassala-style floating bar message
-  // (looks like your "Enter a valid amount" bar)
-  // =========================================================
   void _showHassalaBar(String message) {
     if (!mounted) return;
 
@@ -74,8 +71,8 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         ),
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-        backgroundColor: const Color(0xFFE74C3C), // Hassala teal
+        margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 18),
+        backgroundColor: const Color(0xFFE74C3C),
         elevation: 10,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
@@ -84,6 +81,8 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
 
   Future<void> _loginParent() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    final l10n = AppLocalizations.of(context)!;
 
     setState(() => _isLoading = true);
 
@@ -102,7 +101,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // ✅ Safe decode (some servers may return non-json on errors)
       Map<String, dynamic> body = {};
       try {
         body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -115,10 +113,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         final parentId = body['parentId'];
 
         if (token == null || parentId == null) {
-          // =========================================================
-          // ✅ CHANGED: use Hassala bar instead of red SnackBar
-          // =========================================================
-          _showHassalaBar('Login response missing token or parentId');
+          _showHassalaBar(l10n.errMissingTokenParentId);
           return;
         }
 
@@ -142,41 +137,37 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         final errorMessage =
             body['error'] ??
             body['message'] ??
-            'Login failed, please try again';
+            l10n.errLoginFailedGeneric;
 
-        // =========================================================
-        // ✅ CHANGED: backend errors show in teal floating bar
-        // (wrong password / account not found / etc.)
-        // =========================================================
         _showHassalaBar(errorMessage.toString());
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // =========================================================
-      // ✅ CHANGED: network errors show in teal floating bar
-      // =========================================================
-      _showHassalaBar('Error: $e');
+      _showHassalaBar(l10n.errorMsg(e.toString()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    // final isRtl = Directionality.of(context) == TextDirection.rtl;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
+Align(
+                alignment: AlignmentDirectional.centerStart,
                 child: IconButton(
                   icon: const Icon(
                     Icons.arrow_back,
@@ -206,9 +197,9 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                 fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 10),
-                              const Text(
-                                "Welcome Back",
-                                style: TextStyle(
+                              Text(
+                                l10n.welcomeBackTitle,
+                                style: const TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w800,
                                   color: Color(0xFF2C3E50),
@@ -224,9 +215,9 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 25),
-                              const Text(
-                                'Enter your password',
-                                style: TextStyle(
+                              Text(
+                                l10n.enterYourPassword,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF333333),
                                 ),
@@ -240,7 +231,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                   controller: passwordController,
                                   obscureText: _obscure,
                                   decoration: InputDecoration(
-                                    hintText: "Password",
+                                    hintText: l10n.passwordHint,
                                     hintStyle: const TextStyle(
                                       color: Colors.black38,
                                     ),
@@ -255,8 +246,8 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                         setState(() => _obscure = !_obscure);
                                       },
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 12,
+                                        padding: const EdgeInsetsDirectional.only(
+                                          end: 12,
                                         ),
                                         child: Icon(
                                           _obscure
@@ -273,13 +264,13 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                     ),
                                   ),
                                   validator: (v) => v == null || v.isEmpty
-                                      ? 'Enter password'
+                                      ? l10n.enterPasswordVal
                                       : null,
                                 ),
                               ),
                               const SizedBox(height: 15),
                               Align(
-                                alignment: Alignment.centerRight,
+                                alignment: AlignmentDirectional.centerEnd,
                                 child: GestureDetector(
                                   onTap: () {
                                     Navigator.push(
@@ -290,9 +281,9 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                       ),
                                     );
                                   },
-                                  child: const Text(
-                                    "Forgot password?",
-                                    style: TextStyle(
+                                  child: Text(
+                                    l10n.forgotPassword,
+                                    style: const TextStyle(
                                       fontSize: 14,
                                       color: Color(0xFF2EA49E),
                                       fontWeight: FontWeight.w600,
@@ -330,9 +321,9 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                         ? const CircularProgressIndicator(
                                             color: Colors.white,
                                           )
-                                        : const Text(
-                                            "Continue",
-                                            style: TextStyle(
+                                        : Text(
+                                            l10n.continue_,
+                                            style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.w700,
                                               color: Colors.white,

@@ -6,6 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:my_app/core/providers/locale_provider.dart';
 
 class MorePage extends StatefulWidget {
   final int parentId;
@@ -22,7 +25,7 @@ class _MorePageState extends State<MorePage> {
   String phoneNo = '';
   String? token;
   bool isLoading = true;
-  String? errorMessage;
+  String? errorKey; // Store error key instead of hardcoded strings
 
   @override
   void initState() {
@@ -31,20 +34,16 @@ class _MorePageState extends State<MorePage> {
   }
 
   Future<void> _initAuth() async {
-    // Step 1 — check expired
     await checkAuthStatus(context);
 
-    // Step 2 — load token
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString("token") ?? widget.token;
 
-    // Step 3 — if missing → logout
     if (token == null || token!.isEmpty) {
       _forceLogout();
       return;
     }
 
-    // Step 4 — load info
     await fetchParentInfo();
   }
 
@@ -61,14 +60,13 @@ class _MorePageState extends State<MorePage> {
     if (widget.parentId == 0) {
       if (!mounted) return;
       setState(() {
-        errorMessage = "لازم تسوين تسجيل دخول من جديد.";
+        errorKey = "login_required";
         isLoading = false;
       });
       return;
     }
 
     final url = Uri.parse('${ApiConfig.baseUrl}/api/parent/${widget.parentId}');
-    print("Fetching parent info from $url");
 
     try {
       final response = await http.get(
@@ -78,8 +76,6 @@ class _MorePageState extends State<MorePage> {
           "Content-Type": "application/json",
         },
       );
-
-      print("Response: ${response.body}");
 
       if (response.statusCode == 401) {
         final prefs = await SharedPreferences.getInstance();
@@ -95,11 +91,10 @@ class _MorePageState extends State<MorePage> {
 
         if (!mounted) return;
         setState(() {
-          fullName = "${data['firstname'] ?? ''} ${data['lastname'] ?? ''}"
-              .trim();
+          fullName = "${data['firstname'] ?? ''} ${data['lastname'] ?? ''}".trim();
           phoneNo = data['phoneno'] ?? '';
           isLoading = false;
-          errorMessage = null;
+          errorKey = null;
         });
         return;
       }
@@ -108,7 +103,7 @@ class _MorePageState extends State<MorePage> {
           response.body.contains("Parent not found")) {
         if (!mounted) return;
         setState(() {
-          errorMessage = "This account was deleted or does not exist.";
+          errorKey = "not_found";
           isLoading = false;
         });
         return;
@@ -116,20 +111,19 @@ class _MorePageState extends State<MorePage> {
 
       if (!mounted) return;
       setState(() {
-        errorMessage = "An error occurred while loading data.";
+        errorKey = "error_loading";
         isLoading = false;
       });
     } catch (e) {
-      print("Error fetching parent info: $e");
       if (!mounted) return;
       setState(() {
-        errorMessage = "Failed to connect to the server.";
+        errorKey = "server_failed";
         isLoading = false;
       });
     }
   }
 
-  void _showLogoutConfirmation(BuildContext context) {
+  void _showLogoutConfirmation(BuildContext context, AppLocalizations l10n) {
     const kTextDark = Color(0xFF2C3E50);
     const kRed = Color(0xFFE74C3C);
 
@@ -144,11 +138,10 @@ class _MorePageState extends State<MorePage> {
             borderRadius: BorderRadius.circular(22),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
+            padding: const EdgeInsetsDirectional.fromSTEB(22, 20, 22, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // soft icon circle
                 Container(
                   width: 56,
                   height: 56,
@@ -160,14 +153,15 @@ class _MorePageState extends State<MorePage> {
                     Icons.logout_rounded,
                     color: kRed,
                     size: 28,
+                    
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                const Text(
-                  "Log Out",
+                Text(
+                  l10n.logOut,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                     color: kTextDark,
@@ -176,7 +170,7 @@ class _MorePageState extends State<MorePage> {
                 const SizedBox(height: 8),
 
                 Text(
-                  "Are you sure you want to log out?",
+                  l10n.confirmLogOut,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13.5,
@@ -203,9 +197,9 @@ class _MorePageState extends State<MorePage> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                          child: Text(
+                            l10n.cancel,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
                       ),
@@ -227,9 +221,9 @@ class _MorePageState extends State<MorePage> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          child: const Text(
-                            "Log Out",
-                            style: TextStyle(fontWeight: FontWeight.w900),
+                          child: Text(
+                            l10n.logOut,
+                            style: const TextStyle(fontWeight: FontWeight.w900),
                           ),
                         ),
                       ),
@@ -248,25 +242,40 @@ class _MorePageState extends State<MorePage> {
     await _forceLogout();
   }
 
+  String _getErrorMessage(AppLocalizations l10n) {
+    switch (errorKey) {
+      case 'login_required':
+        return l10n.loginRequiredError;
+      case 'not_found':
+        return l10n.accountDeletedError;
+      case 'error_loading':
+        return l10n.errorLoadingData;
+      case 'server_failed':
+        return l10n.serverConnectionFailed;
+      default:
+        return l10n.somethingWentWrongGeneric;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final showProfile = errorMessage == null;
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    final showProfile = errorKey == null;
 
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.transparent,
-
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
-
         child: SafeArea(
           child: RefreshIndicator(
             onRefresh: fetchParentInfo,
@@ -275,7 +284,7 @@ class _MorePageState extends State<MorePage> {
               children: [
                 const SizedBox(height: 10),
 
-                if (errorMessage != null) ...[
+                if (errorKey != null) ...[
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -283,7 +292,7 @@ class _MorePageState extends State<MorePage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      errorMessage!,
+                      _getErrorMessage(l10n),
                       style: const TextStyle(
                         fontSize: 15,
                         color: Colors.red,
@@ -335,7 +344,8 @@ class _MorePageState extends State<MorePage> {
 
                 _buildMenuItem(
                   icon: Icons.lock_outline,
-                  title: 'Security settings',
+                  title: l10n.securitySettings,
+                  isRtl: isRtl,
                   onTap: () {
                     Navigator.pushNamed(
                       context,
@@ -351,7 +361,8 @@ class _MorePageState extends State<MorePage> {
                 const SizedBox(height: 16),
                 _buildMenuItem(
                   icon: Icons.family_restroom_outlined,
-                  title: 'Manage Kids',
+                  title: l10n.manageKids,
+                  isRtl: isRtl,
                   onTap: () {
                     Navigator.pushNamed(
                       context,
@@ -367,20 +378,81 @@ class _MorePageState extends State<MorePage> {
                 const SizedBox(height: 16),
                 _buildMenuItem(
                   icon: Icons.privacy_tip_outlined,
-                  title: 'Terms & privacy policy',
+                  title: l10n.termsAndPrivacy,
+                  isRtl: isRtl,
                   onTap: () {
                     Navigator.pushNamed(context, '/termsPrivacy');
                   },
                 ),
 
                 const SizedBox(height: 16),
+
+                // =====================================================================
+                // 🌐 LANGUAGE CONVERTER BUTTON (START)
+                // Copy this exact block of code to your child more screen!
+                // Make sure to pass `isRtl` parameter locally in that file.
+                // =====================================================================
+                _buildMenuItem(
+                  icon: Icons.language,
+                  title: l10n.switchLanguage,
+                  isRtl: isRtl,
+                  trailingWidget: Text(
+                    isRtl ? "English" : "العربية",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF37C4BE),
+                    ),
+                  ),
+                  // onTap: () async {
+                  //   final prefs = await SharedPreferences.getInstance();
+                  //   final currentLang = prefs.getString('language_code') ?? 'en';
+                  //   final newLang = currentLang == 'en' ? 'ar' : 'en';
+
+                  //   await prefs.setString('language_code', newLang);
+
+                  //   // ⚠️ IMPORTANT:
+                  //   // Here you should trigger your state management to update the locale.
+                  //   // For example, if using Provider: 
+                  //   // Provider.of<LocaleProvider>(context, listen: false).setLocale(Locale(newLang));
+
+                  //   if (context.mounted) {
+                  //     ScaffoldMessenger.of(context).showSnackBar(
+                  //       SnackBar(
+                  //         content: Text(l10n.languageChangedHint),
+                  //         backgroundColor: const Color(0xFF37C4BE),
+                  //         behavior: SnackBarBehavior.floating,
+                  //       ),
+                  //     );
+                  //   }
+                  // },
+
+
+                 onTap: () {
+  final provider = Provider.of<LocaleProvider>(context, listen: false);
+  if (isRtl) {
+    provider.setLocale(const Locale('en'));
+  } else {
+    provider.setLocale(const Locale('ar'));
+  }
+  
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(l10n.languageChangedHint))
+  );
+}, 
+                ),
+                // =====================================================================
+                // 🌐 LANGUAGE CONVERTER BUTTON (END)
+                // =====================================================================
+
+                const SizedBox(height: 16),
                 _buildMenuItem(
                   icon: Icons.logout,
-                  title: 'Log out',
+                  title: l10n.logOut,
                   titleColor: Colors.red,
                   iconColor: Colors.red,
+                  isRtl: isRtl,
                   onTap: () {
-                    _showLogoutConfirmation(context);
+                    _showLogoutConfirmation(context, l10n);
                   },
                 ),
               ],
@@ -396,6 +468,8 @@ class _MorePageState extends State<MorePage> {
     required String title,
     Color titleColor = Colors.black,
     Color iconColor = Colors.black,
+    required bool isRtl,
+    Widget? trailingWidget, // Optional custom trailing widget
     required VoidCallback onTap,
   }) {
     return Container(
@@ -421,8 +495,8 @@ class _MorePageState extends State<MorePage> {
             color: titleColor,
           ),
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
+        trailing: trailingWidget ?? Icon(
+          isRtl ? Icons.arrow_back_ios : Icons.arrow_forward_ios,
           size: 16,
           color: Colors.grey,
         ),

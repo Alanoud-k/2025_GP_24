@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 import 'child_card_payment_details_screen.dart';
 
 class ChildCardScanScreen extends StatelessWidget {
@@ -21,6 +22,8 @@ class ChildCardScanScreen extends StatelessWidget {
     const Color kBg = Color(0xFFF7F8FA);
     const Color kTextDark = Color(0xFF222222);
 
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
@@ -28,23 +31,23 @@ class ChildCardScanScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: kTextDark),
-        title: const Text(
-          "Scan to pay",
-          style: TextStyle(
+        title: Text(
+          l10n.scanToPay,
+          style: const TextStyle(
             color: kTextDark,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 16),
-            const Text(
-              "Scan the QR code",
-              style: TextStyle(
+            Text(
+              l10n.scanTheQRCode,
+              style: const TextStyle(
                 color: kTextDark,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -104,9 +107,9 @@ class ChildCardScanScreen extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text(
-                  "Continue",
-                  style: TextStyle(
+                child: Text(
+                  l10n.continue_,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),

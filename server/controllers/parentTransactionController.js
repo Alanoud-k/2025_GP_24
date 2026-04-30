@@ -16,6 +16,7 @@ export const getParentTransactions = async (req, res) => {
   t."transactioncategory",
   t."senderAccountId",
   t."receiverAccountId"
+  c_receiver."firstname" AS "childName" -- جلب اسم الطفل المستقبل
 FROM "Transaction" t
 JOIN "Account" a_sender
   ON a_sender.accountid = t."senderAccountId"
@@ -35,6 +36,7 @@ SELECT
   t."transactioncategory",
   t."senderAccountId",
   t."receiverAccountId"
+  c_sender."firstname" AS "childName" -- 👈 جلب اسم الطفل المرسل
 FROM "Transaction" t
 JOIN "Account" a_receiver
   ON a_receiver.accountid = t."receiverAccountId"

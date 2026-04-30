@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/core/api_config.dart';
 import 'package:my_app/notifications/notification_service.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ChildLoginScreen extends StatefulWidget {
   const ChildLoginScreen({super.key});
@@ -100,7 +101,7 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error['message'] ?? 'Login failed'),
+            content: Text(error['message'] ?? AppLocalizations.of(context)!.loginFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -109,7 +110,7 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')));
     }
   }
 
@@ -159,6 +160,7 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
   @override
   Widget build(BuildContext context) {
     const hassalaLinkColor = Color(0xFF2EA49E);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Container(
@@ -174,7 +176,7 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
             children: [
               /// ← زر الرجوع
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: IconButton(
                   icon: const Icon(
                     Icons.arrow_back,
@@ -210,7 +212,7 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
                               const SizedBox(height: 10),
 
                               Text(
-                                "Welcome Back",
+                                l10n.welcomeBackTitle,
                                 style: const TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w800,
@@ -231,9 +233,9 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
 
                               const SizedBox(height: 25),
 
-                              const Text(
-                                'Enter your password',
-                                style: TextStyle(
+                              Text(
+                                l10n.enterYourPassword,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF333333),
                                 ),
@@ -250,7 +252,7 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
                                   controller: passwordController,
                                   obscureText: _obscure,
                                   decoration: InputDecoration(
-                                    hintText: "Password",
+                                    hintText: l10n.password,
                                     hintStyle: const TextStyle(
                                       color: Colors.black38,
                                     ),
@@ -268,8 +270,8 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
                                         });
                                       },
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 12,
+                                        padding: const EdgeInsetsDirectional.only(
+                                          end: 12,
                                         ),
                                         child: Icon(
                                           _obscure
@@ -288,10 +290,10 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
                                   ),
                                   validator: (v) {
                                     if (v == null || v.isEmpty) {
-                                      return 'Enter your password';
+                                      return l10n.enterPasswordVal;
                                     }
                                     if (v.length < 8) {
-                                      return 'Password must be at least 8 characters';
+                                      return l10n.passwordMinLength;
                                     }
                                     return null;
                                   },
@@ -329,9 +331,9 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
                                         ? const CircularProgressIndicator(
                                             color: Colors.white,
                                           )
-                                        : const Text(
-                                            "Continue",
-                                            style: TextStyle(
+                                        : Text(
+                                            l10n.continue_,
+                                            style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.w700,
                                               color: Colors.white,

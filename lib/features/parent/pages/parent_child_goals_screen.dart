@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 const kBg = Color(0xFFF7F8FA);
 const kMintSoft = Color(0xFFE6FBF9);
@@ -96,6 +97,7 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final active = _goals.where((g) => !_isAchieved(g)).toList();
     final completed = _goals.where((g) => _isAchieved(g)).toList();
 
@@ -107,7 +109,7 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
         leading: const BackButton(color: Colors.black87),
         centerTitle: true,
         title: Text(
-          "${widget.childName}'s Goals",
+          l10n.childsGoals(widget.childName),
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -129,11 +131,11 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _SectionHeader(title: "Active Goals", count: active.length),
+                    _SectionHeader(title: l10n.activeGoals, count: active.length),
                     const SizedBox(height: 10),
 
                     if (active.isEmpty)
-                      const _EmptyState(text: "No active goals")
+                      _EmptyState(text: l10n.noActiveGoals)
                     else
                       ...active.map(
                         (g) => Padding(
@@ -146,7 +148,7 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
 
                     if (completed.isNotEmpty) ...[
                       _SectionHeader(
-                        title: "Completed Goals",
+                        title: l10n.completedGoals,
                         count: completed.length,
                       ),
                       const SizedBox(height: 10),
@@ -168,6 +170,7 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
   // ACTIVE GOAL CARD
   // -------------------------------------------------------
   Widget _activeGoalCard(dynamic g) {
+    final l10n = AppLocalizations.of(context)!;
     final name = (g["goalname"] ?? g["goalName"] ?? "Goal").toString();
     final target = _parse(g["targetamount"] ?? g["targetAmount"]);
     final saved = _parse(g["balance"] ?? g["goalBalance"]);
@@ -240,13 +243,13 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
           Row(
             children: [
               _miniMetric(
-                label: "Saved",
+                label: l10n.savedMetric,
                 value: saved.toStringAsFixed(0),
                 color: kHassalaGreen,
               ),
               const SizedBox(width: 10),
               _miniMetric(
-                label: "Remaining",
+                label: l10n.remainingMetric,
                 value: remaining.toStringAsFixed(0),
                 color: Colors.orange.shade700,
               ),
@@ -329,6 +332,7 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
   // COMPLETED GOAL CARD
   // -------------------------------------------------------
   Widget _completedGoalCard(dynamic g) {
+    final l10n = AppLocalizations.of(context)!;
     final name = (g["goalname"] ?? g["goalName"] ?? "Goal").toString();
     final target = _parse(g["targetamount"] ?? g["targetAmount"]);
 
@@ -379,8 +383,8 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      "Target: ",
+                    Text(
+                      l10n.targetLabel,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -408,8 +412,8 @@ class _ParentChildGoalsScreenState extends State<ParentChildGoalsScreen> {
               color: Colors.green.shade100,
               borderRadius: BorderRadius.circular(999),
             ),
-            child: const Text(
-              "Completed",
+            child: Text(
+              l10n.completedBadge,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,

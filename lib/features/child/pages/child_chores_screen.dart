@@ -536,6 +536,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; 
+import 'package:my_app/l10n/app_localizations.dart';
 import '../../child/models/chore_model.dart';
 import '../../child/services/chore_service.dart';
 
@@ -576,6 +577,7 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
   }
 
   Future<void> _completeChore(String choreId, File proofImage) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       showDialog(
         context: context,
@@ -588,20 +590,21 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
       if (mounted) Navigator.pop(context); 
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Great job! Sent for approval."), backgroundColor: Colors.green),
+        SnackBar(content: Text(l10n.greatJobSentForApproval), backgroundColor: Colors.green),
       );
       
       _loadChores(); 
     } catch (e) {
       if (mounted) Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        SnackBar(content: Text("${l10n.errorPrefix}: $e"), backgroundColor: Colors.red),
       );
     }
   }
 
   // ✅ الملاحظة 1: نافذة التنبيه بسبب الرفض
   void _showRejectionReasonDialog(ChoreModel chore) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => Theme(
@@ -611,33 +614,33 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
         child: AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-              SizedBox(width: 8),
-              Text("Task Returned!", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              const SizedBox(width: 8),
+              Text(l10n.taskReturned, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Your parent reviewed this task and sent it back with this note:", style: TextStyle(color: Colors.black87)),
+              Text(l10n.taskReturnedNote, style: const TextStyle(color: Colors.black87)),
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.red.shade200)),
-                child: Text(chore.rejectionReason ?? "Please fix the task and try again.", style: const TextStyle(color: Colors.red, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
+                child: Text(chore.rejectionReason ?? l10n.pleaseFixTask, style: const TextStyle(color: Colors.red, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 12),
-              const Text("Please fix it, then submit a new proof photo.", style: TextStyle(color: Colors.black87)),
+              Text(l10n.submitNewProof, style: const TextStyle(color: Colors.black87)),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text("Later", style: TextStyle(color: Colors.grey)),
+              child: Text(l10n.later, style: const TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -645,7 +648,7 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
                 _showCompletionDialog(chore); // ✅ بعد القراءة يسمح له برفع الصورة
               },
               style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-              child: const Text("Resubmit Proof", style: TextStyle(color: Colors.white)),
+              child: Text(l10n.resubmitProof, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -655,6 +658,7 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
 
   // ✅ الملاحظة 4: توحيد الألوان للنافذة البيضاء والأخضر التركوازي
   void _showCompletionDialog(ChoreModel chore) {
+    final l10n = AppLocalizations.of(context)!;
     File? selectedImage;
     final picker = ImagePicker();
 
@@ -669,11 +673,11 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
             child: AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text("Submit Proof", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              title: Text(l10n.submitProof, style: const TextStyle(fontWeight: FontWeight.bold, color: textColor)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("Select a photo from your gallery to prove you finished the task."),
+                  Text(l10n.selectPhotoProof),
                   const SizedBox(height: 15),
                   GestureDetector(
                     onTap: () async {
@@ -690,12 +694,12 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
                         image: selectedImage != null ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover) : null
                       ),
                       child: selectedImage == null 
-                        ? const Column(
+                        ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.photo_library, size: 40, color: hassalaGreen1),
-                              SizedBox(height: 8),
-                              Text("Tap to open Gallery", style: TextStyle(color: hassalaGreen1, fontWeight: FontWeight.bold)),
+                              const Icon(Icons.photo_library, size: 40, color: hassalaGreen1),
+                              const SizedBox(height: 8),
+                              Text(l10n.tapToOpenGallery, style: const TextStyle(color: hassalaGreen1, fontWeight: FontWeight.bold)),
                             ],
                           )
                         : null,
@@ -706,19 +710,19 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                  child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     if (selectedImage == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Proof picture is required!"), backgroundColor: Colors.red));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.proofPictureRequired), backgroundColor: Colors.red));
                       return;
                     }
                     Navigator.pop(ctx);
                     _completeChore(chore.id, selectedImage!); 
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: hassalaGreen1, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  child: const Text("Submit", style: TextStyle(color: Colors.white)),
+                  child: Text(l10n.submit, style: const TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -730,10 +734,11 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFC),
       appBar: AppBar(
-        title: const Text("My Chores", style: TextStyle(fontWeight: FontWeight.w800, color: textColor)),
+        title: Text(l10n.chores, style: const TextStyle(fontWeight: FontWeight.w800, color: textColor)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -744,7 +749,7 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
           unselectedLabelColor: Colors.grey,
           indicatorColor: hassalaGreen2,
           indicatorWeight: 3,
-          tabs: const [Tab(text: "To Do"), Tab(text: "History")],
+          tabs: [Tab(text: l10n.chores), Tab(text: l10n.mytransactions)],
         ),
       ),
       body: FutureBuilder<List<ChoreModel>>(
@@ -752,7 +757,7 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: hassalaGreen1));
           if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
-          if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No chores found"));
+          if (!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text(l10n.noNotifications));
 
           final allChores = snapshot.data!;
           final todoList = allChores.where((c) => c.status == 'Pending').toList();
@@ -760,14 +765,15 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
 
           return TabBarView(
             controller: _tabController,
-            children: [_buildList(todoList, isTodo: true), _buildList(historyList, isTodo: false)],
+            children: [_buildList(context, todoList, isTodo: true), _buildList(context, historyList, isTodo: false)],
           );
         },
       ),
     );
   }
 
-  Widget _buildList(List<ChoreModel> chores, {required bool isTodo}) {
+  Widget _buildList(BuildContext context, List<ChoreModel> chores, {required bool isTodo}) {
+    final l10n = AppLocalizations.of(context)!;
     if (chores.isEmpty) {
       return Center(
         child: Column(
@@ -775,25 +781,26 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
           children: [
             Icon(isTodo ? Icons.task_alt : Icons.history, size: 80, color: Colors.black12),
             const SizedBox(height: 16),
-            Text(isTodo ? "No chores assigned yet!" : "No history yet.", style: const TextStyle(fontSize: 16, color: Colors.black38)),
+            Text(isTodo ? l10n.noNotifications : l10n.noTransactions, style: const TextStyle(fontSize: 16, color: Colors.black38)),
           ],
         ),
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsetsDirectional.all(16),
       itemCount: chores.length,
-      itemBuilder: (context, index) => _buildChoreCard(chores[index], isTodo: isTodo),
+      itemBuilder: (context, index) => _buildChoreCard(context, chores[index], isTodo: isTodo),
     );
   }
 
-  Widget _buildChoreCard(ChoreModel chore, {required bool isTodo}) {
+  Widget _buildChoreCard(BuildContext context, ChoreModel chore, {required bool isTodo}) {
+    final l10n = AppLocalizations.of(context)!;
     final bool isWaiting = chore.status == 'Submitted' || chore.status == 'Waiting Approval';
     final bool isWeekly = chore.type == 'Weekly';
     final bool isRejected = isTodo && chore.rejectionReason != null && chore.rejectionReason!.isNotEmpty;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsetsDirectional.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -801,9 +808,9 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 4))],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        contentPadding: const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 10),
         leading: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsetsDirectional.all(10),
           decoration: BoxDecoration(
             color: isRejected ? Colors.red.withOpacity(0.1) : (isTodo ? hassalaGreen1.withOpacity(0.1) : (isWaiting ? Colors.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.1))),
             shape: BoxShape.circle,
@@ -819,9 +826,9 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
             if (isWeekly) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsetsDirectional.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
-                child: const Text("Weekly", style: TextStyle(fontSize: 10, color: Colors.blue)),
+                child: Text(l10n.weekly, style: const TextStyle(fontSize: 10, color: Colors.blue)),
               ),
             ]
           ],
@@ -830,18 +837,18 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isTodo ? (chore.description ?? "No description") : (isWaiting ? "Waiting Approval" : "Completed"),
+              isTodo ? (chore.description ?? l10n.noNotifications) : (isWaiting ? l10n.notifications : l10n.transactions),
               style: TextStyle(fontSize: 13, color: isWaiting ? Colors.orange : Colors.grey[600], fontWeight: isWaiting ? FontWeight.bold : FontWeight.normal),
             ),
             // ✅ رسالة الرفض تظهر بوضوح تحت الوصف
             if (isRejected)
               Padding(
-                padding: const EdgeInsets.only(top: 6.0),
+                padding: const EdgeInsetsDirectional.only(top: 6.0),
                 child: Row(
                   children: [
                     const Icon(Icons.info_outline, color: Colors.red, size: 14),
                     const SizedBox(width: 4),
-                    Expanded(child: Text("Parent returned this: Tap to read", style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold))),
+                    Expanded(child: Text(l10n.forSmarterChildren, style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold))),
                   ],
                 ),
               ),

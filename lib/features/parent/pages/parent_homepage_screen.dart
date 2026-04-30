@@ -12,6 +12,7 @@ import 'parent_insights_screen.dart';
 import 'parent_notification_screen.dart';
 import 'parent_transactions_screen.dart';
 import 'parent_transfer_screen.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -56,28 +57,22 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   }
 
   Future<void> _refreshData() async {
-    // نعيد تحميل بيانات الأب (بما فيها الرصيد) + الإشعارات
     await Future.wait([fetchParentInfo(), _fetchUnread()]);
   }
 
-  /////////////////////////////////
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // 🔧 FIX (3)
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  // 🔧 FIX (4): Detect when user comes back from Moyasar browser
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted) return;
-
     if (state == AppLifecycleState.resumed) {
-      // User has returned to the app → refresh wallet
       _refreshFromDb();
     }
   }
-  ////////////////////////////////
 
   Future<void> _initialize() async {
     await checkAuthStatus(context);
@@ -98,13 +93,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     );
   }
 
-  // ✅ NEW: Hassala-style TEAL info bar (for "add card first")
   void _showTealInfoBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        // ✅ TEAL BOX STYLE (floating, rounded, consistent)
         content: Text(
           message,
           style: const TextStyle(
@@ -121,7 +114,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     );
   }
 
-  // Fetch parent info and card status
   Future<void> fetchParentInfo() async {
     if (token.isEmpty) {
       await _handleUnauthorized();
@@ -137,7 +129,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       double newBalance = double.tryParse(walletBalance) ?? 0.0;
       bool newHasCard = false;
 
-      // Parent info
       final parentRes = await http.get(
         parentUrl,
         headers: {
@@ -162,12 +153,12 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
               : double.tryParse(b.toString()) ?? 0.0;
         }
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load parent info')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadParentInfo)),
         );
       }
 
-      // Card status
       final cardRes = await http.get(
         cardUrl,
         headers: {
@@ -203,7 +194,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error loading parent data')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errorLoadingParentData)),
       );
     }
   }
@@ -247,10 +238,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
             size: 28,
             color: Colors.black87,
           ),
-
           if (unread > 0)
-            Positioned(
-              right: -2,
+            PositionedDirectional(
+              end: -2,
               top: -4,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -291,8 +281,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
         insights = List<Map<String, dynamic>>.from(data);
       });
     }
-    print("INSIGHTS RESPONSE:");
-    print(res.body);
   }
 
   @override
@@ -301,6 +289,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       return const Center(child: CircularProgressIndicator(color: Colors.teal));
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final balanceText =
         double.tryParse(walletBalance)?.toStringAsFixed(2) ?? "0.00";
 
@@ -313,8 +302,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: SafeArea(
@@ -323,7 +312,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top bar
                 // ----------------------- TOP BAR -----------------------
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -344,8 +332,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                             ),
                           ),
                         );
-
-                        // ✅ بعد الرجوع حدّث العداد
                         await _fetchUnread();
                       },
                       child: Stack(
@@ -356,10 +342,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                             size: 28,
                             color: Colors.black87,
                           ),
-
                           if (unreadCount > 0)
-                            Positioned(
-                              right: -2,
+                            PositionedDirectional(
+                              end: -2,
                               top: -2,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -396,7 +381,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
 
                 // Welcome
                 Text(
-                  firstname.isNotEmpty ? "Welcome, $firstname" : "Welcome!",
+                  firstname.isNotEmpty
+                      ? l10n.welcomeUser(firstname)
+                      : l10n.welcome,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -428,9 +415,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        "Parent's Wallet",
-                        style: TextStyle(
+                      Text(
+                        l10n.parentWallet,
+                        style: const TextStyle(
                           fontSize: 16.5,
                           fontWeight: FontWeight.w700,
                           color: Colors.black,
@@ -471,12 +458,12 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                   children: [
                     Expanded(
                       child: _ActionCard(
-                        title: "Add Money",
+                        title: l10n.addMoney,
                         asset: "assets/icons/addMoney.png",
                         labelStyle: fintechLabelStyle,
                         onTap: () async {
                           if (!parentHasCard) {
-                            _showTealInfoBar("Please add a card first");
+                            _showTealInfoBar(l10n.pleaseAddCardFirst);
                             return;
                           }
 
@@ -499,7 +486,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                     const SizedBox(width: 12),
                     Expanded(
                       child: _ActionCard(
-                        title: "Transactions",
+                        title: l10n.transactions,
                         asset: "assets/icons/transactions.png",
                         labelStyle: fintechLabelStyle,
                         onTap: () {
@@ -526,7 +513,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                   children: [
                     Expanded(
                       child: _ActionCard(
-                        title: parentHasCard ? "My Card" : "Add Card",
+                        title: parentHasCard ? l10n.myCard : l10n.addCard,
                         asset: parentHasCard
                             ? "assets/icons/myCard.png"
                             : "assets/icons/addCard.png",
@@ -565,7 +552,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                     const SizedBox(width: 12),
                     Expanded(
                       child: _ActionCard(
-                        title: "Insights",
+                        title: l10n.insights,
                         asset: "assets/icons/insights.png",
                         labelStyle: fintechLabelStyle,
                         onTap: () {
@@ -591,7 +578,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                   children: [
                     Expanded(
                       child: _ActionCard(
-                        title: "My Children",
+                        title: l10n.myChildren,
                         asset: "assets/icons/myKids.png",
                         labelStyle: fintechLabelStyle,
                         onTap: () {
@@ -610,7 +597,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                     const SizedBox(width: 12),
                     Expanded(
                       child: _ActionCard(
-                        title: "Transfer Money",
+                        title: l10n.transferMoney,
                         asset: "assets/icons/transactions.png",
                         labelStyle: fintechLabelStyle,
                         onTap: () {
@@ -649,7 +636,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       height: 1.35,
     );
 
-    // No SAR → normal text
     if (parts.length == 1) {
       return Text(message, style: textStyle);
     }
@@ -709,13 +695,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   };
 
   Widget _insightsSection() {
-    final gradients = [
-      [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
-      [Color(0xFF7E57C2), Color(0xFFB39DDB)],
-      [Color(0xFFFF8A65), Color(0xFFFFB199)],
-      [Color(0xFF42A5F5), Color(0xFF90CAF9)],
-    ];
-
     final controller = PageController(viewportFraction: 0.88);
 
     return Column(
@@ -746,8 +725,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: gradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   ),
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
@@ -767,7 +746,6 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            //color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(icon, color: Colors.white),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ChildCardPaymentDetailsScreen extends StatefulWidget {
   final int childId;
@@ -48,6 +49,7 @@ class _ChildCardPaymentDetailsScreenState
       _isLoading = true;
     });
 
+        final l10n = AppLocalizations.of(context)!;
     final double amountToSend = total + fee;
 
     try {
@@ -79,14 +81,14 @@ class _ChildCardPaymentDetailsScreenState
 
         // Success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              "Payment completed successfully.",
-              style: TextStyle(
+              l10n.paymentCompleted,
+              style: const TextStyle(
                 fontWeight: FontWeight.w600,
               ),
             ),
-            duration: Duration(seconds: 5),
+            duration: const Duration(seconds: 5),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -100,11 +102,11 @@ class _ChildCardPaymentDetailsScreenState
 
         // Example debug usage if needed:
         // debugPrint("Transaction id: ${tx["transactionid"]}, category: $category");
-      } else {
+            } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "Error: ${res.statusCode} - ${res.body}",
+              "${l10n.errorPrefix}: ${res.statusCode} - ${res.body}",
             ),
           ),
         );
@@ -113,7 +115,7 @@ class _ChildCardPaymentDetailsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Something went wrong: $e"),
+          content: Text(l10n.somethingWentWrong(e.toString())),
         ),
       );
     } finally {
@@ -125,8 +127,9 @@ class _ChildCardPaymentDetailsScreenState
     }
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final double afterPayment = total + fee;
 
     return Scaffold(
@@ -136,22 +139,22 @@ class _ChildCardPaymentDetailsScreenState
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: kTextDark),
-        title: const Text(
-          "Payment Details",
-          style: TextStyle(
+        title: Text(
+          l10n.paymentDetails,
+          style: const TextStyle(
             color: kTextDark,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
-              "Review Payment",
-              style: TextStyle(
+            Text(
+              l10n.reviewPayment,
+              style: const TextStyle(
                 color: kTextDark,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -177,9 +180,9 @@ class _ChildCardPaymentDetailsScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Merchant",
-                    style: TextStyle(
+                  Text(
+                    l10n.merchant,
+                    style: const TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
                     ),
@@ -210,12 +213,12 @@ class _ChildCardPaymentDetailsScreenState
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _AmountRow(label: "Total:", value: total),
+                  _AmountRow(label: l10n.total, value: total),
                   const SizedBox(height: 4),
-                  _AmountRow(label: "Fee:", value: fee),
+                  _AmountRow(label: l10n.fee, value: fee),
                   const Divider(height: 24),
                   _AmountRow(
-                    label: "After Payment:",
+                    label: l10n.afterPayment,
                     value: afterPayment,
                     isBold: true,
                   ),
@@ -247,9 +250,9 @@ class _ChildCardPaymentDetailsScreenState
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Text(
-                        "Confirm & Pay",
-                        style: TextStyle(
+                    : Text(
+                        l10n.confirmAndPay,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
                         ),
@@ -279,6 +282,7 @@ class _AmountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color kTextDark = Color(0xFF222222);
 
+        final l10n = AppLocalizations.of(context)!;
     final styleBase = TextStyle(
       fontSize: 14,
       color: kTextDark,
@@ -290,7 +294,7 @@ class _AmountRow extends StatelessWidget {
       children: [
         Text(label, style: styleBase),
         Text(
-          "﷼ ${value.toStringAsFixed(2)}",
+          l10n.sarAmount(value.toStringAsFixed(2)),
           style: styleBase,
         ),
       ],

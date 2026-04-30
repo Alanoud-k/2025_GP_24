@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 import 'parent_add_card_screen.dart';
 
 const kBg = Color(0xFFF7F8FA);
@@ -40,10 +39,14 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCard();
+    // Use addPostFrameCallback to safely access AppLocalizations initially if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final l10n = AppLocalizations.of(context)!;
+      _fetchCard(l10n);
+    });
   }
 
-  Future<void> _fetchCard() async {
+  Future<void> _fetchCard(AppLocalizations l10n) async {
     setState(() => _isLoading = true);
 
     final url = Uri.parse("$baseUrl/api/parent/$parentId/card");
@@ -98,7 +101,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
           _hasCard = false;
           _isLoading = false;
         });
-        _showErrorBar('Failed to load card');
+        _showErrorBar(l10n.failedToLoadCard);
       }
     } catch (_) {
       if (!mounted) return;
@@ -106,7 +109,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
         _hasCard = false;
         _isLoading = false;
       });
-      _showErrorBar('Error while loading card');
+      _showErrorBar(l10n.errorLoadingCard);
     }
   }
 
@@ -119,7 +122,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
       case 'mada':
         return 'Mada';
       default:
-        return 'Card';
+        return 'Card'; // Or localize if you prefer: l10n.card
     }
   }
 
@@ -153,21 +156,20 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
     return '$mm/$yy';
   }
 
-  Future<void> _confirmDelete() async {
+  Future<void> _confirmDelete(AppLocalizations l10n) async {
     final confirmed = await _showConfirmDialog(
-      title: "Remove card?",
-      message:
-          "Are you sure you want to remove this card? You can add a new one later.",
-      confirmText: "Remove",
+      title: l10n.removeCardTitle,
+      message: l10n.removeCardMessage,
+      confirmText: l10n.remove,
+      cancelText: l10n.cancel,
       confirmColor: const Color(0xFFE74C3C),
     );
 
     if (confirmed) {
-      await _deleteCard();
+      await _deleteCard(l10n);
     }
   }
 
-  // ✅ Unified Hassala Snackbars
   void _showErrorBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -198,13 +200,12 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
     );
   }
 
-  // ✅ Unified Hassala-style confirm dialog (teal)
   Future<bool> _showConfirmDialog({
     required String title,
     required String message,
     required String confirmText,
-    String cancelText = "Cancel",
-    Color confirmColor = const Color(0xFFE74C3C), // red for destructive
+    required String cancelText,
+    Color confirmColor = const Color(0xFFE74C3C),
   }) async {
     final result = await showDialog<bool>(
       context: context,
@@ -216,7 +217,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
             borderRadius: BorderRadius.circular(22),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+            padding: const EdgeInsetsDirectional.fromSTEB(18, 18, 18, 14),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +316,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
     return result ?? false;
   }
 
-  Future<void> _deleteCard() async {
+  Future<void> _deleteCard(AppLocalizations l10n) async {
     final url = Uri.parse("$baseUrl/api/parent/$parentId/card");
 
     try {
@@ -329,34 +330,27 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
 
       if (!mounted) return;
 
-      // Debug prints to see what backend returns
-      // تشوفينها في debug console في VS Code / Android Studio
-      print('DELETE status: ${res.statusCode}');
-      if (res.body.isNotEmpty) {
-        print('DELETE body: ${res.body}');
-      }
-
       if (res.statusCode == 200 || res.statusCode == 204) {
-        _showSuccessBar('Card removed successfully');
+        _showSuccessBar(l10n.cardRemovedSuccess);
         Navigator.pop(context, true);
-        //Navigator.pop(context, true);
       } else if (res.statusCode == 404) {
-        // No card already → اعتبرها نجاح وارجعي للهوم
         Navigator.pop(context, true);
       } else {
-        _showErrorBar('Failed to remove card (code: ${res.statusCode})');
+        _showErrorBar(l10n.failedToRemoveCard(res.statusCode));
       }
     } catch (e) {
       if (!mounted) return;
-      print('DELETE error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error while removing card')),
+        SnackBar(content: Text(l10n.errorLoadingCard)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
@@ -364,16 +358,16 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
+          icon: Icon(
+            isRtl ? Icons.arrow_forward_ios : Icons.arrow_back_ios_new,
             size: 20,
             color: Colors.black87,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'My Card',
-          style: TextStyle(
+        title: Text(
+          l10n.myCard,
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Colors.black87,
@@ -388,12 +382,12 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
           ? const Center(child: CircularProgressIndicator(color: kPrimary))
           : Padding(
               padding: const EdgeInsets.all(20),
-              child: _hasCard ? _buildHasCardView() : _buildNoCardView(),
+              child: _hasCard ? _buildHasCardView(l10n) : _buildNoCardView(),
             ),
     );
   }
 
-  Widget _buildHasCardView() {
+  Widget _buildHasCardView(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -417,9 +411,9 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Payment Method',
-                    style: TextStyle(
+                  Text(
+                    l10n.paymentMethod,
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
@@ -434,9 +428,9 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
                       color: const Color(0xFFE4F4F2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Active',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.active,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: kPrimary,
@@ -476,9 +470,9 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
-                        'Expires',
-                        style: TextStyle(fontSize: 11, color: Colors.black54),
+                      Text(
+                        l10n.expires,
+                        style: const TextStyle(fontSize: 11, color: Colors.black54),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -497,9 +491,9 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Only one card can be saved for this parent account.',
-          style: TextStyle(fontSize: 12, color: Colors.black54),
+        Text(
+          l10n.onlyOneCardSaved,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
         const Spacer(),
         SafeArea(
@@ -522,7 +516,7 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
                       ),
                     );
                     if (updated == true && mounted) {
-                      await _fetchCard();
+                      await _fetchCard(l10n);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -532,19 +526,19 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    'Edit Card',
-                    style: TextStyle(fontSize: 16),
+                  child: Text(
+                    l10n.editCard,
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),
               const SizedBox(height: 4),
               Center(
                 child: TextButton(
-                  onPressed: _confirmDelete,
-                  child: const Text(
-                    'Remove Card',
-                    style: TextStyle(
+                  onPressed: () => _confirmDelete(l10n),
+                  child: Text(
+                    l10n.removeCard,
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.w600,
                     ),
@@ -558,12 +552,22 @@ class _ParentMyCardScreenState extends State<ParentMyCardScreen> {
     );
   }
 
-  Widget _buildNoCardView() {
-    Future.microtask(() {
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context, true);
-      }
-    });
-    return const SizedBox.shrink();
-  }
+Widget _buildNoCardView() {
+  final l10n = AppLocalizations.of(context)!;
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.credit_card_off, size: 80, color: Colors.grey),
+        SizedBox(height: 16),
+        Text(l10n.noCardFoundTitle, style: TextStyle(fontSize: 18, color: Colors.grey)), // أضف مفتاح ترجمة لهذا
+        SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: () => Navigator.pushNamed(context, '/addCard'),
+          child: Text(l10n.addCard),
+        ),
+      ],
+    ),
+  );
+}
 }

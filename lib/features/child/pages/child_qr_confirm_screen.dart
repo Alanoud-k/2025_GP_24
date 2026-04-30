@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/l10n/app_localizations.dart';
 import 'child_homepage_screen.dart'; // ✅ add this at the top
 
 class ChildQrConfirmScreen extends StatefulWidget {
@@ -69,6 +70,8 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
   }
 
   Future<void> _confirmPay() async {
+    final l10n = AppLocalizations.of(context)!;
+
     setState(() {
       _paying = true;
       _error = null;
@@ -77,7 +80,7 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
     try {
       final expired = DateTime.now().isAfter(widget.expiresAt);
       if (expired) {
-        throw Exception('This QR request has expired.');
+        throw Exception(l10n.qrExpiredError);
       }
 
       //final url = _confirmUrl();
@@ -97,10 +100,10 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
         try {
           final body = jsonDecode(res.body);
           throw Exception(
-            body['error'] ?? 'Payment failed (${res.statusCode}).',
+            body['error'] ?? l10n.paymentFailedError(res.statusCode),
           );
         } catch (_) {
-          throw Exception('Payment failed (${res.statusCode}).');
+          throw Exception(l10n.paymentFailedError(res.statusCode));
         }
       }
 
@@ -113,9 +116,9 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
         backgroundColor: Colors.transparent,
         builder: (_) {
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsetsDirectional.all(16),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              padding: const EdgeInsetsDirectional.fromSTEB(18, 16, 18, 18),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
@@ -144,9 +147,9 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    "Paid",
-                    style: TextStyle(
+                  Text(
+                    l10n.paidStatus,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                       color: Color(0xFF2C3E50),
@@ -155,10 +158,10 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                   const SizedBox(height: 14),
 
                   // Summary rows (kid-friendly)
-                  _summaryRow("Merchant", widget.merchantName),
-                  _amountSummaryRow(widget.amount), // ✅ amount + Riyal icon
+                  _summaryRow(context, l10n.merchantLabel, widget.merchantName),
+                  _amountSummaryRow(context, widget.amount), // ✅ amount + Riyal icon
 
-                  _summaryRow("Time", paidAt),
+                  _summaryRow(context, l10n.timeLabel, paidAt),
 
                   const SizedBox(height: 16),
                   SizedBox(
@@ -190,9 +193,9 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        "Done",
-                        style: TextStyle(
+                      child: Text(
+                        l10n.doneButton,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -214,9 +217,9 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
     }
   }
 
-  Widget _summaryRow(String label, String value) {
+  Widget _summaryRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsetsDirectional.symmetric(vertical: 6),
       child: Row(
         children: [
           SizedBox(
@@ -233,7 +236,7 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
           Expanded(
             child: Text(
               value,
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.end,
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 color: Color(0xFF2C3E50),
@@ -248,15 +251,16 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
   // ======================
   // Amount row with Riyal icon (used in the success popup)
   // ======================
-  Widget _amountSummaryRow(double amount) {
+  Widget _amountSummaryRow(BuildContext context, double amount) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsetsDirectional.symmetric(vertical: 6),
       child: Row(
         children: [
           SizedBox(
             width: 86,
             child: Text(
-              "Amount",
+              l10n.amountLabel,
               style: TextStyle(
                 color: Colors.black.withOpacity(0.55),
                 fontWeight: FontWeight.w700,
@@ -287,8 +291,8 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final expired = DateTime.now().isAfter(widget.expiresAt);
-    final expiresText = _formatDateTime(widget.expiresAt);
 
     const primary = Color(0xFF37C4BE);
     const bg1 = Color(0xFFF7FAFC);
@@ -296,9 +300,9 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Confirm Payment",
-          style: TextStyle(
+        title: Text(
+          l10n.confirmPaymentTitle,
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: Colors.black87,
@@ -319,18 +323,18 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsetsDirectional.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 🔥 TOP AMOUNT CARD
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsetsDirectional.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                     ),
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
@@ -343,9 +347,9 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        "You are about to pay",
-                        style: TextStyle(
+                      Text(
+                        l10n.aboutToPay,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -384,7 +388,7 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
 
                 // 🔹 DETAILS CARD
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsetsDirectional.all(18),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(22),
@@ -398,9 +402,9 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                   ),
                   child: Column(
                     children: [
-                      _summaryRow("Merchant", widget.merchantName),
+                      _summaryRow(context, l10n.merchantLabel, widget.merchantName),
                       const SizedBox(height: 10),
-                      _amountSummaryRow(widget.amount),
+                      _amountSummaryRow(context, widget.amount),
 
                       const SizedBox(height: 10),
 
@@ -413,7 +417,7 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Expires: $expiresText',
+                              l10n.expiresAtLabel(_formatDateTime(widget.expiresAt)),
                               style: TextStyle(
                                 color: expired ? Colors.red : Colors.black54,
                                 fontWeight: expired
@@ -433,7 +437,7 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                 // ❌ ERROR BOX
                 if (_error != null)
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsetsDirectional.all(12),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(14),
@@ -468,7 +472,7 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                       elevation: 0,
                     ),
                     child: Text(
-                      _paying ? 'Processing...' : 'Pay Now',
+                      _paying ? l10n.processingStatus : l10n.payNowButton,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -485,12 +489,12 @@ class _ChildQrConfirmScreenState extends State<ChildQrConfirmScreen> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primary,
                     side: BorderSide(color: primary),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsetsDirectional.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  child: const Text("Cancel"),
+                  child: Text(l10n.cancelButton),
                 ),
               ],
             ),

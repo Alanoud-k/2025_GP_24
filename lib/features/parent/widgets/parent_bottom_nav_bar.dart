@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ParentBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -13,6 +14,7 @@ class ParentBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const double barHeight = 70;
     const double iconSize = 26;
 
@@ -23,9 +25,10 @@ class ParentBottomNavBar extends StatelessWidget {
       height: barHeight,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(26),
-          topRight: Radius.circular(26),
+        // Converted to BorderRadiusDirectional for RTL support (topStart / topEnd)
+        borderRadius: BorderRadiusDirectional.only(
+          topStart: Radius.circular(26),
+          topEnd: Radius.circular(26),
         ),
         boxShadow: [
           BoxShadow(
@@ -36,13 +39,14 @@ class ParentBottomNavBar extends StatelessWidget {
         ],
       ),
       child: Padding(
+        // EdgeInsets.symmetric is directional-agnostic, safe for RTL/LTR
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _NavItem(
               asset: "assets/icons/home.svg",
-              label: "Home",
+              label: l10n.home,
               isSelected: currentIndex == 0,
               iconSize: iconSize,
               onTap: () => onTap(0),
@@ -51,7 +55,7 @@ class ParentBottomNavBar extends StatelessWidget {
             // Temporary icon until chores.svg is added
             _NavItem(
               asset: "assets/icons/Reward.svg",
-              label: "Chores",
+              label: l10n.chores_action,
               isSelected: currentIndex == 1,
               iconSize: iconSize,
               onTap: () => onTap(1),
@@ -59,7 +63,7 @@ class ParentBottomNavBar extends StatelessWidget {
 
             _NavItem(
               asset: "assets/icons/Gift.svg",
-              label: "Rewards",
+              label: l10n.rewards,
               isSelected: currentIndex == 2,
               iconSize: iconSize,
               onTap: () => onTap(2),
@@ -67,7 +71,7 @@ class ParentBottomNavBar extends StatelessWidget {
 
             _NavItem(
               asset: "assets/icons/More.svg",
-              label: "More",
+              label: l10n.more,
               isSelected: currentIndex == 3,
               iconSize: iconSize,
               onTap: () => onTap(3),
@@ -135,4 +139,3 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
-//

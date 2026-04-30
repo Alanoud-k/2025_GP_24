@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ParentAllowanceScreen extends StatefulWidget {
   final int parentId;
@@ -66,6 +67,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
   }
 
   Future<void> _fetchChildren() async {
+    final l10n = AppLocalizations.of(context)!;
     final url = Uri.parse(
       '${ApiConfig.baseUrl}/api/auth/parent/${widget.parentId}/children',
     );
@@ -122,7 +124,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
         setState(() => _childrenLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load children (${res.statusCode})'),
+            content: Text(l10n.failedToLoadChildren(res.statusCode)),
           ),
         );
       }
@@ -130,7 +132,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
       setState(() => _childrenLoading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error loading children: $e')));
+      ).showSnackBar(SnackBar(content: Text(l10n.errorFetchingChildren(e.toString()))));
     }
   }
 
@@ -168,6 +170,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
   }
 
   Future<void> _saveSettings() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_children.isEmpty) return;
 
     final childId = _children[_selectedChildIndex]['childId'];
@@ -179,21 +182,21 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     if (_isAutoTransferEnabled) {
       if (cleaned.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter weekly amount')),
+          SnackBar(content: Text(l10n.pleaseEnterWeeklyAmount)),
         );
         return;
       }
 
       if (parsedAmount == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Amount must be a number')),
+          SnackBar(content: Text(l10n.amountMustBeNumber)),
         );
         return;
       }
 
       if (parsedAmount <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Amount must be greater than 0')),
+          SnackBar(content: Text(l10n.amountMustBeGreaterThanZero)),
         );
         return;
       }
@@ -214,6 +217,7 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
         body: jsonEncode({
           'isEnabled': _isAutoTransferEnabled,
           'amount': amountToSend,
+          'savingRatio': _savePercentage, 
         }),
       );
 
@@ -224,19 +228,19 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
         return;
       }
 
-      if (res.statusCode == 200) {
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Allowance Saved ✅')));
+        ).showSnackBar(SnackBar(content: Text(l10n.allowanceSavedSuccess)));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed (${res.statusCode})')),
+          SnackBar(content: Text(l10n.saveFailed(res.statusCode))),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
+      ).showSnackBar(SnackBar(content: Text(l10n.errorSaving(e.toString()))));
     }
   }
 
@@ -248,6 +252,8 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     const hassalaGreen1 = Color(0xFF37C4BE);
     const hassalaGreen2 = Color(0xFF2EA49E);
 
@@ -261,9 +267,9 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     }
 
     if (_children.isEmpty) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF7F8FA),
-        body: Center(child: Text("No children found")),
+      return Scaffold(
+        backgroundColor: const Color(0xFFF7F8FA),
+        body: Center(child: Text(l10n.noChildrenFound)),
       );
     }
 
@@ -273,308 +279,323 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
+              begin: AlignmentDirectional.topCenter,
+              end: AlignmentDirectional.bottomCenter,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Allowance Setup",
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2C3E50),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsetsDirectional.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 10,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.allowanceSetupTitle,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2C3E50),
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        "Teach them to save by splitting their weekly allowance.",
-                        style: TextStyle(fontSize: 15, color: Colors.black54),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.allowanceSetupSubtitle,
+                          style: const TextStyle(fontSize: 14, color: Colors.black54),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                SizedBox(
-                  height: 110,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _children.length,
-                    itemBuilder: (context, index) {
-                      final isSelected = index == _selectedChildIndex;
+                  SizedBox(
+                    height: 85,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
+                      itemCount: _children.length,
+                      itemBuilder: (context, index) {
+                        final isSelected = index == _selectedChildIndex;
 
-                      return GestureDetector(
-                        onTap: () async {
-                          setState(() {
-                            _selectedChildIndex = index;
-
-                            final defaultRatio =
-                                (_children[index]['defaultSavingRatio'] ?? 0.0)
-                                    as double;
-
-                            _savePercentage = defaultRatio.clamp(0.0, 1.0);
-                          });
-
-                          await _fetchAllowanceSettings(
-                            _children[index]['childId'],
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 16),
-                          child: Column(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(3),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? hassalaGreen1
-                                        : Colors.transparent,
-                                    width: 3,
+                        return GestureDetector(
+                          onTap: () async {
+                            setState(() {
+                              _selectedChildIndex = index;
+                              final defaultRatio =
+                                  (_children[index]['defaultSavingRatio'] ?? 0.0)
+                                      as double;
+                              _savePercentage = defaultRatio.clamp(0.0, 1.0);
+                            });
+                            await _fetchAllowanceSettings(
+                              _children[index]['childId'],
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsetsDirectional.only(end: 16),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsetsDirectional.all(2),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? hassalaGreen1
+                                          : Colors.transparent,
+                                      width: 2.5,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 26,
+                                    backgroundColor: Colors.grey.shade200,
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 26,
+                                      color: isSelected
+                                          ? hassalaGreen2
+                                          : Colors.grey,
+                                    ),
                                   ),
                                 ),
-                                child: CircleAvatar(
-                                  radius: 32,
-                                  backgroundColor: Colors.grey.shade200,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 35,
+                                const SizedBox(height: 4),
+                                Text(
+                                  _children[index]['name'],
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                     color: isSelected
-                                        ? hassalaGreen2
+                                        ? const Color(0xFF2C3E50)
                                         : Colors.grey,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _children[index]['name'],
-                                style: TextStyle(
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? const Color(0xFF2C3E50)
-                                      : Colors.grey,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 10),
 
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12.withOpacity(0.08),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Weekly Amount",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey,
+                  Container(
+                    margin: const EdgeInsetsDirectional.symmetric(horizontal: 20),
+                    padding: const EdgeInsetsDirectional.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12.withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _amountController,
-                        enabled: _isAutoTransferEnabled,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2C3E50),
-                        ),
-                        decoration: const InputDecoration(
-                          prefixText: "SAR  ",
-                          prefixStyle: TextStyle(
-                            fontSize: 20,
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.weeklyAmountLabel,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: Colors.grey,
                           ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
                         ),
-                        onChanged: (_) {
-                          if (mounted) setState(() {});
-                        },
-                      ),
-                      const Divider(height: 30),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              "Allocation Split",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF2C3E50),
+                        const SizedBox(height: 4),
+                        
+                        TextField(
+                          controller: _amountController,
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: _isAutoTransferEnabled ? const Color(0xFF2C3E50) : const Color.fromARGB(255, 0, 0, 0),
+                          ),
+                          decoration: InputDecoration(
+                            // إستبدال النص بصورة شعار الريال هنا
+                            prefixIcon: Padding(
+                              padding: const EdgeInsetsDirectional.only(end: 8.0, top: 4.0, bottom: 4.0),
+                              child: Image.asset(
+                                "assets/icons/Sar.png",
+                                width: 22,
+                                height: 22,
+                                color: Colors.grey,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            "${(_savePercentage * 100).toInt()}% Save",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: hassalaGreen2,
+                            prefixIconConstraints: const BoxConstraints(
+                              minWidth: 30,
+                              minHeight: 30,
                             ),
+                            border: InputBorder.none,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildAllocationBox(
-                              "Spend",
-                              spendAmount,
-                              Icons.shopping_bag_outlined,
-                              const Color(0xFF37C4BE),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildAllocationBox(
-                              "Save",
-                              saveAmount,
-                              Icons.account_balance_wallet_rounded,
-                              const Color(0xFF7E57C2),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          activeTrackColor: hassalaGreen1,
-                          inactiveTrackColor: Colors.grey.shade200,
-                          thumbColor: hassalaGreen2,
-                          overlayColor: hassalaGreen1.withOpacity(0.2),
-                          trackHeight: 6.0,
-                        ),
-                        child: Slider(
-                          value: _savePercentage,
-                          min: 0.0,
-                          max: 1.0,
-                          divisions: 10,
-                          label: "${(_savePercentage * 100).toInt()}% Save",
-                          onChanged: (value) {
-                            setState(() => _savePercentage = value);
+                          onChanged: (_) {
+                            if (mounted) setState(() {});
                           },
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Adjust the slider to teach your child how much to save from their allowance automatically.",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                          height: 1.5,
+                        
+                        const Divider(height: 16),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l10n.allocationSplitLabel,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.percentSave((_savePercentage * 100).toInt()),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: hassalaGreen2,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildAllocationBox(
+                                context,
+                                l10n.spend,
+                                spendAmount,
+                                Icons.shopping_bag_outlined,
+                                const Color(0xFF37C4BE),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildAllocationBox(
+                                context,
+                                l10n.save,
+                                saveAmount,
+                                Icons.account_balance_wallet_rounded,
+                                const Color(0xFF7E57C2),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: hassalaGreen1,
+                            inactiveTrackColor: Colors.grey.shade200,
+                            thumbColor: hassalaGreen2,
+                            overlayColor: hassalaGreen1.withOpacity(0.2),
+                            trackHeight: 4.0,
+                          ),
+                          child: Slider(
+                            value: _savePercentage,
+                            min: 0.0,
+                            max: 1.0,
+                            divisions: 10,
+                            label: l10n.percentSave((_savePercentage * 100).toInt()),
+                            onChanged: (value) {
+                              setState(() => _savePercentage = value);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.allowanceSliderInstruction,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Container(
+                    margin: const EdgeInsetsDirectional.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: SwitchListTile(
+                      dense: true,
+                      activeColor: hassalaGreen1,
+                      title: Text(
+                        l10n.autoTransferWeekly,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2C3E50),
                         ),
                       ),
-                    ],
+                      subtitle: Text(l10n.everySunday, style: const TextStyle(fontSize: 12)),
+                      value: _isAutoTransferEnabled,
+                      onChanged: (val) =>
+                          setState(() => _isAutoTransferEnabled = val),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: SwitchListTile(
-                    activeColor: hassalaGreen1,
-                    title: const Text(
-                      "Auto-transfer Weekly",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2C3E50),
+                  Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _saveSettings,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: hassalaGreen1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: Text(
+                          l10n.saveSettings,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
-                    subtitle: const Text("Every Sunday"),
-                    value: _isAutoTransferEnabled,
-                    onChanged: (val) =>
-                        setState(() => _isAutoTransferEnabled = val),
                   ),
-                ),
-
-                const SizedBox(height: 30),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: _saveSettings,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: hassalaGreen1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        elevation: 4,
-                      ),
-                      child: const Text(
-                        "Save Settings",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ),
@@ -583,40 +604,56 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
   }
 
   Widget _buildAllocationBox(
+    BuildContext context,
     String label,
     double amount,
     IconData icon,
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsetsDirectional.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color.withOpacity(0.8),
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            "${amount.toStringAsFixed(0)} SAR",
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          // إستبدال النص بصورة شعار الريال هنا أيضاً
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                "assets/icons/Sar.png",
+                width: 14,
+                height: 14,
+                color: color,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  amount.toStringAsFixed(0),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

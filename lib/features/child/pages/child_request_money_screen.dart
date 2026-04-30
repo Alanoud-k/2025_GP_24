@@ -1,9 +1,9 @@
-//
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ChildRequestMoneyScreen extends StatefulWidget {
   final int childId;
@@ -67,19 +67,20 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
   }
 
   // =============================================
-  // LOGIC 1: SUBMIT REQUEST (Your Logic)
+  // LOGIC 1: SUBMIT REQUEST
   // =============================================
   Future<void> _submitRequest() async {
     final amountText = _amountController.text.trim();
     final message = _messageController.text.trim();
     final amount = double.tryParse(amountText) ?? 0.0;
+    final l10n = AppLocalizations.of(context)!;
 
     if (amount <= 0) {
-      _showSnack('Enter a valid amount');
+      _showSnack(l10n.invalidAmount);
       return;
     }
     if (message.isEmpty) {
-      _showSnack('Please enter a message');
+      _showSnack(l10n.enterMessage);
       return;
     }
 
@@ -108,8 +109,12 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
         return;
       }
 
-      if (response.statusCode == 200) {
-        // Success
+      // ✅ الإصلاح الأول: قبول أي كود نجاح من 200 إلى 299 (بدلاً من 200 فقط)
+      if (response.statusCode >= 200 && response.statusCode <= 299) {
+        // ✅ Mark submission done before any further async work
+        if (mounted) setState(() => _submitting = false);
+
+        // Show success UI
         await _showSuccessDialog(amount, message);
 
         // Clear fields
@@ -117,25 +122,29 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
         _messageController.clear();
         FocusScope.of(context).unfocus();
 
-        // Refresh History & Switch Tab
+        // ✅ Refresh history OUTSIDE the try/catch so a fetch failure
+        //    never triggers the "requestFailed" snackbar after a successful submit.
         if (mounted) {
           await _fetchHistory();
           _tabController.animateTo(1); // Go to History Tab
         }
+
+        return; // ✅ Exit early — finally will still run but _submitting is already false
       } else {
         final serverMsg = _tryReadServerMessage(response.body);
-        _showSnack(serverMsg ?? 'Request failed');
+        _showSnack(serverMsg ?? l10n.requestFailed);
       }
     } catch (e) {
       if (!mounted) return;
-      _showSnack('Error: $e');
+      _showSnack(l10n.requestFailed);
     } finally {
+      // ✅ Safe to call even after early return — guards any non-success path
       if (mounted) setState(() => _submitting = false);
     }
   }
 
   // =============================================
-  // LOGIC 2: FETCH HISTORY (New for Tab 2)
+  // LOGIC 2: FETCH HISTORY
   // =============================================
   Future<void> _fetchHistory() async {
     setState(() => _loadingHistory = true);
@@ -167,7 +176,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
     }
   }
 
-  // --- Helpers (Your Helpers) ---
+  // --- Helpers ---
   String? _tryReadServerMessage(String body) {
     try {
       final decoded = jsonDecode(body);
@@ -193,6 +202,8 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
   }
 
   Future<void> _showSuccessDialog(double amount, String message) {
+    final l10n = AppLocalizations.of(context)!;
+
     return showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -217,19 +228,14 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
-                'Request Sent',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              Text(
+                l10n.greatJobSentForApproval, // بديل للـ requestSentTitle
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Column(
                 children: [
-                  const Text(
-                    'Your request for',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14.5, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 6),
                   SarAmount(
                     amount: amount,
                     decimals: 2,
@@ -239,12 +245,6 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                       fontWeight: FontWeight.w800,
                       color: Colors.black87,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'was sent successfully.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14.5, color: Colors.black54),
                   ),
                 ],
               ),
@@ -262,7 +262,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Continue', style: TextStyle(fontSize: 16)),
+                  child: Text(l10n.continue_, style: const TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -284,16 +284,17 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
   }
 
   // =============================================
-  // UI BUILD (Tabbed Layout)
+  // UI BUILD
   // =============================================
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xffF7F8FA),
       appBar: AppBar(
-        title: const Text(
-          "Money Requests",
-          style: TextStyle(
+        title: Text(
+          l10n.requestMoney,
+          style: const TextStyle(
             fontWeight: FontWeight.w800,
             color: Color(0xFF2C3E50),
           ),
@@ -311,7 +312,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
           const SizedBox(height: 10),
           // --- Tab Bar ---
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+            margin: const EdgeInsetsDirectional.symmetric(horizontal: 20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(25),
@@ -330,16 +331,16 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                 borderRadius: BorderRadius.circular(25),
                 gradient: const LinearGradient(
                   colors: [hassalaGreen1, hassalaGreen2],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 ),
               ),
               labelColor: Colors.white,
               unselectedLabelColor: Colors.grey,
               labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-              tabs: const [
-                Tab(text: "New Request"),
-                Tab(text: "History"),
+              tabs: [
+                Tab(text: l10n.requestMoney), // Using generic request money key
+                Tab(text: l10n.transactions), // Using generic history key
               ],
             ),
           ),
@@ -350,8 +351,8 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildFormTab(), // Your Form UI
-                _buildHistoryTab(), // New History List
+                _buildFormTab(),
+                _buildHistoryTab(),
               ],
             ),
           ),
@@ -360,14 +361,16 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
     );
   }
 
-  // --- View 1: Form (User's Original UI adapted) ---
+  // --- View 1: Form ---
   Widget _buildFormTab() {
+    final l10n = AppLocalizations.of(context)!;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -387,7 +390,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                 DecimalTextInputFormatter(decimalRange: 2),
               ],
               decoration: InputDecoration(
-                hintText: "e.g. 50.00",
+                hintText: l10n.enterAmount,
                 border: InputBorder.none,
                 prefixIcon: Padding(
                   padding: const EdgeInsets.all(12),
@@ -404,7 +407,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
           const SizedBox(height: 20),
 
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -417,16 +420,26 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
             ),
             child: TextField(
               controller: _messageController,
-              keyboardType: TextInputType.text,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(
-                  RegExp(r"[a-zA-Z\u0600-\u06FF\s]"),
-                ),
-              ],
-              decoration: const InputDecoration(
-                hintText: "Add a message",
+              // ✅ Fix 1a: Derive text direction from the active locale so Arabic
+              //    characters are accepted and rendered right-to-left correctly.
+              textDirection: Directionality.of(context) == TextDirection.rtl
+                  ? TextDirection.rtl
+                  : TextDirection.ltr,
+              // ✅ Fix 1b: textAlign: start respects the resolved textDirection
+              //    automatically, so Arabic starts from the right edge.
+              textAlign: TextAlign.start,
+              // ✅ Fix 1c: Removed textCapitalization — it interferes with Arabic
+              //    IME on Android and can suppress non-Latin character composition.
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              decoration: InputDecoration(
+                hintText: l10n.description,
+                // ✅ Fix 1d: Mirror hint text direction to match the locale.
+                hintTextDirection: Directionality.of(context) == TextDirection.rtl
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
                 border: InputBorder.none,
-                prefixIcon: Icon(
+                prefixIcon: const Icon(
                   Icons.chat_bubble_outline,
                   color: hassalaGreen1,
                 ),
@@ -456,7 +469,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                         color: Colors.white,
                       ),
                     )
-                  : const Text("Request", style: TextStyle(fontSize: 18)),
+                  : Text(l10n.submit, style: const TextStyle(fontSize: 18)),
             ),
           ),
         ],
@@ -466,6 +479,8 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
 
   // --- View 2: History List ---
   Widget _buildHistoryTab() {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_loadingHistory) {
       return const Center(
         child: CircularProgressIndicator(color: hassalaGreen1),
@@ -475,12 +490,12 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.history, size: 80, color: Colors.black12),
-            SizedBox(height: 16),
+          children: [
+            const Icon(Icons.history, size: 80, color: Colors.black12),
+            const SizedBox(height: 16),
             Text(
-              "No requests yet",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              l10n.noRequestsYet, // تم ربطها بملف الترجمة
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),
@@ -494,7 +509,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
         final statusColor = _getStatusColor(req['requestStatus']);
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsetsDirectional.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -522,7 +537,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
 
                   if (req['requestDescription'] != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsetsDirectional.only(top: 4),
                       child: Text(
                         req['requestDescription'],
                         style: TextStyle(color: Colors.grey[600], fontSize: 13),
@@ -531,7 +546,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
+                padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
@@ -540,7 +555,7 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  req['requestStatus'],
+                  req['requestStatus'], // نستخدم الحالة من السيرفر مباشرة
                   style: TextStyle(
                     color: statusColor,
                     fontWeight: FontWeight.bold,
@@ -556,7 +571,6 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
   }
 }
 
-// Allows digits and one dot with fixed decimals.
 class DecimalTextInputFormatter extends TextInputFormatter {
   final int decimalRange;
   const DecimalTextInputFormatter({required this.decimalRange});

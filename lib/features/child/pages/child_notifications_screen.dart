@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ChildNotificationsScreen extends StatefulWidget {
   final int childId;
@@ -125,7 +126,7 @@ class _ChildNotificationsScreenState
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: Padding(
-              padding: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsetsDirectional.only(end: 4),
               child: _sarIcon(size: 14, color: const Color(0xFF2C3E50)),
             ),
           ),
@@ -188,6 +189,7 @@ class _ChildNotificationsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
@@ -196,7 +198,7 @@ class _ChildNotificationsScreenState
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Notifications"),
+          title: Text(l10n.notifications),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           actions: [
@@ -220,11 +222,11 @@ class _ChildNotificationsScreenState
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _notifications.isEmpty
-                ? const Center(child: Text("No notifications yet"))
+                ? Center(child: Text(l10n.noNotifications))
                 : RefreshIndicator(
                     onRefresh: _fetchNotifications,
                     child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsetsDirectional.all(16),
                       itemCount: _notifications.length,
                       itemBuilder: (_, i) {
                         final n = _notifications[i];
@@ -233,8 +235,8 @@ class _ChildNotificationsScreenState
                         final isRead = n["isread"] == true;
 
                         return Container(
-                          padding: const EdgeInsets.all(14),
-                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsetsDirectional.all(14),
+                          margin: const EdgeInsetsDirectional.only(bottom: 12),
                           decoration: BoxDecoration(
                             color: isRead
                                 ? Colors.white

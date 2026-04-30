@@ -1,0 +1,935 @@
+{
+  "@@locale": "en",
+  "app_title": "Hassalah",
+  "welcomeBack": "Welcome back,",
+  "childFallbackName": "Child",
+  "spendBalance": "Spend balance",
+  "saveBalance": "Save balance",
+  "keys": "Keys",
+  "chores": "Chores",
+  "transactions": "Transactions",
+ "mytransactions": "Transactions",
+  "goals": "Goals",
+  "requestMoney": "Request Money",
+  "spendingBreakdown": "Spending Breakdown",
+  "catFood": "Food",
+  "catEducation": "Education",
+  "catEntertainment": "Entertainment",
+  "catShopping": "Shopping",
+  "catGifts": "Gifts",
+  "catOthers": "Others",
+  "welcome": "Welcome",
+  "enterMobileNumber": "Please enter your mobile number",
+  "mobileHint": "05XXXXXXXX",
+  "byClickingContinue": "By clicking \"Continue\", you agree to our ",
+  "terms": "Terms",
+  "and": " and ",
+  "privacyPolicy": "Data Privacy Policy",
+  "continue_": "Continue",
+  "pleaseEnterMobile": "Please enter your mobile number",
+  "validSaudiPhone": "Enter a valid Saudi phone number",
+  "numberHelp": "Number must be 10 digits and start with 05.\nExample: 05XXXXXXXX",
+  "forgotPassword": "Forgot Password",
+  "securityQuestion": "Security Question",
+  "resetPassword": "Reset Password",
+  "enterPhoneForReset": "Enter your phone number",
+  "answerSecurity": "Answer your security question",
+  "enterNewPassword": "Enter your new password",
+  "phoneNumber": "Phone Number",
+  "yourAnswer": "Your Answer",
+  "newPassword": "New Password",
+  "confirmPassword": "Confirm Password",
+  "verifyAnswer": "Verify Answer",
+  "streetQuestion": "What's the name of the street where you lived as a child?",
+  "invalidPhone": "Invalid phone number",
+  "phoneNotRegistered": "Phone not registered",
+  "incorrectAnswer": "Incorrect answer",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "passwordRequirements": "Password must include upper, lower, number & special character",
+  "passwordUpdated": "Password updated!",
+  "failedToReset": "Failed to reset password",
+  "pleaseEnterAnswer": "Please enter your answer",
+  "forSmarterChildren": "For Smarter Children...",
+  "foodRestaurants": "Food & Restaurants",
+  "groceryMarkets": "Grocery & Markets",
+  "retailShopping": "Retail & Shopping",
+  "transport": "Transport",
+  "medical": "Medical",
+  "digitalSubscriptions": "Digital & Subscriptions",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "yearly": "Yearly",
+  "breakdown": "Breakdown",
+  "selectDate": "Select Date",
+  "cancel": "Cancel",
+  "apply": "Apply",
+  "jan": "Jan",
+  "feb": "Feb",
+  "mar": "Mar",
+  "apr": "Apr",
+  "may": "May",
+  "jun": "Jun",
+  "jul": "Jul",
+  "aug": "Aug",
+  "sep": "Sep",
+  "oct": "Oct",
+  "nov": "Nov",
+  "dec": "Dec",
+  "parentWallet": "Parent's Wallet",
+  "addMoney": "Add Money",
+  "myCard": "My Card",
+  "addCard": "Add Card",
+  "insights": "Insights",
+  "totalWord": "Total",
+  "myChildren": "My Children",
+  "transferMoney": "Transfer Money",
+  "pleaseAddCardFirst": "Please add a card first",
+  "notifications": "Notifications",
+  "noNotifications": "No notifications yet",
+  "noTransactions": "No transactions yet",
+  "changePassword": "Change Password",
+  "securitySettings": "Security settings",
+  "security": "Security",
+  "change": "Change",
+  "passwordChanged": "Password changed successfully",
+  "failedToChangePassword": "Failed to change password",
+  "termsAndPrivacy": "Terms & Privacy",
+  "policyOverview": "Policy Overview",
+  "termsOfUse": "Terms of Use",
+  "termsDescription": "and does not support real banking transactions. Only one parent account is supported per family in this version.",
+  "privacyPolicyTitle": "Privacy Policy",
+  "questionsOrConcerns": "Questions or concerns?",
+  "supportEmail": "support@hassala.sa",
+  "generateMerchantQR": "Generate Merchant QR (Demo)",
+  "merchantDetails": "Merchant details",
+  "merchantName": "Merchant name",
+  "amountSAR": "Amount (SAR)",
+  "generating": "Generating...",
+  "tokenLabel": "Token:",
+  "enterMerchantName": "Enter merchant name.",
+  "enterValidAmount": "Enter a valid amount.",
+  "failedToCreateQR": "Failed to create QR",
+  "demoMerchant": "Demo Merchant",
+  "language": "Language",
+  "english": "English",
+  "arabic": "Arabic",
+  "switchLanguage": "Switch Language",
+  "addGoal": "Add Goal",
+  "createNewGoal": "Create a new goal",
+  "goalName": "Goal name",
+  "enterGoalName": "Enter goal name",
+  "lettersOnly": "Letters only",
+  "description": "Description",
+  "max200Chars": "Max 200 characters",
+  "amountToSave": "Amount to save",
+  "enterAmount": "Enter amount",
+  "numbersOnly": "Numbers only",
+  "invalidAmount": "Invalid amount",
+  "saving": "Saving...",
+  "add": "Add",
+  "paymentCompleted": "Payment completed successfully.",
+  "errorPrefix": "Error",
+  "somethingWentWrong": "Something went wrong: {error}",
+  "@somethingWentWrong": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentDetails": "Payment Details",
+  "reviewPayment": "Review Payment",
+  "merchant": "Merchant",
+  "total": "Total:",
+  "fee": "Fee:",
+  "afterPayment": "After Payment:",
+  "confirmAndPay": "Confirm & Pay",
+  "sarAmount": "{amount} SAR",
+  "@sarAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "scanToPay": "Scan to pay",
+  "scanTheQRCode": "Scan the QR code",
+  "card": "Card",
+  "hassalahVirtualCard": "Hassalah Virtual Card",
+  "cardNumber": "Card number",
+  "cvv": "CVV",
+  "childUser": "CHILD USER",
+  "payWithQR": "Pay with QR",
+  "greatJobSentForApproval": "Great job! Sent for approval.",
+  "taskReturned": "Task Returned!",
+  "taskReturnedNote": "Your parent reviewed this task and sent it back with this note:",
+  "pleaseFixTask": "Please fix the task and try again.",
+  "submitNewProof": "Please fix it, then submit a new proof photo.",
+  "later": "Later",
+  "resubmitProof": "Resubmit Proof",
+  "submitProof": "Submit Proof",
+  "selectPhotoProof": "Select a photo from your gallery to prove you finished the task.",
+  "tapToOpenGallery": "Tap to open Gallery",
+  "proofPictureRequired": "Proof picture is required!",
+  "submit": "Submit",
+  "gameScreen": "Game Screen",
+  "failedToRedeem": "Failed to redeem",
+  "yay": "Yay!",
+  "redeemedSuccessMsg1": "You've redeemed",
+  "redeemedSuccessMsg2": "Your parent has been notified!",
+  "awesome": "Awesome!",
+  "myPrizes": "My Prizes",
+  "spendKeys": "Spend your hard-earned keys!",
+  "youGotThis": "You got this!",
+  "redeemPrize": "Redeem Prize",
+  "notEnoughKeys": "Not enough keys",
+  "noPrizesYet": "No prizes available yet",
+  "errNotEnoughSaving": "Not enough Saving balance.",
+  "errNotEnoughGoalBalance": "Not enough money in this goal.",
+  "errExceedTarget": "You cannot exceed the goal target amount.",
+  "errGoalCompletedLocked": "This goal is completed and locked. You cannot add more money.",
+  "errGoalCompletedNoMoveOut": "Completed goals cannot move money back to Saving.",
+  "errGoalHasMoney": "You must move all money back to Saving before deleting this goal.",
+  "errNothingToRedeem": "There is nothing left to move to Spending.",
+  "errNotCompleted": "You can only redeem completed goals.",
+  "errGoalNotFound": "This goal no longer exists.",
+  "editGoal": "Edit goal",
+  "targetAmount": "Target amount",
+  "enterTarget": "Enter target",
+  "targetMustBeGreater": "Target must be ≥ saved amount",
+  "saveBtn": "Save",
+  "goalUpdated": "Goal updated",
+  "goalCompletedCannotChange": "This goal is completed and cannot be changed. You can redeem it instead.",
+  "moveInSavingToGoal": "Move In (Saving → Goal)",
+  "moveOutGoalToSaving": "Move Out (Goal → Saving)",
+  "amountStr": "Amount",
+  "confirmBtn": "Confirm",
+  "moneyAddedToGoal": "Money added to goal",
+  "moneyMovedToSaving": "Money moved to Saving",
+  "goalMoneyMovedToSpending": "Goal money moved to Spending",
+  "deleteGoal": "Delete goal",
+  "deleteGoalWarning": "Are you sure you want to delete this goal?\n\nIf there is any money saved inside it, you must move it back to Saving first.",
+  "deleteBtn": "Delete",
+  "goalDeleted": "Goal deleted",
+  "savingsGoal": "Savings goal",
+  "completed": "Completed",
+  "savedLabel": "Saved:",
+  "targetLabel": "Target:",
+  "remainingLabel": "Remaining:",
+  "moveOutGoalToSavingBtn": "Move Out\n(Goal → Saving)",
+  "moveInSavingToGoalBtn": "Move In\n(Saving → Goal)",
+  "goalCompleted": "Goal completed",
+  "canMoveCollectedAmount": "You can move the collected amount to your Spending balance.",
+  "goalAlreadyRedeemed": "This goal has already been redeemed to Spending.",
+  "moveToSpending": "Move to Spending",
+  "goalDetails": "Goal details",
+  "status": "Status",
+  "saved": "Saved",
+  "target": "Target",
+  "remaining": "Remaining",
+  "failedToLoadGoals": "Failed to load goals: {error}",
+  "@failedToLoadGoals": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "somethingWentWrongGeneric": "Something went wrong",
+  "notEnoughBalanceToMove": "You don’t have enough balance to move this amount.",
+  "moveInSpendingToSaving": "Move In (Spending → Saving)",
+  "moveOutSavingToSpending": "Move Out (Saving → Spending)",
+  "moveFailed": "Move failed. Please try again.",
+  "movedSuccessfully": "Moved successfully",
+  "networkError": "Network error. Please try again.",
+  "addNewGoal": "Add new goal",
+  "savingTab": "Saving",
+  "spendingTab": "Spending",
+  "moveInSpSv": "Move In (Sp→Sv)",
+  "moveOutSvSp": "Move Out (Sv→Sp)",
+  "activeGoals": "Active goals",
+  "noActiveGoals": "You don’t have any active goals.",
+  "completedGoals": "Completed goals",
+  "loginFailed": "Login failed",
+  "welcomeBackTitle": "Welcome Back",
+  "enterYourPassword": "Enter your password",
+  "password": "Password",
+  "enterPasswordVal": "Enter your password",
+  "passwordMinLength": "Password must be at least 8 characters",
+  "logOut": "Log Out",
+  "confirmLogOut": "Are you sure you want to log out?",
+  "spendingInsights": "Spending Insights",
+  "comparisonByChild": "Comparison by Child",
+  "categoryBreakdownFor": "{name}'s Category Breakdown",
+  "@categoryBreakdownFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "seeWhichChildSpendingMost": "See which child is spending the most.",
+  "trackWhereMoneyGoes": "Track where {name}'s money goes.",
+  "@trackWhereMoneyGoes": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "percentOfTotal": "% of total",
+  "details": "Details",
+  "noSpendingData": "No spending data available for this date.",
+  "allChildren": "All Children",
+  "all": "All",
+  "welcomeUser": "Welcome, {name}",
+  "@welcomeUser": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmPaymentTitle": "Confirm Payment",
+  "aboutToPay": "You are about to pay",
+  "merchantLabel": "Merchant",
+  "amountLabel": "Amount",
+  "timeLabel": "Time",
+  "expiresAtLabel": "Expires at: {time}",
+  "@expiresAtLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "qrExpiredError": "QR code has expired",
+  "paymentFailedError": "Payment failed (Status: {code})",
+  "@paymentFailedError": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "paidStatus": "Paid Successfully!",
+  "doneButton": "Done",
+  "payNowButton": "Pay Now",
+  "processingStatus": "Processing...",
+  "cancelButton": "Cancel",
+  "failedToLoadParentInfo": "Failed to load parent info",
+  "errorLoadingParentData": "Error loading parent data",
+  "receiptTitle": "Receipt",
+  "paymentSuccessful": "Payment Successful",
+  "paymentFailed": "Payment Failed",
+  "paymentCompletedSubtitle": "Your payment was completed.",
+  "paymentCouldNotBeCompleted": "Your payment could not be completed.",
+  "paidAt": "Paid at",
+  "transactionIdLabel": "Transaction ID",
+  "backToHome": "Back to Home",
+  "viewTransactions": "View Transactions",
+  "uploadQrSubtitle": "Upload a QR code image to complete your payment",
+  "noQrSelected": "No QR selected",
+  "scanning": "Scanning...",
+  "chooseQrImage": "Choose QR Image",
+  "errorNoQrFound": "No QR code found in this image.",
+  "errorQrUnreadable": "QR detected but unreadable.",
+  "useThisQr": "Use this QR",
+  "clear": "Clear",
+  "generateDemoQr": "Generate Demo QR",
+  "generate": "Generate",
+  "errorInvalidQrFormat": "Invalid QR format",
+  "errorFailedResolveQr": "Failed to resolve QR.",
+  "errorFailedCreateDemoQr": "Failed to create demo QR.",
+  "moneyRequestsTitle": "Money Requests",
+  "newRequestTab": "New Request",
+  "historyTab": "History",
+  "amountHint": "e.g. 50.00",
+  "messageHint": "Add a message",
+  "requestButton": "Request",
+  "noRequestsYet": "No requests yet",
+  "enterMessage": "Please enter a message for your request",
+  "requestFailed": "Request failed",
+  "requestSentTitle": "Request Sent",
+  "requestForBody": "Your request for",
+  "wasSentSuccessfully": "was sent successfully.",
+  "statusApproved": "Approved",
+  "statusDeclined": "Declined",
+  "statusPending": "Pending",
+  "statusUnknown": "Unknown",
+  "manageRewards": "Manage Rewards",
+  "createFunRewards": "Create fun rewards for your children to earn!",
+  "rewardAddedSuccess": "Reward added successfully!",
+  "rewardUpdated": "Reward updated!",
+  "rewardDeleted": "Reward deleted!",
+  "deleteRewardTitle": "Delete Reward",
+  "deleteRewardWarning": "Are you sure you want to delete this reward?",
+  "editReward": "Edit Reward",
+  "newReward": "New Reward",
+  "rewardTitleLabel": "Reward Title",
+  "rewardTitleHint": "e.g. Zoo Trip",
+  "descriptionLabel": "Description",
+  "descriptionHint": "Short description...",
+  "costKeysLabel": "Cost (Keys)",
+  "costKeysHint": "e.g. 10",
+  "keysMustBeGreater": "Keys must be greater than 0",
+  "noRewardsYet": "No rewards yet",
+  "redeemedBy": "Redeemed by {name}",
+  "@redeemedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tapToEdit": "Tap to edit",
+  "delete": "Delete",
+  "confirmNewPassword": "Confirm New Password",
+  "unknown": "Unknown",
+  "uncategorized": "Uncategorized",
+  "prizes": "Prizes",
+  "home": "Home",
+  "pay": "Pay",
+  "more": "More",
+  "missingToken": "Authentication token is missing. Please log in again.",
+  "failedToLoadChildren": "Failed to load children (Status: {code})",
+  "@failedToLoadChildren": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "errorFetchingChildren": "Error fetching children: {error}",
+  "@errorFetchingChildren": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "updateSpendingLimit": "Update Spending Limit",
+  "setNewLimitFor": "Set new limit for {name}",
+  "@setNewLimitFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newSpendingLimitSar": "New Spending Limit (SAR)",
+  "defaultSavingSplit": "Default Saving Split",
+  "savingSpendingSplit": "Saving: {saving}% / Spending: {spending}%",
+  "@savingSpendingSplit": {
+    "placeholders": {
+      "saving": {
+        "type": "int"
+      },
+      "spending": {
+        "type": "int"
+      }
+    }
+  },
+  "childSettingsUpdated": "Child settings updated",
+  "failedToUpdateChildSettings": "Failed to update child settings",
+  "addNewChild": "Add New Child",
+  "firstNameLabel": "First Name",
+  "enterFirstName": "Please enter first name",
+  "nationalIdLabel": "National ID",
+  "enterNationalId": "Please enter national ID",
+  "mustBe10Digits": "Must be 10 digits",
+  "enterPhoneNumber": "Please enter phone number",
+  "phoneHelp": "Phone must start with 05 and be 10 digits",
+  "dateOfBirthLabel": "Date of Birth",
+  "selectDateOfBirth": "Please select date of birth",
+  "spendingLimitSar": "Spending Limit (SAR)",
+  "enterLimit": "Please enter a limit",
+  "phoneAlreadyLinked": "This phone number is already linked to another account",
+  "childAddedSuccess": "Child added successfully",
+  "failedToAddChild": "Failed to add child",
+  "manageChildren": "Manage Children",
+  "noChildrenAdded": "No children added yet",
+  "phoneDisplay": "Phone: {phone}",
+  "@phoneDisplay": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "limitDisplay": "Limit: {limit} SAR",
+  "@limitDisplay": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "addNewCardTitle": "Add New Card",
+  "cardHolder": "CARD HOLDER",
+  "expiryDate": "EXPIRY DATE",
+  "expiryHint": "MM/YY",
+  "cardHolderName": "Card Holder Name",
+  "saveCardForFuture": "Save card details for future payments",
+  "errCardNumberRequired": "Card number is required",
+  "errCardNumberDigitsOnly": "Card number must contain digits only",
+  "errCardNumberLength": "Card number must be 16 digits",
+  "errExpiryRequired": "Expiry date is required",
+  "errExpiryInvalidFormat": "Enter a valid expiry date (MM/YY)",
+  "errExpiryInvalid": "Enter a valid expiry date",
+  "errExpiryMonth": "Enter a valid month",
+  "errExpiryYear": "Expiry year must be 26 or later",
+  "errCvvRequired": "CVV is required",
+  "errCvvDigitsOnly": "CVV must contain digits only",
+  "errCvvLength": "CVV must be 3 digits",
+  "errCardNameRequired": "Name on card is required",
+  "errCardNameLettersOnly": "Name must contain English letters only",
+  "errCardNameSpace": "Use only one space between first and last name",
+  "errCardNameOneSpace": "Enter first and last name with one space only",
+  "errCardNameFirstLast": "Enter first and last name only",
+  "errCardNameMinLength": "Each name must be at least 3 letters",
+  "errFailedToSaveCard": "Failed to save card",
+  "errErrorSavingCard": "Error while saving card",
+  "authenticationError": "Authentication error",
+  "unableToOpenPaymentPage": "Unable to open payment page",
+  "redirectUrlMissing": "Redirect URL missing",
+  "addMoneyFailed": "Add money failed",
+  "proceedToPayment": "Proceed to Payment",
+  "allowanceSetupTitle": "Allowance Setup",
+  "allowanceSetupSubtitle": "Teach them to save by splitting their weekly allowance.",
+  "weeklyAmountLabel": "Weekly Amount",
+  "allocationSplitLabel": "Allocation Split",
+  "percentSave": "{percent}% Save",
+  "@percentSave": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "allowanceSliderInstruction": "Adjust the slider to teach your child how much to save from their allowance automatically.",
+  "autoTransferWeekly": "Auto-transfer Weekly",
+  "everySunday": "Every Sunday",
+  "saveSettings": "Save Settings",
+  "noChildrenFound": "No children found",
+  "allowanceSavedSuccess": "Allowance Saved ✅",
+  "pleaseEnterWeeklyAmount": "Please enter weekly amount",
+  "amountMustBeNumber": "Amount must be a number",
+  "amountMustBeGreaterThanZero": "Amount must be greater than 0",
+  "saveFailed": "Save failed ({code})",
+  "@saveFailed": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "errorSaving": "Error saving: {error}",
+  "@errorSaving": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "currencySarLabel": "SAR",
+  "spend": "Spend",
+  "save": "Save",
+  "choreApproved": "Chore approved!",
+  "failedToApprove": "Failed to approve chore",
+  "deleteChoreTitle": "Delete Chore",
+  "deleteChoreWarning": "Are you sure you want to delete this chore?",
+  "choreDeletedSuccess": "Chore deleted successfully",
+  "failedToDeleteChore": "Failed to delete chore",
+  "reviewProof": "Review Proof",
+  "childCompletedTask": "{name} completed the task: {title}",
+  "@childCompletedTask": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "imageNotFound": "Image not found",
+  "noProofImage": "No proof image submitted",
+  "close": "Close",
+  "approve": "Approve",
+  "addNewChore": "Add New Chore",
+  "choreTitle": "Chore Title",
+  "rewardKeysLabel": "Reward Keys",
+  "choreType": "Chore Type",
+  "oneTime": "One-time",
+  "day": "Day",
+  "time": "Time",
+  "selectTime": "Select Time",
+  "invalidInput": "Invalid input",
+  "choreAddedSuccess": "Chore added successfully",
+  "create": "Create",
+  "childsChores": "{name}'s Chores",
+  "@childsChores": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activeTab": "Active",
+  "noActiveChores": "No active chores",
+  "noHistoryYet": "No history yet",
+  "waitingReview": "Waiting Review",
+  "sunday": "Sunday",
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+
+  "totalBalance": "Total Balance",
+  "transferMoney_action": "Transfer Money",
+  "chores_action": "Chores",
+  "transactions_action": "Transactions",
+  "moneyRequests": "Money Requests",
+  "goals_action": "Goals",
+
+  "childsGoals": "{name}'s Goals",
+  "@childsGoals": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activeGoals": "Active Goals",
+  "completedGoals": "Completed Goals",
+  "noActiveGoals": "No active goals",
+  "savedMetric": "Saved: ",
+  "remainingMetric": "Remaining: ",
+  "completedBadge": "Completed",
+
+  "allFamilyChores": "All Family Chores",
+  "toReviewTab": "To Review",
+  "inProgressTab": "In Progress",
+  "nochoresToReview": "No chores to review",
+  "noActiveChoresList": "No active chores",
+  "childsChoresHeader": "{name}'s Chores",
+  "@childsChoresHeader": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rewardKeys": "Reward: {keys} Keys",
+  "@rewardKeys": {
+    "placeholders": {
+      "keys": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyBadge": "Weekly",
+  "reviewProofTitle": "Review {name}'s Proof",
+  "@reviewProofTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taskLabel": "Task: {title}",
+  "@taskLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "noProofProvided": "No proof image provided.",
+  "reject": "Reject",
+  "reasonForRejection": "Reason for Rejection",
+  "rejectionHint": "E.g., The room is still messy!",
+  "sendToChild": "Send to Child",
+  "choreRejected": "Chore Rejected & returned to child",
+  "failedToReject": "Failed to reject",
+  "editChore": "Edit Chore",
+  "titleLabel": "Title",
+  "descriptionChore": "Description",
+  "rewardKeysInput": "Reward (Keys)",
+  "choreTypeLabel": "Chore Type",
+  "oneTimeOption": "One-time",
+  "weeklyOption": "Weekly",
+  "dayLabel": "Day",
+  "timeLabel": "Time",
+  "selectTimeHint": "Select Time",
+  "assignToChild": "Assign to Child",
+  "selectChild": "Select a child",
+  "noChildrenFoundRed": "No children found.",
+  "rewardMustBePositive": "Reward must be > 0",
+  "pleaseFillAllFields": "Please fill all fields",
+  "choreUpdated": "Chore updated!",
+  "choreCreated": "Chore created!",
+  "errorMsg": "Error: {error}",
+  "@errorMsg": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteChoreConfirmTitle": "Delete Chore?",
+  "deleteChoreConfirmBody": "Are you sure you want to delete this chore? This action cannot be undone.",
+  "choreApprovedSuccess": "Chore Approved!",
+  "declineRequestTitle": "Decline Request?",
+  "declineRequestContent": "Are you sure you want to decline this request?",
+  "declineBtn": "Decline",
+  "moneyRequestTitle": "Money request",
+  "noRequestsFound": "No requests found",
+  "noMessage": "No message",
+  "approveBtn": "Approve",
+  "declinedBadge": "Declined",
+  "paidBadge": "Paid",
+  "errMissingTokenParentId": "Login response missing token or parentId",
+  "errLoginFailedGeneric": "Login failed, please try again",
+  "passwordHint": "Password",
+  "loginRequiredError": "You need to log in again.",
+  "accountDeletedError": "This account was deleted or does not exist.",
+  "errorLoadingData": "An error occurred while loading data.",
+  "serverConnectionFailed": "Failed to connect to the server.",
+  "manageKids": "Manage Kids",
+  "paymentMethod": "Payment Method",
+  "active": "Active",
+  "expires": "Expires",
+  "onlyOneCardSaved": "Only one card can be saved for this parent account.",
+  "editCard": "Edit Card",
+  "removeCard": "Remove Card",
+  "removeCardTitle": "Remove card?",
+  "removeCardMessage": "Are you sure you want to remove this card? You can add a new one later.",
+  "remove": "Remove",
+  "failedToLoadCard": "Failed to load card",
+  "errorLoadingCard": "Error while loading card",
+  "cardRemovedSuccess": "Card removed successfully",
+  "failedToRemoveCard": "Failed to remove card (code: {code})",
+  "@failedToRemoveCard": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "languageChangedHint": "Language changed. Please restart the app if it does not change automatically.",
+  "noCardFoundTitle": "No card found",
+  "addCardBtn": "Add Card Now",
+  "languageChangedHint": "Language changed successfully",
+  "authErrorMissingToken": "Authentication error: Missing token.",
+  "failedToLoadChildrenCode": "Failed to load children (Code: {code})",
+  "@failedToLoadChildrenCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingChildrenEx": "Error fetching children: {error}",
+  "@errorFetchingChildrenEx": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "selectChildTitle": "Select Child",
+  "yourChildren": "Your Children",
+  "noChildrenFoundList": "No children found",
+  "unnamedChild": "Unnamed",
+  "saveLabel": "Save: ",
+  "spendLabel": "Spend: ",
+  "missingTokenLoginAgain": "Missing token — please log in again",
+  "failedToLoadChildrenBasic": "Failed to load children",
+  "errorPrefixMsg": "Error: {error}",
+  "@errorPrefixMsg": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "somethingWentWrongBasic": "Something went wrong",
+  "changePasswordTitle": "Change password",
+  "currentPasswordLabel": "Current password",
+  "enterCurrentPasswordHint": "Enter current password",
+  "requiredField": "Required",
+  "newPasswordLabel": "New password",
+  "createStrongPasswordHint": "Create a strong password",
+  "requirementsTooltip": "Requirements",
+  "doesNotMeetRequirements": "Doesn't meet requirements",
+  "confirmNewPasswordLabel": "Confirm new password",
+  "confirmPasswordLabel": "Confirm password",
+  "reEnterNewPasswordHint": "Re-enter new password",
+  "passwordsDoNotMatchVal": "Passwords do not match",
+  "passwordRequirementsDesc": "Use 8+ chars with uppercase, lowercase, number, and special character.",
+  "cancelBtn": "Cancel",
+  "changeBtn": "Change",
+  "passwordChangedSuccess": "Password changed successfully",
+  "failedToChangePasswordFallback": "Failed to change password",
+  "networkErrorTryAgain": "Network error. Please try again.",
+  "changeChildPasswordTitle": "Change child password",
+  "selectChildLabel": "Select child",
+  "chooseHint": "Choose",
+  "childFallback": "Child",
+  "childPasswordChangedSuccess": "Child password changed successfully",
+  "securitySettingsTitle": "Security Settings",
+  "securitySection": "Security",
+  "updateParentPasswordSub": "Update your parent account password",
+  "addChildFirstToManage": "Add a child first to manage passwords",
+  "resetChildPasswordSub": "Reset a child account password",
+  "passwordRequirementsTitle": "Password Requirements",
+  "passwordRequirementsList": "• At least 8 characters\n• One uppercase letter\n• One lowercase letter\n• One number\n• One special character (!@#$%^&*)",
+  "transferTitle": "Transfer",
+  "fromParent": "From Parent",
+  "balanceAmount": "Balance: {amount}",
+  "@balanceAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "toChild": "To {name}",
+  "@toChild": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitSavingSpending": "Split Between Saving and Spending",
+  "savePercentage": "Save: {percent}%",
+  "@savePercentage": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "spendPercentage": "Spend: {percent}%",
+  "@spendPercentage": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseEnterValidAmount": "Please enter a valid amount",
+  "transferFailed": "Transfer failed",
+  "transferSuccessful": "Transfer Successful!",
+  "savingLabel": "Saving",
+  "spendingLabel": "Spending",
+  "updateChildWalletPrompt": "This will update your child’s wallet balance.",
+  "transactionsTitle": "Transactions",
+  "failedToLoadTransactionsCode": "Failed to load transactions ({code})",
+  "@failedToLoadTransactionsCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "somethingWentWrongError": "Something went wrong: {error}",
+  "@somethingWentWrongError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultTransaction": "Transaction",
+  "defaultCategory": "General",
+  "noTransactionsYet": "No transactions yet.",
+  "nameMinLengthVal": "Must be at least 2 letters",
+  "nameLettersOnlyVal": "Letters only",
+  "nationalIdValidationVal": "National ID / Iqama must be 10 digits",
+  "confirmPasswordVal": "Confirm your password",
+  "registeredSuccessfully": "Registered successfully! Please log in.",
+  "registrationFailed": "Registration failed",
+  "createYourAccount": "Create Your Account",
+  "lastNameLabel": "Last Name",
+  "nationalIdIqamaLabel": "National ID / Iqama",
+  "dobLabel": "Date of Birth",
+  "passwordMinLengthVal": "At least 8 characters",
+  "passwordRegexVal": "Must include upper/lower/number/special",
+  "confirmPasswordHint": "Confirm Password",
+  "securityQuestionAnswerLabel": "Security Question Answer",
+  "securityQuestionHint": "What’s the name of the street where you lived as a child?",
+  "selectDateVal": "Select date",
+  "policyPoint1": "Using Hassala means you agree to our terms and privacy practices",
+  "policyPoint2": "You control your data, permissions, and linked devices",
+  "policyPoint3": "All sensitive data is encrypted and never shared without explicit consent",
+  "termsOfUseFullText": "You agree to use Hassala responsibly and for family financial education purposes. All accounts created under a parent are subject to parental supervision. Transactions are simulated or processed via licensed PSPs. The app follows SAMA and Saudi data protection standards. Misuse of the platform may result in account suspension. Hassala currently uses sandbox-based payment simulations (e.g., Moyasar) and does not support real banking transactions. Only one parent account is supported per family in this version.",
+  "privacyPolicyFullText": "Hessala does not share your personal or financial data with third parties without consent. All sensitive data (PINs, passwords, tokens) are encrypted at rest and in transit. You can request data deletion or unlink your bank anytime. Only aggregated, anonymized data may be used for analytics.",
+ "rewards": "Rewards",
+ "allowance": "Allowance",
+ "requestedAmount": "requested",
+  "requestedMoney": "requested money",
+  "redeemedPrize": "redeemed a prize",
+  "completedTask": "completed a task",
+  "walletTopUp": "Wallet Top-up",
+  "moneyTransfer": "Money Transfer",
+  "deposit": "Deposit",
+  "refund": "Refund",
+  "parentAllowanceCat": "Allowance",
+  "parentAllowanceDesc": "Parent Allowance",
+  "moyasar": "Moyasar Payment",
+  "spendingTab": "Spending",
+  "savingTab": "Saving",
+  "spend": "Spend",
+  "save": "Save",
+  "savingLabel": "Saving",
+  "spendingLabel": "Spending",
+  "transferToChildMessage": "Transferred {amount} SAR to {childName}",
+  "@transferToChildMessage": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "allowanceFromParent": "Allowance from Parent",
+  "insight_title_weekly_spending": "Weekly Spending",
+  "insight_msg_weekly_spending": "You spent {amount} SAR in the last 7 days.",
+  "@insight_msg_weekly_spending": { "placeholders": { "amount": { "type": "String" } } },
+  
+  "insight_title_no_spending": "No Spending",
+  "insight_msg_no_spending_week": "You haven't spent anything in the last 7 days.",
+  
+  "insight_title_top_category": "Top Category",
+  "insight_msg_top_category": "You spent {percentage}% of your money on {category} recently.",
+  "@insight_msg_top_category": { "placeholders": { "percentage": { "type": "String" }, "category": { "type": "String" } } },
+  
+  "insight_title_self_control": "Self Control",
+  "insight_msg_self_control": "You didn’t spend anything yesterday, nice self-control!",
+  
+  "insight_title_start_saving": "Start Saving",
+  "insight_msg_start_saving": "Start saving to reach your {goalName} goal!",
+  "@insight_msg_start_saving": { "placeholders": { "goalName": { "type": "String" } } },
+  
+  "insight_title_almost_there": "Almost There",
+  "insight_msg_almost_there": "Only {amount} SAR left to reach your {goalName}!",
+  "@insight_msg_almost_there": { "placeholders": { "amount": { "type": "String" }, "goalName": { "type": "String" } } },
+  
+  "insight_title_goal_progress": "Goal Progress",
+  "insight_msg_goal_progress": "Great progress! You're {percentage}% closer to your {goalName} goal.",
+  "@insight_msg_goal_progress": { "placeholders": { "percentage": { "type": "String" }, "goalName": { "type": "String" } } },
+  
+  "insight_title_spending_increase": "Spending Increase",
+  "insight_msg_spending_increase": "{category} spending increased by {percentage}% recently.",
+  "@insight_msg_spending_increase": { "placeholders": { "category": { "type": "String" }, "percentage": { "type": "String" } } },
+  "insight_title_no_goals_yet": "No Goals Yet",
+  "insight_msg_no_goals_yet": "Start your first goal and track your progress here."}

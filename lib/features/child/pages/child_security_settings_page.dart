@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ChildSecuritySettingsPage extends StatefulWidget {
   final int childId;
@@ -38,6 +39,8 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
   void _showChangePasswordDialog() {
     final newController = TextEditingController();
     final confirmController = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     bool hideNew = true;
     bool hideConfirm = true;
@@ -52,9 +55,9 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              title: const Text(
-                'Change Password',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              title: Text(
+                l10n.changePassword,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
 
               content: Column(
@@ -65,7 +68,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                     controller: newController,
                     obscureText: hideNew,
                     decoration: InputDecoration(
-                      labelText: 'New Password',
+                      labelText: l10n.newPassword,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -86,7 +89,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
                     controller: confirmController,
                     obscureText: hideConfirm,
                     decoration: InputDecoration(
-                      labelText: 'Confirm New Password',
+                      labelText: l10n.confirmNewPassword,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -106,25 +109,23 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancel),
                 ),
 
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                  child: const Text('Change'),
+                  child: Text(l10n.change),
                   onPressed: () async {
                     final newPass = newController.text.trim();
                     final confirmPass = confirmController.text.trim();
 
                     // VALIDATION
                     if (newPass != confirmPass) {
-                      _showError('Passwords do not match');
+                      _showError(l10n.passwordsDoNotMatch);
                       return;
                     }
                     if (!_validatePassword(newPass)) {
-                      _showError(
-                        'Password must include upper, lower, number & symbol.',
-                      );
+                      _showError(l10n.passwordRequirements);
                       return;
                     }
 
@@ -148,6 +149,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
   Future<bool> _changeChildPassword(String newPassword) async {
     if (_isUpdating) return false;
     setState(() => _isUpdating = true);
+    final l10n = AppLocalizations.of(context)!;
 
     final url = Uri.parse(
       '${widget.baseUrl}/api/auth/child/${widget.childId}/password',
@@ -180,7 +182,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
 
       // SUCCESS
       if (response.statusCode == 200) {
-        _showSuccess('Password changed successfully');
+        _showSuccess(l10n.passwordChanged);
         return true;
       }
 
@@ -189,15 +191,15 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
       try {
         body = jsonDecode(response.body);
       } catch (_) {
-        _showError("Unexpected server error (${response.statusCode})");
+        _showError(l10n.somethingWentWrong(response.statusCode.toString()));
         return false;
       }
 
-      _showError(body['error'] ?? 'Failed to change password');
+      _showError(body['error'] ?? l10n.failedToChangePassword);
       return false;
     } catch (e) {
       setState(() => _isUpdating = false);
-      _showError('Error: $e');
+      _showError(l10n.somethingWentWrong(e.toString()));
       return false;
     }
   }
@@ -229,13 +231,14 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
   // -------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.grey[100],
 
       appBar: AppBar(
-        title: const Text(
-          'Security settings',
-          style: TextStyle(
+        title: Text(
+          l10n.securitySettings,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -252,15 +255,15 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
 
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsetsDirectional.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              Padding(
+                padding: const EdgeInsetsDirectional.symmetric(horizontal: 4, vertical: 8),
                 child: Text(
-                  'Security',
-                  style: TextStyle(
+                  l10n.security,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey,
@@ -270,13 +273,13 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
 
               _buildSecurityCard(
                 icon: Icons.lock_outline,
-                title: 'Change password',
+                title: l10n.changePassword,
                 onTap: _showChangePasswordDialog,
               ),
 
               if (_isUpdating)
-                const Padding(
-                  padding: EdgeInsets.only(top: 20),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 20),
                   child: Center(child: CircularProgressIndicator()),
                 ),
 
@@ -324,7 +327,7 @@ class _ChildSecuritySettingsPageState extends State<ChildSecuritySettingsPage> {
             color: Colors.black,
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        trailing: const Icon(Icons.chevron_right, size: 16),
         onTap: onTap,
       ),
     );

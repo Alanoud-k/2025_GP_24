@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 import 'child_qr_confirm_screen.dart';
 
@@ -40,11 +41,20 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   double? _demoAmount;
 
   final TextEditingController _merchantCtrl = TextEditingController(
-    text: "Demo Merchant",
   );
   final TextEditingController _amountCtrl = TextEditingController(
     text: "10.00",
   );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize the demo text only if it's currently empty
+    if (_merchantCtrl.text.isEmpty) {
+      final l10n = AppLocalizations.of(context)!;
+      _merchantCtrl.text = l10n.demoMerchant;
+    }
+  }
 
   @override
   void dispose() {
@@ -53,12 +63,12 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
     super.dispose();
   }
 
-  String _extractToken(String raw) {
+  String _extractToken(String raw, AppLocalizations l10n) {
     final parts = raw.split(':');
     if (parts.length == 3 && parts[0] == 'HASSALA_PAY' && parts[1] == '1') {
       return parts[2];
     }
-    throw Exception('Invalid QR format');
+    throw Exception(l10n.errorInvalidQrFormat);
   }
 
   String _formatDateTime(DateTime dt) {
@@ -72,6 +82,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   }
 
   Future<void> _pickAndScan() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _error = null;
       _loading = true;
@@ -96,7 +107,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
       if (barcodes.isEmpty) {
         setState(() {
           _loading = false;
-          _error = "No QR code found in this image.";
+          _error = l10n.errorNoQrFound;
         });
         return;
       }
@@ -105,7 +116,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
       if (raw.isEmpty) {
         setState(() {
           _loading = false;
-          _error = "QR detected but unreadable.";
+          _error = l10n.errorQrUnreadable;
         });
         return;
       }
@@ -120,8 +131,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   }
 
   Future<void> _goToConfirmFromQrRaw(String raw) async {
-    final token = _extractToken(raw);
-
+    final l10n = AppLocalizations.of(context)!;
+    final token = _extractToken(raw, l10n);
+    
     final info = await _resolveToken(token);
 
     if (!mounted) return;
@@ -144,6 +156,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   }
 
   Future<Map<String, dynamic>> _resolveToken(String token) async {
+    final l10n = AppLocalizations.of(context)!;
     final url = Uri.parse('${widget.baseUrl}/api/qr/resolve?token=$token');
 
     final res = await http.get(
@@ -160,9 +173,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
     if (res.statusCode != 200) {
       try {
         final body = jsonDecode(res.body);
-        throw Exception(body['error'] ?? 'Failed to resolve QR.');
+        throw Exception(body['error'] ?? l10n.errorFailedResolveQr);
       } catch (_) {
-        throw Exception('Failed to resolve QR.');
+        throw Exception(l10n.errorFailedResolveQr);
       }
     }
 
@@ -172,15 +185,16 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   Future<void> _openGenerateDialog() async {
     setState(() => _error = null);
 
+    final l10n = AppLocalizations.of(context)!;
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) {
         return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
+          padding: EdgeInsetsDirectional.only(
+            start: 16,
+            end: 16,
             bottom: MediaQuery.of(context).viewInsets.bottom + 16,
           ),
           child: Container(
@@ -192,9 +206,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  "Generate Demo QR",
-                  style: TextStyle(
+                Text(
+                  l10n.generateDemoQr,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF2C3E50),
@@ -204,7 +218,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                 TextField(
                   controller: _merchantCtrl,
                   decoration: InputDecoration(
-                    labelText: "Merchant name",
+                    labelText: l10n.merchantName,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -217,7 +231,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: "Amount (SAR)",
+                    labelText: l10n.amountSAR,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -239,7 +253,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text("Cancel"),
+                        child: Text(l10n.cancel),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -259,7 +273,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: Text(_creatingQr ? "Generating..." : "Generate"),
+                        child: Text(_creatingQr ? l10n.generating : l10n.generate),
                       ),
                     ),
                   ],
@@ -273,6 +287,8 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   }
 
   Future<void> _createDemoQr() async {
+    final l10n = AppLocalizations.of(context)!;
+
     setState(() {
       _error = null;
       _creatingQr = true;
@@ -288,10 +304,10 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
       final amount = double.tryParse(_amountCtrl.text.trim());
 
       if (merchantName.isEmpty) {
-        throw Exception("Please enter merchant name.");
+        throw Exception(l10n.enterMerchantName);
       }
       if (amount == null || amount <= 0) {
-        throw Exception("Please enter a valid amount.");
+        throw Exception(l10n.enterValidAmount);
       }
 
       final url = Uri.parse('${widget.baseUrl}/api/qr/create');
@@ -312,9 +328,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
       if (res.statusCode != 200) {
         try {
           final body = jsonDecode(res.body);
-          throw Exception(body['error'] ?? 'Failed to create demo QR.');
+          throw Exception(body['error'] ?? l10n.errorFailedCreateDemoQr);
         } catch (_) {
-          throw Exception('Failed to create demo QR.');
+          throw Exception(l10n.errorFailedCreateDemoQr);
         }
       }
 
@@ -326,7 +342,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
           .toString();
 
       if (token.isEmpty || qrString.isEmpty || expiresAtStr.isEmpty) {
-        throw Exception("Backend response missing token/qrString/expiresAt.");
+        throw Exception(l10n.somethingWentWrongGeneric);
       }
 
       setState(() {
@@ -377,6 +393,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   Widget build(BuildContext context) {
     const primary = Color(0xFF37C4BE);
     const bg = Color(0xFFF7F8FA);
+    final l10n = AppLocalizations.of(context)!;
 
     final hasDemo = _demoQrString != null;
 
@@ -384,9 +401,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
       backgroundColor: bg,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
-          "Pay by QR",
-          style: TextStyle(
+        title: Text(
+          l10n.payWithQR,
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: Colors.black87,
@@ -410,13 +427,13 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                padding: const EdgeInsetsDirectional.fromSTEB(18, 14, 18, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Scan to Pay",
-                      style: TextStyle(
+                    Text(
+                      l10n.scanToPay,
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF2C3E50),
@@ -424,7 +441,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      "Upload a QR code image to complete your payment",
+                      l10n.uploadQrSubtitle,
                       style: TextStyle(
                         color: Colors.black.withOpacity(0.55),
                         fontSize: 13,
@@ -462,7 +479,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                               const SizedBox(height: 6),
                               if (_demoExpiresAt != null)
                                 Text(
-                                  'Expires: ${_formatDateTime(_demoExpiresAt!)}',
+                                  l10n.expiresAtLabel(_formatDateTime(_demoExpiresAt!)),
                                   style: TextStyle(
                                     color: Colors.black.withOpacity(0.55),
                                   ),
@@ -484,7 +501,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                       borderRadius: BorderRadius.circular(18),
                                     ),
                                   ),
-                                  child: const Text("Use this QR"),
+                                  child: Text(l10n.useThisQr),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -508,7 +525,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                     borderRadius: BorderRadius.circular(18),
                                   ),
                                 ),
-                                child: const Text("Clear"),
+                                child: Text(l10n.clear),
                               ),
                             ] else ...[
                               Container(
@@ -540,7 +557,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                           ),
                                           const SizedBox(height: 10),
                                           Text(
-                                            "No QR selected",
+                                            l10n.noQrSelected,
                                             style: TextStyle(
                                               color: Colors.grey.shade500,
                                               fontWeight: FontWeight.w600,
@@ -558,7 +575,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                       : _pickAndScan,
                                   icon: const Icon(Icons.image_outlined),
                                   label: Text(
-                                    _loading ? "Scanning..." : "Choose QR Image",
+                                    _loading ? l10n.scanning : l10n.chooseQrImage,
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primary,
@@ -608,9 +625,9 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                   ],
                 ),
               ),
-              Positioned(
+              PositionedDirectional(
                 bottom: 20,
-                right: 20,
+                end: 20,
                 child: FloatingActionButton(
                   backgroundColor: primary,
                   elevation: 6,

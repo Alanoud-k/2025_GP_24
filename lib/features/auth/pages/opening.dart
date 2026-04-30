@@ -58,6 +58,7 @@ class _SplashViewState extends State<SplashView>
 }*/
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});

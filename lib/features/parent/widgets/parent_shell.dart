@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart'; // تم إضافة استيراد الترجمة
 
 import '../pages/parent_homepage_screen.dart';
 import '../pages/parent_chores_screen.dart';
@@ -63,9 +64,7 @@ class _ParentShellState extends State<ParentShell> {
     final pages = [
       ParentHomeScreen(parentId: parentId, token: token), // 0
       ParentChoresScreen(parentId: parentId, token: token), // 1
-  ParentAllowanceScreen(parentId: parentId, token: token),
-
- // 2 (placeholder)
+      ParentAllowanceScreen(parentId: parentId, token: token), // 2 
       ParentGiftsScreen(parentId: parentId, token: token), // 3
       MorePage(parentId: parentId, token: token), // 4
     ];
@@ -94,6 +93,8 @@ class ParentBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // تهيئة الترجمة
+
     const double barHeight = 80;
     const double iconSize = 26;
     const double homeOuter = 80;
@@ -109,17 +110,18 @@ class ParentBottomNavBar extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // Bar background
-          Positioned(
+          PositionedDirectional( // استخدام PositionedDirectional لدعم RTL
             bottom: 0,
-            left: 0,
-            right: 0,
+            start: 0,
+            end: 0,
             child: Container(
               height: barHeight,
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(26),
-                  topRight: Radius.circular(26),
+                // استخدام BorderRadiusDirectional لدعم RTL
+                borderRadius: BorderRadiusDirectional.only(
+                  topStart: Radius.circular(26),
+                  topEnd: Radius.circular(26),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -132,58 +134,58 @@ class ParentBottomNavBar extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Row(
-  children: [
-    Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _NavItem(
-            asset: "assets/icons/Reward.svg",
-            label: "Chores",
-            isSelected: currentIndex == 1,
-            iconSize: iconSize,
-            onTap: () => onTap(1),
-          ),
-          _NavItem(
-            asset: "assets/icons/Card.svg",
-            label: "Allowance",
-            isSelected: currentIndex == 2,
-            iconSize: iconSize,
-            onTap: () => onTap(2),
-          ),
-        ],
-      ),
-    ),
+                  children: [
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _NavItem(
+                            asset: "assets/icons/Reward.svg",
+                            label: l10n.chores_action, // نص مترجم
+                            isSelected: currentIndex == 1,
+                            iconSize: iconSize,
+                            onTap: () => onTap(1),
+                          ),
+                          _NavItem(
+                            asset: "assets/icons/Card.svg",
+                            label: l10n.allowance, // نص مترجم
+                            isSelected: currentIndex == 2,
+                            iconSize: iconSize,
+                            onTap: () => onTap(2),
+                          ),
+                        ],
+                      ),
+                    ),
 
-    Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _NavItem(
-            asset: "assets/icons/Gift.svg",
-            label: "Rewards",
-            isSelected: currentIndex == 3,
-            iconSize: iconSize,
-            onTap: () => onTap(3),
-          ),
-          _NavItem(
-            asset: "assets/icons/More.svg",
-            label: "More",
-            isSelected: currentIndex == 4,
-            iconSize: iconSize,
-            onTap: () => onTap(4),
-          ),
-        ],
-      ),
-    ),
-  ],
-)
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _NavItem(
+                            asset: "assets/icons/Gift.svg",
+                            label: l10n.rewards, // نص مترجم
+                            isSelected: currentIndex == 3,
+                            iconSize: iconSize,
+                            onTap: () => onTap(3),
+                          ),
+                          _NavItem(
+                            asset: "assets/icons/More.svg",
+                            label: l10n.more, // نص مترجم
+                            isSelected: currentIndex == 4,
+                            iconSize: iconSize,
+                            onTap: () => onTap(4),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
           // Floating Home button
-          Positioned(
+          PositionedDirectional( // استخدام PositionedDirectional لدعم RTL
             top: 10,
             child: GestureDetector(
               onTap: () => onTap(0),

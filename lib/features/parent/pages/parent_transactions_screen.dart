@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ParentTransactionsScreen extends StatefulWidget {
   final int parentId;
@@ -31,7 +32,9 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchTransactions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchTransactions();
+    });
   }
 
   Future<void> _fetchTransactions() async {
@@ -39,6 +42,8 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
+
+    final l10n = AppLocalizations.of(context)!;
 
     try {
       final url = Uri.parse(
@@ -58,7 +63,6 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body) as Map<String, dynamic>;
 
-        // 👇 EXACTLY like child screen: make it List<dynamic> first.
         final List<dynamic> list = decoded["data"] ?? [];
 
         final List<ParentTransaction> items = list
@@ -70,17 +74,15 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
         });
       } else {
         setState(() {
-          _errorMessage = "Failed to load transactions (${res.statusCode})";
+          _errorMessage = l10n.failedToLoadTransactionsCode(res.statusCode.toString());
         });
       }
     } catch (e, stack) {
-      // Optional: log stack for debugging
-      // ignore: avoid_print
-      print("Parent _fetchTransactions error: $e\n$stack");
+      debugPrint("Parent _fetchTransactions error: $e\n$stack");
 
       if (!mounted) return;
       setState(() {
-        _errorMessage = "Something went wrong: $e";
+        _errorMessage = l10n.somethingWentWrongError(e.toString());
       });
     } finally {
       if (!mounted) return;
@@ -115,7 +117,7 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
     if (c.contains("transport")) {
       return Icons.directions_bus_rounded;
     }
-    if (c.contains("top-up") || c.contains("wallet")) {
+    if (c.contains("top-up") || c.contains("wallet") || c.contains("allowance") || c.contains("saving") || c.contains("spending")) {
       return Icons.account_balance_wallet_rounded;
     }
     if (c.contains("child") || c.contains("transfer")) {
@@ -126,16 +128,22 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: kTextDark),
-        title: const Text(
-          "Transactions",
-          style: TextStyle(color: kTextDark, fontWeight: FontWeight.w600),
+        leading: IconButton(
+          icon: Icon(isRtl ? Icons.arrow_forward : Icons.arrow_back, color: kTextDark),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          l10n.transactionsTitle,
+          style: const TextStyle(color: kTextDark, fontWeight: FontWeight.w600),
         ),
       ),
       body: RefreshIndicator(
@@ -143,13 +151,13 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
         onRefresh: _fetchTransactions,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: _buildBody(),
+          child: _buildBody(l10n),
         ),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations l10n) {
     if (_isLoading && _transactions.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -165,10 +173,10 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
     }
 
     if (_transactions.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          "No transactions yet.",
-          style: TextStyle(color: Colors.black45, fontSize: 14),
+          l10n.noTransactionsYet,
+          style: const TextStyle(color: Colors.black45, fontSize: 14),
         ),
       );
     }
@@ -182,6 +190,7 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
           transaction: tx,
           amountColor: _amountColor(tx.type),
           icon: _categoryIcon(tx.category),
+          l10n: l10n,
         );
       },
     );
@@ -197,6 +206,7 @@ class ParentTransaction {
   final String description;
   final String category;
   final DateTime? date;
+  final String childName; // 👈 إضافة متغير اسم الطفل
 
   ParentTransaction({
     required this.id,
@@ -205,6 +215,7 @@ class ParentTransaction {
     required this.description,
     required this.category,
     required this.date,
+    required this.childName, // 👈 إضافته للمُنشئ
   });
 
   factory ParentTransaction.fromJson(Map<String, dynamic> json) {
@@ -221,11 +232,11 @@ class ParentTransaction {
     return ParentTransaction(
       id: json["transactionid"] ?? 0,
       type: json["transactiontype"] ?? "",
-      // 👇 Always parse from string or number safely
       amount: double.tryParse(json["amount"].toString()) ?? 0.0,
-      description: json["merchantname"] ?? json["description"] ?? "Transaction",
-      category: json["transactioncategory"] ?? "General",
+      description: json["merchantname"] ?? json["description"] ?? "", 
+      category: json["transactioncategory"] ?? "", 
       date: parsedDate,
+      childName: json["childName"] ?? "", // 👈 قراءة الاسم من الاستجابة
     );
   }
 }
@@ -236,11 +247,13 @@ class _TransactionCard extends StatelessWidget {
   final ParentTransaction transaction;
   final Color amountColor;
   final IconData icon;
+  final AppLocalizations l10n;
 
   const _TransactionCard({
     required this.transaction,
     required this.amountColor,
     required this.icon,
+    required this.l10n,
   });
 
   String _formatDate(DateTime? date) {
@@ -251,13 +264,57 @@ class _TransactionCard extends StatelessWidget {
     return "$y-$m-$d";
   }
 
+  // ✅ دالة لترجمة التصنيفات الأساسية (بما فيها Spending و Saving)
+  String _translateCategory(String category) {
+    final c = category.toLowerCase();
+    if (c.contains("food") || c.contains("restaurant")) return l10n.catFood;
+    if (c.contains("education") || c.contains("school")) return l10n.catEducation;
+    if (c.contains("entertainment") || c.contains("fun")) return l10n.catEntertainment;
+    if (c.contains("shopping") || c.contains("store")) return l10n.catShopping;
+    if (c.contains("gift") || c.contains("reward")) return l10n.catGifts;
+    if (c.contains("top-up") || c.contains("wallet")) return l10n.walletTopUp;
+    if (c.contains("allowance")) return l10n.parentAllowanceCat;
+    if (c.contains("saving")) return l10n.savingLabel; // 👈 ترجمة Saving
+    if (c.contains("spending")) return l10n.spendingLabel; // 👈 ترجمة Spending
+    return category; 
+  }
+
+  // ✅ تمرير اسم الطفل في الدالة
+  String _translateDescription(String desc, double amount, String childName) {
+    final d = desc.toLowerCase();
+    
+    if (d.contains("parent allowance") || d.contains("allowance")) {
+        final formattedAmount = amount.toStringAsFixed(2);
+        
+        // 👈 إذا كان الاسم موجوداً استخدمه، وإلا استخدم الكلمة الاحتياطية
+        final nameToDisplay = childName.isNotEmpty ? childName : l10n.childFallbackName;
+        
+        return l10n.transferToChildMessage(formattedAmount, nameToDisplay);
+    }
+    
+    if (d.contains("transfer to child") || d.contains("money transfer")) return l10n.moneyTransfer;
+    if (d.contains("deposit")) return l10n.deposit;
+    if (d.contains("refund")) return l10n.refund;
+    if (d.contains("moyasar")) return l10n.moyasar;
+    
+    return desc; 
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color kTextDark = Color(0xFF222222);
     final dateText = _formatDate(transaction.date);
+    
+    // 👈 تحديث الاستدعاء هنا لتمرير transaction.childName
+    String desc = _translateDescription(transaction.description.trim(), transaction.amount, transaction.childName);
+    if (desc.isEmpty) desc = l10n.defaultTransaction;
+
+    String cat = _translateCategory(transaction.category.trim());
+    if (cat.isEmpty) cat = l10n.defaultCategory;
+    
     final subtitle = dateText.isEmpty
-        ? transaction.category
-        : "${transaction.category} • $dateText";
+        ? cat
+        : "$cat • $dateText";
 
     return Container(
       decoration: BoxDecoration(
@@ -292,7 +349,7 @@ class _TransactionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  transaction.description,
+                  desc,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

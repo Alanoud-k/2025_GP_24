@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 import 'child_goals_screen.dart';
 import 'child_request_money_screen.dart';
 import 'package:my_app/utils/check_auth.dart';
@@ -31,13 +32,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   int selectedMonth = DateTime.now().month;
   int selectedYear = DateTime.now().year;
   int selectedDay = DateTime.now().day;
-  String selectedPeriod = "Monthly";
+  String selectedPeriod = "Monthly"; // هذه القيمة البرمجية يجب أن تبقى بالإنجليزية
   double monthTotalSpent = 0.0;
-
-  final List<String> monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
 
   double currentBalance = 0.0;
   int currentPoints = 0;
@@ -75,6 +71,14 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (mounted) _fetchChildInfo();
+  }
+
+  // ✅ جلب أسماء الأشهر معربة من ملفات اللغة
+  List<String> _getMonthNames(AppLocalizations l10n) {
+    return [
+      l10n.jan, l10n.feb, l10n.mar, l10n.apr, l10n.may, l10n.jun,
+      l10n.jul, l10n.aug, l10n.sep, l10n.oct, l10n.nov, l10n.dec,
+    ];
   }
 
   Future<void> _fetchChildInfo() async {
@@ -215,12 +219,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const bg1 = Color(0xFFF7FAFC);
     const bg2 = Color(0xFFE6F4F3);
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(colors: [bg1, bg2], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+        decoration: const BoxDecoration(gradient: LinearGradient(colors: [bg1, bg2], begin: AlignmentDirectional.topCenter, end: AlignmentDirectional.bottomCenter)),
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -229,6 +234,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     await _fetchChildInfo();
                     await _fetchChildChartData();
                     await _fetchUnreadCount();
+                    await _fetchInsights();
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -236,17 +242,17 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _header(),
+                        _header(l10n),
                         const SizedBox(height: 20),
-                        _balancesRow(),
+                        _balancesRow(l10n),
                         const SizedBox(height: 12),
-                        _keysBadge(),
+                        _keysBadge(l10n),
                         const SizedBox(height: 24),
-                        _actionsGrid(),
+                        _actionsGrid(l10n),
                         const SizedBox(height: 24),
-                        if (insights.isNotEmpty) _insightsSection(),
+                        if (insights.isNotEmpty) _insightsSection(l10n),
                         const SizedBox(height: 20),
-                        _breakdownCard(),
+                        _breakdownCard(l10n),
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -257,7 +263,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _header() {
+  Widget _header(AppLocalizations l10n) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -270,8 +276,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Welcome back,", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: Colors.black54)),
-                    Text(childName.isNotEmpty ? childName : 'Child', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+                    Text(l10n.welcomeBack, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                    Text(childName.isNotEmpty ? childName : l10n.childFallbackName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
                   ],
                 ),
               ),
@@ -289,8 +295,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             children: [
               const Icon(Icons.notifications_none_rounded, size: 30, color: Colors.black87),
               if (unreadCount > 0)
-                Positioned(
-                  right: -2, top: -2,
+                PositionedDirectional(
+                  end: -2, top: -2,
                   child: Container(
                     constraints: const BoxConstraints(minWidth: 18),
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
@@ -305,12 +311,12 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _balancesRow() {
+  Widget _balancesRow(AppLocalizations l10n) {
     return Row(
       children: [
-        Expanded(child: _balanceCard(title: 'Spend balance', amount: spendBalance, gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)], leadingIcon: Icons.shopping_bag_outlined)),
+        Expanded(child: _balanceCard(title: l10n.spendBalance, amount: spendBalance, gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)], leadingIcon: Icons.shopping_bag_outlined)),
         const SizedBox(width: 12),
-        Expanded(child: _balanceCard(title: 'Save balance', amount: savingBalance, gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)], leadingIcon: Icons.account_balance_wallet_rounded)),
+        Expanded(child: _balanceCard(title: l10n.saveBalance, amount: savingBalance, gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)], leadingIcon: Icons.account_balance_wallet_rounded)),
       ],
     );
   }
@@ -318,7 +324,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _balanceCard({required String title, required double amount, required List<Color> gradientColors, required IconData leadingIcon}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      decoration: BoxDecoration(gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 6))]),
+      decoration: BoxDecoration(gradient: LinearGradient(colors: gradientColors, begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd), borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 6))]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -330,9 +336,9 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _keysBadge() {
+  Widget _keysBadge(AppLocalizations l10n) {
     return Align(
-      alignment: Alignment.centerRight,
+      alignment: AlignmentDirectional.centerEnd,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFEDEDED)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 4))]),
@@ -341,22 +347,22 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           children: [
             Icon(Icons.vpn_key_rounded, size: 18, color: Colors.amber.shade800),
             const SizedBox(width: 6),
-            Flexible(child: Text("$currentPoints Keys", maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
+            Flexible(child: Text("$currentPoints ${l10n.keys}", maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
           ],
         ),
       ),
     );
   }
 
-  Widget _actionsGrid() {
+  Widget _actionsGrid(AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(
           child: Column(
             children: [
-              _actionButton('Chores', Icons.checklist_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildChoresScreen(childId: widget.childId, token: widget.token))); }),
+              _actionButton(l10n.chores, Icons.checklist_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildChoresScreen(childId: widget.childId, token: widget.token))); }),
               const SizedBox(height: 12),
-              _actionButton('Transactions', Icons.receipt_long_outlined, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildTransactionsScreen(childId: widget.childId, token: widget.token, baseUrl: widget.baseUrl))); }),
+              _actionButton(l10n.transactions, Icons.receipt_long_outlined, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildTransactionsScreen(childId: widget.childId, token: widget.token, baseUrl: widget.baseUrl))); }),
             ],
           ),
         ),
@@ -364,14 +370,68 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Column(
             children: [
-              _actionButton('Goals', Icons.flag_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildGoalsScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
+              _actionButton(l10n.goals, Icons.flag_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildGoalsScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
               const SizedBox(height: 12),
-              _actionButton('Request Money', Icons.payments_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildRequestMoneyScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
+              _actionButton(l10n.requestMoney, Icons.payments_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildRequestMoneyScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFEDEDED), width: 1), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 4))]),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            Container(height: 40, width: 40, decoration: BoxDecoration(color: const Color(0xFF37C4BE).withOpacity(0.12), borderRadius: BorderRadius.circular(14)), child: Icon(icon, size: 22, color: const Color(0xFF2EA49E))),
+            const SizedBox(width: 8),
+            Expanded(child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ دوال الترجمة الخاصة بالرسائل الذكية
+  String _getTranslatedTitle(String titleKey, AppLocalizations l10n) {
+    switch (titleKey) {
+      case "insight_title_weekly_spending": return l10n.insight_title_weekly_spending;
+      case "insight_title_no_spending": return l10n.insight_title_no_spending;
+      case "insight_title_top_category": return l10n.insight_title_top_category;
+      case "insight_title_self_control": return l10n.insight_title_self_control;
+      case "insight_title_start_saving": return l10n.insight_title_start_saving;
+      case "insight_title_almost_there": return l10n.insight_title_almost_there;
+      case "insight_title_goal_progress": return l10n.insight_title_goal_progress;
+      case "insight_title_spending_increase": return l10n.insight_title_spending_increase;
+      default: return titleKey; 
+    }
+  }
+
+  String _getTranslatedMessage(String msgKey, String? val1, String? val2, AppLocalizations l10n) {
+    String translatedVal1 = val1 ?? "";
+    String translatedVal2 = val2 ?? "";
+    
+    // إذا كان المتغير يحتوي على اسم تصنيف باللغة الإنجليزية، نقوم بترجمته
+    translatedVal1 = _getCategoryDisplayName(context, translatedVal1);
+    translatedVal2 = _getCategoryDisplayName(context, translatedVal2);
+
+    switch (msgKey) {
+      case "insight_msg_weekly_spending": return l10n.insight_msg_weekly_spending(translatedVal1);
+      case "insight_msg_no_spending_week": return l10n.insight_msg_no_spending_week;
+      case "insight_msg_top_category": return l10n.insight_msg_top_category(translatedVal1, translatedVal2);
+      case "insight_msg_self_control": return l10n.insight_msg_self_control;
+      case "insight_msg_start_saving": return l10n.insight_msg_start_saving(translatedVal1);
+      case "insight_msg_almost_there": return l10n.insight_msg_almost_there(translatedVal1, translatedVal2);
+      case "insight_msg_goal_progress": return l10n.insight_msg_goal_progress(translatedVal1, translatedVal2);
+      case "insight_msg_spending_increase": return l10n.insight_msg_spending_increase(translatedVal2, translatedVal1);
+      default: return msgKey;
+    }
   }
 
   Widget _buildInsightText(String message) {
@@ -402,7 +462,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     "empty": {"colors": [Color(0xFFB0BEC5), Color(0xFFECEFF1)], "icon": Icons.info_outline},
   };
 
-  Widget _insightsSection() {
+  Widget _insightsSection(AppLocalizations l10n) {
     final controller = PageController(viewportFraction: 0.88);
 
     return Column(
@@ -416,8 +476,15 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             itemBuilder: (context, i) {
               final insight = insights[i];
               final type = insight["type"] ?? "empty";
-              final title = insight["title"] ?? "";
-              final message = insight["message"] ?? "";
+              
+              final titleKey = insight["title"] ?? "";
+              final msgKey = insight["message"] ?? "";
+              final val1 = insight["value"]?.toString();
+              final val2 = insight["extraValue"]?.toString();
+
+              final translatedTitle = _getTranslatedTitle(titleKey, l10n);
+              final translatedMessage = _getTranslatedMessage(msgKey, val1, val2, l10n);
+
               final style = insightStyles[type] ?? insightStyles["empty"]!;
               final gradient = style["colors"] as List<Color>;
               final icon = style["icon"] as IconData;
@@ -425,13 +492,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                 padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: gradient[0].withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 12))]),
+                decoration: BoxDecoration(gradient: LinearGradient(colors: gradient, begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd), borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: gradient[0].withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 12))]),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(children: [Icon(icon, color: Colors.white), const SizedBox(width: 8), Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)))]),
+                    Row(children: [Icon(icon, color: Colors.white), const SizedBox(width: 8), Expanded(child: Text(translatedTitle, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)))]),
                     const SizedBox(height: 10),
-                    _buildInsightText(message),
+                    _buildInsightText(translatedMessage),
                   ],
                 ),
               );
@@ -450,38 +517,27 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFEDEDED), width: 1), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 4))]),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Row(
-          children: [
-            Container(height: 40, width: 40, decoration: BoxDecoration(color: const Color(0xFF37C4BE).withOpacity(0.12), borderRadius: BorderRadius.circular(14)), child: Icon(icon, size: 22, color: const Color(0xFF2EA49E))),
-            const SizedBox(width: 8),
-            Expanded(child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildPeriodToggle(AppLocalizations l10n) {
+    final Map<String, String> periods = {
+      'Daily': l10n.daily,
+      'Weekly': l10n.weekly,
+      'Monthly': l10n.monthly,
+      'Yearly': l10n.yearly,
+    };
 
-  Widget _buildPeriodToggle() {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(16)),
       child: Row(
-        children: ['Daily', 'Weekly', 'Monthly', 'Yearly'].map((p) {
-          final isSelected = selectedPeriod == p;
+        children: periods.entries.map((entry) {
+          final isSelected = selectedPeriod == entry.key; 
           return Expanded(
             child: GestureDetector(
-              onTap: () { setState(() { selectedPeriod = p; }); _fetchChildChartData(); },
+              onTap: () { setState(() { selectedPeriod = entry.key; }); _fetchChildChartData(); },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(color: isSelected ? const Color(0xFF37C4BE) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-                child: Center(child: Text(p, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: isSelected ? Colors.white : Colors.black54, fontWeight: FontWeight.bold, fontSize: 12))),
+                child: Center(child: Text(entry.value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: isSelected ? Colors.white : Colors.black54, fontWeight: FontWeight.bold, fontSize: 12))),
               ),
             ),
           );
@@ -490,16 +546,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _buildDateSelector() {
+  Widget _buildDateSelector(AppLocalizations l10n) {
+    final List<String> localizedMonths = _getMonthNames(l10n);
     String dateText = "";
+    
     if (selectedPeriod == 'Daily') {
-      dateText = "$selectedDay ${monthNames[selectedMonth - 1]} $selectedYear";
+      dateText = "$selectedDay ${localizedMonths[selectedMonth - 1]} $selectedYear";
     } else if (selectedPeriod == 'Weekly') {
       DateTime current = DateTime(selectedYear, selectedMonth, selectedDay);
       DateTime weekAgo = current.subtract(const Duration(days: 6));
-      dateText = "${weekAgo.day} ${monthNames[weekAgo.month - 1]} - $selectedDay ${monthNames[selectedMonth - 1]}";
+      dateText = "${weekAgo.day} ${localizedMonths[weekAgo.month - 1]} - $selectedDay ${localizedMonths[selectedMonth - 1]}";
     } else if (selectedPeriod == 'Monthly') {
-      dateText = "${monthNames[selectedMonth - 1]} $selectedYear";
+      dateText = "${localizedMonths[selectedMonth - 1]} $selectedYear";
     } else if (selectedPeriod == 'Yearly') {
       dateText = "$selectedYear";
     }
@@ -510,7 +568,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     return Flexible(
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
+        alignment: AlignmentDirectional.centerEnd,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(20)),
@@ -521,7 +579,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_left_rounded, size: 24, color: Colors.black54)),
               ),
               GestureDetector(
-                onTap: canSelectPicker ? _showMonthYearPicker : null,
+                onTap: canSelectPicker ? () => _showMonthYearPicker(l10n) : null,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
@@ -547,29 +605,29 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _breakdownCard() {
+  Widget _breakdownCard(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFEDEDED)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 6))]),
       child: Column(
         children: [
-          _buildPeriodToggle(),
+          _buildPeriodToggle(l10n),
           const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
+              Expanded(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
-                    SizedBox(width: 6),
-                    Flexible(child: Text('Breakdown', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
+                    const Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
+                    const SizedBox(width: 6),
+                    Flexible(child: Text(l10n.breakdown, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              _buildDateSelector(),
+              _buildDateSelector(l10n),
             ],
           ),
           const SizedBox(height: 16),
@@ -592,7 +650,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  void _showMonthYearPicker() {
+  void _showMonthYearPicker(AppLocalizations l10n) {
+    final List<String> localizedMonths = _getMonthNames(l10n);
     int tempMonth = selectedMonth;
     int tempYear = selectedYear;
 
@@ -604,7 +663,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: const Text("Select Date", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18)),
+              title: Text(l10n.selectDate, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18)),
               content: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -623,7 +682,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                           return DropdownMenuItem<int>(
                             value: m,
                             enabled: !isDisabled,
-                            child: Text(monthNames[index], style: TextStyle(fontWeight: FontWeight.w600, color: isDisabled ? Colors.grey : const Color(0xFF2C3E50)))
+                            child: Text(localizedMonths[index], style: TextStyle(fontWeight: FontWeight.w600, color: isDisabled ? Colors.grey : const Color(0xFF2C3E50)))
                           );
                         }),
                         onChanged: (val) { 
@@ -664,7 +723,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               ),
               actionsAlignment: MainAxisAlignment.spaceEvenly,
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37C4BE), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10)),
                   onPressed: () {
@@ -680,7 +739,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     _fetchChildChartData();
                     Navigator.pop(context);
                   },
-                  child: const Text("Apply", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(l10n.apply, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -690,20 +749,46 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
+  String _getCategoryDisplayName(BuildContext context, String categoryKey) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (categoryKey) {
+      case 'Food & Restaurants': return l10n.foodRestaurants;
+      case 'Grocery & Markets': return l10n.groceryMarkets;
+      case 'Retail & Shopping': return l10n.retailShopping;
+      case 'Transport': return l10n.transport;
+      case 'Medical': return l10n.medical;
+      case 'Digital & Subscriptions': return l10n.digitalSubscriptions;
+      default: return categoryKey;
+    }
+  }
+
   Widget _legend() {
-    final List<String> ordered = ['Food & Restaurants', 'Grocery & Markets', 'Retail & Shopping', 'Transport', 'Medical', 'Digital & Subscriptions'];
+    final List<String> internalKeys = [
+      'Food & Restaurants', 
+      'Grocery & Markets', 
+      'Retail & Shopping', 
+      'Transport', 
+      'Medical', 
+      'Digital & Subscriptions'
+    ];
+
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 24,
       runSpacing: 12,
-      children: ordered.where((cat) => (categoryPercentages[cat] ?? 0) > 0).map((cat) {
-        final color = _getColorForCategory(cat);
+      children: internalKeys.where((key) => (categoryPercentages[key] ?? 0) > 0).map((key) {
+        final color = _getColorForCategory(key);
+        final displayName = _getCategoryDisplayName(context, key); 
+        
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(width: 14, height: 14, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
             const SizedBox(width: 6),
-            Text(cat, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))),
+            Text(
+              displayName, 
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))
+            ),
           ],
         );
       }).toList(),

@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:my_app/utils/check_auth.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 enum CardBrand { visa, mastercard, mada }
 
@@ -64,14 +65,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
 
   void _onFieldChanged() {
     _recheckForm();
-
-    // ✅ NEW: once user attempted submit, allow live error updates
-    if (_submittedOnce) {
-      setState(() {});
-    } else {
-      // keep UI light before submit
-      setState(() {});
-    }
+    setState(() {});
   }
 
   Future<void> _initialize() async {
@@ -160,87 +154,90 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
   // -------- Validation helpers --------
 
   String? _validateCardNumber(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     if (value == null || value.isEmpty) {
-      return 'Card number is required';
+      return l10n.errCardNumberRequired;
     }
     final cleaned = value.replaceAll(' ', '');
     if (!RegExp(r'^\d+$').hasMatch(cleaned)) {
-      return 'Card number must contain digits only';
+      return l10n.errCardNumberDigitsOnly;
     }
     if (cleaned.length != 16) {
-      return 'Card number must be 16 digits';
+      return l10n.errCardNumberLength;
     }
     return null;
   }
 
   String? _validateExpiry(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     if (value == null || value.isEmpty) {
-      return 'Expiry date is required';
+      return l10n.errExpiryRequired;
     }
     final text = value.trim();
     final regex = RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$');
     if (!regex.hasMatch(text)) {
-      return 'Enter a valid expiry date (MM/YY)';
+      return l10n.errExpiryInvalidFormat;
     }
 
-    // extra checks: month <= 12 and year >= 26
     final parts = text.split('/');
     final month = int.tryParse(parts[0]);
     final year = int.tryParse(parts[1]);
 
     if (month == null || year == null) {
-      return 'Enter a valid expiry date';
+      return l10n.errExpiryInvalid;
     }
     if (month < 1 || month > 12) {
-      return 'Enter a valid month';
+      return l10n.errExpiryMonth;
     }
     if (year < 26) {
-      return 'Expiry year must be 26 or later';
+      return l10n.errExpiryYear;
     }
 
     return null;
   }
 
   String? _validateCVV(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     if (value == null || value.isEmpty) {
-      return 'CVV is required';
+      return l10n.errCvvRequired;
     }
     if (!RegExp(r'^\d+$').hasMatch(value)) {
-      return 'CVV must contain digits only';
+      return l10n.errCvvDigitsOnly;
     }
     if (value.length != 3) {
-      return 'CVV must be 3 digits';
+      return l10n.errCvvLength;
     }
     return null;
   }
 
   String? _validateName(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
-      return 'Name on card is required';
+      return l10n.errCardNameRequired;
     }
 
     if (!RegExp(r'^[A-Za-z ]+$').hasMatch(text)) {
-      return 'Name must contain English letters only';
+      return l10n.errCardNameLettersOnly;
     }
 
     if (text.contains('  ')) {
-      return 'Use only one space between first and last name';
+      return l10n.errCardNameSpace;
     }
 
     final firstSpace = text.indexOf(' ');
     final lastSpace = text.lastIndexOf(' ');
     if (firstSpace == -1 || firstSpace != lastSpace) {
-      return 'Enter first and last name with one space only';
+      return l10n.errCardNameOneSpace;
     }
 
     final parts = text.split(' ').where((p) => p.isNotEmpty).toList();
     if (parts.length != 2) {
-      return 'Enter first and last name only';
+      return l10n.errCardNameFirstLast;
     }
 
     if (parts.any((p) => p.length < 3)) {
-      return 'Each name must be at least 3 letters';
+      return l10n.errCardNameMinLength;
     }
 
     return null;
@@ -261,6 +258,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
   // -------- Submit to backend --------
 
   Future<void> _onAddCard() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _submittedOnce = true);
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
@@ -315,12 +313,12 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("Failed to save card")));
+        ).showSnackBar(SnackBar(content: Text(l10n.errFailedToSaveCard)));
       }
     } catch (_) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Error while saving card')));
+      ).showSnackBar(SnackBar(content: Text(l10n.errErrorSavingCard)));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -330,6 +328,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final brand = _detectBrand(_cardNumberCtrl.text);
 
     return Scaffold(
@@ -340,15 +339,15 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
+            Icons.arrow_back,
+            size: 24,
             color: Colors.black87,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Add New Card",
-          style: TextStyle(
+        title: Text(
+          l10n.addNewCardTitle,
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Colors.black87,
@@ -363,21 +362,21 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsetsDirectional.all(16),
               child: Column(
                 children: [
                   // preview card
                   Container(
                     width: double.infinity,
                     height: 220,
-                    margin: const EdgeInsets.only(bottom: 24),
-                    padding: const EdgeInsets.all(20),
+                    margin: const EdgeInsetsDirectional.only(bottom: 24),
+                    padding: const EdgeInsetsDirectional.all(20),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
                       gradient: const LinearGradient(
                         colors: [Color(0xFF37C4BE), Color(0xFF2EA49E)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -391,7 +390,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Align(
-                          alignment: Alignment.topRight,
+                          alignment: AlignmentDirectional.topEnd,
                           child: _buildBrandLogo(brand),
                         ),
                         const Spacer(),
@@ -410,9 +409,9 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'CARD HOLDER',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.cardHolder,
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 11,
                                     letterSpacing: 1.2,
@@ -433,9 +432,9 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                const Text(
-                                  'EXPIRY DATE',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.expiryDate,
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 11,
                                     letterSpacing: 1.2,
@@ -444,7 +443,7 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                                 const SizedBox(height: 6),
                                 Text(
                                   _expiryCtrl.text.isEmpty
-                                      ? 'MM/YY'
+                                      ? l10n.expiryHint
                                       : _expiryCtrl.text,
                                   style: const TextStyle(
                                     color: Colors.white,
@@ -463,16 +462,15 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                   // form
                   Form(
                     key: _formKey,
-                    // ✅ CHANGED: show validation like registration page
                     autovalidateMode: _submittedOnce
                         ? AutovalidateMode.onUserInteraction
                         : AutovalidateMode.disabled,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Card Number',
-                          style: TextStyle(
+                        Text(
+                          l10n.cardNumber,
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -481,20 +479,17 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                         TextFormField(
                           controller: _cardNumberCtrl,
                           keyboardType: TextInputType.number,
-                          decoration: _inputDecoration(),
+                          decoration: _inputDecoration(context: context),
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                             LengthLimitingTextInputFormatter(16),
                           ],
-                          // ✅ NEW: touched tracking
                           onTap: () => setState(() => _touched['card'] = true),
                           onChanged: (_) {
                             _touched['card'] = true;
                             _recheckForm();
                             if (_submittedOnce) setState(() {});
                           },
-
-                          // ✅ CHANGED: only show error if touched or submitted once
                           validator: (v) {
                             if (!_submittedOnce && _touched['card'] != true)
                               return null;
@@ -503,9 +498,9 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        const Text(
-                          'Card Holder Name',
-                          style: TextStyle(
+                        Text(
+                          l10n.cardHolderName,
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -514,20 +509,18 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                         TextFormField(
                           controller: _nameCtrl,
                           keyboardType: TextInputType.name,
-                          decoration: _inputDecoration(),
+                          decoration: _inputDecoration(context: context),
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
                               RegExp(r'[A-Za-z ]'),
                             ),
                           ],
-                          // ✅ NEW
                           onTap: () => setState(() => _touched['name'] = true),
                           onChanged: (_) {
                             _touched['name'] = true;
                             _recheckForm();
                             if (_submittedOnce) setState(() {});
                           },
-
                           validator: (v) {
                             if (!_submittedOnce && _touched['name'] != true)
                               return null;
@@ -542,9 +535,9 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Expiry Date',
-                                    style: TextStyle(
+                                  Text(
+                                    l10n.expiryDate,
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -553,7 +546,10 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                                   TextFormField(
                                     controller: _expiryCtrl,
                                     keyboardType: TextInputType.number,
-                                    decoration: _inputDecoration(hint: 'MM/YY'),
+                                    decoration: _inputDecoration(
+                                      context: context,
+                                      hint: l10n.expiryHint,
+                                    ),
                                     inputFormatters: [
                                       LengthLimitingTextInputFormatter(5),
                                       FilteringTextInputFormatter.allow(
@@ -563,7 +559,6 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                                     onTap: () => setState(
                                       () => _touched['expiry'] = true,
                                     ),
-
                                     onChanged: (value) {
                                       _touched['expiry'] = true;
 
@@ -602,9 +597,9 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'CVV',
-                                    style: TextStyle(
+                                  Text(
+                                    l10n.cvv,
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -614,12 +609,11 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                                     controller: _cvvCtrl,
                                     keyboardType: TextInputType.number,
                                     obscureText: true,
-                                    decoration: _inputDecoration(),
+                                    decoration: _inputDecoration(context: context),
                                     inputFormatters: [
                                       FilteringTextInputFormatter.digitsOnly,
                                       LengthLimitingTextInputFormatter(3),
                                     ],
-                                    // ✅ NEW
                                     onTap: () =>
                                         setState(() => _touched['cvv'] = true),
                                     onChanged: (_) {
@@ -627,7 +621,6 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                                       _recheckForm();
                                       if (_submittedOnce) setState(() {});
                                     },
-
                                     validator: (v) {
                                       if (!_submittedOnce &&
                                           _touched['cvv'] != true)
@@ -653,17 +646,17 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Save card details for future payments',
-                          style: TextStyle(fontSize: 13, color: kTextSecondary),
+                          l10n.saveCardForFuture,
+                          style: const TextStyle(fontSize: 13, color: kTextSecondary),
                         ),
                       ),
                       Switch(
@@ -697,9 +690,9 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              "Add Card",
-                              style: TextStyle(fontSize: 18),
+                          : Text(
+                              l10n.addCard,
+                              style: const TextStyle(fontSize: 18),
                             ),
                     ),
                   ),
@@ -712,12 +705,12 @@ class _ParentAddCardScreenState extends State<ParentAddCardScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({String? hint}) {
+  InputDecoration _inputDecoration({required BuildContext context, String? hint}) {
     return InputDecoration(
       hintText: hint,
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      contentPadding: const EdgeInsetsDirectional.symmetric(horizontal: 14, vertical: 14),
 
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),

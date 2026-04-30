@@ -9,6 +9,6 @@ export const validatePassword = (password) => {
 };
 
 export function validateName(name) {
-  return /^[A-Za-z]{2,}$/.test(name.trim());
+  // تم التعديل لدعم اللغتين العربية والإنجليزية والمسافات بحد أدنى حرفين
+  return /^[\u0600-\u06FFa-zA-Z\s]{2,}$/.test(name.trim());
 }
-

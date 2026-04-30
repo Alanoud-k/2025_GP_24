@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 import 'package:my_app/utils/check_auth.dart';
 
 class ParentInsightsScreen extends StatefulWidget {
@@ -30,11 +31,6 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
   String selectedPeriod = "Monthly"; 
   List<String> childrenNames = ["All"];
 
-  final List<String> monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-  ];
-
   Map<String, double> _chartData = {};
   double _totalSpent = 0.0; 
 
@@ -52,6 +48,13 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initialize();
     });
+  }
+
+  List<String> _getMonthNames(AppLocalizations l10n) {
+    return [
+      l10n.jan, l10n.feb, l10n.mar, l10n.apr, l10n.may, l10n.jun, 
+      l10n.jul, l10n.aug, l10n.sep, l10n.oct, l10n.nov, l10n.dec
+    ];
   }
 
   Future<void> _initialize() async {
@@ -171,6 +174,8 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
   }
 
   void _showMonthYearPicker() {
+    final l10n = AppLocalizations.of(context)!;
+    final monthNames = _getMonthNames(l10n);
     int tempMonth = selectedMonth;
     int tempYear = selectedYear;
 
@@ -182,7 +187,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: const Text("Select Date", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18)),
+              title: Text(l10n.selectDate, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18)),
               content: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -244,7 +249,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                  child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37C4BE), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10)),
@@ -261,7 +266,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                     _fetchInsights();
                     Navigator.pop(context); 
                   },
-                  child: const Text("Apply", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(l10n.apply, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -283,9 +288,28 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
     }
   }
 
-  Widget _buildPeriodToggle() {
+  String _getLocalizedCategory(String category, AppLocalizations l10n) {
+    switch (category) {
+      case 'Food & Restaurants': return l10n.foodRestaurants;
+      case 'Grocery & Markets': return l10n.groceryMarkets;
+      case 'Retail & Shopping': return l10n.retailShopping;
+      case 'Transport': return l10n.transport;
+      case 'Medical': return l10n.medical;
+      case 'Digital & Subscriptions': return l10n.digitalSubscriptions;
+      default: return category;
+    }
+  }
+
+  Widget _buildPeriodToggle(AppLocalizations l10n) {
+    final periodLabels = {
+      'Daily': l10n.daily,
+      'Weekly': l10n.weekly,
+      'Monthly': l10n.monthly,
+      'Yearly': l10n.yearly,
+    };
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsetsDirectional.only(bottom: 20),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade200)),
       child: Row(
@@ -300,7 +324,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(color: isSelected ? const Color(0xFF37C4BE) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-                child: Center(child: Text(p, style: TextStyle(color: isSelected ? Colors.white : Colors.black54, fontWeight: FontWeight.bold, fontSize: 12))),
+                child: Center(child: Text(periodLabels[p]!, style: TextStyle(color: isSelected ? Colors.white : Colors.black54, fontWeight: FontWeight.bold, fontSize: 12))),
               ),
             ),
           );
@@ -309,7 +333,10 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
     );
   }
 
-  Widget _buildDateSelector() {
+  Widget _buildDateSelector(AppLocalizations l10n) {
+    final monthNames = _getMonthNames(l10n);
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+
     String dateText = "";
     if (selectedPeriod == 'Daily') {
       dateText = "$selectedDay ${monthNames[selectedMonth - 1]} $selectedYear";
@@ -329,7 +356,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
     return Flexible(
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
+        alignment: AlignmentDirectional.centerEnd,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(20)),
@@ -337,7 +364,10 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
             children: [
               GestureDetector(
                 onTap: () => _changeDate(-1),
-                child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_left_rounded, size: 24, color: Colors.black54)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4), 
+                  child: Icon(isRtl ? Icons.chevron_right_rounded : Icons.chevron_left_rounded, size: 24, color: Colors.black54)
+                ),
               ),
               GestureDetector(
                 onTap: canSelectPicker ? _showMonthYearPicker : null,
@@ -357,7 +387,10 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
               ),
               GestureDetector(
                 onTap: canGoForward ? () => _changeDate(1) : null,
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_right_rounded, size: 24, color: canGoForward ? Colors.black54 : Colors.grey.shade300)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4), 
+                  child: Icon(isRtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded, size: 24, color: canGoForward ? Colors.black54 : Colors.grey.shade300)
+                ),
               ),
             ],
           ),
@@ -368,16 +401,20 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const textColor = Color(0xFF2C3E50);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFC),
       appBar: AppBar(
-        title: const Text("Spending Insights", style: TextStyle(fontWeight: FontWeight.w800, color: textColor)),
+        title: Text(l10n.spendingBreakdown, style: const TextStyle(fontWeight: FontWeight.w800, color: textColor)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: textColor), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(
+          icon: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.arrow_forward : Icons.arrow_back, color: textColor), 
+          onPressed: () => Navigator.pop(context)
+        ),
       ),
       body: SafeArea(
         child: _loading 
@@ -387,7 +424,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildPeriodToggle(),
+                    _buildPeriodToggle(l10n),
                     
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -403,7 +440,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                               icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
                               dropdownColor: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              items: childrenNames.map((name) => DropdownMenuItem(value: name, child: Text(name == "All" ? "All Children" : name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2EA49E), fontSize: 13)))).toList(),
+                              items: childrenNames.map((name) => DropdownMenuItem(value: name, child: Text(name == "All" ? l10n.allChildren : name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2EA49E), fontSize: 13)))).toList(),
                               onChanged: (val) {
                                 if (val != null) { setState(() => selectedChild = val); _fetchInsights(); }
                               },
@@ -411,14 +448,14 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _buildDateSelector(),
+                        _buildDateSelector(l10n),
                       ],
                     ),
 
                     const SizedBox(height: 30),
-                    Text(selectedChild == "All" ? "Comparison by Child" : "$selectedChild's Category Breakdown", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+                    Text(selectedChild == "All" ? l10n.comparisonByChild : l10n.categoryBreakdownFor(selectedChild), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
                     const SizedBox(height: 10),
-                    Text(selectedChild == "All" ? "See which child is spending the most." : "Track where $selectedChild's money goes.", style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                    Text(selectedChild == "All" ? l10n.seeWhichChildSpendingMost : l10n.trackWhereMoneyGoes(selectedChild), style: const TextStyle(fontSize: 14, color: Colors.grey)),
 
                     const SizedBox(height: 30),
 
@@ -434,7 +471,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                               children: [
                                 Icon(selectedChild == "All" ? Icons.people_outline : Icons.category_outlined, size: 30, color: Colors.grey),
                                 const SizedBox(height: 2),
-                                const Text("Total", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey)),
+                                Text(l10n.totalWord, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey)),
                                 const SizedBox(height: 2),
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -450,7 +487,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                         ),
                       ),
                       const SizedBox(height: 40),
-                      const Text("Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+                      Text(l10n.details, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
                       const SizedBox(height: 16),
                       
                       ..._chartData.entries.map((entry) {
@@ -459,7 +496,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                         final percent = _totalSpent > 0 ? (entry.value / _totalSpent * 100).toStringAsFixed(1) : "0.0";
 
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
+                          margin: const EdgeInsetsDirectional.only(bottom: 12),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3))]),
                           child: Row(
@@ -470,8 +507,8 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(entry.key, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
-                                    Text("$percent% of total", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
+                                    Text(_getLocalizedCategory(entry.key, l10n), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+                                    Text("$percent ${l10n.percentOfTotal}", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
                                   ],
                                 ),
                               ),
@@ -490,12 +527,12 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
                     ] else
                       Center(
                         child: Padding(
-                          padding: const EdgeInsets.only(top: 50),
+                          padding: const EdgeInsetsDirectional.only(top: 50),
                           child: Column(
                             children: [
                               Icon(Icons.inbox_rounded, size: 60, color: Colors.grey.shade300),
                               const SizedBox(height: 12),
-                              const Text("No spending data available for this date.", style: TextStyle(color: Colors.grey, fontSize: 15)),
+                              Text(l10n.noSpendingData, style: const TextStyle(color: Colors.grey, fontSize: 15)),
                             ],
                           ),
                         ),

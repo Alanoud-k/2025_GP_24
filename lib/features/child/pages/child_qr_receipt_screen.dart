@@ -2,6 +2,7 @@
 // child_qr_receipt_screen.dart
 // =============================
 import 'package:flutter/material.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 import 'child_transactions_screen.dart';
 
@@ -43,18 +44,19 @@ class ChildQrReceiptScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const bg1 = Color(0xFFF7FAFC);
     const bg2 = Color(0xFFE6F4F3);
     const primary = Color(0xFF2EA49E);
 
-    final title = success ? 'Payment Successful' : 'Payment Failed';
+    final title = success ? l10n.paymentSuccessful : l10n.paymentFailed;
     final subtitle = success
-        ? 'Your payment was completed.'
-        : (message ?? 'Your payment could not be completed.');
+        ? l10n.paymentCompletedSubtitle
+        : (message ?? l10n.paymentCouldNotBeCompleted);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Receipt'),
+        title: Text(l10n.receiptTitle),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
@@ -69,15 +71,15 @@ class ChildQrReceiptScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsetsDirectional.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsetsDirectional.all(18),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadiusDirectional.circular(20).resolve(Directionality.of(context)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black12.withOpacity(0.08),
@@ -135,13 +137,13 @@ class ChildQrReceiptScreen extends StatelessWidget {
                       const Divider(height: 1),
                       const SizedBox(height: 14),
 
-                      _row('Merchant', merchantName),
+                      _row(context, l10n.merchantLabel, merchantName),
                       const SizedBox(height: 10),
-                      _row('Amount', '${amount.toStringAsFixed(2)} SAR'),
+                      _row(context, l10n.amountLabel, l10n.sarAmount(amount.toStringAsFixed(2))),
                       const SizedBox(height: 10),
-                      _row('Paid at', _formatDateTime(paidAt)),
+                      _row(context, l10n.paidAt, _formatDateTime(paidAt)),
                       const SizedBox(height: 10),
-                      _row('Transaction ID', transactionId),
+                      _row(context, l10n.transactionIdLabel, transactionId),
                     ],
                   ),
                 ),
@@ -161,7 +163,7 @@ class ChildQrReceiptScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text('Back to Home'),
+                  child: Text(l10n.backToHome),
                 ),
 
                 const SizedBox(height: 10),
@@ -187,7 +189,7 @@ class ChildQrReceiptScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text('View Transactions'),
+                  child: Text(l10n.viewTransactions),
                 ),
               ],
             ),
@@ -197,7 +199,7 @@ class ChildQrReceiptScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(BuildContext context, String label, String value) {
     return Row(
       children: [
         SizedBox(
@@ -213,7 +215,7 @@ class ChildQrReceiptScreen extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            textAlign: TextAlign.right,
+            textAlign: TextAlign.end,
             style: const TextStyle(
               fontWeight: FontWeight.w800,
               color: Color(0xFF2C3E50),

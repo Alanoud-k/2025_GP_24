@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/goals_api.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ChildAddGoalScreen extends StatefulWidget {
   final int childId;
@@ -52,7 +53,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
     super.dispose();
   }
 
-  bool _lettersOnly(String v) {
+    bool _lettersOnly(String v, BuildContext context) {
     final t = v.trim();
     if (t.isEmpty) return false;
     return RegExp(r'^[a-zA-Z\u0600-\u06FF\s]+$').hasMatch(t);
@@ -96,6 +97,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
 
   @override
   Widget build(BuildContext context) {
+        final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: kBg,
 
@@ -114,7 +116,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -127,9 +129,9 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                     onPressed: () => Navigator.pop(context, false),
                   ),
                   const Spacer(),
-                  const Text(
-                    'Add Goal',
-                    style: TextStyle(
+                  Text(
+                    l10n.addGoal,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 20,
                       color: Colors.black87,
@@ -151,7 +153,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding: const EdgeInsetsDirectional.symmetric(
                     horizontal: 20,
                     vertical: 8,
                   ),
@@ -163,7 +165,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: const EdgeInsetsDirectional.symmetric(
                           horizontal: 22,
                           vertical: 36,
                         ),
@@ -177,12 +179,12 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Center(
+                              Center(
                                 child: Padding(
-                                  padding: EdgeInsets.only(bottom: 20),
+                                  padding: const EdgeInsets.only(bottom: 20),
                                   child: Text(
-                                    'Create a new goal',
-                                    style: TextStyle(
+                                    l10n.createNewGoal,
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.black87,
@@ -191,9 +193,9 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                                 ),
                               ),
 
-                              const Text(
-                                'Goal name',
-                                style: TextStyle(
+                              Text(
+                                l10n.goalName,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: kTextSecondary,
                                   fontWeight: FontWeight.w600,
@@ -209,17 +211,17 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                                 ],
                                 validator: (v) {
                                   if (v == null || v.trim().isEmpty)
-                                    return 'Enter goal name';
-                                  if (!_lettersOnly(v)) return 'Letters only';
+                                    return l10n.enterGoalName;
+                                  if (!_lettersOnly(v, context)) return l10n.lettersOnly;
                                   return null;
                                 },
                               ),
 
                               const SizedBox(height: 18),
 
-                              const Text(
-                                'Description',
-                                style: TextStyle(
+                              Text(
+                                l10n.description,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: kTextSecondary,
                                   fontWeight: FontWeight.w600,
@@ -237,18 +239,18 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                                 validator: (v) {
                                   if (v == null || v.trim().isEmpty)
                                     return null;
-                                  if (!_lettersOnly(v)) return 'Letters only';
+                                  if (!_lettersOnly(v, context)) return l10n.lettersOnly;
                                   if (v.trim().length > 200)
-                                    return 'Max 200 characters';
+                                    return l10n.max200Chars;
                                   return null;
                                 },
                               ),
 
                               const SizedBox(height: 18),
 
-                              const Text(
-                                'Amount to save',
-                                style: TextStyle(
+                              Text(
+                                l10n.amountToSave,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: kTextSecondary,
                                   fontWeight: FontWeight.w600,
@@ -268,11 +270,11 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                                 ],
                                 validator: (v) {
                                   if (v == null || v.trim().isEmpty)
-                                    return 'Enter amount';
-                                  if (!_amountOnly(v)) return 'Numbers only';
+                                    return l10n.enterAmount;
+                                  if (!_amountOnly(v)) return l10n.numbersOnly;
                                   final d = double.tryParse(v.trim());
                                   if (d == null || d <= 0)
-                                    return 'Invalid amount';
+                                    return l10n.invalidAmount;
                                   return null;
                                 },
                               ),
@@ -283,14 +285,14 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   _pill(
-                                    text: _submitting ? 'Saving...' : 'Add',
+                                    text: _submitting ? l10n.saving : l10n.add,
                                     bg: kAddBtn,
                                     onTap: _submitting ? null : _onSubmit,
                                     loading: _submitting,
                                   ),
                                   const SizedBox(width: 16),
                                   _pill(
-                                    text: 'Cancel',
+                                    text: l10n.cancel,
                                     bg: Colors.white,
                                     onTap: _submitting
                                         ? null
@@ -329,7 +331,7 @@ class _ChildAddGoalScreenState extends State<ChildAddGoalScreen> {
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
+                contentPadding: const EdgeInsetsDirectional.symmetric(
           horizontal: 16,
           vertical: 14,
         ),

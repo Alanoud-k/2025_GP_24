@@ -1,7 +1,320 @@
+// import 'dart:convert';
+// import 'package:flutter/material.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:my_app/core/api_config.dart';
+// import 'package:my_app/l10n/app_localizations.dart';
+
+// class ParentNotificationsScreen extends StatefulWidget {
+//   final int parentId;
+//   final String token;
+
+//   const ParentNotificationsScreen({
+//     super.key,
+//     required this.parentId,
+//     required this.token,
+//   });
+
+//   @override
+//   State<ParentNotificationsScreen> createState() =>
+//       _ParentNotificationsScreenState();
+// }
+
+// class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
+//   bool _loading = true;
+//   List<dynamic> _notifications = [];
+//   bool _markingRead = false;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _fetchNotifications();
+//   }
+
+//   Future<void> _markParentRead() async {
+//     if (_markingRead) return;
+//     _markingRead = true;
+
+//     final url = Uri.parse(
+//       "${ApiConfig.baseUrl}/api/notifications/mark-read/parent/${widget.parentId}",
+//     );
+
+//     try {
+//       await http.post(
+//         url,
+//         headers: {"Authorization": "Bearer ${widget.token}"},
+//       );
+//     } catch (_) {
+//       // تجاهل الخطأ
+//     } finally {
+//       _markingRead = false;
+//     }
+//   }
+
+//   Future<void> _fetchNotifications() async {
+//     final url = Uri.parse(
+//       "${ApiConfig.baseUrl}/api/notifications/parent/${widget.parentId}",
+//     );
+
+//     try {
+//       final response = await http.get(
+//         url,
+//         headers: {
+//           "Authorization": "Bearer ${widget.token}",
+//           "Content-Type": "application/json",
+//         },
+//       );
+
+//       if (!mounted) return;
+
+//       if (response.statusCode == 200) {
+//         final list = jsonDecode(response.body);
+
+//         setState(() {
+//           _notifications = (list is List) ? list : [];
+//           _loading = false;
+//         });
+//       } else {
+//         setState(() => _loading = false);
+//       }
+//     } catch (_) {
+//       if (!mounted) return;
+//       setState(() => _loading = false);
+//     }
+//   }
+
+//   String _formatCreatedAt(dynamic value) {
+//     if (value == null) return "";
+//     final raw = value.toString();
+//     return raw.replaceFirst('T', ' ').split('.').first;
+//   }
+
+//   Color _typeColor(String type) {
+//     switch (type) {
+//       case 'REWARD_REDEEMED':
+//         return Colors.purple;
+//       case 'MONEY_REQUEST':
+//         return Colors.orange;
+//       case 'MONEY_TRANSFER':
+//         return Colors.teal;
+//       case 'REQUEST_APPROVED':
+//         return Colors.green;
+//       case 'REQUEST_DECLINED':
+//         return Colors.red;
+//       case "CHORE_COMPLETED":
+//         return Colors.orange;
+//       default:
+//         return Colors.blueGrey;
+//     }
+//   }
+
+//   IconData _typeIcon(String type) {
+//     switch (type) {
+//       case 'REWARD_REDEEMED':
+//         return Icons.card_giftcard;
+//       case 'MONEY_REQUEST':
+//         return Icons.attach_money_rounded;
+//       case 'MONEY_TRANSFER':
+//         return Icons.swap_horiz_rounded;
+//       case 'REQUEST_APPROVED':
+//         return Icons.check_circle_rounded;
+//       case 'REQUEST_DECLINED':
+//         return Icons.cancel_rounded;
+//       case "CHORE_COMPLETED":
+//         return Icons.task_alt_rounded;
+//       default:
+//         return Icons.notifications_rounded;
+//     }
+//   }
+
+//   Widget _sarIcon({double size = 14, Color? color}) {
+//     return Image.asset(
+//       'assets/icons/Sar.png',
+//       width: size,
+//       height: size,
+//       color: color,
+//     );
+//   }
+
+//   Widget _messageAmountInline(String message) {
+//     final match =
+//         RegExp(r'^(.*?)(\d+(?:\.\d{1,2})?)\s*$').firstMatch(message);
+
+//     const baseStyle = TextStyle(
+//       fontSize: 15,
+//       fontWeight: FontWeight.w600,
+//       color: Color(0xFF2C3E50),
+//     );
+
+//     if (match == null) {
+//       return Text(message, style: baseStyle);
+//     }
+
+//     final prefix = match.group(1) ?? "";
+//     final amount = match.group(2) ?? "";
+
+//     return Wrap(
+//       crossAxisAlignment: WrapCrossAlignment.center,
+//       children: [
+//         Text(prefix, style: baseStyle),
+//         Text(amount, style: baseStyle),
+//         const SizedBox(width: 6),
+//         _sarIcon(size: 14, color: const Color(0xFF2C3E50)),
+//       ],
+//     );
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final l10n = AppLocalizations.of(context)!;
+//     return PopScope(
+//       onPopInvokedWithResult: (didPop, result) {
+//         if (didPop) {
+//           _markParentRead();
+//         }
+//       },
+//       child: Scaffold(
+//         appBar: AppBar(
+//           title: Text(
+//             l10n.notifications,
+//             style: const TextStyle(fontWeight: FontWeight.w700),
+//           ),
+//           backgroundColor: Colors.white,
+//           foregroundColor: Colors.black87,
+//           elevation: 0,
+//           actions: [
+//             IconButton(
+//               tooltip: "Mark all as read",
+//               icon: const Icon(Icons.done_all_rounded),
+//               onPressed: _notifications.isEmpty
+//                   ? null
+//                   : () async {
+//                       await _markParentRead();
+//                       if (!mounted) return;
+//                       setState(() {
+//                         for (final n in _notifications) {
+//                           n["isread"] = true;
+//                         }
+//                       });
+//                     },
+//             ),
+//           ],
+//         ),
+//         backgroundColor: const Color(0xffF7F8FA),
+//         body: _loading
+//             ? const Center(child: CircularProgressIndicator())
+//             : _notifications.isEmpty
+//                 ? Center(
+//                     child: Text(
+//                       l10n.noNotifications,
+//                       style: const TextStyle(fontSize: 16, color: Colors.black54),
+//                     ),
+//                   )
+//                 : RefreshIndicator(
+//                     onRefresh: _fetchNotifications,
+//                     child: ListView.builder(
+//                       padding: const EdgeInsets.all(16),
+//                       itemCount: _notifications.length,
+//                       itemBuilder: (_, i) {
+//                         final n = _notifications[i];
+//                         final type = (n["type"] ?? "").toString();
+//                         final color = _typeColor(type);
+//                         final isRead = (n["isread"] == true);
+
+//                         return Container(
+//                           margin: const EdgeInsets.only(bottom: 12),
+//                           padding: const EdgeInsets.all(14),
+//                           decoration: BoxDecoration(
+//                             color: isRead
+//                                 ? Colors.white
+//                                 : const Color(0xFFEAF7F6),
+//                             borderRadius: BorderRadius.circular(14),
+//                             boxShadow: [
+//                               BoxShadow(
+//                                 color: Colors.black12.withOpacity(0.04),
+//                                 blurRadius: 6,
+//                                 offset: const Offset(0, 4),
+//                               ),
+//                             ],
+//                             border: isRead
+//                                 ? null
+//                                 : Border.all(
+//                                     color: const Color(0xFF37C4BE)
+//                                         .withOpacity(0.35),
+//                                   ),
+//                           ),
+//                           child: Row(
+//                             crossAxisAlignment: CrossAxisAlignment.start,
+//                             children: [
+//                               Container(
+//                                 width: 40,
+//                                 height: 40,
+//                                 decoration: BoxDecoration(
+//                                   color: color.withOpacity(0.12),
+//                                   shape: BoxShape.circle,
+//                                 ),
+//                                 child:
+//                                     Icon(_typeIcon(type), color: color, size: 22),
+//                               ),
+//                               const SizedBox(width: 12),
+//                               Expanded(
+//                                 child: Column(
+//                                   crossAxisAlignment: CrossAxisAlignment.start,
+//                                   children: [
+//                                     _messageAmountInline(
+//                                       (n["message"] ?? "").toString(),
+//                                     ),
+//                                     const SizedBox(height: 6),
+//                                     if (n["childName"] != null &&
+//                                         (n["childName"]
+//                                             .toString()
+//                                             .trim()
+//                                             .isNotEmpty))
+//                                       Text(
+//                                         "Child: ${n["childName"]}",
+//                                         style: const TextStyle(
+//                                           fontSize: 13,
+//                                           color: Colors.black54,
+//                                           fontWeight: FontWeight.w600,
+//                                         ),
+//                                       ),
+//                                     const SizedBox(height: 6),
+//                                     Text(
+//                                       _formatCreatedAt(n["createdAt"]),
+//                                       style: const TextStyle(
+//                                         fontSize: 11,
+//                                         color: Colors.black45,
+//                                       ),
+//                                     ),
+//                                   ],
+//                                 ),
+//                               ),
+//                               if (!isRead) ...[
+//                                 const SizedBox(width: 10),
+//                                 Container(
+//                                   width: 9,
+//                                   height: 9,
+//                                   decoration: const BoxDecoration(
+//                                     color: Color(0xFF37C4BE),
+//                                     shape: BoxShape.circle,
+//                                   ),
+//                                 ),
+//                               ],
+//                             ],
+//                           ),
+//                         );
+//                       },
+//                     ),
+//                   ),
+//       ),
+//     );
+//   }
+// }
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ParentNotificationsScreen extends StatefulWidget {
   final int parentId;
@@ -134,36 +447,62 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
     );
   }
 
-  Widget _messageAmountInline(String message) {
-    final match =
-        RegExp(r'^(.*?)(\d+(?:\.\d{1,2})?)\s*$').firstMatch(message);
-
+  // ✅ الدالة الجديدة المسؤولة عن الترجمة الديناميكية
+  Widget _buildTranslatedMessage(String originalMsg, String type, String childName, AppLocalizations l10n) {
     const baseStyle = TextStyle(
       fontSize: 15,
       fontWeight: FontWeight.w600,
       color: Color(0xFF2C3E50),
     );
 
-    if (match == null) {
-      return Text(message, style: baseStyle);
+    // استخراج المبلغ إذا كان موجوداً في الرسالة الأصلية
+    String? amount;
+    final match = RegExp(r'(\d+(?:\.\d{1,2})?)').firstMatch(originalMsg);
+    if (match != null) {
+      amount = match.group(1);
     }
 
-    final prefix = match.group(1) ?? "";
-    final amount = match.group(2) ?? "";
+    // الترجمة بناءً على الـ type 
+    switch (type) {
+      case 'MONEY_REQUEST':
+        if (amount != null) {
+          return Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text("${l10n.childFallbackName} $childName ${l10n.requestedAmount} $amount ", style: baseStyle),
+              _sarIcon(size: 14, color: const Color(0xFF2C3E50)),
+            ],
+          );
+        }
+        return Text("${l10n.childFallbackName} $childName ${l10n.requestedMoney}", style: baseStyle);
 
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Text(prefix, style: baseStyle),
-        Text(amount, style: baseStyle),
-        const SizedBox(width: 6),
-        _sarIcon(size: 14, color: const Color(0xFF2C3E50)),
-      ],
-    );
+      case 'REWARD_REDEEMED':
+        return Text("${l10n.childFallbackName} $childName ${l10n.redeemedPrize}", style: baseStyle);
+
+      case 'CHORE_COMPLETED':
+        return Text("${l10n.childFallbackName} $childName ${l10n.completedTask}", style: baseStyle);
+
+      default:
+        // محاولة عرض الرسالة العادية مع استخراج المبلغ كحل احتياطي
+        final matchBackup = RegExp(r'^(.*?)(\d+(?:\.\d{1,2})?)\s*$').firstMatch(originalMsg);
+        if (matchBackup == null) {
+          return Text(originalMsg, style: baseStyle);
+        }
+        return Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(matchBackup.group(1) ?? "", style: baseStyle),
+            Text(matchBackup.group(2) ?? "", style: baseStyle),
+            const SizedBox(width: 6),
+            _sarIcon(size: 14, color: const Color(0xFF2C3E50)),
+          ],
+        );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
@@ -172,16 +511,16 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            "Notifications",
-            style: TextStyle(fontWeight: FontWeight.w700),
+          title: Text(
+            l10n.notifications,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black87,
           elevation: 0,
           actions: [
             IconButton(
-              tooltip: "Mark all as read",
+              tooltip: "Mark all as read", // يمكنك إضافة مفتاح ترجمة لها لاحقاً (مثلاً l10n.markAllRead)
               icon: const Icon(Icons.done_all_rounded),
               onPressed: _notifications.isEmpty
                   ? null
@@ -201,10 +540,10 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _notifications.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
-                      "No notifications yet",
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                      l10n.noNotifications,
+                      style: const TextStyle(fontSize: 16, color: Colors.black54),
                     ),
                   )
                 : RefreshIndicator(
@@ -217,6 +556,8 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
                         final type = (n["type"] ?? "").toString();
                         final color = _typeColor(type);
                         final isRead = (n["isread"] == true);
+                        final childName = (n["childName"] ?? "").toString().trim();
+                        final originalMsg = (n["message"] ?? "").toString();
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -258,23 +599,8 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _messageAmountInline(
-                                      (n["message"] ?? "").toString(),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    if (n["childName"] != null &&
-                                        (n["childName"]
-                                            .toString()
-                                            .trim()
-                                            .isNotEmpty))
-                                      Text(
-                                        "Child: ${n["childName"]}",
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.black54,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
+                                    // عرض الرسالة المترجمة
+                                    _buildTranslatedMessage(originalMsg, type, childName, l10n),
                                     const SizedBox(height: 6),
                                     Text(
                                       _formatCreatedAt(n["createdAt"]),

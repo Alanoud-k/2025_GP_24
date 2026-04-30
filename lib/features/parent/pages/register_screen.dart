@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:my_app/l10n/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,12 +18,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final dob = TextEditingController();
   final password = TextEditingController();
   final securityAnswer = TextEditingController();
-  final confirmPassword = TextEditingController(); // ✅ NEW: confirm password
+  final confirmPassword = TextEditingController();
 
   String phoneNo = '';
   bool _obscure = true;
-  bool _obscureConfirm = true; // ✅ NEW: toggle confirm field
+  bool _obscureConfirm = true;
   bool _isLoading = false;
+
+  // متغيرات لتخزين رسائل الخطأ القادمة من الخادم وعرضها تحت كل خانة
+  String? _apiFirstNameError;
+  String? _apiLastNameError;
+  String? _apiNationalIdError;
+  String? _apiDobError;
+  String? _apiPasswordError;
+  String? _apiSecurityAnswerError;
 
   @override
   void didChangeDependencies() {
@@ -38,7 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     nationalId.dispose();
     dob.dispose();
     password.dispose();
-    confirmPassword.dispose(); // ✅ NEW
+    confirmPassword.dispose();
     securityAnswer.dispose();
     super.dispose();
   }
@@ -49,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFFE74C3C), // 🔴 soft red
+        backgroundColor: const Color(0xFFE74C3C),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -58,7 +67,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // ✅ OPTIONAL (keep for success)
   void _showSuccessBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -74,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _showPasswordRequirementsDialog(BuildContext context) {
+  void _showPasswordRequirementsDialog(BuildContext context, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) {
@@ -82,19 +90,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text(
-            "Password Requirements",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          title: Text(
+            l10n.passwordRequirementsTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("• At least 8 characters"),
-              Text("• One uppercase letter"),
-              Text("• One lowercase letter"),
-              Text("• One number (0-9)"),
-              Text("• One special character (!@#\$%^&*)"),
+              Text(l10n.passwordRequirementsList),
             ],
           ),
           actions: [
@@ -108,44 +112,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  String? _nameValidator(String? v) {
+  // تم التعديل لدعم اللغة العربية والإنجليزية بشكل صريح
+  String? _nameValidator(String? v, AppLocalizations l10n) {
     if (v == null || v.trim().isEmpty) {
-      return "Required field";
+      return l10n.requiredField;
     }
     if (v.trim().length < 2) {
-      return "Must be at least 2 letters";
+      return l10n.nameMinLengthVal;
     }
-    if (!RegExp(r'^[A-Za-z]+$').hasMatch(v.trim())) {
-      return "Letters only (A–Z)";
+    // دعم الحروف العربية والإنجليزية والمسافات
+    if (!RegExp(r'^[\u0600-\u06FFa-zA-Z\s]+$').hasMatch(v.trim())) {
+      return l10n.nameLettersOnlyVal;
     }
     return null;
   }
 
-  // ✅ NEW: National ID / Iqama validation (10 digits)
-  String? _nationalIdValidator(String? v) {
+  String? _nationalIdValidator(String? v, AppLocalizations l10n) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return "Required field";
+    if (value.isEmpty) return l10n.requiredField;
     if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-      return "National ID / Iqama must be 10 digits";
+      return l10n.nationalIdValidationVal;
     }
     return null;
   }
 
-  // ✅ NEW: Confirm password validation
-  String? _confirmPasswordValidator(String? v) {
+  String? _confirmPasswordValidator(String? v, AppLocalizations l10n) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return "Confirm your password";
-    if (value != password.text.trim()) return "Passwords do not match";
+    if (value.isEmpty) return l10n.confirmPasswordVal;
+    if (value != password.text.trim()) return l10n.passwordsDoNotMatchVal;
     return null;
   }
 
-  Future<void> _registerParent() async {
+  // دالة مخصصة للسؤال الأمني لدعم العربية والإنجليزية والأرقام
+  String? _securityAnswerValidator(String? v, AppLocalizations l10n) {
+    if (v == null || v.trim().isEmpty) {
+      return l10n.requiredField;
+    }
+    if (!RegExp(r'^[\u0600-\u06FFa-zA-Z0-9\s]+$').hasMatch(v.trim())) {
+      return 'الرجاء إدخال أحرف وأرقام فقط'; 
+    }
+    return null;
+  }
+
+  Future<void> _registerParent(AppLocalizations l10n) async {
     if (!_formKey.currentState!.validate()) return;
-    // ✅ NEW: stop double submissions
+    
     if (_isLoading) return;
-    setState(() => _isLoading = true);
-   final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
-//final url = Uri.parse('http://localhost:3000/api/auth/register-parent');
+    
+    setState(() {
+      _isLoading = true;
+      // تصفير أخطاء الواجهة البرمجية السابقة
+      _apiFirstNameError = null;
+      _apiLastNameError = null;
+      _apiNationalIdError = null;
+      _apiDobError = null;
+      _apiPasswordError = null;
+      _apiSecurityAnswerError = null;
+    });
+    
+    final url = Uri.parse('http://10.0.2.2:3000/api/auth/register-parent');
 
     try {
       final response = await http.post(
@@ -165,8 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        // ✅ CHANGED: success bar style (optional, keep if you want)
-        _showSuccessBar("Registered successfully! Please log in.");
+        _showSuccessBar(l10n.registeredSuccessfully);
 
         Navigator.pushReplacementNamed(
           context,
@@ -174,14 +198,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
           arguments: {'phoneNo': phoneNo},
         );
       } else {
-        // ✅ CHANGED: backend error popup now uses red Hassala bar
         final decoded = jsonDecode(response.body);
-        _showErrorBar(decoded['error'] ?? 'Registration failed');
+        final errorMsg = decoded['error']?.toString() ?? '';
+        final errorLower = errorMsg.toLowerCase();
+        
+        // ترجمة وتوجيه أخطاء الخادم إلى كل خانة
+        setState(() {
+          if (errorLower.contains('first name')) {
+            _apiFirstNameError = 'الاسم الأول غير صالح';
+          } else if (errorLower.contains('last name')) {
+            _apiLastNameError = 'الاسم الأخير غير صالح';
+          } else if (errorLower.contains('national')) {
+            _apiNationalIdError = 'رقم الهوية/الإقامة غير صالح';
+          } else if (errorLower.contains('password')) {
+            _apiPasswordError = 'كلمة المرور غير صالحة';
+          } else if (errorLower.contains('security')) {
+            _apiSecurityAnswerError = 'إجابة السؤال الأمني غير صالحة';
+          } else if (errorLower.contains('dob') || errorLower.contains('date')) {
+            _apiDobError = 'تاريخ الميلاد غير صالح';
+          } else {
+            // إظهار رسالة عامة للخطأ غير المعروف أسفل الشاشة
+            _showErrorBar(errorMsg.isEmpty ? l10n.registrationFailed : errorMsg);
+          }
+        });
       }
     } catch (e) {
       if (!mounted) return;
-      // ✅ CHANGED: network error uses same red bar
-      _showErrorBar("Error: $e");
+      _showErrorBar(l10n.errorPrefixMsg(e.toString()));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -189,24 +232,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const hassalaGreen1 = Color(0xFF37C4BE);
-    const hassalaGreen2 = Color(0xFF2EA49E);
-
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              /// ← زر الرجوع
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: IconButton(
                   icon: const Icon(
                     Icons.arrow_back,
@@ -236,17 +277,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 offset: const Offset(0, 70),
                                 child: Image.asset(
                                   'assets/logo/hassalaLogo5.png',
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.70,
+                                  width: MediaQuery.of(context).size.width * 0.70,
                                   fit: BoxFit.contain,
                                 ),
                               ),
 
                               const SizedBox(height: 10),
 
-                              const Text(
-                                "Create Your Account",
-                                style: TextStyle(
+                              Text(
+                                l10n.createYourAccount,
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w800,
                                   color: Color(0xFF2C3E50),
@@ -257,27 +297,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               _field(
                                 firstName,
-                                "First Name",
-                                validator: _nameValidator,
+                                l10n.firstNameLabel,
+                                validator: (v) => _nameValidator(v, l10n),
+                                errorText: _apiFirstNameError,
+                                onChanged: () {
+                                  if (_apiFirstNameError != null) setState(() => _apiFirstNameError = null);
+                                },
+                                l10n: l10n,
                               ),
                               const SizedBox(height: 15),
 
                               _field(
                                 lastName,
-                                "Last Name",
-                                validator: _nameValidator,
+                                l10n.lastNameLabel,
+                                validator: (v) => _nameValidator(v, l10n),
+                                errorText: _apiLastNameError,
+                                onChanged: () {
+                                  if (_apiLastNameError != null) setState(() => _apiLastNameError = null);
+                                },
+                                l10n: l10n,
                               ),
                               const SizedBox(height: 15),
 
                               _field(
                                 nationalId,
-                                "National ID / Iqama",
+                                l10n.nationalIdIqamaLabel,
                                 keyboardType: TextInputType.number,
-                                validator: _nationalIdValidator,
+                                validator: (v) => _nationalIdValidator(v, l10n),
+                                errorText: _apiNationalIdError,
+                                onChanged: () {
+                                  if (_apiNationalIdError != null) setState(() => _apiNationalIdError = null);
+                                },
+                                l10n: l10n,
                               ),
                               const SizedBox(height: 15),
 
-                              _buildDateField(),
+                              _buildDateField(l10n),
                               const SizedBox(height: 15),
 
                               Material(
@@ -287,32 +342,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: TextFormField(
                                   controller: password,
                                   obscureText: _obscure,
+                                  onChanged: (v) {
+                                    if (_apiPasswordError != null) setState(() => _apiPasswordError = null);
+                                  },
                                   decoration: InputDecoration(
-                                    hintText: "Password",
+                                    hintText: l10n.passwordHint,
+                                    errorText: _apiPasswordError, // عرض خطأ السيرفر
                                     filled: true,
                                     fillColor: Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 20,
                                       vertical: 18,
                                     ),
-                                    // ✅ NEW: show info dialog button (optional)
                                     prefixIcon: IconButton(
                                       icon: const Icon(
                                         Icons.info_outline,
                                         color: Colors.black54,
                                       ),
                                       onPressed: () =>
-                                          _showPasswordRequirementsDialog(
-                                            context,
-                                          ),
+                                          _showPasswordRequirementsDialog(context, l10n),
                                     ),
                                     suffixIcon: GestureDetector(
                                       onTap: () =>
                                           setState(() => _obscure = !_obscure),
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 12,
-                                        ),
+                                        padding: const EdgeInsetsDirectional.only(end: 12),
                                         child: Icon(
                                           _obscure
                                               ? Icons.visibility_off
@@ -329,13 +383,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                   validator: (v) {
                                     if (v == null || v.isEmpty)
-                                      return "Enter password";
+                                      return l10n.enterPasswordVal;
                                     if (v.length < 8)
-                                      return "At least 8 characters";
+                                      return l10n.passwordMinLengthVal;
                                     if (!RegExp(
                                       r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$%^&*])',
                                     ).hasMatch(v)) {
-                                      return "Must include upper/lower/number/special";
+                                      return l10n.passwordRegexVal;
                                     }
                                     return null;
                                   },
@@ -344,7 +398,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               const SizedBox(height: 15),
 
-                              // ✅ NEW: CONFIRM PASSWORD FIELD
                               Material(
                                 elevation: 10,
                                 shadowColor: Colors.black12,
@@ -353,7 +406,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   controller: confirmPassword,
                                   obscureText: _obscureConfirm,
                                   decoration: InputDecoration(
-                                    hintText: "Confirm Password",
+                                    hintText: l10n.confirmPasswordHint,
                                     filled: true,
                                     fillColor: Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(
@@ -362,13 +415,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                     suffixIcon: GestureDetector(
                                       onTap: () => setState(
-                                        () =>
-                                            _obscureConfirm = !_obscureConfirm,
+                                        () => _obscureConfirm = !_obscureConfirm,
                                       ),
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 12,
-                                        ),
+                                        padding: const EdgeInsetsDirectional.only(end: 12),
                                         child: Icon(
                                           _obscureConfirm
                                               ? Icons.visibility_off
@@ -383,7 +433,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       borderSide: BorderSide.none,
                                     ),
                                   ),
-                                  validator: _confirmPasswordValidator,
+                                  validator: (v) => _confirmPasswordValidator(v, l10n),
                                 ),
                               ),
 
@@ -391,18 +441,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               _field(
                                 securityAnswer,
-                                "Security Question Answer",
+                                l10n.securityQuestionAnswerLabel,
+                                validator: (v) => _securityAnswerValidator(v, l10n),
+                                errorText: _apiSecurityAnswerError,
+                                onChanged: () {
+                                  if (_apiSecurityAnswerError != null) setState(() => _apiSecurityAnswerError = null);
+                                },
                                 suffix: const Icon(
                                   Icons.lock_outline,
                                   color: Colors.grey,
                                 ),
+                                l10n: l10n,
                               ),
 
-                              const Padding(
-                                padding: EdgeInsets.only(top: 5),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 5),
                                 child: Text(
-                                  "What’s the name of the street where you lived as a child?",
-                                  style: TextStyle(
+                                  l10n.securityQuestionHint,
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     color: Colors.black54,
                                   ),
@@ -424,7 +480,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     borderRadius: BorderRadius.circular(22),
                                   ),
                                   child: ElevatedButton(
-                                    onPressed: _registerParent,
+                                    onPressed: () => _registerParent(l10n),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
                                       shadowColor: Colors.transparent,
@@ -435,14 +491,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         borderRadius: BorderRadius.circular(22),
                                       ),
                                     ),
-                                    child: const Text(
-                                      "Continue",
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                                    child: _isLoading 
+                                        ? const CircularProgressIndicator(color: Colors.white) 
+                                        : Text(
+                                            l10n.continue_,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                   ),
                                 ),
                               ),
@@ -463,12 +521,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  // تم تحديث الدالة لتستقبل errorText و onChanged للتعامل مع أخطاء السيرفر
   Widget _field(
-    controller,
+    TextEditingController controller,
     String hint, {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     Widget? suffix,
+    String? errorText,
+    VoidCallback? onChanged,
+    required AppLocalizations l10n,
   }) {
     return Material(
       elevation: 10,
@@ -477,8 +539,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        onChanged: (v) {
+          if (onChanged != null) onChanged();
+        },
         decoration: InputDecoration(
           hintText: hint,
+          errorText: errorText, // إضافة مكان لرسالة الخطأ
           filled: true,
           fillColor: Colors.white,
           suffixIcon: suffix,
@@ -493,12 +559,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         validator:
             validator ??
-            (v) => v == null || v.isEmpty ? "Required field" : null,
+            (v) => v == null || v.isEmpty ? l10n.requiredField : null,
       ),
     );
   }
 
-  Widget _buildDateField() {
+  Widget _buildDateField(AppLocalizations l10n) {
     return Material(
       elevation: 10,
       shadowColor: Colors.black12,
@@ -506,8 +572,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: TextFormField(
         controller: dob,
         readOnly: true,
+        onChanged: (v) {
+          if (_apiDobError != null) setState(() => _apiDobError = null);
+        },
         decoration: InputDecoration(
-          hintText: "Date of Birth",
+          hintText: l10n.dobLabel,
+          errorText: _apiDobError, // إضافة مكان لرسالة الخطأ
           filled: true,
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(
@@ -521,6 +591,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         onTap: () async {
           FocusScope.of(context).unfocus();
+          if (_apiDobError != null) setState(() => _apiDobError = null); // مسح الخطأ عند الفتح
 
           final picked = await showDatePicker(
             context: context,
@@ -533,7 +604,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             dob.text = picked.toIso8601String().split('T').first;
           }
         },
-        validator: (v) => v == null || v.isEmpty ? "Select date" : null,
+        validator: (v) => v == null || v.isEmpty ? l10n.selectDateVal : null,
       ),
     );
   }

@@ -3,13 +3,15 @@
 // import 'package:http/http.dart' as http;
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 // import 'package:my_app/features/child/pages/child_transactions_screen.dart';
 
 // import 'parent_transfer_screen.dart';
 // import 'parent_money_requests_screen.dart';
 // import 'parent_child_goals_screen.dart';
 // // ✅ تأكدي أن هذا هو اسم الملف الذي وضعتِ فيه الكود الأول
-// import 'parent_child_chores_screen.dart'; 
+// import 'parent_child_chores_screen.dart';
+ 
 
 // class ParentChildOverviewScreen extends StatefulWidget {
 //   final int parentId;
@@ -309,7 +311,7 @@ import 'package:my_app/features/child/pages/child_transactions_screen.dart';
 import 'parent_transfer_screen.dart';
 import 'parent_money_requests_screen.dart';
 import 'parent_child_goals_screen.dart';
-import 'parent_child_chores_screen.dart'; 
+import 'parent_child_chores_screen.dart';
 
 class ParentChildOverviewScreen extends StatefulWidget {
   final int parentId;
@@ -402,6 +404,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const Color primary1 = Color(0xFF37C4BE);
 
     return Scaffold(
@@ -481,7 +484,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text("Total Balance", style: TextStyle(color: Colors.black54, fontSize: 14, fontWeight: FontWeight.w600)),
+                                Text(l10n.totalBalance, style: TextStyle(color: Colors.black54, fontSize: 14, fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 6),
                                 Row(
                                   children: [
@@ -510,7 +513,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                         children: [
                           Expanded(
                             child: _balanceCard(
-                              title: 'Spend balance',
+                              title: l10n.spendBalance,
                               amount: _spend,
                               gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)],
                               leadingIcon: Icons.shopping_bag_outlined,
@@ -519,7 +522,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _balanceCard(
-                              title: 'Save balance',
+                              title: l10n.saveBalance,
                               amount: _saving,
                               gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)],
                               leadingIcon: Icons.account_balance_wallet_rounded,
@@ -534,7 +537,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                         children: [
                           Expanded(
                             child: _actionButton(
-                              "Transfer Money",
+                              l10n.transferMoney_action,
                               Icons.send_rounded,
                               () async {
                                 final result = await Navigator.push(
@@ -559,7 +562,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _actionButton(
-                              "Chores",
+                              l10n.chores_action,
                               Icons.check_circle_outline,
                               () {
                                 Navigator.push(
@@ -583,13 +586,13 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                        Row(
                         children: [
                           Expanded(
-                            child: _actionButton("Transactions", Icons.receipt_long_rounded, () {
+                            child: _actionButton(l10n.transactions_action, Icons.receipt_long_rounded, () {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => ChildTransactionsScreen(childId: widget.childId, token: widget.token, baseUrl: baseUrl)));
                             }),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: _actionButton("Money Requests", Icons.request_page_outlined, () {
+                            child: _actionButton(l10n.moneyRequests, Icons.request_page_outlined, () {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => ParentMoneyRequestsScreen(parentId: widget.parentId, childId: widget.childId)));
                             }),
                           ),
@@ -599,7 +602,7 @@ class _ParentChildOverviewScreenState extends State<ParentChildOverviewScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: _actionButton("Goals", Icons.flag_rounded, () {
+                            child: _actionButton(l10n.goals_action, Icons.flag_rounded, () {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => ParentChildGoalsScreen(childId: widget.childId, childName: widget.childName, token: widget.token, baseUrl: baseUrl)));
                             }),
                           ),

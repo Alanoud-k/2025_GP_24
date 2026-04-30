@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 //import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:my_app/core/providers/locale_provider.dart';
 //import 'package:mime/mime.dart';
 //import 'package:http_parser/http_parser.dart';
 
@@ -116,6 +119,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   }
 
   void _showLogoutConfirmation() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) {
@@ -124,29 +128,29 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.logout, color: Colors.red),
-              SizedBox(width: 10),
-              Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Icon(Icons.logout, color: Colors.red),
+              const SizedBox(width: 10),
+              Text(l10n.logOut, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
-          content: const Text(
-            'Are you sure you want to log out?',
-            style: TextStyle(fontSize: 16),
+          content: Text(
+            l10n.confirmLogOut,
+            style: const TextStyle(fontSize: 16),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-              ),
-              style: ElevatedButton.styleFrom(
+              style: TextButton.styleFrom(
                 backgroundColor: const Color.fromARGB(200, 152, 152, 152),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
+              ),
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
               ),
             ),
             ElevatedButton(
@@ -160,9 +164,9 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                 Navigator.pop(context);
                 _performLogout(context);
               },
-              child: const Text(
-                'Log Out',
-                style: TextStyle(color: Colors.white),
+            child: Text(
+              l10n.logOut,
+              style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -176,8 +180,8 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    // debugPrint("BASE URL = ${widget.baseUrl}");
-    // debugPrint("AVATAR URL = ${widget.avatarUrl}");
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
 
     return Scaffold(
       extendBody: true,
@@ -186,15 +190,15 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: isLoading
             ? const Center(child: CircularProgressIndicator(color: Colors.teal))
             : SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsetsDirectional.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -212,13 +216,13 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                CircleAvatar(
+                                const CircleAvatar(
                                   radius: 35,
                                   backgroundColor: Colors.teal,
                                   // backgroundImage: (widget.avatarUrl != null)
                                   //     ? NetworkImage("${widget.baseUrl}${widget.avatarUrl}")
                                   //     : null,
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.person,
                                     size: 32,
                                     color: Colors.white,
@@ -261,43 +265,55 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
 
                       const SizedBox(height: 40),
 
-                      // ---------------------------------------------------------
-                      // SECURITY SETTINGS (COMMENTED OUT)
-                      // Examiners: only parents can change child password
-                      // ---------------------------------------------------------
-                      /*
                       _buildMenuItem(
-                        icon: Icons.lock_outline,
-                        title: "Security settings",
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/childSecuritySettings',
-                            arguments: {
-                              'childId': widget.childId,
-                              'token': widget.token,
-                              'baseUrl': widget.baseUrl,
-                            },
-                          );
-                        },
+                        icon: Icons.privacy_tip_outlined,
+                        title: l10n.termsAndPrivacy,
+                        isRtl: isRtl,
+                        onTap: () => Navigator.pushNamed(context, '/termsPrivacy'),
                       ),
 
                       const SizedBox(height: 18),
-                      */
+
+                      // =====================================================================
+                      // 🌐 LANGUAGE CONVERTER BUTTON
+                      // =====================================================================
                       _buildMenuItem(
-                        icon: Icons.privacy_tip_outlined,
-                        title: "Terms & privacy policy",
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/termsPrivacy'),
+                        icon: Icons.language,
+                        title: l10n.switchLanguage,
+                        isRtl: isRtl,
+                        trailingWidget: Text(
+                          isRtl ? "English" : "العربية",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF37C4BE),
+                          ),
+                        ),
+                        onTap: () {
+                          final provider = Provider.of<LocaleProvider>(context, listen: false);
+                          if (isRtl) {
+                            provider.setLocale(const Locale('en'));
+                          } else {
+                            provider.setLocale(const Locale('ar'));
+                          }
+                          
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.languageChangedHint),
+                              backgroundColor: const Color(0xFF37C4BE),
+                            )
+                          );
+                        }, 
                       ),
+                      // =====================================================================
 
                       const SizedBox(height: 18),
 
                       _buildMenuItem(
                         icon: Icons.logout,
-                        title: "Log out",
+                        title: l10n.logOut,
                         titleColor: Colors.red,
                         iconColor: Colors.red,
+                        isRtl: isRtl,
                         onTap: _showLogoutConfirmation,
                       ),
 
@@ -318,6 +334,8 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
     required String title,
     Color titleColor = Colors.black,
     Color iconColor = Colors.black,
+    required bool isRtl,
+    Widget? trailingWidget, // لدعم عنصر مخصص في نهاية القائمة
     required VoidCallback onTap,
   }) {
     return Container(
@@ -342,7 +360,11 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
             color: titleColor,
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        trailing: trailingWidget ?? Icon(
+          isRtl ? Icons.arrow_back_ios : Icons.arrow_forward_ios, 
+          size: 16,
+          color: Colors.grey,
+        ),
         onTap: onTap,
       ),
     );

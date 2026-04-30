@@ -1,0 +1,936 @@
+{
+  "@@locale": "ar",
+  "app_title": "حصالة",
+  "welcomeBack": "أهلاً بك،",
+  "childFallbackName": "الطفل",
+  "spendBalance": "مصروفي",
+  "saveBalance": "مدخراتي",
+  "keys": "مفاتيح",
+  "chores": "مهامي",
+  "transactions": "معاملاتي",
+  "mytransactions": "مهامي السابقة",
+  "goals": "أهدافي",
+  "requestMoney": "طلب مبلغ",
+  "spendingBreakdown": "تفصيل المصروفات",
+  "catFood": "المطاعم والأكل",
+  "catEducation": "التعليم",
+  "catEntertainment": "الترفيه",
+  "catShopping": "التسوق",
+  "catGifts": "الهدايا",
+  "catOthers": "أخرى",
+  "welcome": "مرحباً",
+  "enterMobileNumber": "الرجاء إدخال رقم الجوال",
+  "mobileHint": "05XXXXXXXX",
+  "byClickingContinue": "بالنقر على \"متابعة\"، أنت توافق على ",
+  "terms": "الشروط",
+  "and": " و",
+  "privacyPolicy": "سياسة الخصوصية",
+  "continue_": "متابعة",
+  "pleaseEnterMobile": "الرجاء إدخال رقم الجوال",
+  "validSaudiPhone": "أدخل رقم جوال سعودي صحيح",
+  "numberHelp": "يجب أن يكون الرقم 10 أرقام ويبدأ بـ 05.\nمثال: 05XXXXXXXX",
+  "forgotPassword": "نسيت كلمة المرور",
+  "securityQuestion": "السؤال الأمني",
+  "resetPassword": "إعادة تعيين كلمة المرور",
+  "enterPhoneForReset": "أدخل رقم جوالك",
+  "answerSecurity": "أجب على سؤالك الأمني",
+  "enterNewPassword": "أدخل كلمة المرور الجديدة",
+  "phoneNumber": "رقم الجوال",
+  "yourAnswer": "إجابتك",
+  "newPassword": "كلمة المرور الجديدة",
+  "confirmPassword": "تأكيد كلمة المرور",
+  "verifyAnswer": "تحقق من الإجابة",
+  "streetQuestion": "ما هو اسم الشارع الذي عشت فيه في طفولتك؟",
+  "invalidPhone": "رقم الجوال غير صحيح",
+  "phoneNotRegistered": "رقم الجوال غير مسجل",
+  "incorrectAnswer": "إجابة غير صحيحة",
+  "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
+  "passwordRequirements": "يجب أن تحتوي كلمة المرور على أحرف كبيرة وصغيرة ورقم ورمز خاص",
+  "passwordUpdated": "تم تحديث كلمة المرور!",
+  "failedToReset": "فشل إعادة تعيين كلمة المرور",
+  "pleaseEnterAnswer": "الرجاء إدخال الإجابة",
+  "forSmarterChildren": "لأطفال أكثر ذكاءً...",
+  "foodRestaurants": "المطاعم والأكل",
+  "groceryMarkets": "البقالة والأسواق",
+  "retailShopping": "التجزئة والتسوق",
+  "transport": "المواصلات",
+  "medical": "الطبي",
+  "digitalSubscriptions": "الرقمية والاشتراكات",
+  "daily": "يومي",
+  "weekly": "أسبوعي",
+  "monthly": "شهري",
+  "yearly": "سنوي",
+  "breakdown": "التفصيل",
+  "selectDate": "اختر التاريخ",
+  "cancel": "إلغاء",
+  "apply": "تطبيق",
+  "jan": "يناير",
+  "feb": "فبراير",
+  "mar": "مارس",
+  "apr": "أبريل",
+  "may": "مايو",
+  "jun": "يونيو",
+  "jul": "يوليو",
+  "aug": "أغسطس",
+  "sep": "سبتمبر",
+  "oct": "أكتوبر",
+  "nov": "نوفمبر",
+  "dec": "ديسمبر",
+  "parentWallet": "الرصيد الإجمالي",
+  "addMoney": "إضافة رصيد",
+  "myCard": "بطاقتي",
+  "addCard": "إضافة بطاقة",
+  "insights": "تحليل المصروافات",
+  "totalWord": "Total",
+  "myChildren": "أطفالي",
+  "transferMoney": "تحويل مبلغ",
+  "pleaseAddCardFirst": "الرجاء إضافة بطاقة أولاً",
+  "notifications": "الإشعارات",
+  "noNotifications": "لا توجد إشعارات بعد",
+  "noTransactions": "لا توجد معاملات بعد",
+  "changePassword": "تغيير كلمة المرور",
+  "securitySettings": "إعدادات الأمان",
+  "security": "الأمان",
+  "change": "تغيير",
+  "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+  "failedToChangePassword": "فشل تغيير كلمة المرور",
+  "termsAndPrivacy": "الشروط والخصوصية",
+  "policyOverview": "نظرة عامة على السياسة",
+  "termsOfUse": "شروط الاستخدام",
+  "termsDescription": "ولا يدعم المعاملات المصرفية الحقيقية.\nحساب والد واحد فقط مدعوم لكل عائلة في هذا الإصدار.",
+  "privacyPolicyTitle": "سياسة الخصوصية",
+  "questionsOrConcerns": "أسئلة أو استفسارات؟",
+  "supportEmail": "support@hassala.sa",
+  "generateMerchantQR": "إنشاء رمز التاجر التجريبي",
+  "merchantDetails": "تفاصيل التاجر",
+  "merchantName": "اسم المتجر",
+  "amountSAR": "المبلغ (ريال)",
+  "generating": "جاري الإنشاء...",
+  "tokenLabel": "الرمز:",
+  "enterMerchantName": "أدخل اسم التاجر.",
+  "enterValidAmount": "أدخل مبلغاً صحيحاً.",
+  "failedToCreateQR": "فشل إنشاء رمز الاستجابة",
+  "demoMerchant": "تاجر تجريبي",
+  "language": "اللغة",
+  "english": "الإنجليزية",
+  "arabic": "العربية",
+  "switchLanguage": "تغيير اللغة",
+  "addGoal": "إضافة هدف",
+  "createNewGoal": "إنشاء هدف جديد",
+  "goalName": "اسم الهدف",
+  "enterGoalName": "أدخل اسم الهدف",
+  "lettersOnly": "أحرف فقط",
+  "description": "الوصف",
+  "max200Chars": "الحد الأقصى 200 حرف",
+  "amountToSave": "المبلغ المراد توفيره",
+  "enterAmount": "أدخل المبلغ",
+  "numbersOnly": "أرقام فقط",
+  "invalidAmount": "مبلغ غير صحيح",
+  "saving": "جاري الحفظ...",
+  "add": "إضافة",
+  "paymentCompleted": "تمت عملية الدفع بنجاح.",
+  "errorPrefix": "خطأ",
+  "somethingWentWrong": "حدث خطأ ما: {error}",
+  "@somethingWentWrong": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentDetails": "تفاصيل الدفع",
+  "reviewPayment": "مراجعة الدفع",
+  "merchant": "التاجر",
+  "total": "المجموع:",
+  "fee": "الرسوم:",
+  "afterPayment": "بعد الدفع:",
+  "confirmAndPay": "تأكيد ودفع",
+  "sarAmount": "{amount} ر.س",
+  "@sarAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "scanToPay": "مسح للدفع",
+  "scanTheQRCode": "امسح رمز الاستجابة السريعة (QR)",
+  "card": "البطاقة",
+  "hassalahVirtualCard": "بطاقة حصالة الافتراضية",
+  "cardNumber": "رقم البطاقة",
+  "cvv": "رمز التحقق (CVV)",
+  "childUser": "حساب طفل",
+  "payWithQR": "الدفع برمز QR",
+  "greatJobSentForApproval": "عمل رائع!\nتم الإرسال للموافقة.",
+  "taskReturned": "تم إرجاع المهمة!",
+  "taskReturnedNote": "لقد راجع والدك هذه المهمة وأعادها بهذه الملاحظة:",
+  "pleaseFixTask": "الرجاء إصلاح المهمة والمحاولة مرة أخرى.",
+  "submitNewProof": "الرجاء إصلاحها، ثم إرسال صورة إثبات جديدة.",
+  "later": "لاحقاً",
+  "resubmitProof": "إعادة إرسال الإثبات",
+  "submitProof": "إرسال الإثبات",
+  "selectPhotoProof": "اختر صورة من المعرض لإثبات إكمالك للمهمة.",
+  "tapToOpenGallery": "اضغط لفتح المعرض",
+  "proofPictureRequired": "صورة الإثبات مطلوبة!",
+  "submit": "إرسال",
+  "gameScreen": "شاشة اللعبة",
+  "failedToRedeem": "فشل في استبدال الجائزة",
+  "yay": "مرحى!",
+  "redeemedSuccessMsg1": "لقد قمت باستبدال",
+  "redeemedSuccessMsg2": "تم إشعار والديك!",
+  "awesome": "رائع!",
+  "myPrizes": "جوائزي",
+  "spendKeys": "أنفق المفاتيح التي كسبتها!",
+  "youGotThis": "لقد حصلت عليها!",
+  "redeemPrize": "استبدال الجائزة",
+  "notEnoughKeys": "مفاتيح غير كافية",
+  "noPrizesYet": "لا توجد جوائز متاحة بعد",
+  "errNotEnoughSaving": "ليس لديك رصيد كافٍ في المدخرات.",
+  "errNotEnoughGoalBalance": "ليس هناك مبلغ كافٍ في هذا الهدف.",
+  "errExceedTarget": "لا يمكنك تجاوز المبلغ المستهدف للهدف.",
+  "errGoalCompletedLocked": "تم اكتمال هذا الهدف وهو مقفل.\nلا يمكنك إضافة المزيد من الأموال.",
+  "errGoalCompletedNoMoveOut": "لا يمكن للأهداف المكتملة إعادة الأموال إلى المدخرات.",
+  "errGoalHasMoney": "يجب عليك نقل جميع الأموال مرة أخرى إلى المدخرات قبل حذف هذا الهدف.",
+  "errNothingToRedeem": "لا يوجد شيء متبقٍ لنقله إلى المصروفات.",
+  "errNotCompleted": "يمكنك فقط استبدال الأهداف المكتملة.",
+  "errGoalNotFound": "هذا الهدف لم يعد موجوداً.",
+  "editGoal": "تعديل الهدف",
+  "targetAmount": "المبلغ المستهدف",
+  "enterTarget": "أدخل المبلغ المستهدف",
+  "targetMustBeGreater": "يجب أن يكون الهدف أكبر من أو يساوي المبلغ المدخر",
+  "saveBtn": "حفظ",
+  "goalUpdated": "تم تحديث الهدف",
+  "goalCompletedCannotChange": "هذا الهدف مكتمل ولا يمكن تغييره.\nيمكنك استبداله بدلاً من ذلك.",
+  "moveInSavingToGoal": "إضافة (المدخرات ← الهدف)",
+  "moveOutGoalToSaving": "سحب (الهدف ← المدخرات)",
+  "amountStr": "المبلغ",
+  "confirmBtn": "تأكيد",
+  "moneyAddedToGoal": "تمت إضافة الأموال إلى الهدف",
+  "moneyMovedToSaving": "تم نقل الأموال إلى المدخرات",
+  "goalMoneyMovedToSpending": "تم نقل أموال الهدف إلى المصروفات",
+  "deleteGoal": "حذف الهدف",
+  "deleteGoalWarning": "هل أنت متأكد أنك تريد حذف هذا الهدف؟\n\nإذا كان هناك أي أموال محفوظة بداخله، يجب عليك إعادتها إلى المدخرات أولاً.",
+  "deleteBtn": "حذف",
+  "goalDeleted": "تم حذف الهدف",
+  "savingsGoal": "هدف الادخار",
+  "completed": "مكتمل",
+  "savedLabel": "المدخر:",
+  "targetLabel": "المستهدف:",
+  "remainingLabel": "المتبقي:",
+  "moveOutGoalToSavingBtn": "سحب\n(الهدف ← المدخرات)",
+  "moveInSavingToGoalBtn": "إضافة\n(المدخرات ← الهدف)",
+  "goalCompleted": "تم اكتمال الهدف",
+  "canMoveCollectedAmount": "يمكنك نقل المبلغ الذي تم جمعه إلى رصيد المصروفات الخاص بك.",
+  "goalAlreadyRedeemed": "تم استبدال هذا الهدف بالفعل ونقله إلى المصروفات.",
+  "moveToSpending": "نقل إلى المصروفات",
+  "goalDetails": "تفاصيل الهدف",
+  "status": "الحالة",
+  "saved": "المدخر",
+  "target": "المستهدف",
+  "remaining": "المتبقي",
+  "failedToLoadGoals": "فشل في تحميل الأهداف: {error}",
+  "@failedToLoadGoals": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "somethingWentWrongGeneric": "حدث خطأ ما",
+  "notEnoughBalanceToMove": "ليس لديك رصيد كافٍ لنقل هذا المبلغ.",
+  "moveInSpendingToSaving": "إضافة (المصروفات ← المدخرات)",
+  "moveOutSavingToSpending": "سحب (المدخرات ← المصروفات)",
+  "moveFailed": "فشل النقل.\nالرجاء المحاولة مرة أخرى.",
+  "movedSuccessfully": "تم النقل بنجاح",
+  "networkError": "خطأ في الشبكة.\nالرجاء المحاولة مرة أخرى.",
+  "addNewGoal": "إضافة هدف جديد",
+  "savingTab": "المدخرات",
+  "spendingTab": "المصروفات",
+  "moveInSpSv": "إضافة (مصروف ← مدخر)",
+  "moveOutSvSp": "سحب (مدخر ← مصروف)",
+  "activeGoals": "الأهداف النشطة",
+  "noActiveGoals": "ليس لديك أي أهداف نشطة.",
+  "completedGoals": "الأهداف المكتملة",
+  "loginFailed": "فشل تسجيل الدخول",
+  "welcomeBackTitle": "مرحباً بعودتك",
+  "enterYourPassword": "أدخل كلمة المرور الخاصة بك",
+  "password": "كلمة المرور",
+  "enterPasswordVal": "الرجاء إدخال كلمة المرور",
+  "passwordMinLength": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+  "logOut": "تسجيل الخروج",
+  "confirmLogOut": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+  "spendingInsights": "تحليل المصروفات",
+  "comparisonByChild": "مقارنة بين الأبناء",
+  "categoryBreakdownFor": "تفصيل المصروفات لـ {name}",
+  "@categoryBreakdownFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "seeWhichChildSpendingMost": "تعرف على أكثر الأبناء إنفاقاً.",
+  "trackWhereMoneyGoes": "تتبع أين تذهب أموال {name}.",
+  "@trackWhereMoneyGoes": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "percentOfTotal": "% من الإجمالي",
+  "details": "التفاصيل",
+  "noSpendingData": "لا توجد بيانات مصروفات لهذا التاريخ.",
+  "allChildren": "جميع الأبناء",
+  "all": "الكل",
+  "welcomeUser": "مرحباً، {name}",
+  "@welcomeUser": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmPaymentTitle": "تأكيد الدفع",
+  "aboutToPay": "أنت على وشك دفع",
+  "merchantLabel": "التاجر",
+  "amountLabel": "المبلغ",
+  "timeLabel": "الوقت",
+  "expiresAtLabel": "تنتهي الصلاحية في: {time}",
+  "@expiresAtLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "qrExpiredError": "انتهت صلاحية رمز QR",
+  "paymentFailedError": "فشل الدفع (الحالة: {code})",
+  "@paymentFailedError": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "paidStatus": "تم الدفع بنجاح!",
+  "doneButton": "تم",
+  "payNowButton": "ادفع الآن",
+  "processingStatus": "جاري المعالجة...",
+  "cancelButton": "إلغاء",
+  "failedToLoadParentInfo": "فشل في تحميل بيانات ولي الأمر",
+  "errorLoadingParentData": "خطأ في تحميل بيانات ولي الأمر",
+  "receiptTitle": "الإيصال",
+  "paymentSuccessful": "تم الدفع بنجاح",
+  "paymentFailed": "فشل الدفع",
+  "paymentCompletedSubtitle": "تمت عملية الدفع بنجاح.",
+  "paymentCouldNotBeCompleted": "تعذر إكمال عملية الدفع.",
+  "paidAt": "تم الدفع في",
+  "transactionIdLabel": "رقم العملية",
+  "backToHome": "العودة للرئيسية",
+  "viewTransactions": "عرض المعاملات",
+  "uploadQrSubtitle": "قم بتحميل صورة رمز QR لإتمام عملية الدفع",
+  "noQrSelected": "لم يتم اختيار رمز QR",
+  "scanning": "جاري المسح...",
+  "chooseQrImage": "اختر صورة QR",
+  "errorNoQrFound": "لم يتم العثور على رمز QR في هذه الصورة.",
+  "errorQrUnreadable": "تم اكتشاف رمز QR ولكن لا يمكن قراءته.",
+  "useThisQr": "استخدم هذا الرمز",
+  "clear": "مسح",
+  "generateDemoQr": "إنشاء رمز QR تجريبي",
+  "generate": "إنشاء",
+  "errorInvalidQrFormat": "تنسيق QR غير صالح",
+  "errorFailedResolveQr": "فشل في تحليل رمز QR.",
+  "errorFailedCreateDemoQr": "فشل في إنشاء رمز QR التجريبي.",
+  "moneyRequestsTitle": "طلبات المبالغ",
+  "newRequestTab": "طلب جديد",
+  "historyTab": "السجل",
+  "amountHint": "مثال: 50.00",
+  "messageHint": "أضف رسالة",
+  "requestButton": "طلب",
+  "noRequestsYet": "لا توجد طلبات بعد",
+  "enterMessage": "الرجاء إدخال وصف لطلبك",
+  "requestFailed": "فشل الطلب",
+  "requestSentTitle": "تم إرسال الطلب",
+  "requestForBody": "طلبك لـ",
+  "wasSentSuccessfully": "تم إرساله بنجاح.",
+  "statusApproved": "مقبول",
+  "statusDeclined": "مرفوض",
+  "statusPending": "قيد الانتظار",
+  "statusUnknown": "غير معروف",
+  "manageRewards": "إدارة الجوائز",
+  "createFunRewards": "أنشئ جوائز ممتعة لأطفالك ليكتسبوها!",
+  "rewardAddedSuccess": "تمت إضافة الجائزة بنجاح!",
+  "rewardUpdated": "تم تحديث الجائزة!",
+  "rewardDeleted": "تم حذف الجائزة!",
+  "deleteRewardTitle": "حذف الجائزة",
+  "deleteRewardWarning": "هل أنت متأكد أنك تريد حذف هذه الجائزة؟",
+  "editReward": "تعديل الجائزة",
+  "newReward": "جائزة جديدة",
+  "rewardTitleLabel": "عنوان الجائزة",
+  "rewardTitleHint": "مثال: رحلة لحديقة الحيوان",
+  "descriptionLabel": "الوصف",
+  "descriptionHint": "وصف قصير...",
+  "costKeysLabel": "التكلفة (مفاتيح)",
+  "costKeysHint": "مثال: 10",
+  "keysMustBeGreater": "يجب أن تكون المفاتيح أكبر من 0",
+  "noRewardsYet": "لا توجد جوائز بعد",
+  "redeemedBy": "تم استبدالها بواسطة {name}",
+  "@redeemedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tapToEdit": "اضغط للتعديل",
+  "delete": "حذف",
+  "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+  "unknown": "غير معروف",
+  "uncategorized": "غير مصنف",
+  "prizes": "الجوائز",
+  "home": "الرئيسية",
+  "pay": "ادفع",
+  "more": "المزيد",
+  "missingToken": "رمز المصادقة مفقود.\nيرجى تسجيل الدخول مرة أخرى.",
+  "failedToLoadChildren": "فشل في تحميل الأبناء (الحالة: {code})",
+  "@failedToLoadChildren": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "errorFetchingChildren": "خطأ في جلب الأبناء: {error}",
+  "@errorFetchingChildren": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "updateSpendingLimit": "تحديث حد الإنفاق",
+  "setNewLimitFor": "تعيين حد جديد لـ {name}",
+  "@setNewLimitFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newSpendingLimitSar": "حد إنفاق جديد (ريال)",
+  "defaultSavingSplit": "تقسيم الادخار الافتراضي",
+  "savingSpendingSplit": "الادخار: {saving}% / الإنفاق: {spending}%",
+  "@savingSpendingSplit": {
+    "placeholders": {
+      "saving": {
+        "type": "int"
+      },
+      "spending": {
+        "type": "int"
+      }
+    }
+  },
+  "childSettingsUpdated": "تم تحديث إعدادات الطفل",
+  "failedToUpdateChildSettings": "فشل تحديث إعدادات الطفل",
+  "addNewChild": "إضافة طفل جديد",
+  "firstNameLabel": "الاسم الأول",
+  "enterFirstName": "يرجى إدخال الاسم الأول",
+  "nationalIdLabel": "رقم الهوية الوطنية",
+  "enterNationalId": "يرجى إدخال رقم الهوية الوطنية",
+  "mustBe10Digits": "يجب أن يتكون من 10 أرقام",
+  "enterPhoneNumber": "يرجى إدخال رقم الجوال",
+  "phoneHelp": "يجب أن يبدأ رقم الجوال بـ 05 ويتكون من 10 أرقام",
+  "dateOfBirthLabel": "تاريخ الميلاد",
+  "selectDateOfBirth": "يرجى اختيار تاريخ الميلاد",
+  "spendingLimitSar": "حد الإنفاق (ريال)",
+  "enterLimit": "يرجى إدخال الحد",
+  "phoneAlreadyLinked": "رقم الجوال هذا مرتبط بالفعل بحساب آخر",
+  "childAddedSuccess": "تمت إضافة الطفل بنجاح",
+  "failedToAddChild": "فشل في إضافة الطفل",
+  "manageChildren": "إدارة الأبناء",
+  "noChildrenAdded": "لم يتم إضافة أبناء بعد",
+  "phoneDisplay": "الجوال: {phone}",
+  "@phoneDisplay": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "limitDisplay": "الحد: {limit} ريال",
+  "@limitDisplay": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "addNewCardTitle": "إضافة بطاقة جديدة",
+  "cardHolder": "صاحب البطاقة",
+  "expiryDate": "تاريخ الانتهاء",
+  "expiryHint": "شهر/سنة",
+  "cardHolderName": "اسم صاحب البطاقة",
+  "saveCardForFuture": "حفظ تفاصيل البطاقة للمدفوعات المستقبلية",
+  "errCardNumberRequired": "رقم البطاقة مطلوب",
+  "errCardNumberDigitsOnly": "يجب أن يحتوي رقم البطاقة على أرقام فقط",
+  "errCardNumberLength": "يجب أن يتكون رقم البطاقة من 16 رقماً",
+  "errExpiryRequired": "تاريخ الانتهاء مطلوب",
+  "errExpiryInvalidFormat": "أدخل تاريخ انتهاء صحيح (شهر/سنة)",
+  "errExpiryInvalid": "أدخل تاريخ انتهاء صحيح",
+  "errExpiryMonth": "أدخل شهراً صحيحاً",
+  "errExpiryYear": "يجب أن تكون سنة الانتهاء 26 أو أحدث",
+  "errCvvRequired": "رمز التحقق مطلوب",
+  "errCvvDigitsOnly": "يجب أن يحتوي رمز التحقق على أرقام فقط",
+  "errCvvLength": "يجب أن يتكون رمز التحقق من 3 أرقام",
+  "errCardNameRequired": "اسم صاحب البطاقة مطلوب",
+  "errCardNameLettersOnly": "يجب أن يحتوي الاسم على أحرف إنجليزية فقط",
+  "errCardNameSpace": "استخدم مسافة واحدة فقط بين الاسم الأول والعائلة",
+  "errCardNameOneSpace": "أدخل الاسم الأول والعائلة بمسافة واحدة فقط",
+  "errCardNameFirstLast": "أدخل الاسم الأول والعائلة فقط",
+  "errCardNameMinLength": "يجب أن يتكون كل اسم من 3 أحرف على الأقل",
+  "errFailedToSaveCard": "فشل في حفظ البطاقة",
+  "errErrorSavingCard": "خطأ أثناء حفظ البطاقة",
+  "authenticationError": "خطأ في المصادقة",
+  "unableToOpenPaymentPage": "تعذر فتح صفحة الدفع",
+  "redirectUrlMissing": "رابط إعادة التوجيه مفقود",
+  "addMoneyFailed": "فشل إضافة الأموال",
+  "proceedToPayment": "المتابعة للدفع",
+  "allowanceSetupTitle": "إعداد المصروف",
+  "allowanceSetupSubtitle": "علمهم الادخار بتقسيم مصروفهم الأسبوعي.",
+  "weeklyAmountLabel": "المبلغ الأسبوعي",
+  "allocationSplitLabel": "تقسيم المبلغ",
+  "percentSave": "ادخار {percent}%",
+  "@percentSave": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "allowanceSliderInstruction": "اسحب الشريط لتعليم طفلك كم يجب أن يدخر من مصروفه تلقائياً.",
+  "autoTransferWeekly": "تحويل أسبوعي تلقائي",
+  "everySunday": "كل يوم أحد",
+  "saveSettings": "حفظ الإعدادات",
+  "noChildrenFound": "لم يتم العثور على أبناء",
+  "allowanceSavedSuccess": "تم حفظ المصروف بنجاح ✅",
+  "pleaseEnterWeeklyAmount": "الرجاء إدخال المبلغ الأسبوعي",
+  "amountMustBeNumber": "يجب أن يكون المبلغ رقماً",
+  "amountMustBeGreaterThanZero": "يجب أن يكون المبلغ أكبر من صفر",
+  "saveFailed": "فشل الحفظ (الحالة: {code})",
+  "@saveFailed": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "errorSaving": "خطأ في الحفظ: {error}",
+  "@errorSaving": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "currencySarLabel": "ر.س",
+  "spend": "إنفاق",
+  "save": "ادخار",
+  "choreApproved": "تم قبول المهمة!",
+  "failedToApprove": "فشل في قبول المهمة",
+  "deleteChoreTitle": "حذف المهمة",
+  "deleteChoreWarning": "هل أنت متأكد أنك تريد حذف هذه المهمة؟",
+  "choreDeletedSuccess": "تم حذف المهمة بنجاح",
+  "failedToDeleteChore": "فشل حذف المهمة",
+  "reviewProof": "مراجعة الإثبات",
+  "childCompletedTask": "أكمل {name} المهمة: {title}",
+  "@childCompletedTask": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "imageNotFound": "لم يتم العثور على الصورة",
+  "noProofImage": "لا توجد صورة إثبات مرسلة",
+  "close": "إغلاق",
+  "approve": "قبول",
+  "addNewChore": "إضافة مهمة جديدة",
+  "choreTitle": "عنوان المهمة",
+  "rewardKeysLabel": "مفاتيح الجائزة",
+  "choreType": "نوع المهمة",
+  "oneTime": "لمرة واحدة",
+  "day": "اليوم",
+  "time": "الوقت",
+  "selectTime": "اختر الوقت",
+  "invalidInput": "إدخال غير صحيح",
+  "choreAddedSuccess": "تمت إضافة المهمة بنجاح",
+  "create": "إنشاء",
+  "childsChores": "مهام {name}",
+  "@childsChores": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activeTab": "نشطة",
+  "noActiveChores": "لا توجد مهام نشطة",
+  "noHistoryYet": "لا يوجد سجل بعد",
+  "waitingReview": "بانتظار المراجعة",
+  "sunday": "الأحد",
+  "monday": "الاثنين",
+  "tuesday": "الثلاثاء",
+  "wednesday": "الأربعاء",
+  "thursday": "الخميس",
+  "friday": "الجمعة",
+  "saturday": "السبت",
+
+  "totalBalance": "الرصيد الإجمالي",
+  "transferMoney_action": "تحويل مبلغ",
+  "chores_action": "المهام",
+  "transactions_action": "المعاملات",
+  "moneyRequests": "طلبات المبلغ",
+  "goals_action": "الأهداف",
+
+  "childsGoals": "أهداف {name}",
+  "@childsGoals": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activeGoals": "الأهداف النشطة",
+  "completedGoals": "الأهداف المكتملة",
+  "noActiveGoals": "لا توجد أهداف نشطة",
+  "savedMetric": "المدخر: ",
+  "remainingMetric": "المتبقي: ",
+  "completedBadge": "مكتمل",
+
+  "allFamilyChores": "مهام العائلة",
+  "toReviewTab": "للمراجعة",
+  "inProgressTab": "قيد التنفيذ",
+  "nochoresToReview": "لا توجد مهام للمراجعة",
+  "noActiveChoresList": "لا توجد مهام نشطة",
+  "childsChoresHeader": "مهام {name}",
+  "@childsChoresHeader": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rewardKeys": "الجائزة: {keys} مفاتيح",
+  "@rewardKeys": {
+    "placeholders": {
+      "keys": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyBadge": "أسبوعي",
+  "reviewProofTitle": "مراجعة إثبات {name}",
+  "@reviewProofTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taskLabel": "المهمة: {title}",
+  "@taskLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "noProofProvided": "لم يتم تقديم صورة إثبات.",
+  "reject": "رفض",
+  "reasonForRejection": "سبب الرفض",
+  "rejectionHint": "مثال: الغرفة لا تزال فوضوية!",
+  "sendToChild": "إرسال للطفل",
+  "choreRejected": "تم رفض المهمة وإعادتها للطفل",
+  "failedToReject": "فشل رفض المهمة",
+  "editChore": "تعديل المهمة",
+  "titleLabel": "العنوان",
+  "descriptionChore": "الوصف",
+  "rewardKeysInput": "الجائزة (مفاتيح)",
+  "choreTypeLabel": "نوع المهمة",
+  "oneTimeOption": "لمرة واحدة",
+  "weeklyOption": "أسبوعي",
+  "dayLabel": "اليوم",
+  "timeLabel": "الوقت",
+  "selectTimeHint": "اختر الوقت",
+  "assignToChild": "تعيين لطفل",
+  "selectChild": "اختر طفلاً",
+  "noChildrenFoundRed": "لم يتم العثور على أبناء.",
+  "rewardMustBePositive": "يجب أن تكون الجائزة أكبر من 0",
+  "pleaseFillAllFields": "الرجاء ملء جميع الحقول",
+  "choreUpdated": "تم تحديث المهمة!",
+  "choreCreated": "تم إنشاء المهمة!",
+  "errorMsg": "خطأ: {error}",
+  "@errorMsg": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteChoreConfirmTitle": "حذف المهمة؟",
+  "deleteChoreConfirmBody": "هل أنت متأكد أنك تريد حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
+  "choreApprovedSuccess": "تمت الموافقة على المهمة!",
+  "declineRequestTitle": "رفض الطلب؟",
+  "declineRequestContent": "هل أنت متأكد أنك تريد رفض هذا الطلب؟",
+  "declineBtn": "رفض",
+  "moneyRequestTitle": "طلب المبلغ",
+  "noRequestsFound": "لم يتم العثور على طلبات",
+  "noMessage": "لا توجد رسالة",
+  "approveBtn": "قبول",
+  "declinedBadge": "مرفوض",
+  "paidBadge": "تم الدفع",
+  "errMissingTokenParentId": "استجابة تسجيل الدخول تفتقد رمز المصادقة أو معرف حساب ولي الأمر",
+  "errLoginFailedGeneric": "فشل تسجيل الدخول، يرجى المحاولة مرة أخرى",
+  "passwordHint": "كلمة المرور",
+  "loginRequiredError": "يرجى إعادة تسجيل الدخول من جديد.",
+  "accountDeletedError": "هذا الحساب تم حذفه أو غير موجود.",
+  "errorLoadingData": "حدث خطأ أثناء تحميل البيانات.",
+  "serverConnectionFailed": "فشل الاتصال بالخادم.",
+  "manageKids": "إدارة الأبناء",
+  "paymentMethod": "طريقة الدفع",
+  "active": "نشط",
+  "expires": "ينتهي في",
+  "onlyOneCardSaved": "يمكن حفظ بطاقة واحدة فقط لحساب ولي الأمر هذا.",
+  "editCard": "تعديل البطاقة",
+  "removeCard": "إزالة البطاقة",
+  "removeCardTitle": "إزالة البطاقة؟",
+  "removeCardMessage": "هل أنت متأكد من إزالة هذه البطاقة؟ يمكنك إضافة واحدة جديدة لاحقاً.",
+  "remove": "إزالة",
+  "failedToLoadCard": "فشل تحميل البطاقة",
+  "errorLoadingCard": "خطأ أثناء تحميل البطاقة",
+  "cardRemovedSuccess": "تمت إزالة البطاقة بنجاح",
+  "failedToRemoveCard": "فشل إزالة البطاقة (الرمز: {code})",
+  "@failedToRemoveCard": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "languageChangedHint": "تم تغيير اللغة. يرجى إعادة تشغيل التطبيق إذا لم تتغير تلقائياً.",
+  "noCardFoundTitle": "لا توجد بطاقة مضافة",
+  "addCardBtn": "إضافة بطاقة الآن",
+  "languageChangedHint": "تم تغيير اللغة بنجاح",
+  "authErrorMissingToken": "خطأ في المصادقة: رمز الدخول مفقود.",
+  "failedToLoadChildrenCode": "فشل في تحميل الأبناء (الرمز: {code})",
+  "@failedToLoadChildrenCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingChildrenEx": "خطأ في جلب بيانات الأبناء: {error}",
+  "@errorFetchingChildrenEx": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "selectChildTitle": "اختر طفلاً",
+  "yourChildren": "أبناؤك",
+  "noChildrenFoundList": "لا يوجد أبناء",
+  "unnamedChild": "غير مسمى",
+  "saveLabel": "المدخرات: ",
+  "spendLabel": "المصروفات: ",
+  "missingTokenLoginAgain": "رمز الدخول مفقود — يرجى تسجيل الدخول مرة أخرى",
+  "failedToLoadChildrenBasic": "فشل في تحميل بيانات الأبناء",
+  "errorPrefixMsg": "خطأ: {error}",
+  "@errorPrefixMsg": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "somethingWentWrongBasic": "حدث خطأ ما",
+  "changePasswordTitle": "تغيير كلمة المرور",
+  "currentPasswordLabel": "كلمة المرور الحالية",
+  "enterCurrentPasswordHint": "أدخل كلمة المرور الحالية",
+  "requiredField": "مطلوب",
+  "newPasswordLabel": "كلمة المرور الجديدة",
+  "createStrongPasswordHint": "أنشئ كلمة مرور قوية",
+  "requirementsTooltip": "المتطلبات",
+  "doesNotMeetRequirements": "لا تستوفي المتطلبات",
+  "confirmNewPasswordLabel": "تأكيد كلمة المرور الجديدة",
+  "confirmPasswordLabel": "تأكيد كلمة المرور",
+  "reEnterNewPasswordHint": "أعد إدخال كلمة المرور الجديدة",
+  "passwordsDoNotMatchVal": "كلمات المرور غير متطابقة",
+  "passwordRequirementsDesc": "استخدم 8 أحرف على الأقل تحتوي على حرف كبير، حرف صغير، رقم، ورمز خاص.",
+  "cancelBtn": "إلغاء",
+  "changeBtn": "تغيير",
+  "passwordChangedSuccess": "تم تغيير كلمة المرور بنجاح",
+  "failedToChangePasswordFallback": "فشل تغيير كلمة المرور",
+  "networkErrorTryAgain": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+  "changeChildPasswordTitle": "تغيير كلمة مرور الطفل",
+  "selectChildLabel": "اختر الطفل",
+  "chooseHint": "اختر",
+  "childFallback": "طفل",
+  "childPasswordChangedSuccess": "تم تغيير كلمة مرور الطفل بنجاح",
+  "securitySettingsTitle": "إعدادات الأمان",
+  "securitySection": "الأمان",
+  "updateParentPasswordSub": "تحديث كلمة مرور حساب ولي الأمر",
+  "addChildFirstToManage": "أضف طفلاً أولاً لإدارة كلمات المرور",
+  "resetChildPasswordSub": "إعادة تعيين كلمة مرور حساب الطفل",
+  "passwordRequirementsTitle": "متطلبات كلمة المرور",
+  "passwordRequirementsList": "• 8 أحرف على الأقل\n• حرف إنجليزي كبير واحد\n• حرف إنجليزي صغير واحد\n• رقم واحد\n• رمز خاص واحد (!@#$%^&*)",
+  "transferTitle": "تحويل",
+  "fromParent": "من ولي الأمر",
+  "balanceAmount": "الرصيد: {amount}",
+  "@balanceAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "toChild": "إلى {name}",
+  "@toChild": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitSavingSpending": "التقسيم بين الادخار والمصروف",
+  "savePercentage": "الادخار: {percent}%",
+  "@savePercentage": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "spendPercentage": "المصروف: {percent}%",
+  "@spendPercentage": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseEnterValidAmount": "الرجاء إدخال مبلغ صحيح",
+  "transferFailed": "فشل التحويل",
+  "transferSuccessful": "تم التحويل بنجاح!",
+  "savingLabel": "الادخار",
+  "spendingLabel": "المصروفات",
+  "updateChildWalletPrompt": "سيتم تحديث رصيد محفظة طفلك.",
+  "transactionsTitle": "المعاملات",
+  "failedToLoadTransactionsCode": "فشل تحميل المعاملات ({code})",
+  "@failedToLoadTransactionsCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "somethingWentWrongError": "حدث خطأ ما: {error}",
+  "@somethingWentWrongError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultTransaction": "معاملة",
+  "defaultCategory": "عام",
+  "noTransactionsYet": "لا توجد معاملات بعد.",
+  "nameMinLengthVal": "يجب أن يتكون من حرفين على الأقل",
+  "nameLettersOnlyVal": "أحرف فقط",
+  "nationalIdValidationVal": "يجب أن تتكون الهوية الوطنية / الإقامة من 10 أرقام",
+  "confirmPasswordVal": "قم بتأكيد كلمة المرور",
+  "registeredSuccessfully": "تم التسجيل بنجاح! يرجى تسجيل الدخول.",
+  "registrationFailed": "فشل التسجيل",
+  "createYourAccount": "إنشاء حسابك",
+  "lastNameLabel": "الاسم الأخير",
+  "nationalIdIqamaLabel": "الهوية الوطنية / الإقامة",
+  "dobLabel": "تاريخ الميلاد",
+  "passwordMinLengthVal": "8 أحرف على الأقل",
+  "passwordRegexVal": "يجب أن تحتوي على أحرف كبيرة/صغيرة/رقم/رمز خاص",
+  "confirmPasswordHint": "تأكيد كلمة المرور",
+  "securityQuestionAnswerLabel": "إجابة السؤال الأمني",
+  "securityQuestionHint": "ما هو اسم الشارع الذي عشت فيه في طفولتك؟",
+  "selectDateVal": "اختر التاريخ",
+  "policyPoint1": "استخدامك لحصالة يعني موافقتك على شروطنا وممارسات الخصوصية",
+  "policyPoint2": "أنت تتحكم في بياناتك وصلاحياتك والأجهزة المرتبطة",
+  "policyPoint3": "جميع البيانات الحساسة مشفرة ولا يتم مشاركتها أبداً دون موافقة صريحة",
+  "termsOfUseFullText": "أنت توافق على استخدام حصالة بمسؤولية ولأغراض التثقيف المالي الأسري. تخضع جميع الحسابات المنشأة تحت حساب الوالدين لإشرافهم. تتم محاكاة المعاملات أو معالجتها عبر مزودي خدمات الدفع المرخصين. يتبع التطبيق معايير مؤسسة النقد العربي السعودي (SAMA) وحماية البيانات السعودية. قد يؤدي سوء استخدام المنصة إلى تعليق الحساب. تستخدم حصالة حالياً محاكاة مدفوعات تجريبية ولا تدعم المعاملات المصرفية الحقيقية. يُدعم حساب والد واحد فقط لكل عائلة في هذا الإصدار.",
+  "privacyPolicyFullText": "لا تشارك حصالة بياناتك الشخصية أو المالية مع أطراف ثالثة دون موافقتك. جميع البيانات الحساسة (أرقام التعريف الشخصية، كلمات المرور، الرموز) مشفرة أثناء حفظها ونقلها. يمكنك طلب حذف البيانات أو إلغاء ربط البنك في أي وقت. يمكن استخدام البيانات المجمعة والمجهولة فقط للتحليلات.",
+  "rewards": "المكافآت",
+  "allowance": "المصروف",
+  "requestedAmount": "طلب مبلغ",
+  "requestedMoney": "طلب مبلغاً مالياً",
+  "redeemedPrize": "قام باستبدال جائزة",
+  "completedTask": "أنهى مهمة",
+  "walletTopUp": "شحن المحفظة",
+  "moneyTransfer": "حوالة مالية",
+  "deposit": "إيداع",
+  "refund": "استرداد",
+  "parentAllowanceCat": "المصروف",
+  "parentAllowanceDesc": "تحويل من ولي الأمر",
+  "moyasar": "مدفوعات ميسر",
+  "savingTab": "المدخرات",
+  "spendingTab": "المصروفات",
+  "spend": "إنفاق",
+  "save": "ادخار",
+  "savingLabel": "الادخار",
+  "spendingLabel": "المصروفات",
+  "transferToChildMessage": "تحويل مبلغ {amount} ريال إلى طفلك {childName}",
+  "@transferToChildMessage": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "childName": {
+        "type": "String"
+      }
+    }
+  },
+  "allowanceFromParent": "مصروف من ولي الأمر",
+  "insight_title_weekly_spending": "الإنفاق الأسبوعي",
+  "insight_msg_weekly_spending": "لقد أنفقت {amount} ريال خلال الأيام السبعة الماضية.",
+  "@insight_msg_weekly_spending": { "placeholders": { "amount": { "type": "String" } } },
+  
+  "insight_title_no_spending": "لا يوجد إنفاق",
+  "insight_msg_no_spending_week": "لم تقم بإنفاق أي شيء خلال الأيام السبعة الماضية.",
+  
+  "insight_title_top_category": "أعلى تصنيف",
+  "insight_msg_top_category": "لقد أنفقت {percentage}% من أموالك على {category} مؤخراً.",
+  "@insight_msg_top_category": { "placeholders": { "percentage": { "type": "String" }, "category": { "type": "String" } } },
+  
+  "insight_title_self_control": "تحكم بالنفس",
+  "insight_msg_self_control": "لم تنفق شيئاً البارحة، تحكم رائع بالنفس!",
+  
+  "insight_title_start_saving": "ابدأ الادخار",
+  "insight_msg_start_saving": "ابدأ الادخار للوصول إلى هدفك: {goalName}!",
+  "@insight_msg_start_saving": { "placeholders": { "goalName": { "type": "String" } } },
+  
+  "insight_title_almost_there": "أوشكت على الوصول",
+  "insight_msg_almost_there": "تبقى {amount} ريال فقط للوصول إلى {goalName}!",
+  "@insight_msg_almost_there": { "placeholders": { "amount": { "type": "String" }, "goalName": { "type": "String" } } },
+  
+  "insight_title_goal_progress": "تقدم الهدف",
+  "insight_msg_goal_progress": "تقدم رائع! لقد اقتربت بنسبة {percentage}% من الوصول إلى {goalName}.",
+  "@insight_msg_goal_progress": { "placeholders": { "percentage": { "type": "String" }, "goalName": { "type": "String" } } },
+  
+  "insight_title_spending_increase": "زيادة في الإنفاق",
+  "insight_msg_spending_increase": "زاد إنفاقك على {category} بنسبة {percentage}% مؤخراً.",
+  "@insight_msg_spending_increase": { "placeholders": { "category": { "type": "String" }, "percentage": { "type": "String" } },
+  "insight_title_no_goals_yet": "لا توجد أهداف بعد",
+  "insight_msg_no_goals_yet": "ابدأ هدفك الأول وتتبع تقدمك هنا." }
+}

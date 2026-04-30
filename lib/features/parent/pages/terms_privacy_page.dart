@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class TermsPrivacyPage extends StatefulWidget {
   const TermsPrivacyPage({super.key});
@@ -13,7 +14,6 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
   void initState() {
     super.initState();
 
-    /// 🔒 Check token validity AFTER the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await checkAuthStatus(context);
     });
@@ -21,7 +21,8 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Define App Colors
+    final l10n = AppLocalizations.of(context)!;
+    
     const Color hassalaGreen = Color(0xFF37C4BE);
     const Color titleColor = Color(0xFF2C3E50);
     const Color bodyColor = Color(0xFF607D8B);
@@ -30,18 +31,16 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
 
     return Scaffold(
       body: Container(
-        // Standard App Gradient Background
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF7FAFC), Color(0xFFE6F4F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              // --- Custom Header ---
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -54,13 +53,14 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                         Icons.arrow_back,
                         color: titleColor,
                         size: 26,
+                      
                       ),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Terms & Privacy',
-                      style: TextStyle(
+                    Text(
+                      l10n.termsAndPrivacy,
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: titleColor,
@@ -70,11 +70,10 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                 ),
               ),
 
-              // --- Content Card ---
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.only(left: 20, right: 20, bottom: 0),
+                  margin: const EdgeInsetsDirectional.only(start: 20, end: 20, bottom: 0),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -95,10 +94,9 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Intro Section
-                        const Text(
-                          'Policy Overview',
-                          style: TextStyle(
+                        Text(
+                          l10n.policyOverview,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: hassalaGreen,
@@ -106,19 +104,18 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Main Points
                         _buildBulletPoint(
-                          'Using Hassala means you agree to our terms and privacy practices',
+                          l10n.policyPoint1,
                           hassalaGreen,
                           bodyColor,
                         ),
                         _buildBulletPoint(
-                          'You control your data, permissions, and linked devices',
+                          l10n.policyPoint2,
                           hassalaGreen,
                           bodyColor,
                         ),
                         _buildBulletPoint(
-                          'All sensitive data is encrypted and never shared without explicit consent',
+                          l10n.policyPoint3,
                           hassalaGreen,
                           bodyColor,
                         ),
@@ -127,26 +124,18 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                         Divider(height: 1, color: Colors.grey.shade200),
                         const SizedBox(height: 24),
 
-                        // Terms of Use Section
-                        const Text(
-                          'Terms of Use',
-                          style: TextStyle(
+                        Text(
+                          l10n.termsOfUse,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: titleColor,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'You agree to use Hassala responsibly and for family financial education purposes. '
-                          'All accounts created under a parent are subject to parental supervision. '
-                          'Transactions are simulated or processed via licensed PSPs. '
-                          'The app follows SAMA and Saudi data protection standards. '
-                          'Misuse of the platform may result in account suspension. '
-                          'Hassala currently uses sandbox-based payment simulations (e.g., Moyasar) '
-                          'and does not support real banking transactions. Only one parent account '
-                          'is supported per family in this version.',
-                          style: TextStyle(
+                        Text(
+                          l10n.termsOfUseFullText,
+                          style: const TextStyle(
                             fontSize: 14,
                             height: 1.6,
                             color: bodyColor,
@@ -158,22 +147,18 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                         Divider(height: 1, color: Colors.grey.shade200),
                         const SizedBox(height: 24),
 
-                        // Privacy Policy Section
-                        const Text(
-                          'Privacy Policy',
-                          style: TextStyle(
+                        Text(
+                          l10n.privacyPolicyTitle,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: titleColor,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Hessala does not share your personal or financial data with third parties without consent. '
-                          'All sensitive data (PINs, passwords, tokens) are encrypted at rest and in transit. '
-                          'You can request data deletion or unlink your bank anytime. '
-                          'Only aggregated, anonymized data may be used for analytics.',
-                          style: TextStyle(
+                        Text(
+                          l10n.privacyPolicyFullText,
+                          style: const TextStyle(
                             fontSize: 14,
                             height: 1.6,
                             color: bodyColor,
@@ -185,7 +170,6 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                         Divider(height: 1, color: Colors.grey.shade200),
                         const SizedBox(height: 24),
 
-                        // Contact Section
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
@@ -194,19 +178,19 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
-                            children: const [
+                            children: [
                               Text(
-                                'Questions or concerns?',
-                                style: TextStyle(
+                                l10n.questionsOrConcerns,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: titleColor,
                                 ),
                               ),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               Text(
-                                'support@hassala.sa',
-                                style: TextStyle(
+                                l10n.supportEmail,
+                                style: const TextStyle(
                                   fontSize: 15,
                                   color: hassalaGreen,
                                   fontWeight: FontWeight.w600,
@@ -235,7 +219,7 @@ class _TermsPrivacyPageState extends State<TermsPrivacyPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 7, right: 10),
+            padding: const EdgeInsetsDirectional.only(top: 7, end: 10),
             child: Icon(Icons.circle, size: 8, color: dotColor),
           ),
           Expanded(

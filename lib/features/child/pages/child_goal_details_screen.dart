@@ -1,9 +1,8 @@
-// lib/screens/child_goal_details_screen.dart
 import 'package:flutter/material.dart';
-
 import '../models/goal_model.dart';
 import '../services/goals_api.dart';
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 const kBg = Color(0xFFF7F8FA);
 const kMint = Color(0xFF9FE5E2);
@@ -36,51 +35,30 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   bool _busy = false;
   bool _changed = false;
 
-  // Letters only (Arabic + English + spaces)
   final RegExp _lettersRegex = RegExp(r'^[a-zA-Z\u0621-\u064A\s]+$');
 
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       checkAuthStatus(context);
     });
-
     _api = GoalsApi(widget.baseUrl, widget.token);
     _goal = widget.goal;
     _refreshGoal();
   }
 
-  String _prettyError(String raw) {
+  String _prettyError(String raw, AppLocalizations l10n) {
     final msg = raw.replaceFirst('Exception: ', '');
-    if (msg.contains('insufficient_saving')) {
-      return 'Not enough Saving balance.';
-    }
-    if (msg.contains('insufficient_goal_balance')) {
-      return 'Not enough money in this goal.';
-    }
-    if (msg.contains('over_target')) {
-      return 'You cannot exceed the goal target amount.';
-    }
-    if (msg.contains('goal_completed_no_more_contributions')) {
-      return 'This goal is completed and locked. You cannot add more money.';
-    }
-    if (msg.contains('goal_completed_no_move_out')) {
-      return 'Completed goals cannot move money back to Saving.';
-    }
-    if (msg.contains('goal_has_money')) {
-      return 'You must move all money back to Saving before deleting this goal.';
-    }
-    if (msg.contains('nothing_to_redeem')) {
-      return 'There is nothing left to move to Spending.';
-    }
-    if (msg.contains('not_completed')) {
-      return 'You can only redeem completed goals.';
-    }
-    if (msg.contains('goal_not_found')) {
-      return 'This goal no longer exists.';
-    }
+    if (msg.contains('insufficient_saving')) return l10n.errNotEnoughSaving;
+    if (msg.contains('insufficient_goal_balance')) return l10n.errNotEnoughGoalBalance;
+    if (msg.contains('over_target')) return l10n.errExceedTarget;
+    if (msg.contains('goal_completed_no_more_contributions')) return l10n.errGoalCompletedLocked;
+    if (msg.contains('goal_completed_no_move_out')) return l10n.errGoalCompletedNoMoveOut;
+    if (msg.contains('goal_has_money')) return l10n.errGoalHasMoney;
+    if (msg.contains('nothing_to_redeem')) return l10n.errNothingToRedeem;
+    if (msg.contains('not_completed')) return l10n.errNotCompleted;
+    if (msg.contains('goal_not_found')) return l10n.errGoalNotFound;
     return msg;
   }
 
@@ -89,32 +67,25 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
       final fresh = await _api.getGoalById(_goal.goalId);
       if (!mounted) return;
       setState(() => _goal = fresh);
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
   }
 
-  /* ---------------------- Edit goal sheet ------------------------ */
-
   Future<void> _openEditSheet() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final nameCtrl = TextEditingController(text: _goal.goalName);
     final descCtrl = TextEditingController(text: _goal.description);
-    final targetCtrl = TextEditingController(
-      text: _goal.targetAmount.toStringAsFixed(2),
-    );
-
+    final targetCtrl = TextEditingController(text: _goal.targetAmount.toStringAsFixed(2));
     final formKey = GlobalKey<FormState>();
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
+        padding: EdgeInsetsDirectional.only(
+          start: 16,
+          end: 16,
           top: 16,
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
         ),
@@ -124,40 +95,26 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Center(
+              Center(
                 child: Text(
-                  "Edit goal",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  l10n.editGoal,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
-                "Goal name",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text(l10n.goalName, style: const TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: nameCtrl,
                 decoration: _fieldDeco(),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return "Enter goal name";
-                  if (!_lettersRegex.hasMatch(v.trim())) return "Letters only";
+                  if (v == null || v.trim().isEmpty) return l10n.enterGoalName;
+                  if (!_lettersRegex.hasMatch(v.trim())) return l10n.lettersOnly;
                   return null;
                 },
               ),
               const SizedBox(height: 12),
-              const Text(
-                "Description",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text(l10n.description, style: const TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: descCtrl,
@@ -165,34 +122,23 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                 decoration: _fieldDeco(),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return null;
-                  if (!_lettersRegex.hasMatch(v.trim())) return "Letters only";
-                  if (v.trim().length > 200) return "Max 200 characters";
+                  if (!_lettersRegex.hasMatch(v.trim())) return l10n.lettersOnly;
+                  if (v.trim().length > 200) return l10n.max200Chars;
                   return null;
                 },
               ),
               const SizedBox(height: 12),
-              const Text(
-                "Target amount",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text(l10n.targetAmount, style: const TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: targetCtrl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: _fieldDeco(),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return "Enter target";
+                  if (v == null || v.trim().isEmpty) return l10n.enterTarget;
                   final d = double.tryParse(v.trim());
-                  if (d == null || d <= 0) return "Numbers only";
-                  if (d < _goal.goalBalance) {
-                    return "Target must be ≥ saved amount";
-                  }
+                  if (d == null || d <= 0) return l10n.numbersOnly;
+                  if (d < _goal.goalBalance) return l10n.targetMustBeGreater;
                   return null;
                 },
               ),
@@ -204,15 +150,8 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                       height: 46,
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(ctx, false),
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                        style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        child: Text(l10n.cancel, style: const TextStyle(fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ),
@@ -225,16 +164,8 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                           if (!formKey.currentState!.validate()) return;
                           Navigator.pop(ctx, true);
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kProgress,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Save",
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
+                        style: ElevatedButton.styleFrom(backgroundColor: kProgress, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        child: Text(l10n.saveBtn, style: const TextStyle(fontWeight: FontWeight.w800)),
                       ),
                     ),
                   ),
@@ -259,12 +190,10 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
       await _refreshGoal();
       _changed = true;
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Goal updated")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.goalUpdated)));
     } catch (e) {
       if (!mounted) return;
-      final msg = _prettyError(e.toString());
+      final msg = _prettyError(e.toString(), l10n);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -272,31 +201,23 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   }
 
   /* ---------------- Move money in/out of goal -------------------- */
-
   Future<void> _openAmountSheet({required bool isAdd}) async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_goal.isCompleted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "This goal is completed and cannot be changed. You can redeem it instead.",
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.goalCompletedCannotChange)));
       return;
     }
 
     final ctrl = TextEditingController();
-
     final amount = await showModalBottomSheet<double>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
+        padding: EdgeInsetsDirectional.only(
+          start: 16,
+          end: 16,
           top: 16,
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
         ),
@@ -304,23 +225,19 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isAdd ? "Move In (Saving → Goal)" : "Move Out (Goal → Saving)",
+              isAdd ? l10n.moveInSavingToGoal : l10n.moveOutGoalToSaving,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                hintText: "Amount",
+                hintText: l10n.amountStr,
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 12),
@@ -332,16 +249,8 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                   final v = double.tryParse(ctrl.text.trim());
                   if (v != null && v > 0) Navigator.pop(ctx, v);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kProgress,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "Confirm",
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: kProgress, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                child: Text(l10n.confirmBtn, style: const TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ],
@@ -354,59 +263,36 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
     setState(() => _busy = true);
     try {
       if (isAdd) {
-        await _api.addMoneyToGoal(
-          childId: widget.childId,
-          goalId: _goal.goalId,
-          amount: amount,
-        );
+        await _api.addMoneyToGoal(childId: widget.childId, goalId: _goal.goalId, amount: amount);
       } else {
-        await _api.moveMoneyFromGoal(
-          childId: widget.childId,
-          goalId: _goal.goalId,
-          amount: amount,
-        );
+        await _api.moveMoneyFromGoal(childId: widget.childId, goalId: _goal.goalId, amount: amount);
       }
-
       await _refreshGoal();
       _changed = true;
-
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isAdd ? "Money added to goal" : "Money moved to Saving",
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isAdd ? l10n.moneyAddedToGoal : l10n.moneyMovedToSaving)));
     } catch (e) {
       if (!mounted) return;
-      final msg = _prettyError(e.toString());
+      final msg = _prettyError(e.toString(), l10n);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-
-      if (e.toString().contains("401")) {
-        await checkAuthStatus(context);
-      }
+      if (e.toString().contains("401")) await checkAuthStatus(context);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  /* ----------------- Redeem completed goal → Spending ------------ */
-
   Future<void> _redeemGoal() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _busy = true);
     try {
       await _api.redeemGoal(childId: widget.childId, goalId: _goal.goalId);
       await _refreshGoal();
       _changed = true;
-
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Goal money moved to Spending")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.goalMoneyMovedToSpending)));
     } catch (e) {
       if (!mounted) return;
-      final msg = _prettyError(e.toString());
+      final msg = _prettyError(e.toString(), l10n);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -414,25 +300,17 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   }
 
   /* -------------------------- Delete goal ------------------------ */
-
   Future<void> _confirmDelete() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Delete goal"),
-        content: const Text(
-          "Are you sure you want to delete this goal?\n\n"
-          "If there is any money saved inside it, you must move it back to Saving first.",
-        ),
+        title: Text(l10n.deleteGoal),
+        content: Text(l10n.deleteGoalWarning),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.deleteBtn, style: const TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -443,33 +321,31 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
     try {
       await _api.deleteGoal(_goal.goalId);
       if (!mounted) return;
-
       _changed = true;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Goal deleted")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.goalDeleted)));
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      final msg = _prettyError(e.toString());
+      final msg = _prettyError(e.toString(), l10n);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  /* -------------------------- Build ------------------------------ */
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     final pct = (_goal.progress * 100).clamp(0, 100).toStringAsFixed(0);
     final remaining = (_goal.targetAmount - _goal.goalBalance).clamp(0, 999999);
     final isAchieved = _goal.isCompleted;
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         Navigator.pop(context, _changed);
-        return false;
       },
       child: Scaffold(
         backgroundColor: kBg,
@@ -478,65 +354,30 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 20,
-              color: Colors.black87,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black87), // أزلنا matchTextDirection
             onPressed: () => Navigator.pop(context, _changed),
           ),
-          title: const Text(
-            "Savings goal",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Colors.black87,
-            ),
-          ),
+          title: Text(l10n.savingsGoal, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black87)),
           actions: [
-            IconButton(
-              onPressed: _busy ? null : _openEditSheet,
-              icon: const Icon(Icons.edit, color: Colors.black87, size: 20),
-            ),
+            IconButton(onPressed: _busy ? null : _openEditSheet, icon: const Icon(Icons.edit, color: Colors.black87, size: 20)),
             const SizedBox(width: 6),
           ],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED)),
-          ),
+          bottom: const PreferredSize(preferredSize: Size.fromHeight(1), child: Divider(height: 1, thickness: 1, color: Color(0xFFEDEDED))),
         ),
         body: SafeArea(
           child: _busy
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 24),
                   child: Column(
                     children: [
-                      // Header card with ring + title + status
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 18,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(22),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))]),
                         child: Row(
                           children: [
-                            _ProgressRing(
-                              percent: _goal.progress,
-                              label: "$pct%",
-                              completed: isAchieved,
-                            ),
+                            _ProgressRing(percent: _goal.progress, label: "$pct%", completed: isAchieved, l10n: l10n),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
@@ -544,36 +385,12 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Expanded(
-                                        child: Text(
-                                          _goal.goalName,
-                                          style: const TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w800,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ),
+                                      Expanded(child: Text(_goal.goalName, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.black87))),
                                       if (isAchieved)
                                         Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.shade100,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            "Completed",
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: Colors.green,
-                                            ),
-                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(12)),
+                                          child: Text(l10n.completed, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.green)),
                                         ),
                                     ],
                                   ),
@@ -581,77 +398,27 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Text(
-                                        "Saved:",
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
+                                      Text(l10n.savedLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
                                       const SizedBox(width: 6),
-                                      SarAmount(
-                                        amount: _goal.goalBalance,
-                                        decimals: 2,
-                                        iconSize: 13,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
+                                      SarAmount(amount: _goal.goalBalance, decimals: 2, iconSize: 13, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
                                     ],
                                   ),
                                   const SizedBox(height: 2),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Text(
-                                        "Target:",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: kTextSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                                      Text(l10n.targetLabel, style: const TextStyle(fontSize: 12, color: kTextSecondary, fontWeight: FontWeight.w500)),
                                       const SizedBox(width: 6),
-                                      SarAmount(
-                                        amount: _goal.targetAmount,
-                                        decimals: 2,
-                                        iconSize: 12,
-                                        iconColor: kTextSecondary,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: kTextSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                                      SarAmount(amount: _goal.targetAmount, decimals: 2, iconSize: 12, iconColor: kTextSecondary, style: const TextStyle(fontSize: 12, color: kTextSecondary, fontWeight: FontWeight.w500)),
                                     ],
                                   ),
                                   const SizedBox(height: 2),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Text(
-                                        "Remaining:",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: kTextSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                                      Text(l10n.remainingLabel, style: const TextStyle(fontSize: 12, color: kTextSecondary, fontWeight: FontWeight.w500)),
                                       const SizedBox(width: 6),
-                                      SarAmount(
-                                        amount: remaining.toDouble(),
-                                        decimals: 2,
-                                        iconSize: 12,
-                                        iconColor: kTextSecondary,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: kTextSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                                      SarAmount(amount: remaining.toDouble(), decimals: 2, iconSize: 12, iconColor: kTextSecondary, style: const TextStyle(fontSize: 12, color: kTextSecondary, fontWeight: FontWeight.w500)),
                                     ],
                                   ),
                                 ],
@@ -660,87 +427,34 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       if (_goal.description.trim().isNotEmpty)
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: kMintSoft,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Text(
-                            _goal.description,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: kTextSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(color: kMintSoft, borderRadius: BorderRadius.circular(18)),
+                          child: Text(_goal.description, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w600)),
                         ),
-
                       const SizedBox(height: 18),
-
-                      // Action area
                       if (!isAchieved) ...[
                         Row(
                           children: [
-                            Expanded(
-                              child: _ActionButton(
-                                text: "Move Out\n(Goal → Saving)",
-                                bg: Colors.white,
-                                borderColor: kHassalaGreen.withOpacity(0.55),
-                                textColor: Colors.black87,
-                                onTap: () => _openAmountSheet(isAdd: false),
-                              ),
-                            ),
+                            Expanded(child: _ActionButton(text: l10n.moveOutGoalToSavingBtn, bg: Colors.white, borderColor: kHassalaGreen.withOpacity(0.55), textColor: Colors.black87, onTap: () => _openAmountSheet(isAdd: false))),
                             const SizedBox(width: 12),
-                            Expanded(
-                              child: _ActionButton(
-                                text: "Move In\n(Saving → Goal)",
-                                bg: kHassalaGreen,
-                                textColor: Colors.white,
-                                onTap: () => _openAmountSheet(isAdd: true),
-                              ),
-                            ),
+                            Expanded(child: _ActionButton(text: l10n.moveInSavingToGoalBtn, bg: kHassalaGreen, textColor: Colors.white, onTap: () => _openAmountSheet(isAdd: true))),
                           ],
                         ),
                       ] else ...[
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                          decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(16)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Goal completed",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.green,
-                                ),
-                              ),
+                              Text(l10n.goalCompleted, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.green)),
                               const SizedBox(height: 6),
-                              Text(
-                                _goal.goalBalance > 0
-                                    ? "You can move the collected amount to your Spending balance."
-                                    : "This goal has already been redeemed to Spending.",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: kTextSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              Text(_goal.goalBalance > 0 ? l10n.canMoveCollectedAmount : l10n.goalAlreadyRedeemed, style: const TextStyle(fontSize: 12, color: kTextSecondary, fontWeight: FontWeight.w500)),
                               if (_goal.goalBalance > 0) ...[
                                 const SizedBox(height: 10),
                                 SizedBox(
@@ -749,18 +463,8 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                                   child: ElevatedButton.icon(
                                     onPressed: _redeemGoal,
                                     icon: const Icon(Icons.card_giftcard),
-                                    label: const Text(
-                                      "Move to Spending",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
+                                    label: Text(l10n.moveToSpending, style: const TextStyle(fontWeight: FontWeight.w800)),
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                                   ),
                                 ),
                               ],
@@ -768,35 +472,17 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
                           ),
                         ),
                       ],
-
                       const SizedBox(height: 18),
-
-                      _DetailsCard(goal: _goal),
-
+                      _DetailsCard(goal: _goal, l10n: l10n),
                       const SizedBox(height: 18),
-
                       SizedBox(
                         width: double.infinity,
                         height: 44,
                         child: OutlinedButton.icon(
                           onPressed: _busy ? null : _confirmDelete,
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.red,
-                          ),
-                          label: const Text(
-                            "Delete goal",
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.red),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          label: Text(l10n.deleteGoal, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                         ),
                       ),
                     ],
@@ -808,33 +494,24 @@ class _ChildGoalDetailsScreenState extends State<ChildGoalDetailsScreen> {
   }
 }
 
-/* ---------------- Shared UI helpers ---------------- */
-
 InputDecoration _fieldDeco() => InputDecoration(
   filled: true,
   fillColor: Colors.white,
   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-  border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: BorderSide.none,
-  ),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
 );
 
 class _ProgressRing extends StatelessWidget {
   final double percent;
   final String label;
   final bool completed;
+  final AppLocalizations l10n;
 
-  const _ProgressRing({
-    required this.percent,
-    required this.label,
-    required this.completed,
-  });
+  const _ProgressRing({required this.percent, required this.label, required this.completed, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
     final color = completed ? Colors.green : kProgress;
-
     return SizedBox(
       width: 90,
       height: 90,
@@ -844,21 +521,9 @@ class _ProgressRing extends StatelessWidget {
           SizedBox(
             width: 90,
             height: 90,
-            child: CircularProgressIndicator(
-              value: percent.clamp(0, 1),
-              strokeWidth: 8,
-              backgroundColor: const Color(0xFFE8EEF0),
-              valueColor: AlwaysStoppedAnimation(color),
-            ),
+            child: CircularProgressIndicator(value: percent.clamp(0, 1), strokeWidth: 8, backgroundColor: const Color(0xFFE8EEF0), valueColor: AlwaysStoppedAnimation(color)),
           ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: Colors.black87,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black87)),
         ],
       ),
     );
@@ -872,38 +537,19 @@ class _ActionButton extends StatelessWidget {
   final Color? borderColor;
   final VoidCallback onTap;
 
-  const _ActionButton({
-    required this.text,
-    required this.bg,
-    required this.textColor,
-    this.borderColor,
-    required this.onTap,
-  });
+  const _ActionButton({required this.text, required this.bg, required this.textColor, this.borderColor, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final hasBorder = borderColor != null;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         height: 46,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-          border: hasBorder ? Border.all(color: borderColor!) : null,
-        ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-            color: textColor,
-          ),
-        ),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14), border: hasBorder ? Border.all(color: borderColor!) : null),
+        child: Text(text, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: textColor)),
       ),
     );
   }
@@ -911,8 +557,9 @@ class _ActionButton extends StatelessWidget {
 
 class _DetailsCard extends StatelessWidget {
   final Goal goal;
+  final AppLocalizations l10n;
 
-  const _DetailsCard({required this.goal});
+  const _DetailsCard({required this.goal, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -921,75 +568,16 @@ class _DetailsCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
-        ],
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Goal details",
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: Colors.black87,
-            ),
-          ),
+          Text(l10n.goalDetails, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.black87)),
           const SizedBox(height: 10),
-          _detailRow(
-            "Status",
-            Text(
-              goal.goalStatus,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-          _detailRow(
-            "Saved",
-            SarAmount(
-              amount: goal.goalBalance,
-              decimals: 2,
-              iconSize: 12,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-          _detailRow(
-            "Target",
-            SarAmount(
-              amount: goal.targetAmount,
-              decimals: 2,
-              iconSize: 12,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-          _detailRow(
-            "Remaining",
-            SarAmount(
-              amount: remaining.toDouble(),
-              decimals: 2,
-              iconSize: 12,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Colors.black87,
-              ),
-            ),
-          ),
+          _detailRow(l10n.status, Text(goal.goalStatus, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87))),
+          _detailRow(l10n.saved, SarAmount(amount: goal.goalBalance, decimals: 2, iconSize: 12, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87))),
+          _detailRow(l10n.target, SarAmount(amount: goal.targetAmount, decimals: 2, iconSize: 12, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87))),
+          _detailRow(l10n.remaining, SarAmount(amount: remaining.toDouble(), decimals: 2, iconSize: 12, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87))),
         ],
       ),
     );
@@ -997,19 +585,10 @@ class _DetailsCard extends StatelessWidget {
 
   Widget _detailRow(String k, Widget value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsetsDirectional.only(bottom: 6),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              k,
-              style: const TextStyle(
-                fontSize: 13,
-                color: kTextSecondary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
+          Expanded(child: Text(k, style: const TextStyle(fontSize: 13, color: kTextSecondary, fontWeight: FontWeight.w700))),
           value,
         ],
       ),
@@ -1038,12 +617,7 @@ class SarAmount extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(
-          'assets/icons/Sar.png',
-          width: iconSize,
-          height: iconSize,
-          color: iconColor ?? style.color,
-        ),
+        Image.asset('assets/icons/Sar.png', width: iconSize, height: iconSize, color: iconColor ?? style.color),
         const SizedBox(width: 4),
         Text(amount.toStringAsFixed(decimals), style: style),
       ],

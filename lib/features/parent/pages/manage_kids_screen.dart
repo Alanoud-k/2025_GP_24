@@ -1,641 +1,10 @@
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:my_app/utils/check_auth.dart'; // if you don't use it, you can remove this
-// import 'package:my_app/core/api_config.dart';
-
-// class ManageKidsScreen extends StatefulWidget {
-//   const ManageKidsScreen({super.key});
-
-//   @override
-//   State<ManageKidsScreen> createState() => _ManageKidsScreenState();
-// }
-
-// class _ManageKidsScreenState extends State<ManageKidsScreen> {
-//   List<Map<String, dynamic>> _children = [];
-//   bool _loading = true;
-//   late int parentId;
-
-//   final TextEditingController password = TextEditingController();
-
-//   String? token;
-//   final String baseUrl = ApiConfig.baseUrl;
-
-//   /// To avoid running `didChangeDependencies` logic twice
-//   bool _initialized = false;
-
-//   @override
-//   void didChangeDependencies() {
-//     super.didChangeDependencies();
-//     if (_initialized) return;
-//     _initialized = true;
-
-//     // Get parentId from navigation arguments
-//     final args = ModalRoute.of(context)?.settings.arguments as Map?;
-//     parentId = args?['parentId'] ?? 0;
-
-//     _loadToken().then((_) => fetchChildren());
-//   }
-
-//   Future<void> _loadToken() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     token = prefs.getString("token");
-//   }
-
-//   double parseDouble(dynamic value) {
-//     if (value == null) return 0.0;
-//     if (value is double) return value;
-//     if (value is int) return value.toDouble();
-//     if (value is String) return double.tryParse(value) ?? 0.0;
-//     return 0.0;
-//   }
-
-//   /// Fetch children for this parent
-//   Future<void> fetchChildren() async {
-//     if (token == null) {
-//       setState(() => _loading = false);
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text("Missing token — please log in again.")),
-//       );
-//       return;
-//     }
-
-//     setState(() => _loading = true);
-
-//     // ✅ NEW ENDPOINT (Option 2)
-//     final url = Uri.parse("$baseUrl/api/auth/parent/$parentId/children");
-
-//     try {
-//       final response = await http.get(
-//         url,
-//         headers: {"Authorization": "Bearer $token"},
-//       );
-
-//       if (response.statusCode == 200) {
-//         final decoded = jsonDecode(response.body);
-
-//         // Backend returns either:
-//         // 1) a plain List<child>  OR
-//         // 2) { "children": [ ... ] }
-//         List<dynamic> list;
-//         if (decoded is List) {
-//           list = decoded;
-//         } else if (decoded is Map && decoded["children"] is List) {
-//           list = decoded["children"] as List;
-//         } else {
-//           list = [];
-//         }
-
-//         setState(() {
-//           _children = list
-//               .map<Map<String, dynamic>>(
-//                 (c) => {
-//                   "childId": c["childId"] ?? c["id"],
-//                   "firstName": c["firstName"] ?? c["firstname"] ?? "Unnamed",
-//                   "phoneNo": c["phoneNo"] ?? c["phoneno"],
-//                   "limitAmount": parseDouble(c["limitAmount"]),
-//                   "balance": parseDouble(c["balance"]),
-//                 },
-//               )
-//               .toList();
-//           _loading = false;
-//         });
-//       } else if (response.statusCode == 401) {
-//         // Token expired / invalid → clear & send user back to start
-//         final prefs = await SharedPreferences.getInstance();
-//         await prefs.clear();
-//         if (!mounted) return;
-//         Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
-//       } else {
-//         throw Exception(
-//           "Failed to load children (code ${response.statusCode})",
-//         );
-//       }
-//     } catch (e) {
-//       setState(() => _loading = false);
-//       ScaffoldMessenger.of(
-//         context,
-//       ).showSnackBar(SnackBar(content: Text("Error fetching children: $e")));
-//     }
-//   }
-
-//   // =====================================================
-//   // POPUP TO UPDATE SPENDING LIMIT
-//   // =====================================================
-//   void _openEditLimitDialog(Map<String, dynamic> kid) {
-//     final limitController = TextEditingController(
-//       text: kid["limitAmount"].toString(),
-//     );
-
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(18),
-//           ),
-//           title: Text("Update Limit for ${kid['firstName']}"),
-//           content: TextFormField(
-//             controller: limitController,
-//             keyboardType: TextInputType.number,
-//             decoration: const InputDecoration(
-//               labelText: "New Spending Limit (SAR)",
-//               border: OutlineInputBorder(),
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () => Navigator.pop(context),
-//               child: const Text("Cancel"),
-//             ),
-//             ElevatedButton(
-//               onPressed: () async {
-//                 final raw = limitController.text.trim();
-//                 final value = double.tryParse(raw);
-
-//                 if (value == null || value <= 0) {
-//                   ScaffoldMessenger.of(context).showSnackBar(
-//                     const SnackBar(content: Text("Enter a valid amount")),
-//                   );
-//                   return;
-//                 }
-
-//                 await _updateChildLimit(kid["childId"], value);
-
-//                 if (context.mounted) Navigator.pop(context);
-//               },
-//               child: const Text("Save"),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   // =====================================================
-//   // CALL BACKEND TO UPDATE LIMIT
-//   // (kept same endpoint you already use)
-//   // =====================================================
-//   Future<void> _updateChildLimit(int childId, double newLimit) async {
-//     final url = Uri.parse("$baseUrl/api/auth/child/update-limit/$childId");
-
-//     try {
-//       final response = await http.put(
-//         url,
-//         headers: {
-//           "Content-Type": "application/json",
-//           "Authorization": "Bearer $token",
-//         },
-//         body: jsonEncode({"limitAmount": newLimit}),
-//       );
-
-//       if (response.statusCode == 200) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(
-//             content: Text("Spending limit updated"),
-//             backgroundColor: Colors.green,
-//           ),
-//         );
-//         await fetchChildren(); // refresh UI
-//       } else {
-//         final err = jsonDecode(response.body);
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(
-//             content: Text(err["error"] ?? "Failed to update limit"),
-//             backgroundColor: Colors.red,
-//           ),
-//         );
-//       }
-//     } catch (e) {
-//       ScaffoldMessenger.of(
-//         context,
-//       ).showSnackBar(SnackBar(content: Text("Error: $e")));
-//     }
-//   }
-
-//   // =====================================================
-//   // ADD CHILD DIALOG + REGISTRATION
-//   // =====================================================
-//   void _openAddChildDialog() {
-//     final formKey = GlobalKey<FormState>();
-//     final firstName = TextEditingController();
-//     final nationalId = TextEditingController();
-//     final phoneNo = TextEditingController();
-//     final dob = TextEditingController();
-//     final limitAmount = TextEditingController();
-
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(20),
-//           ),
-//           backgroundColor: Colors.white,
-//           title: const Text(
-//             "Add Child",
-//             textAlign: TextAlign.center,
-//             style: TextStyle(
-//               fontWeight: FontWeight.w700,
-//               fontSize: 20,
-//               color: Color(0xFF2C3E50),
-//             ),
-//           ),
-//           content: SingleChildScrollView(
-//             child: Form(
-//               key: formKey,
-//               child: Column(
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   _buildValidatedField(
-//                     controller: firstName,
-//                     label: "First Name",
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) return 'Enter first name';
-//                       if (!RegExp(r'^[a-zA-Z]+$').hasMatch(v)) {
-//                         return 'Letters only';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 12),
-//                   _buildValidatedField(
-//                     controller: nationalId,
-//                     label: "National ID",
-//                     keyboardType: TextInputType.number,
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) return 'Enter National ID';
-//                       if (!RegExp(r'^[0-9]{10}$').hasMatch(v)) {
-//                         return 'Must be 10 digits';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 12),
-//                   _buildValidatedField(
-//                     controller: phoneNo,
-//                     label: "Phone Number",
-//                     keyboardType: TextInputType.phone,
-//                     validator: (v) {
-//                       final value = v?.trim() ?? '';
-//                       if (value.isEmpty) return 'Enter phone number';
-//                       if (!RegExp(r'^05\d{8}$').hasMatch(value)) {
-//                         return 'Phone must start with 05 and be 10 digits (e.g., 05XXXXXXXX)';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 12),
-//                   TextFormField(
-//                     controller: dob,
-//                     readOnly: true,
-//                     decoration: InputDecoration(
-//                       labelText: "Date of Birth",
-//                       filled: true,
-//                       fillColor: const Color(0xFFFDFDFD),
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.circular(16),
-//                       ),
-//                     ),
-//                     validator: (v) =>
-//                         v == null || v.isEmpty ? 'Select date of birth' : null,
-//                     onTap: () async {
-//                       FocusScope.of(context).unfocus();
-//                       final pickedDate = await showDatePicker(
-//                         context: context,
-//                         initialDate: DateTime(2010),
-//                         firstDate: DateTime(2007),
-//                         lastDate: DateTime.now(),
-//                       );
-//                       if (pickedDate != null) {
-//                         dob.text = pickedDate
-//                             .toIso8601String()
-//                             .split("T")
-//                             .first;
-//                       }
-//                     },
-//                   ),
-//                   const SizedBox(height: 12),
-//                   _buildValidatedField(
-//                     controller: password,
-//                     label: "Password",
-//                     obscureText: true,
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) return 'Enter password';
-//                       if (v.length < 8) {
-//                         return 'Must be at least 8 characters';
-//                       }
-//                       if (!RegExp(
-//                         r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
-//                       ).hasMatch(v)) {
-//                         return 'Use upper, lower, number & special character';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                   const SizedBox(height: 12),
-//                   TextFormField(
-//                     controller: limitAmount,
-//                     keyboardType: TextInputType.number,
-//                     decoration: InputDecoration(
-//                       labelText: "Spending Limit (SAR)",
-//                       filled: true,
-//                       fillColor: const Color(0xFFFDFDFD),
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.circular(16),
-//                       ),
-//                     ),
-//                     validator: (v) {
-//                       if (v == null || v.isEmpty) {
-//                         return 'Enter a spending limit';
-//                       }
-//                       final value = double.tryParse(v);
-//                       if (value == null || value <= 0) {
-//                         return 'Enter a valid amount';
-//                       }
-//                       return null;
-//                     },
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//           actionsPadding: const EdgeInsets.symmetric(
-//             horizontal: 16,
-//             vertical: 10,
-//           ),
-//           actionsAlignment: MainAxisAlignment.spaceBetween,
-//           actions: [
-//             TextButton(
-//               onPressed: () => Navigator.pop(context),
-//               child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
-//             ),
-//             ElevatedButton(
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: const Color(0xFF37C4BE),
-//                 foregroundColor: Colors.white,
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(18),
-//                 ),
-//               ),
-//               onPressed: () async {
-//                 if (!formKey.currentState!.validate()) return;
-
-//                 final enteredPhone = phoneNo.text.trim();
-
-//                 final exists = await phoneExists(enteredPhone);
-//                 if (exists) {
-//                   ScaffoldMessenger.of(context).showSnackBar(
-//                     const SnackBar(
-//                       content: Text(
-//                         "This phone number is already linked to an existing user.",
-//                       ),
-//                       backgroundColor: Colors.red,
-//                     ),
-//                   );
-//                   return;
-//                 }
-
-//                 final success = await registerChild(
-//                   firstName.text.trim(),
-//                   nationalId.text.trim(),
-//                   enteredPhone,
-//                   dob.text.trim(),
-//                   password.text.trim(),
-//                   limitAmount.text.trim(),
-//                 );
-
-//                 if (success && context.mounted) {
-//                   Navigator.pop(context);
-//                 }
-//               },
-//               child: const Text("Add"),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   Future<bool> phoneExists(String phone) async {
-//     final url = Uri.parse("$baseUrl/api/auth/check-user");
-
-//     try {
-//       final response = await http.post(
-//         url,
-//         headers: {
-//           "Content-Type": "application/json",
-//           if (token != null) "Authorization": "Bearer $token",
-//         },
-//         body: jsonEncode({"phoneNo": phone}),
-//       );
-
-//       if (response.statusCode == 200) {
-//         final data = jsonDecode(response.body);
-//         return data["exists"] == true;
-//       }
-//     } catch (e) {
-//       debugPrint("Phone check failed: $e");
-//     }
-
-//     return false;
-//   }
-
-//   Future<bool> registerChild(
-//     String firstName,
-//     String nationalId,
-//     String phoneNo,
-//     String dob,
-//     String password,
-//     String limitAmount,
-//   ) async {
-//     if (token == null) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text("Missing token — please log in again.")),
-//       );
-//       return false;
-//     }
-
-//     final url = Uri.parse("$baseUrl/api/auth/child/register");
-
-//     final body = {
-//       "parentId": parentId,
-//       "firstName": firstName,
-//       "nationalId": int.tryParse(nationalId),
-//       "phoneNo": phoneNo,
-//       "dob": dob,
-//       "password": password,
-//       "limitAmount": double.tryParse(limitAmount),
-//     };
-
-//     try {
-//       final response = await http.post(
-//         url,
-//         headers: {
-//           'Content-Type': 'application/json',
-//           "Authorization": "Bearer $token",
-//         },
-//         body: jsonEncode(body),
-//       );
-
-//       if (response.statusCode == 200) {
-//         if (!mounted) return true;
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(
-//             content: Text("Child added successfully!"),
-//             backgroundColor: Colors.green,
-//           ),
-//         );
-
-//         await fetchChildren();
-//         return true;
-//       } else {
-//         final data = jsonDecode(response.body);
-//         final message = data['error'] ?? 'Failed to add child';
-
-//         if (mounted) {
-//           ScaffoldMessenger.of(context).showSnackBar(
-//             SnackBar(content: Text(message), backgroundColor: Colors.red),
-//           );
-//         }
-//         return false;
-//       }
-//     } catch (e) {
-//       if (mounted) {
-//         ScaffoldMessenger.of(
-//           context,
-//         ).showSnackBar(SnackBar(content: Text('Error: $e')));
-//       }
-//       return false;
-//     }
-//   }
-
-//   // ===============================================
-//   // SMALL HELPER FOR TEXT FIELDS
-//   // ===============================================
-//   Widget _buildValidatedField({
-//     required TextEditingController controller,
-//     required String label,
-//     bool obscureText = false,
-//     TextInputType? keyboardType,
-//     String? Function(String?)? validator,
-//   }) {
-//     return TextFormField(
-//       controller: controller,
-//       obscureText: obscureText,
-//       keyboardType: keyboardType,
-//       decoration: InputDecoration(
-//         labelText: label,
-//         filled: true,
-//         fillColor: const Color(0xFFFDFDFD),
-//         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-//       ),
-//       validator: validator,
-//     );
-//   }
-
-//   // =====================================================
-//   // UI BUILD
-//   // =====================================================
-//   @override
-//   Widget build(BuildContext context) {
-//     const hassalaGreen1 = Color(0xFF37C4BE);
-
-//     return Scaffold(
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _openAddChildDialog,
-//         backgroundColor: hassalaGreen1,
-//         child: const Icon(Icons.add, color: Colors.white),
-//       ),
-//       body: SafeArea(
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Row(
-//               children: [
-//                 IconButton(
-//                   icon: const Icon(Icons.arrow_back),
-//                   onPressed: () => Navigator.pop(context),
-//                 ),
-//                 const Text(
-//                   "Manage Children",
-//                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-//                 ),
-//               ],
-//             ),
-//             const SizedBox(height: 20),
-//             Expanded(
-//               child: _loading
-//                   ? const Center(child: CircularProgressIndicator())
-//                   : _children.isEmpty
-//                   ? const Center(child: Text("No children added yet"))
-//                   : ListView.builder(
-//                       padding: const EdgeInsets.all(16),
-//                       itemCount: _children.length,
-//                       itemBuilder: (context, index) {
-//                         final kid = _children[index];
-
-//                         return Container(
-//                           margin: const EdgeInsets.only(bottom: 12),
-//                           decoration: BoxDecoration(
-//                             color: Colors.white,
-//                             borderRadius: BorderRadius.circular(18),
-//                             boxShadow: [
-//                               BoxShadow(
-//                                 color: Colors.black12.withOpacity(0.08),
-//                                 blurRadius: 8,
-//                               ),
-//                             ],
-//                           ),
-//                           child: ListTile(
-//                             onTap: () => _openEditLimitDialog(kid),
-//                             leading: CircleAvatar(
-//                               backgroundColor: hassalaGreen1.withOpacity(.2),
-//                               child: const Icon(
-//                                 Icons.person,
-//                                 color: hassalaGreen1,
-//                               ),
-//                             ),
-//                             title: Text(kid["firstName"]),
-//                             subtitle: Column(
-//                               crossAxisAlignment: CrossAxisAlignment.start,
-//                               children: [
-//                                 Text("Phone: ${kid["phoneNo"]}"),
-//                                 const SizedBox(height: 4),
-//                                 Row(
-//                                   children: [
-//                                     Image.asset(
-//                                       "assets/icons/riyal.png",
-//                                       height: 14,
-//                                     ),
-//                                     const SizedBox(width: 4),
-//                                     Text(
-//                                       "Limit: ${kid["limitAmount"].toStringAsFixed(2)}",
-//                                     ),
-//                                   ],
-//                                 ),
-//                               ],
-//                             ),
-//                             trailing: const Icon(Icons.arrow_forward_ios),
-//                           ),
-//                         );
-//                       },
-//                     ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:my_app/core/api_config.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ManageKidsScreen extends StatefulWidget {
   const ManageKidsScreen({super.key});
@@ -688,10 +57,11 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
   }
 
   Future<void> fetchChildren() async {
+    final l10n = AppLocalizations.of(context)!;
     if (token == null) {
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Missing token — please log in again.")),
+        SnackBar(content: Text(l10n.missingToken)),
       );
       return;
     }
@@ -722,7 +92,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
               .map<Map<String, dynamic>>(
                 (c) => {
                   "childId": c["childId"] ?? c["id"],
-                  "firstName": c["firstName"] ?? c["firstname"] ?? "Unnamed",
+                  "firstName": c["firstName"] ?? c["firstname"] ?? l10n.childFallbackName,
                   "phoneNo": c["phoneNo"] ?? c["phoneno"],
                   "limitAmount": parseDouble(c["limitAmount"]),
                   "balance": parseDouble(c["balance"]),
@@ -739,14 +109,14 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         Navigator.pushNamedAndRemoveUntil(context, '/mobile', (route) => false);
       } else {
         throw Exception(
-          "Failed to load children (code ${response.statusCode})",
+          l10n.failedToLoadChildren(response.statusCode),
         );
       }
     } catch (e) {
       setState(() => _loading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error fetching children: $e")));
+      ).showSnackBar(SnackBar(content: Text(l10n.errorFetchingChildren(e.toString()))));
     }
   }
 
@@ -755,6 +125,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     final limitController = TextEditingController(
       text: kid["limitAmount"].toString(),
     );
+    final l10n = AppLocalizations.of(context)!;
     double savingRatio = kid["defaultSavingRatio"] ?? 0.0;
 
     showDialog(
@@ -762,17 +133,17 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       builder: (context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadiusDirectional.circular(20).resolve(Directionality.of(context)),
           ),
           backgroundColor: Colors.white,
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsetsDirectional.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  "Update Spending Limit",
-                  style: TextStyle(
+                Text(
+                  l10n.updateSpendingLimit,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: textDark,
@@ -780,22 +151,23 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Set a new limit for ${kid['firstName']}",
+                  l10n.setNewLimitFor(kid['firstName']),
                   style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                 ),
                 const SizedBox(height: 20),
                 _buildModernTextField(
+                  context: context,
                   controller: limitController,
-                  label: "New Spending Limit (SAR)",
+                  label: l10n.newSpendingLimitSar,
                   icon: Icons.account_balance_wallet_outlined,
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 20),
-                const Align(
-                  alignment: Alignment.centerLeft,
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
                   child: Text(
-                    "Default Saving Split",
-                    style: TextStyle(
+                    l10n.defaultSavingSplit,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: textDark,
@@ -821,8 +193,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                           },
                         ),
                         Text(
-                          "Saving: ${(savingRatio * 100).round()}% | "
-                          "Spending: ${((1 - savingRatio) * 100).round()}%",
+                          l10n.savingSpendingSplit(
+                            (savingRatio * 100).round(),
+                            ((1 - savingRatio) * 100).round(),
+                          ),
                           style: const TextStyle(fontSize: 13),
                         ),
                       ],
@@ -835,8 +209,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          "Cancel",
+                        child: Text(
+                          l10n.cancel,
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),
@@ -849,8 +223,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
                           if (value == null || value <= 0) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Enter a valid amount"),
+                              SnackBar(
+                                content: Text(l10n.enterValidAmount),
                               ),
                             );
                             return;
@@ -870,8 +244,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: const Text(
-                          "Save",
+                        child: Text(
+                          l10n.saveBtn,
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -894,6 +268,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     double newLimit,
     double savingRatio,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final url = Uri.parse("$baseUrl/api/auth/child/update-limit/$childId");
 
     try {
@@ -911,8 +286,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Child settings updated successfully"),
+          SnackBar(
+            content: Text(l10n.childSettingsUpdated),
             backgroundColor: hassalaGreen2,
           ),
         );
@@ -921,7 +296,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         final err = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(err["error"] ?? "Failed to update child settings"),
+            content: Text(err["error"] ?? l10n.failedToUpdateChildSettings),
             backgroundColor: Colors.red,
           ),
         );
@@ -929,7 +304,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ).showSnackBar(SnackBar(content: Text("${l10n.errorPrefix}: $e")));
     }
   }
 
@@ -942,6 +317,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     final dob = TextEditingController();
     final limitAmount = TextEditingController();
     double savingRatio = 0.0;
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
@@ -949,19 +325,19 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         return Dialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadiusDirectional.circular(20).resolve(Directionality.of(context)),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsetsDirectional.all(24.0),
             child: SingleChildScrollView(
               child: Form(
                 key: formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      "Add New Child",
-                      style: TextStyle(
+                    Text(
+                      l10n.addNewChild,
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: textDark,
@@ -969,40 +345,43 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     ),
                     const SizedBox(height: 20),
                     _buildModernTextField(
+                      context: context,
                       controller: firstName,
-                      label: "First Name",
+                      label: l10n.firstNameLabel,
                       icon: Icons.person_outline,
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter first name';
+                        if (v == null || v.isEmpty) return l10n.enterFirstName;
                         if (!RegExp(r'^[a-zA-Z]+$').hasMatch(v))
-                          return 'Letters only';
+                          return l10n.lettersOnly;
                         return null;
                       },
                     ),
                     const SizedBox(height: 12),
                     _buildModernTextField(
+                      context: context,
                       controller: nationalId,
-                      label: "National ID",
+                      label: l10n.nationalIdLabel,
                       icon: Icons.badge_outlined,
                       keyboardType: TextInputType.number,
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter National ID';
+                        if (v == null || v.isEmpty) return l10n.enterNationalId;
                         if (!RegExp(r'^[0-9]{10}$').hasMatch(v))
-                          return 'Must be 10 digits';
+                          return l10n.mustBe10Digits;
                         return null;
                       },
                     ),
                     const SizedBox(height: 12),
                     _buildModernTextField(
+                      context: context,
                       controller: phoneNo,
-                      label: "Phone Number",
+                      label: l10n.phoneNumber,
                       icon: Icons.phone_android,
                       keyboardType: TextInputType.phone,
                       validator: (v) {
                         final value = v?.trim() ?? '';
-                        if (value.isEmpty) return 'Enter phone number';
+                        if (value.isEmpty) return l10n.enterPhoneNumber;
                         if (!RegExp(r'^05\d{8}$').hasMatch(value)) {
-                          return 'Must be 10 digits (e.g., 05XXXXXXXX)';
+                          return l10n.phoneHelp;
                         }
                         return null;
                       },
@@ -1014,7 +393,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       readOnly: true,
                       style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
-                        labelText: "Date of Birth",
+                        labelText: l10n.dateOfBirthLabel,
                         prefixIcon: const Icon(
                           Icons.calendar_today,
                           color: Colors.grey,
@@ -1023,16 +402,16 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadiusDirectional.circular(12).resolve(Directionality.of(context)),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsetsDirectional.symmetric(
                           horizontal: 16,
                           vertical: 14,
                         ),
                       ),
                       validator: (v) => v == null || v.isEmpty
-                          ? 'Select date of birth'
+                          ? l10n.selectDateOfBirth
                           : null,
                       onTap: () async {
                         FocusScope.of(context).unfocus();
@@ -1062,40 +441,42 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     ),
                     const SizedBox(height: 12),
                     _buildModernTextField(
+                      context: context,
                       controller: password,
-                      label: "Password",
+                      label: l10n.password,
                       icon: Icons.lock_outline,
                       obscureText: true,
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter password';
-                        if (v.length < 8) return 'Min 8 chars';
+                        if (v == null || v.isEmpty) return l10n.enterPasswordVal;
+                        if (v.length < 8) return l10n.passwordMinLength;
                         if (!RegExp(
                           r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])',
                         ).hasMatch(v)) {
-                          return 'Use upper, lower, number & special char';
+                          return l10n.passwordRequirements;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 12),
                     _buildModernTextField(
+                      context: context,
                       controller: limitAmount,
-                      label: "Spending Limit (SAR)",
+                      label: l10n.spendingLimitSar,
                       icon: Icons.account_balance_wallet_outlined,
                       keyboardType: TextInputType.number,
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter limit';
+                        if (v == null || v.isEmpty) return l10n.enterLimit;
                         final val = double.tryParse(v);
-                        if (val == null || val <= 0) return 'Invalid amount';
+                        if (val == null || val <= 0) return l10n.invalidAmount;
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
-                    const Align(
-                      alignment: Alignment.centerLeft,
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
                       child: Text(
-                        "Default Saving Split",
-                        style: TextStyle(
+                        l10n.defaultSavingSplit,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: textDark,
@@ -1121,8 +502,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                               },
                             ),
                             Text(
-                              "Saving: ${(savingRatio * 100).round()}% | "
-                              "Spending: ${((1 - savingRatio) * 100).round()}%",
+                              l10n.savingSpendingSplit(
+                                (savingRatio * 100).round(),
+                                ((1 - savingRatio) * 100).round(),
+                              ),
                               style: const TextStyle(fontSize: 13),
                             ),
                           ],
@@ -1135,8 +518,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                         Expanded(
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              "Cancel",
+                            child: Text(
+                              l10n.cancel,
                               style: TextStyle(color: Colors.grey),
                             ),
                           ),
@@ -1157,10 +540,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                               final exists = await phoneExists(enteredPhone);
                               if (exists) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Phone already linked to user.",
-                                    ),
+                                  SnackBar(
+                                    content: Text(l10n.phoneAlreadyLinked),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -1181,8 +562,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                                 Navigator.pop(context);
                               }
                             },
-                            child: const Text(
-                              "Add Child",
+                            child: Text(
+                              l10n.addNewChild,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -1232,9 +613,10 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
     String limitAmount,
     double savingRatio,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Missing token — please log in again.")),
+        SnackBar(content: Text(l10n.missingToken)),
       );
       return false;
     }
@@ -1264,8 +646,8 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       if (response.statusCode == 200) {
         if (!mounted) return true;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Child added successfully!"),
+          SnackBar(
+            content: Text(l10n.childAddedSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -1273,7 +655,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         return true;
       } else {
         final data = jsonDecode(response.body);
-        final message = data['error'] ?? 'Failed to add child';
+        final message = data['error'] ?? l10n.failedToAddChild;
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -1285,7 +667,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text("${l10n.errorPrefix}: $e")));
       }
       return false;
     }
@@ -1293,6 +675,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
   // --- Helper: Modern Text Field ---
   Widget _buildModernTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required IconData icon,
@@ -1312,18 +695,18 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
         filled: true,
         fillColor: const Color(0xFFF8FAFC),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadiusDirectional.circular(12).resolve(Directionality.of(context)),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadiusDirectional.circular(12).resolve(Directionality.of(context)),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadiusDirectional.circular(12).resolve(Directionality.of(context)),
           borderSide: const BorderSide(color: hassalaGreen1, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding: const EdgeInsetsDirectional.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
@@ -1334,6 +717,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddChildDialog,
@@ -1354,7 +738,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: const EdgeInsetsDirectional.symmetric(
                   horizontal: 20,
                   vertical: 12,
                 ),
@@ -1365,9 +749,9 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      "Manage Children",
-                      style: TextStyle(
+                    Text(
+                      l10n.manageChildren,
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: textDark,
@@ -1388,16 +772,16 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.family_restroom_outlined,
                               size: 80,
                               color: Colors.black12,
                             ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text(
-                              "No children added yet",
-                              style: TextStyle(
+                              l10n.noChildrenAdded,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.black38,
                               ),
@@ -1406,7 +790,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
+                        padding: const EdgeInsetsDirectional.symmetric(
                           horizontal: 20,
                           vertical: 10,
                         ),
@@ -1414,7 +798,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                         itemBuilder: (context, index) {
                           final kid = _children[index];
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 16),
+                            margin: const EdgeInsetsDirectional.only(bottom: 16),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
@@ -1433,7 +817,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                               ),
                               onTap: () => _openEditLimitDialog(kid),
                               leading: Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsetsDirectional.all(10),
                                 decoration: BoxDecoration(
                                   color: hassalaGreen2.withOpacity(0.1),
                                   shape: BoxShape.circle,
@@ -1453,12 +837,12 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                                 ),
                               ),
                               subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 6),
+                                padding: const EdgeInsetsDirectional.only(top: 6),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Phone: ${kid["phoneNo"]}",
+                                      l10n.phoneDisplay(kid["phoneNo"]),
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: Colors.grey[600],
@@ -1474,7 +858,7 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          "Limit: ${kid["limitAmount"].toStringAsFixed(0)} SAR",
+                                          l10n.limitDisplay(kid["limitAmount"].toStringAsFixed(0)),
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,

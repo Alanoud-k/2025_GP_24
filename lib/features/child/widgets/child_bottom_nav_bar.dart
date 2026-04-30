@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ChildBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -15,14 +16,15 @@ class ChildBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     const double barHeight = 80; // ارتفاع الشريط
     const double iconSize = 28;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       height: barHeight,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(26),
-          topRight: Radius.circular(26),
+        borderRadius: BorderRadiusDirectional.only(
+          topStart: Radius.circular(26),
+          topEnd: Radius.circular(26),
         ),
         boxShadow: [
           BoxShadow(
@@ -33,7 +35,7 @@ class ChildBottomNavBar extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsetsDirectional.symmetric(horizontal: 10),
         child: Row(
           mainAxisAlignment:
               MainAxisAlignment.spaceAround, // توزيع المسافات بالتساوي
@@ -41,7 +43,7 @@ class ChildBottomNavBar extends StatelessWidget {
             // 1. Prizes Button
             _NavItem(
               asset: "assets/icons/Reward.svg",
-              label: "Prizes",
+              label: l10n.prizes,
               isSelected: currentIndex == 0,
               iconSize: iconSize,
               onTap: () => onTap(0),
@@ -55,7 +57,7 @@ class ChildBottomNavBar extends StatelessWidget {
             // 3. Card Button
             _NavItem(
               asset: "assets/icons/qr.svg",
-              label: "Pay",
+              label: l10n.pay,
               isSelected: currentIndex == 3,
               iconSize: iconSize,
               onTap: () => onTap(3),
@@ -64,7 +66,7 @@ class ChildBottomNavBar extends StatelessWidget {
             // 4. More Button
             _NavItem(
               asset: "assets/icons/More.svg",
-              label: "More",
+              label: l10n.more,
               isSelected: currentIndex == 4,
               iconSize: iconSize,
               onTap: () => onTap(4),
@@ -87,6 +89,8 @@ class _HomeNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return GestureDetector(
       onTap: onTap,
       // التعديل هنا: تحديد عرض ثابت 60 مثل بقية الأزرار
@@ -125,7 +129,7 @@ class _HomeNavItem extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              "Home",
+              l10n.home,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,

@@ -287,6 +287,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:my_app/l10n/app_localizations.dart';
 
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({super.key});
@@ -441,6 +442,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   // ------------------------------
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const titleColor = Color(0xFF2C3E50);
     const gradient1 = Color(0xFF37C4BE);
     const gradient2 = Color(0xFF2EA49E);
@@ -462,13 +464,19 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
             child: Column(
               children: [
                 // Back Button
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, size: 28),
-                    onPressed: () => Navigator.pop(context),
+               Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.black,
+                    size: 28,
                   ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
+              ),
 
                 // Logo
                 Image.asset(
@@ -481,10 +489,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                 // Title
                 Text(
                   _step == 0
-                      ? "Forgot Password"
+                      ? l10n.forgotPassword
                       : _step == 1
-                          ? "Security Question"
-                          : "Reset Password",
+                          ? l10n.securityQuestion
+                          : l10n.resetPassword,
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -497,10 +505,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                 // Subtitle
                 Text(
                   _step == 0
-                      ? "Enter your phone number"
+                      ? l10n.enterPhoneForReset
                       : _step == 1
-                          ? "Answer your security question"
-                          : "Enter your new password",
+                          ? l10n.answerSecurity
+                          : l10n.enterNewPassword,
                   style: const TextStyle(fontSize: 15, color: Colors.black54),
                 ),
 
@@ -512,22 +520,22 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                 if (_step == 0)
                   _inputCard(
                     controller: phoneController,
-                    hint: "Phone Number",
+                    hint: l10n.phoneNumber,
                     type: TextInputType.phone,
                   ),
 
                 if (_step == 1)
                   Column(
                     children: [
-                      const Text(
-                        "What's the name of the street where you lived as a child?",
+                      Text(
+                        l10n.streetQuestion,
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 18),
                       _inputCard(
                         controller: answerController,
-                        hint: "Your Answer",
+                        hint: l10n.yourAnswer,
                       ),
                     ],
                   ),
@@ -537,7 +545,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                     children: [
                       _inputCard(
                         controller: newPasswordController,
-                        hint: "New Password",
+                        hint: l10n.newPassword,
                         obscure: _obscure1,
                         toggle: () =>
                             setState(() => _obscure1 = !_obscure1),
@@ -545,7 +553,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                       const SizedBox(height: 18),
                       _inputCard(
                         controller: confirmPasswordController,
-                        hint: "Confirm Password",
+                        hint: l10n.confirmPassword,
                         obscure: _obscure2,
                         toggle: () =>
                             setState(() => _obscure2 = !_obscure2),
@@ -582,22 +590,22 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                           borderRadius: BorderRadius.circular(22),
                         ),
                       ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                          : Text(
-                              _step == 0
-                                  ? "Continue"
-                                  : _step == 1
-                                      ? "Verify Answer"
-                                      : "Reset Password",
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
+                       child: _isLoading
+                           ? const CircularProgressIndicator(
+                               color: Colors.white,
+                             )
+                           : Text(
+                               _step == 0
+                                   ? l10n.continue_
+                                   : _step == 1
+                                       ? l10n.verifyAnswer
+                                       : l10n.resetPassword,
+                               style: const TextStyle(
+                                 fontSize: 18,
+                                 fontWeight: FontWeight.w700,
+                                 color: Colors.white,
+                               ),
+                             ),
                     ),
                   ),
                 ),
