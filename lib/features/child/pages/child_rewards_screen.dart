@@ -31,6 +31,8 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _validateSession();
     });
+    // استدعاء دالة المفاتيح الخاصة بالهوم بيج مع دالة الجوائز
+    _fetchChildInfo();
     _fetchRewardsData();
   }
 
@@ -39,6 +41,32 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
       await checkAuthStatus(context);
     } catch (e) {
       debugPrint("Auth error: $e");
+    }
+  }
+
+  // ✅ الدالة المضافة من الـ Homepage لجلب عدد المفاتيح الفعلي بدقة
+  Future<void> _fetchChildInfo() async {
+    final url = Uri.parse('${widget.baseUrl}/api/auth/child/info/${widget.childId}');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _myKeys = data['rewardKeys'] ?? 0;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching child info keys: $e");
     }
   }
 
@@ -51,9 +79,12 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
         final data = jsonDecode(res.body);
         if (mounted) {
           setState(() {
-            // ✅ الحل الجذري: تحويل آمن للرقم لتجنب أخطاء الـ Type Mismatch من قاعدة البيانات
-            _myKeys = int.tryParse(data['myKeys']?.toString() ?? '0') ?? 0;
+            // نأخذ قائمة الجوائز من هنا
             _rewards = data['rewards'] ?? [];
+            // وفي حال عادت المفاتيح من هنا أيضاً نقوم بتحديثها كطبقة أمان إضافية
+            if (data['myKeys'] != null) {
+              _myKeys = int.tryParse(data['myKeys']?.toString() ?? '0') ?? _myKeys;
+            }
           });
         }
       } else {
@@ -82,8 +113,9 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
       );
       
       if (res.statusCode >= 200 && res.statusCode <= 299) {
-        // ✅ التعديل هنا: تحديث البيانات بعد إغلاق نافذة النجاح
         _showSuccessDialog(title).then((_) {
+          // تحديث المفاتيح والجوائز معاً بعد الشراء
+          _fetchChildInfo();
           _fetchRewardsData(); 
         });
       } else {
@@ -98,7 +130,6 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
     }
   }
 
-  // ✅ التعديل هنا: إرجاع Future للتحكم بمسار التنفيذ
   Future<void> _showSuccessDialog(String title) {
     final l10n = AppLocalizations.of(context)!;
     return showDialog(
@@ -195,7 +226,6 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
                                 reward: reward,
                                 userKeys: _myKeys,
                                 onRedeem: () {
-                                  // ✅ تحويل آمن للـ ID تجنباً لأي خطأ
                                   final rId = int.tryParse(reward['rewardid']?.toString() ?? '0') ?? 0;
                                   final rName = reward['rewardname']?.toString() ?? '';
                                   _redeemReward(rId, rName);
@@ -216,7 +246,6 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
 
   Widget _buildChildRewardCard({required Map<String, dynamic> reward, required int userKeys, required VoidCallback onRedeem, required AppLocalizations l10n}) {
     final bool isRedeemed = reward['rewardstatus'] == 'Redeemed';
-    // ✅ تحويل آمن لنقاط (مفاتيح) الجائزة
     final int points = int.tryParse(reward['requiredkeys']?.toString() ?? '0') ?? 0;
     final bool canAfford = userKeys >= points;
     final Color cardColor = isRedeemed ? const Color(0xFFF9FAFB) : Colors.white;
