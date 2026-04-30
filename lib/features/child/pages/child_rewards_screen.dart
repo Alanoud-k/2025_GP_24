@@ -82,8 +82,10 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
       );
       
       if (res.statusCode >= 200 && res.statusCode <= 299) {
-        _fetchRewardsData(); 
-        _showSuccessDialog(title);
+        // ✅ التعديل هنا: تحديث البيانات بعد إغلاق نافذة النجاح
+        _showSuccessDialog(title).then((_) {
+          _fetchRewardsData(); 
+        });
       } else {
          final errorData = jsonDecode(res.body);
          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -96,9 +98,10 @@ class _ChildRewardsScreenState extends State<ChildRewardsScreen> {
     }
   }
 
-  void _showSuccessDialog(String title) {
+  // ✅ التعديل هنا: إرجاع Future للتحكم بمسار التنفيذ
+  Future<void> _showSuccessDialog(String title) {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
+    return showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
