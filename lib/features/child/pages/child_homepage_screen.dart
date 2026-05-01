@@ -32,7 +32,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   int selectedMonth = DateTime.now().month;
   int selectedYear = DateTime.now().year;
   int selectedDay = DateTime.now().day;
-  String selectedPeriod = "Monthly"; // هذه القيمة البرمجية يجب أن تبقى بالإنجليزية
+  String selectedPeriod =
+      "Monthly"; // هذه القيمة البرمجية يجب أن تبقى بالإنجليزية
   double monthTotalSpent = 0.0;
 
   double currentBalance = 0.0;
@@ -76,26 +77,46 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   // ✅ جلب أسماء الأشهر معربة من ملفات اللغة
   List<String> _getMonthNames(AppLocalizations l10n) {
     return [
-      l10n.jan, l10n.feb, l10n.mar, l10n.apr, l10n.may, l10n.jun,
-      l10n.jul, l10n.aug, l10n.sep, l10n.oct, l10n.nov, l10n.dec,
+      l10n.jan,
+      l10n.feb,
+      l10n.mar,
+      l10n.apr,
+      l10n.may,
+      l10n.jun,
+      l10n.jul,
+      l10n.aug,
+      l10n.sep,
+      l10n.oct,
+      l10n.nov,
+      l10n.dec,
     ];
   }
 
   Future<void> _fetchChildInfo() async {
     setState(() => _loading = true);
-    final url = Uri.parse('${widget.baseUrl}/api/auth/child/info/${widget.childId}');
+    final url = Uri.parse(
+      '${widget.baseUrl}/api/auth/child/info/${widget.childId}',
+    );
 
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 401) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-        if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
+        if (mounted)
+          Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
         return;
       }
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        double _toDouble(dynamic v) => (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
+        double _toDouble(dynamic v) =>
+            (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
         setState(() {
           childName = data['firstName'] ?? '';
           spendBalance = _toDouble(data['spend']);
@@ -115,11 +136,22 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
     if (selectedPeriod == 'Daily') {
-      return DateTime(selectedYear, selectedMonth, selectedDay).add(const Duration(days: 1)).compareTo(today) <= 0;
+      return DateTime(
+            selectedYear,
+            selectedMonth,
+            selectedDay,
+          ).add(const Duration(days: 1)).compareTo(today) <=
+          0;
     } else if (selectedPeriod == 'Weekly') {
-      return DateTime(selectedYear, selectedMonth, selectedDay).add(const Duration(days: 7)).compareTo(today) <= 0;
+      return DateTime(
+            selectedYear,
+            selectedMonth,
+            selectedDay,
+          ).add(const Duration(days: 7)).compareTo(today) <=
+          0;
     } else if (selectedPeriod == 'Monthly') {
-      return (selectedYear < now.year) || (selectedYear == now.year && selectedMonth < now.month);
+      return (selectedYear < now.year) ||
+          (selectedYear == now.year && selectedMonth < now.month);
     } else if (selectedPeriod == 'Yearly') {
       return selectedYear < now.year;
     }
@@ -140,7 +172,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       } else if (selectedPeriod == 'Yearly') {
         current = DateTime(selectedYear + offset, selectedMonth, selectedDay);
       }
-      
+
       DateTime now = DateTime.now();
       if (current.isAfter(now)) current = now;
 
@@ -153,20 +185,33 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
   Future<void> _fetchChildChartData() async {
     String p = 'month';
-    if (selectedPeriod == 'Daily') p = 'day';
-    else if (selectedPeriod == 'Weekly') p = 'week';
-    else if (selectedPeriod == 'Yearly') p = 'year';
+    if (selectedPeriod == 'Daily')
+      p = 'day';
+    else if (selectedPeriod == 'Weekly')
+      p = 'week';
+    else if (selectedPeriod == 'Yearly')
+      p = 'year';
 
-    final url = Uri.parse('${widget.baseUrl}/api/insights/child-chart/${widget.childId}?month=$selectedMonth&year=$selectedYear&day=$selectedDay&period=$p');
+    final url = Uri.parse(
+      '${widget.baseUrl}/api/insights/child-chart/${widget.childId}?month=$selectedMonth&year=$selectedYear&day=$selectedDay&period=$p',
+    );
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         double totalSpending = 0.0;
         Map<String, double> amounts = {};
 
         data.forEach((key, value) {
-          double val = (value is num) ? value.toDouble() : (double.tryParse(value.toString()) ?? 0.0);
+          double val = (value is num)
+              ? value.toDouble()
+              : (double.tryParse(value.toString()) ?? 0.0);
           amounts[key] = val;
           totalSpending += val;
         });
@@ -177,7 +222,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
             categoryPercentages.updateAll((key, value) => 0.0);
             if (totalSpending > 0) {
               amounts.forEach((key, value) {
-                if (categoryPercentages.containsKey(key)) categoryPercentages[key] = (value / totalSpending) * 100;
+                if (categoryPercentages.containsKey(key))
+                  categoryPercentages[key] = (value / totalSpending) * 100;
               });
             }
           });
@@ -189,9 +235,17 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   }
 
   Future<void> _fetchUnreadCount() async {
-    final url = Uri.parse("${ApiConfig.baseUrl}/api/notifications/unread/child/${widget.childId}");
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/notifications/unread/child/${widget.childId}",
+    );
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() => unreadCount = data["unread"] ?? 0);
@@ -205,7 +259,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Future<void> _fetchInsights() async {
     final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
     try {
-      final response = await http.get(url, headers: {"Authorization": "Bearer ${widget.token}", "Content-Type": "application/json"});
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
@@ -225,7 +285,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(colors: [bg1, bg2], begin: AlignmentDirectional.topCenter, end: AlignmentDirectional.bottomCenter)),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [bg1, bg2],
+            begin: AlignmentDirectional.topCenter,
+            end: AlignmentDirectional.bottomCenter,
+          ),
+        ),
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
@@ -238,7 +304,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 16,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -270,14 +339,35 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Row(
             children: [
-              const CircleAvatar(radius: 24, backgroundColor: Colors.grey, child: Icon(Icons.person, size: 26, color: Colors.white)),
+              const CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.grey,
+                child: Icon(Icons.person, size: 26, color: Colors.white),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(l10n.welcomeBack, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Colors.black54)),
-                    Text(childName.isNotEmpty ? childName : l10n.childFallbackName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+                    Text(
+                      l10n.welcomeBack,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    Text(
+                      childName.isNotEmpty ? childName : l10n.childFallbackName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -287,21 +377,49 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         const SizedBox(width: 12),
         GestureDetector(
           onTap: () async {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => ChildNotificationsScreen(childId: widget.childId, token: widget.token)));
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChildNotificationsScreen(
+                  childId: widget.childId,
+                  token: widget.token,
+                ),
+              ),
+            );
             await _fetchUnreadCount();
           },
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              const Icon(Icons.notifications_none_rounded, size: 30, color: Colors.black87),
+              const Icon(
+                Icons.notifications_none_rounded,
+                size: 30,
+                color: Colors.black87,
+              ),
               if (unreadCount > 0)
                 PositionedDirectional(
-                  end: -2, top: -2,
+                  end: -2,
+                  top: -2,
                   child: Container(
                     constraints: const BoxConstraints(minWidth: 18),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFFE53935), borderRadius: BorderRadius.circular(999), border: Border.all(color: Colors.white, width: 2)),
-                    child: Text(unreadCount > 99 ? "99+" : unreadCount.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE53935),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      unreadCount > 99 ? "99+" : unreadCount.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -314,23 +432,86 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _balancesRow(AppLocalizations l10n) {
     return Row(
       children: [
-        Expanded(child: _balanceCard(title: l10n.spendBalance, amount: spendBalance, gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)], leadingIcon: Icons.shopping_bag_outlined)),
+        Expanded(
+          child: _balanceCard(
+            title: l10n.spendBalance,
+            amount: spendBalance,
+            gradientColors: const [Color(0xFF37C4BE), Color(0xFF2EA49E)],
+            leadingIcon: Icons.shopping_bag_outlined,
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _balanceCard(title: l10n.saveBalance, amount: savingBalance, gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)], leadingIcon: Icons.account_balance_wallet_rounded)),
+        Expanded(
+          child: _balanceCard(
+            title: l10n.saveBalance,
+            amount: savingBalance,
+            gradientColors: const [Color(0xFF7E57C2), Color(0xFF5C6BC0)],
+            leadingIcon: Icons.account_balance_wallet_rounded,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _balanceCard({required String title, required double amount, required List<Color> gradientColors, required IconData leadingIcon}) {
+  Widget _balanceCard({
+    required String title,
+    required double amount,
+    required List<Color> gradientColors,
+    required IconData leadingIcon,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      decoration: BoxDecoration(gradient: LinearGradient(colors: gradientColors, begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd), borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 6))]),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12.withOpacity(0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [Icon(leadingIcon, size: 18, color: Colors.white), const SizedBox(width: 6), Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: Colors.white70)))]),
+          Row(
+            children: [
+              Icon(leadingIcon, size: 18, color: Colors.white),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12.5, color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
-          Row(children: [Image.asset(_sarIconPath, height: 18, color: Colors.white), const SizedBox(width: 4), Expanded(child: Text(amount.toStringAsFixed(2), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)))]),
+          Row(
+            children: [
+              Image.asset(_sarIconPath, height: 18, color: Colors.white),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  amount.toStringAsFixed(2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -341,13 +522,35 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       alignment: AlignmentDirectional.centerEnd,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFEDEDED)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 4))]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDEDED)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.vpn_key_rounded, size: 18, color: Colors.amber.shade800),
             const SizedBox(width: 6),
-            Flexible(child: Text("$currentPoints ${l10n.keys}", maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
+            Flexible(
+              child: Text(
+                "$currentPoints ${l10n.keys}",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -360,9 +563,30 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Column(
             children: [
-              _actionButton(l10n.chores, Icons.checklist_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildChoresScreen(childId: widget.childId, token: widget.token))); }),
+              _actionButton(l10n.chores, Icons.checklist_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildChoresScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
               const SizedBox(height: 12),
-              _actionButton(l10n.transactions, Icons.receipt_long_outlined, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildTransactionsScreen(childId: widget.childId, token: widget.token, baseUrl: widget.baseUrl))); }),
+              _actionButton(l10n.transactions, Icons.receipt_long_outlined, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildTransactionsScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                      baseUrl: widget.baseUrl,
+                    ),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -370,9 +594,31 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Column(
             children: [
-              _actionButton(l10n.goals, Icons.flag_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildGoalsScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
+              _actionButton(l10n.goals, Icons.flag_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildGoalsScreen(
+                      childId: widget.childId,
+                      baseUrl: widget.baseUrl,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
               const SizedBox(height: 12),
-              _actionButton(l10n.requestMoney, Icons.payments_rounded, () { Navigator.push(context, MaterialPageRoute(builder: (_) => ChildRequestMoneyScreen(childId: widget.childId, baseUrl: widget.baseUrl, token: widget.token))); }),
+              _actionButton(l10n.requestMoney, Icons.payments_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildRequestMoneyScreen(
+                      childId: widget.childId,
+                      baseUrl: widget.baseUrl,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -385,13 +631,43 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       onTap: onTap,
       child: Container(
         height: 80,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFEDEDED), width: 1), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 4))]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDEDED), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: [
-            Container(height: 40, width: 40, decoration: BoxDecoration(color: const Color(0xFF37C4BE).withOpacity(0.12), borderRadius: BorderRadius.circular(14)), child: Icon(icon, size: 22, color: const Color(0xFF2EA49E))),
+            Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF37C4BE).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 22, color: const Color(0xFF2EA49E)),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: Text(text, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
+            Expanded(
+              child: Text(
+                text,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -401,65 +677,146 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   // ✅ دوال الترجمة الخاصة بالرسائل الذكية
   String _getTranslatedTitle(String titleKey, AppLocalizations l10n) {
     switch (titleKey) {
-      case "insight_title_weekly_spending": return l10n.insight_title_weekly_spending;
-      case "insight_title_no_spending": return l10n.insight_title_no_spending;
-      case "insight_title_top_category": return l10n.insight_title_top_category;
-      case "insight_title_self_control": return l10n.insight_title_self_control;
-      case "insight_title_start_saving": return l10n.insight_title_start_saving;
-      case "insight_title_almost_there": return l10n.insight_title_almost_there;
-      case "insight_title_goal_progress": return l10n.insight_title_goal_progress;
-      case "insight_title_spending_increase": return l10n.insight_title_spending_increase;
-      default: return titleKey; 
+      case "insight_title_weekly_spending":
+        return l10n.insight_title_weekly_spending;
+      case "insight_title_no_spending":
+        return l10n.insight_title_no_spending;
+      case "insight_title_top_category":
+        return l10n.insight_title_top_category;
+      case "insight_title_self_control":
+        return l10n.insight_title_self_control;
+      case "insight_title_start_saving":
+        return l10n.insight_title_start_saving;
+      case "insight_title_almost_there":
+        return l10n.insight_title_almost_there;
+      case "insight_title_goal_progress":
+        return l10n.insight_title_goal_progress;
+      case "insight_title_spending_increase":
+        return l10n.insight_title_spending_increase;
+      default:
+        return titleKey;
     }
   }
 
-  String _getTranslatedMessage(String msgKey, String? val1, String? val2, AppLocalizations l10n) {
+  String _getTranslatedMessage(
+    String msgKey,
+    String? val1,
+    String? val2,
+    AppLocalizations l10n,
+  ) {
     String translatedVal1 = val1 ?? "";
     String translatedVal2 = val2 ?? "";
-    
+
     // إذا كان المتغير يحتوي على اسم تصنيف باللغة الإنجليزية، نقوم بترجمته
     translatedVal1 = _getCategoryDisplayName(context, translatedVal1);
     translatedVal2 = _getCategoryDisplayName(context, translatedVal2);
 
     switch (msgKey) {
-      case "insight_msg_weekly_spending": return l10n.insight_msg_weekly_spending(translatedVal1);
-      case "insight_msg_no_spending_week": return l10n.insight_msg_no_spending_week;
-      case "insight_msg_top_category": return l10n.insight_msg_top_category(translatedVal1, translatedVal2);
-      case "insight_msg_self_control": return l10n.insight_msg_self_control;
-      case "insight_msg_start_saving": return l10n.insight_msg_start_saving(translatedVal1);
-      case "insight_msg_almost_there": return l10n.insight_msg_almost_there(translatedVal1, translatedVal2);
-      case "insight_msg_goal_progress": return l10n.insight_msg_goal_progress(translatedVal1, translatedVal2);
-      case "insight_msg_spending_increase": return l10n.insight_msg_spending_increase(translatedVal2, translatedVal1);
-      default: return msgKey;
+      case "insight_msg_weekly_spending":
+        return l10n.insight_msg_weekly_spending(translatedVal1);
+      case "insight_msg_no_spending_week":
+        return l10n.insight_msg_no_spending_week;
+      case "insight_msg_top_category":
+        return l10n.insight_msg_top_category(translatedVal1, translatedVal2);
+      case "insight_msg_self_control":
+        return l10n.insight_msg_self_control;
+      case "insight_msg_start_saving":
+        return l10n.insight_msg_start_saving(translatedVal1);
+      case "insight_msg_almost_there":
+        return l10n.insight_msg_almost_there(translatedVal1, translatedVal2);
+      case "insight_msg_goal_progress":
+        return l10n.insight_msg_goal_progress(translatedVal1, translatedVal2);
+      case "insight_msg_spending_increase":
+        return l10n.insight_msg_spending_increase(
+          translatedVal2,
+          translatedVal1,
+        );
+      default:
+        return msgKey;
     }
   }
 
   Widget _buildInsightText(String message) {
     final parts = message.split("SAR");
-    const textStyle = TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800, height: 1.35);
+    const textStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 15,
+      fontWeight: FontWeight.w800,
+      height: 1.35,
+    );
 
-    if (parts.length == 1) return Text(message, maxLines: 4, overflow: TextOverflow.ellipsis, style: textStyle);
+    if (parts.length == 1)
+      return Text(
+        message,
+        maxLines: 4,
+        overflow: TextOverflow.ellipsis,
+        style: textStyle,
+      );
 
     List<InlineSpan> spans = [];
     for (int i = 0; i < parts.length; i++) {
       spans.add(TextSpan(text: parts[i], style: textStyle));
       if (i != parts.length - 1) {
-        spans.add(WidgetSpan(alignment: PlaceholderAlignment.middle, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Image.asset("assets/icons/Sar.png", height: 16, color: Colors.white))));
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Image.asset(
+                "assets/icons/Sar.png",
+                height: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
       }
     }
-    return RichText(maxLines: 4, overflow: TextOverflow.ellipsis, text: TextSpan(children: spans));
+    return RichText(
+      maxLines: 4,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(children: spans),
+    );
   }
 
   int _currentPage = 0;
   final Map<String, Map<String, dynamic>> insightStyles = {
-    "weekly": {"colors": [Color(0xFF37C4BE), Color(0xFF6EE7DF)], "icon": Icons.calendar_today},
-    "category": {"colors": [Color(0xFFAB47BC), Color(0xFFCE93D8)], "icon": Icons.pie_chart},
-    "self-control": {"colors": [Color(0xFF66BB6A), Color(0xFFA5D6A7)], "icon": Icons.self_improvement},
-    "goal-start": {"colors": [Color(0xFF42A5F5), Color(0xFF90CAF9)], "icon": Icons.flag},
-    "goal-progress": {"colors": [Color(0xFF5C6BC0), Color(0xFF9FA8DA)], "icon": Icons.trending_up},
-    "goal-close": {"colors": [Color(0xFFFFA726), Color(0xFFFFCC80)], "icon": Icons.emoji_events},
-    "increase": {"colors": [Color(0xFFFF7043), Color(0xFFFFAB91)], "icon": Icons.trending_up},
-    "empty": {"colors": [Color(0xFFB0BEC5), Color(0xFFECEFF1)], "icon": Icons.info_outline},
+    "weekly": {
+      "colors": [Color(0xFF37C4BE), Color(0xFF6EE7DF)],
+      "icon": Icons.calendar_today,
+    },
+    "category": {
+      "colors": [Color(0xFFAB47BC), Color(0xFFCE93D8)],
+      "icon": Icons.pie_chart,
+    },
+    "self-control": {
+      "colors": [Color(0xFF66BB6A), Color(0xFFA5D6A7)],
+      "icon": Icons.self_improvement,
+    },
+    "goal-start": {
+      "colors": [Color(0xFF42A5F5), Color(0xFF90CAF9)],
+      "icon": Icons.flag,
+    },
+    "goal-progress": {
+      "colors": [Color(0xFF5C6BC0), Color(0xFF9FA8DA)],
+      "icon": Icons.trending_up,
+    },
+    "goal-close": {
+      "colors": [Color(0xFFFFA726), Color(0xFFFFCC80)],
+      "icon": Icons.emoji_events,
+    },
+    "increase": {
+      "colors": [Color(0xFFFF7043), Color(0xFFFFAB91)],
+      "icon": Icons.trending_up,
+    },
+    "empty": {
+      "colors": [Color(0xFFB0BEC5), Color(0xFFECEFF1)],
+      "icon": Icons.info_outline,
+    },
+    "ai-category": {
+      "colors": [Color(0xFF5C6BC0), Color(0xFF9FA8DA)],
+      "icon": Icons.auto_awesome,
+    },
   };
 
   Widget _insightsSection(AppLocalizations l10n) {
@@ -468,22 +825,26 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 150,
+          height: 180,
           child: PageView.builder(
             controller: controller,
             itemCount: insights.length,
-            onPageChanged: (index) { setState(() => _currentPage = index); },
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
             itemBuilder: (context, i) {
               final insight = insights[i];
               final type = insight["type"] ?? "empty";
-              
+
               final titleKey = insight["title"] ?? "";
               final msgKey = insight["message"] ?? "";
               final val1 = insight["value"]?.toString();
               final val2 = insight["extraValue"]?.toString();
 
               final translatedTitle = _getTranslatedTitle(titleKey, l10n);
-              final translatedMessage = _getTranslatedMessage(msgKey, val1, val2, l10n);
+              final translatedMessage = type == "ai-category"
+                  ? msgKey // ✅ show AI text directly
+                  : _getTranslatedMessage(msgKey, val1, val2, l10n);
 
               final style = insightStyles[type] ?? insightStyles["empty"]!;
               final gradient = style["colors"] as List<Color>;
@@ -492,11 +853,40 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                 padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(gradient: LinearGradient(colors: gradient, begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd), borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: gradient[0].withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 12))]),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradient,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient[0].withOpacity(0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(children: [Icon(icon, color: Colors.white), const SizedBox(width: 8), Expanded(child: Text(translatedTitle, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)))]),
+                    Row(
+                      children: [
+                        Icon(icon, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            translatedTitle,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 10),
                     _buildInsightText(translatedMessage),
                   ],
@@ -510,7 +900,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(insights.length, (index) {
             final isActive = index == _currentPage;
-            return AnimatedContainer(duration: const Duration(milliseconds: 250), margin: const EdgeInsets.symmetric(horizontal: 4), width: isActive ? 14 : 6, height: 6, decoration: BoxDecoration(color: isActive ? const Color(0xFF37C4BE) : Colors.grey.shade400, borderRadius: BorderRadius.circular(999)));
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 14 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFF37C4BE)
+                    : Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            );
           }),
         ),
       ],
@@ -527,17 +928,41 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
 
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFC),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: periods.entries.map((entry) {
-          final isSelected = selectedPeriod == entry.key; 
+          final isSelected = selectedPeriod == entry.key;
           return Expanded(
             child: GestureDetector(
-              onTap: () { setState(() { selectedPeriod = entry.key; }); _fetchChildChartData(); },
+              onTap: () {
+                setState(() {
+                  selectedPeriod = entry.key;
+                });
+                _fetchChildChartData();
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(color: isSelected ? const Color(0xFF37C4BE) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-                child: Center(child: Text(entry.value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: isSelected ? Colors.white : Colors.black54, fontWeight: FontWeight.bold, fontSize: 12))),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF37C4BE)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    entry.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black54,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
               ),
             ),
           );
@@ -549,13 +974,15 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _buildDateSelector(AppLocalizations l10n) {
     final List<String> localizedMonths = _getMonthNames(l10n);
     String dateText = "";
-    
+
     if (selectedPeriod == 'Daily') {
-      dateText = "$selectedDay ${localizedMonths[selectedMonth - 1]} $selectedYear";
+      dateText =
+          "$selectedDay ${localizedMonths[selectedMonth - 1]} $selectedYear";
     } else if (selectedPeriod == 'Weekly') {
       DateTime current = DateTime(selectedYear, selectedMonth, selectedDay);
       DateTime weekAgo = current.subtract(const Duration(days: 6));
-      dateText = "${weekAgo.day} ${localizedMonths[weekAgo.month - 1]} - $selectedDay ${localizedMonths[selectedMonth - 1]}";
+      dateText =
+          "${weekAgo.day} ${localizedMonths[weekAgo.month - 1]} - $selectedDay ${localizedMonths[selectedMonth - 1]}";
     } else if (selectedPeriod == 'Monthly') {
       dateText = "${localizedMonths[selectedMonth - 1]} $selectedYear";
     } else if (selectedPeriod == 'Yearly') {
@@ -563,7 +990,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     }
 
     bool canGoForward = _canGoForward();
-    bool canSelectPicker = (selectedPeriod == 'Monthly' || selectedPeriod == 'Yearly');
+    bool canSelectPicker =
+        (selectedPeriod == 'Monthly' || selectedPeriod == 'Yearly');
 
     return Flexible(
       child: FittedBox(
@@ -571,32 +999,69 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         alignment: AlignmentDirectional.centerEnd,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(20)),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7FAFC),
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Row(
             children: [
               GestureDetector(
                 onTap: () => _changeDate(-1),
-                child: const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_left_rounded, size: 24, color: Colors.black54)),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    Icons.chevron_left_rounded,
+                    size: 24,
+                    color: Colors.black54,
+                  ),
+                ),
               ),
               GestureDetector(
-                onTap: canSelectPicker ? () => _showMonthYearPicker(l10n) : null,
+                onTap: canSelectPicker
+                    ? () => _showMonthYearPicker(l10n)
+                    : null,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
                   child: Row(
                     children: [
-                      Text(dateText, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2EA49E), fontSize: 13)),
+                      Text(
+                        dateText,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2EA49E),
+                          fontSize: 13,
+                        ),
+                      ),
                       if (canSelectPicker) ...[
                         const SizedBox(width: 4),
-                        const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFF2EA49E)),
-                      ]
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 16,
+                          color: Color(0xFF2EA49E),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ),
               GestureDetector(
                 onTap: canGoForward ? () => _changeDate(1) : null,
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_right_rounded, size: 24, color: canGoForward ? Colors.black54 : Colors.grey.shade300)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 24,
+                    color: canGoForward ? Colors.black54 : Colors.grey.shade300,
+                  ),
+                ),
               ),
             ],
           ),
@@ -608,7 +1073,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Widget _breakdownCard(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFEDEDED)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 6))]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEDEDED)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           _buildPeriodToggle(l10n),
@@ -620,9 +1096,23 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.pie_chart_rounded, color: Color(0xFF2EA49E)),
+                    const Icon(
+                      Icons.pie_chart_rounded,
+                      color: Color(0xFF2EA49E),
+                    ),
                     const SizedBox(width: 6),
-                    Flexible(child: Text(l10n.breakdown, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50)))),
+                    Flexible(
+                      child: Text(
+                        l10n.breakdown,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2C3E50),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -638,7 +1128,18 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                 centerSpaceRadius: 40,
                 sectionsSpace: 3,
                 sections: categoryPercentages.values.every((v) => v == 0)
-                    ? [PieChartSectionData(value: 100, color: Colors.grey.shade300, title: '0%', radius: 55, titleStyle: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold))]
+                    ? [
+                        PieChartSectionData(
+                          value: 100,
+                          color: Colors.grey.shade300,
+                          title: '0%',
+                          radius: 55,
+                          titleStyle: const TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ]
                     : _buildPieSections(),
               ),
             ),
@@ -662,33 +1163,61 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text(l10n.selectDate, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2C3E50), fontSize: 18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Text(
+                l10n.selectDate,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                  fontSize: 18,
+                ),
+              ),
               content: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (selectedPeriod == 'Monthly') ...[
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: DropdownButton<int>(
                         value: tempMonth,
                         underline: const SizedBox(),
                         dropdownColor: Colors.white,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF2EA49E),
+                        ),
                         items: List.generate(12, (index) {
                           int m = index + 1;
-                          bool isDisabled = (tempYear == DateTime.now().year && m > DateTime.now().month);
+                          bool isDisabled =
+                              (tempYear == DateTime.now().year &&
+                              m > DateTime.now().month);
                           return DropdownMenuItem<int>(
                             value: m,
                             enabled: !isDisabled,
-                            child: Text(localizedMonths[index], style: TextStyle(fontWeight: FontWeight.w600, color: isDisabled ? Colors.grey : const Color(0xFF2C3E50)))
+                            child: Text(
+                              localizedMonths[index],
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: isDisabled
+                                    ? Colors.grey
+                                    : const Color(0xFF2C3E50),
+                              ),
+                            ),
                           );
                         }),
-                        onChanged: (val) { 
+                        onChanged: (val) {
                           if (val != null) {
-                            if (tempYear == DateTime.now().year && val > DateTime.now().month) return;
-                            setDialogState(() => tempMonth = val); 
+                            if (tempYear == DateTime.now().year &&
+                                val > DateTime.now().month)
+                              return;
+                            setDialogState(() => tempMonth = val);
                           }
                         },
                       ),
@@ -697,24 +1226,40 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                   ],
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(color: const Color(0xFFF7FAFC), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: DropdownButton<int>(
                       value: tempYear,
                       underline: const SizedBox(),
                       dropdownColor: Colors.white,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2EA49E)),
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF2EA49E),
+                      ),
                       items: List.generate(6, (index) {
-                        int year = DateTime.now().year - 5 + index; 
-                        return DropdownMenuItem(value: year, child: Text(year.toString(), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))));
+                        int year = DateTime.now().year - 5 + index;
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text(
+                            year.toString(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2C3E50),
+                            ),
+                          ),
+                        );
                       }),
-                      onChanged: (val) { 
+                      onChanged: (val) {
                         if (val != null) {
                           setDialogState(() {
                             tempYear = val;
-                            if (tempYear == DateTime.now().year && tempMonth > DateTime.now().month) {
+                            if (tempYear == DateTime.now().year &&
+                                tempMonth > DateTime.now().month) {
                               tempMonth = DateTime.now().month;
                             }
-                          }); 
+                          });
                         }
                       },
                     ),
@@ -723,14 +1268,34 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
               ),
               actionsAlignment: MainAxisAlignment.spaceEvenly,
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    l10n.cancel,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF37C4BE), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF37C4BE),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
+                  ),
                   onPressed: () {
-                    setState(() { 
-                      selectedMonth = tempMonth; 
-                      selectedYear = tempYear; 
-                      if (selectedYear == DateTime.now().year && selectedMonth == DateTime.now().month) {
+                    setState(() {
+                      selectedMonth = tempMonth;
+                      selectedYear = tempYear;
+                      if (selectedYear == DateTime.now().year &&
+                          selectedMonth == DateTime.now().month) {
                         if (selectedDay > DateTime.now().day) {
                           selectedDay = DateTime.now().day;
                         }
@@ -739,7 +1304,13 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                     _fetchChildChartData();
                     Navigator.pop(context);
                   },
-                  child: Text(l10n.apply, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    l10n.apply,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             );
@@ -752,64 +1323,104 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   String _getCategoryDisplayName(BuildContext context, String categoryKey) {
     final l10n = AppLocalizations.of(context)!;
     switch (categoryKey) {
-      case 'Food & Restaurants': return l10n.foodRestaurants;
-      case 'Grocery & Markets': return l10n.groceryMarkets;
-      case 'Retail & Shopping': return l10n.retailShopping;
-      case 'Transport': return l10n.transport;
-      case 'Medical': return l10n.medical;
-      case 'Digital & Subscriptions': return l10n.digitalSubscriptions;
-      default: return categoryKey;
+      case 'Food & Restaurants':
+        return l10n.foodRestaurants;
+      case 'Grocery & Markets':
+        return l10n.groceryMarkets;
+      case 'Retail & Shopping':
+        return l10n.retailShopping;
+      case 'Transport':
+        return l10n.transport;
+      case 'Medical':
+        return l10n.medical;
+      case 'Digital & Subscriptions':
+        return l10n.digitalSubscriptions;
+      default:
+        return categoryKey;
     }
   }
 
   Widget _legend() {
     final List<String> internalKeys = [
-      'Food & Restaurants', 
-      'Grocery & Markets', 
-      'Retail & Shopping', 
-      'Transport', 
-      'Medical', 
-      'Digital & Subscriptions'
+      'Food & Restaurants',
+      'Grocery & Markets',
+      'Retail & Shopping',
+      'Transport',
+      'Medical',
+      'Digital & Subscriptions',
     ];
 
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 24,
       runSpacing: 12,
-      children: internalKeys.where((key) => (categoryPercentages[key] ?? 0) > 0).map((key) {
-        final color = _getColorForCategory(key);
-        final displayName = _getCategoryDisplayName(context, key); 
-        
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 14, height: 14, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-            const SizedBox(width: 6),
-            Text(
-              displayName, 
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50))
-            ),
-          ],
-        );
-      }).toList(),
+      children: internalKeys
+          .where((key) => (categoryPercentages[key] ?? 0) > 0)
+          .map((key) {
+            final color = _getColorForCategory(key);
+            final displayName = _getCategoryDisplayName(context, key);
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+              ],
+            );
+          })
+          .toList(),
     );
   }
 
   Color _getColorForCategory(String category) {
     switch (category) {
-      case 'Food & Restaurants': return Colors.orangeAccent;
-      case 'Grocery & Markets': return Colors.greenAccent;
-      case 'Retail & Shopping': return Colors.pinkAccent;
-      case 'Transport': return Colors.lightBlueAccent;
-      case 'Medical': return Colors.redAccent;
-      case 'Digital & Subscriptions': return Colors.purpleAccent;
-      default: return Colors.blueGrey;
+      case 'Food & Restaurants':
+        return Colors.orangeAccent;
+      case 'Grocery & Markets':
+        return Colors.greenAccent;
+      case 'Retail & Shopping':
+        return Colors.pinkAccent;
+      case 'Transport':
+        return Colors.lightBlueAccent;
+      case 'Medical':
+        return Colors.redAccent;
+      case 'Digital & Subscriptions':
+        return Colors.purpleAccent;
+      default:
+        return Colors.blueGrey;
     }
   }
 
   List<PieChartSectionData> _buildPieSections() {
-    return categoryPercentages.entries.where((entry) => entry.value > 0).map((entry) {
-      return PieChartSectionData(value: entry.value, color: _getColorForCategory(entry.key), title: '${entry.value.toStringAsFixed(0)}%', radius: 55, titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14));
+    return categoryPercentages.entries.where((entry) => entry.value > 0).map((
+      entry,
+    ) {
+      return PieChartSectionData(
+        value: entry.value,
+        color: _getColorForCategory(entry.key),
+        title: '${entry.value.toStringAsFixed(0)}%',
+        radius: 55,
+        titleStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 14,
+        ),
+      );
     }).toList();
   }
 }

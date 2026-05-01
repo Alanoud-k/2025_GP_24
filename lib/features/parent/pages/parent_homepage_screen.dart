@@ -155,7 +155,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadParentInfo)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.failedToLoadParentInfo),
+          ),
         );
       }
 
@@ -194,7 +196,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.errorLoadingParentData)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.errorLoadingParentData),
+        ),
       );
     }
   }
@@ -662,7 +666,11 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       }
     }
 
-    return RichText(text: TextSpan(children: spans));
+    return RichText(
+      maxLines: 4,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(children: spans),
+    );
   }
 
   int _currentPage = 0;
@@ -692,6 +700,10 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
       "colors": [Color(0xFFB0BEC5), Color(0xFFECEFF1)],
       "icon": Icons.info_outline,
     },
+    "ai-category": {
+      "colors": [Color(0xFF5C6BC0), Color(0xFF9FA8DA)],
+      "icon": Icons.auto_awesome,
+    },
   };
 
   Widget _insightsSection() {
@@ -700,7 +712,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
     return Column(
       children: [
         SizedBox(
-          height: 150,
+          height: 190,
           child: PageView.builder(
             controller: controller,
             itemCount: insights.length,
@@ -709,10 +721,14 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
             },
             itemBuilder: (context, i) {
               final insight = insights[i];
-              final type = insight["type"] ?? "empty";
-              final title = insight["title"] ?? "";
-              final message = insight["message"] ?? "";
+              final type = insight["type"] ?? "";
 
+              final title = insight["title"] ?? "";
+              final messageKey = insight["message"] ?? "";
+
+              final message = type == "ai-category"
+                  ? messageKey // ✅ EXACT same fix as child
+                  : messageKey; // (parent doesn't translate anyway)
               final style = insightStyles[type] ?? insightStyles["empty"]!;
 
               final gradient = style["colors"] as List<Color>;
