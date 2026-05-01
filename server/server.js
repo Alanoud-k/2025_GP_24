@@ -17,6 +17,7 @@ import childTransactionRoutes from "./routes/childTransactionRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import parentTransactionRoutes from "./routes/parentTransactionRoutes.js";
 import choreRoutes from "./routes/choreRoutes.js"; // 👈 استدعاء الملف
+import rewardRoutes from "./routes/rewardRoutes.js";
 // PAYMENT
 import { createPayment } from "./controllers/createPaymentController.js";
 import { handleMoyasarWebhook } from "./controllers/moyasarWebhookController.js";
@@ -97,6 +98,7 @@ app.use('/api/chores', choreRoutes);
 app.use("/api/qr", qrRoutes);
 app.use('/api/insights', insightRoutes);
 app.use("/api/allowance", allowanceRoutes);
+app.use("/api/rewards", rewardRoutes);
 // Create payment
 app.post("/api/create-payment/:parentId", createPayment);
 

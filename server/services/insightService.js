@@ -409,6 +409,7 @@
 // }
 
 import { sql } from '../config/db.js';
+import OpenAI from "openai";
 
 export async function getChildInsights(childId) {
     try {
@@ -472,7 +473,7 @@ export async function getChildInsights(childId) {
             }
         });
 
-        if (maxCategory && totalSpending > 0) {
+        /*if (maxCategory && totalSpending > 0) {
             const percentage = Math.round((maxAmount / totalSpending) * 100);
             insights.push({
                 type: "category",
@@ -480,6 +481,33 @@ export async function getChildInsights(childId) {
                 message: "insight_msg_top_category",
                 value: `${percentage}`, // Percentage
                 extraValue: maxCategory // Category Name
+            });
+        }*/
+
+        if (maxCategory && totalSpending > 0) {
+            const percentage = Math.round((maxAmount / totalSpending) * 100);
+
+            // ✅ build summary for AI
+            const summary = `
+                - Top category: ${maxCategory} (${percentage}%)
+                - Total spending: ${totalSpending} SAR
+            `;
+
+           // ✅ call OpenAI
+            let aiMessage;
+
+            try {
+                aiMessage = await generateInsight(summary, "child");
+            } catch (err) {
+                console.error("AI Error:", err);
+
+            // ✅ fallback message using YOUR existing logic style
+            aiMessage = `You spent a lot on ${maxCategory} recently. Try setting a small budget to manage your spending better.`;
+            }
+                insights.push({
+                type: "ai-category",
+                title: "Smart Insight",
+                message: aiMessage
             });
         }
 
@@ -808,7 +836,27 @@ export async function getParentInsights(parentId) {
 
             if (topCategory && totalSpending > 0) {
                 const percent = Math.round((max / totalSpending) * 100);
-                insights.push({ type: "category", title: "Top Category", message: `${percent}% of spending was on ${topCategory}` });
+                const summary = `
+                    - Top category: ${topCategory} (${percent}%)
+                    - Total spending: ${totalSpending} SAR
+                    - Number of children: ${children.length}
+                `;
+
+let aiMessage;
+
+try {
+    aiMessage = await generateInsight(summary, "parent");
+} catch (err) {
+    console.error("AI Error:", err);
+
+    aiMessage = `${percent}% of spending is on ${topCategory}. Consider reviewing spending priorities.`;
+}
+                insights.push({
+                    type: "ai-category",
+                    title: "Smart Insight",
+                    message: aiMessage
+                });
+                console.log(aiMessage);
             } else {
                 insights.push({ type: "category", title: "Top Category", message: "Spending is balanced across categories" });
             }
@@ -841,5 +889,37 @@ export async function getParentInsights(parentId) {
     } catch (error) {
         console.error("Parent Insights Error:", error);
         throw error;
-    }
+    } 
+}
+
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export async function generateInsight(summary, userType) {
+  const prompt = `
+You are a financial assistant for families.
+
+User type: ${userType}
+
+Data:
+${summary}
+
+Write:
+- One short insight (max 2 sentences)
+- Friendly tone
+- Actionable advice
+- Do NOT repeat numbers exactly, interpret them
+
+Example style:
+"Shopping makes up over half of your child’s spending this week. This could be a good moment to talk about prioritizing needs vs wants."
+`;
+
+  const response = await client.responses.create({
+    model: "gpt-4o-mini",
+    input: prompt,
+  });
+
+  return response.output_text || "Smart insight unavailable.";
 }
