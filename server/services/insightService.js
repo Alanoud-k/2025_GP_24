@@ -499,7 +499,7 @@ export async function getChildInsights(childId) {
             try {
 console.log("⚡ BEFORE AI CALL");
 
-aiMessage = await generateInsight(summary, "parent");
+aiMessage = await generateInsight(summary, "child");
 
 console.log("⚡ AFTER AI CALL");
             } catch (err) {
@@ -904,49 +904,55 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function generateInsight(summary, userType) {
-  console.log("🚀 generateInsight CALLED");
-  console.log("API KEY EXISTS:", !!process.env.OPENAI_API_KEY);
+export async function generateInsight(summary, userType, language = "en", style = "friendly") {
+
+  const toneMap = {
+    parent: "Speak like a calm financial advisor to a parent. Be insightful and slightly analytical.",
+    child: "Speak like a supportive coach to a child. Keep it simple, encouraging, and easy to understand."
+  };
+
+  const styleMap = {
+    friendly: "Be warm, supportive, and encouraging.",
+    strict: "Be firm and direct, but not rude.",
+    playful: "Be light, fun, and slightly playful while still giving useful advice."
+  };
+
+  const languageInstruction = language === "ar"
+    ? "Write the response in Arabic."
+    : "Write the response in English.";
 
   const prompt = `
-You are a financial assistant for families.
+You are a smart financial coach.
 
 User type: ${userType}
+${toneMap[userType]}
+
+Style:
+${styleMap[style]}
+
+${languageInstruction}
 
 Data:
 ${summary}
 
-Write:
-- One short insight (max 1 sentence)
-- Max 12 words
-- Friendly tone
-- Actionable advice
+Write ONE short insight (max 2 sentences).
+
+Rules:
+- Be specific to the situation
+- Do NOT repeat numbers exactly
+- Avoid generic advice like "budget more"
+- Make it feel natural and human
+- Give a clear helpful suggestion
+
+Good example:
+"Shopping seems to take up most of the spending lately, which can add up quickly. Setting a small weekly limit could help keep it under control."
 `;
 
-  try {
-    console.log("⏱ Sending request to OpenAI...");
+  const response = await client.responses.create({
+    model: "gpt-4o-mini",
+    input: prompt,
+    temperature: 0.7,
+  });
 
-    const response = await client.responses.create({
-      model: "gpt-4o-mini",
-      input: prompt,
-    });
-
-    console.log("✅ OpenAI responded");
-
-    // 🔥 IMPORTANT: log full response
-    console.log("OPENAI RESPONSE:", JSON.stringify(response, null, 2));
-
-    // 🔥 FIX parsing
-    const text =
-      response.output?.[0]?.content?.[0]?.text ||
-      "Smart insight unavailable.";
-
-    console.log("🧠 AI TEXT:", text);
-
-    return text;
-
-  } catch (err) {
-    console.error("❌ AI FULL ERROR:", err);
-    throw err; // keep throwing so fallback triggers
-  }
+  return response.output_text || "Smart insight unavailable.";
 }
