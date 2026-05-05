@@ -489,15 +489,19 @@ export async function getChildInsights(childId) {
 
             // ✅ build summary for AI
             const summary = `
-                - Top category: ${maxCategory} (${percentage}%)
-                - Total spending: ${totalSpending} SAR
+            - Top category: ${maxCategory} (${percentage}%)
+            - Total spending: ${totalSpending} SAR
             `;
 
            // ✅ call OpenAI
             let aiMessage;
 
             try {
-                aiMessage = await generateInsight(summary, "child");
+console.log("⚡ BEFORE AI CALL");
+
+aiMessage = await generateInsight(summary, "parent");
+
+console.log("⚡ AFTER AI CALL");
             } catch (err) {
                 console.error("AI Error:", err);
 
@@ -837,16 +841,19 @@ export async function getParentInsights(parentId) {
             if (topCategory && totalSpending > 0) {
                 const percent = Math.round((max / totalSpending) * 100);
                 const summary = `
-                    - Top category: ${topCategory} (${percent}%)
-                    - Total spending: ${totalSpending} SAR
-                    - Number of children: ${children.length}
+                - Top category: ${topCategory} (${percent}%)
+                - Total spending: ${totalSpending} SAR
+                - Number of children: ${children.length}
                 `;
 
 let aiMessage;
 
 try {
-    aiMessage = await generateInsight(summary, "parent");
-} catch (err) {
+console.log("⚡ BEFORE AI CALL");
+
+aiMessage = await generateInsight(summary, "parent");
+
+console.log("⚡ AFTER AI CALL");} catch (err) {
     console.error("AI Error:", err);
 
     aiMessage = `${percent}% of spending is on ${topCategory}. Consider reviewing spending priorities.`;
@@ -898,6 +905,9 @@ const client = new OpenAI({
 });
 
 export async function generateInsight(summary, userType) {
+  console.log("🚀 generateInsight CALLED");
+  console.log("API KEY EXISTS:", !!process.env.OPENAI_API_KEY);
+
   const prompt = `
 You are a financial assistant for families.
 
@@ -907,19 +917,36 @@ Data:
 ${summary}
 
 Write:
-- One short insight (max 2 sentences)
+- One short insight (max 1 sentence)
+- Max 12 words
 - Friendly tone
 - Actionable advice
-- Do NOT repeat numbers exactly, interpret them
-
-Example style:
-"Shopping makes up over half of your child’s spending this week. This could be a good moment to talk about prioritizing needs vs wants."
 `;
 
-  const response = await client.responses.create({
-    model: "gpt-4o-mini",
-    input: prompt,
-  });
+  try {
+    console.log("⏱ Sending request to OpenAI...");
 
-  return response.output_text || "Smart insight unavailable.";
+    const response = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: prompt,
+    });
+
+    console.log("✅ OpenAI responded");
+
+    // 🔥 IMPORTANT: log full response
+    console.log("OPENAI RESPONSE:", JSON.stringify(response, null, 2));
+
+    // 🔥 FIX parsing
+    const text =
+      response.output?.[0]?.content?.[0]?.text ||
+      "Smart insight unavailable.";
+
+    console.log("🧠 AI TEXT:", text);
+
+    return text;
+
+  } catch (err) {
+    console.error("❌ AI FULL ERROR:", err);
+    throw err; // keep throwing so fallback triggers
+  }
 }
