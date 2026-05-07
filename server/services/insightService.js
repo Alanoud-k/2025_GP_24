@@ -436,7 +436,7 @@ export async function getChildInsights(childId) {
         `;
 
         const totalSpending = Number(weeklySpending[0].total ?? 0);
-
+console.log("💰 TOTAL SPENDING:", totalSpending);
         if (totalSpending > 0) {
             insights.push({
                 type: "weekly",
@@ -472,7 +472,8 @@ export async function getChildInsights(childId) {
                 maxCategory = row.transactioncategory;
             }
         });
-
+console.log("📊 MAX CATEGORY:", maxCategory);
+console.log("📊 MAX AMOUNT:", maxAmount);
         /*if (maxCategory && totalSpending > 0) {
             const percentage = Math.round((maxAmount / totalSpending) * 100);
             insights.push({
@@ -483,7 +484,9 @@ export async function getChildInsights(childId) {
                 extraValue: maxCategory // Category Name
             });
         }*/
-
+console.log("🧪 CHECKING AI CONDITION");
+console.log("maxCategory exists:", !!maxCategory);
+console.log("totalSpending > 0:", totalSpending > 0);
         if (maxCategory && totalSpending > 0) {
             const percentage = Math.round((maxAmount / totalSpending) * 100);
 
@@ -499,7 +502,9 @@ export async function getChildInsights(childId) {
             try {
 console.log("⚡ BEFORE AI CALL");
 
+console.log("⚡ BEFORE AI CALL");
 aiMessage = await generateInsight(summary, "child");
+console.log("⚡ AFTER AI CALL");
 
 console.log("⚡ AFTER AI CALL");
             } catch (err) {
@@ -904,32 +909,28 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function generateInsight(summary, userType, language = "en", style = "friendly") {
+export async function generateInsight(summary, userType, language = "en") {
+console.log("🚀 generateInsight CALLED");
+console.log("SUMMARY:", summary);
+console.log("USER TYPE:", userType);
+console.log("LANGUAGE:", language);
+console.log("API KEY EXISTS:", !!process.env.OPENAI_API_KEY);
+  let toneInstruction = "";
 
-  const toneMap = {
-    parent: "Speak like a calm financial advisor to a parent. Be insightful and slightly analytical.",
-    child: "Speak like a supportive coach to a child. Keep it simple, encouraging, and easy to understand."
-  };
+  if (userType === "parent") {
+    toneInstruction = "Speak like a calm financial advisor.";
+  } else {
+    toneInstruction = "Speak simply and encouragingly, like talking to a child.";
+  }
 
-  const styleMap = {
-    friendly: "Be warm, supportive, and encouraging.",
-    strict: "Be firm and direct, but not rude.",
-    playful: "Be light, fun, and slightly playful while still giving useful advice."
-  };
-
-  const languageInstruction = language === "ar"
+  let languageInstruction = language === "ar"
     ? "Write the response in Arabic."
     : "Write the response in English.";
 
   const prompt = `
 You are a smart financial coach.
 
-User type: ${userType}
-${toneMap[userType]}
-
-Style:
-${styleMap[style]}
-
+${toneInstruction}
 ${languageInstruction}
 
 Data:
@@ -939,20 +940,23 @@ Write ONE short insight (max 2 sentences).
 
 Rules:
 - Be specific to the situation
-- Do NOT repeat numbers exactly
 - Avoid generic advice like "budget more"
-- Make it feel natural and human
-- Give a clear helpful suggestion
-
-Good example:
-"Shopping seems to take up most of the spending lately, which can add up quickly. Setting a small weekly limit could help keep it under control."
+- Sound natural and human
+- Do NOT repeat numbers exactly
 `;
-
+console.log("⏱ Sending request to OpenAI...");
   const response = await client.responses.create({
     model: "gpt-4o-mini",
     input: prompt,
     temperature: 0.7,
   });
+
+  console.log("✅ OpenAI responded");
+console.log("OPENAI RESPONSE:", JSON.stringify(response, null, 2));
+
+console.log("🧠 AI TEXT:", response.output_text);
+
+return response.output_text || "Smart insight unavailable.";
 
   return response.output_text || "Smart insight unavailable.";
 }
