@@ -431,7 +431,7 @@ export async function getChildInsights(childId) {
             SELECT SUM("amount") AS total
             FROM "Transaction"
             WHERE "senderAccountId" = ${spendingAccountId}
-            AND "transactiondate" >= CURRENT_DATE - INTERVAL '7 days'
+            AND "transactiondate" >= CURRENT_DATE - INTERVAL '30 days'
             AND "transactiontype"::text = 'Payment'
         `;
 
@@ -457,7 +457,7 @@ console.log("💰 TOTAL SPENDING:", totalSpending);
             SELECT "transactioncategory", SUM("amount") AS total
             FROM "Transaction"
             WHERE "senderAccountId" = ${spendingAccountId}
-            AND "transactiondate" >= CURRENT_DATE - INTERVAL '7 days'
+            AND "transactiondate" >= CURRENT_DATE - INTERVAL '30 days'
             AND "transactiontype"::text = 'Payment'
             GROUP BY "transactioncategory"
         `;
@@ -781,7 +781,7 @@ export async function getParentInsights(parentId) {
             JOIN "Wallet" w ON a.walletid = w.walletid
             WHERE a.accountid = ANY(${accountIds})
             AND t.transactiontype = 'Payment'
-            AND t.transactiondate >= CURRENT_DATE - INTERVAL '7 days'
+            AND t.transactiondate >= CURRENT_DATE - INTERVAL '30 days'
             GROUP BY w.childid
         `;
         console.log("🧪 WEEKLY:", weekly);
@@ -833,7 +833,7 @@ export async function getParentInsights(parentId) {
                 FROM "Transaction" t
                 WHERE t."senderAccountId" = ANY(${accountIds})
                 AND t.transactiontype = 'Payment'
-                AND t.transactiondate >= CURRENT_DATE - INTERVAL '7 days'
+                AND t.transactiondate >= CURRENT_DATE - INTERVAL '30 days'
                 GROUP BY t.transactioncategory
             `;
 
