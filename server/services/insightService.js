@@ -414,13 +414,31 @@ import OpenAI from "openai";
 export async function getChildInsights(childId) {
     try {
 
-        const childData = await sql`
-            SELECT age
-            FROM "Child"
-            WHERE childid = ${childId}
-        `;
+const childData = await sql`
+    SELECT dob
+    FROM "Child"
+    WHERE childid = ${childId}
+`;
 
-        const childAge = childData[0]?.age ?? null;
+let childAge = null;
+
+if (childData[0]?.dob) {
+    const birthDate = new Date(childData[0].dob);
+    const today = new Date();
+
+    childAge = today.getFullYear() - birthDate.getFullYear();
+
+    const monthDifference =
+        today.getMonth() - birthDate.getMonth();
+
+    if (
+        monthDifference < 0 ||
+        (monthDifference === 0 &&
+            today.getDate() < birthDate.getDate())
+    ) {
+        childAge--;
+    }
+}
 
         const spendingAccounts = await sql`
             SELECT a."accountid"
