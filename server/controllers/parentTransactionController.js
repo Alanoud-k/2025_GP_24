@@ -6,47 +6,59 @@ export const getParentTransactions = async (req, res) => {
     const { parentId } = req.params;
 
     const rows = await sql`
-      SELECT
-  t."transactionid",
-  t."transactiontype",
-  t."amount",
-  t."transactiondate",
-  t."transactionstatus",
-  t."merchantname",
-  t."transactioncategory",
-  t."senderAccountId",
-  t."receiverAccountId"
-  c_receiver."firstname" AS "childName" -- جلب اسم الطفل المستقبل
-FROM "Transaction" t
-JOIN "Account" a_sender
-  ON a_sender.accountid = t."senderAccountId"
-JOIN "Wallet" w_sender
-  ON w_sender.walletid = a_sender.walletid
-    AND w_sender.parentid = ${parentId}
+  SELECT
+    t."transactionid",
+    t."transactiontype",
+    t."amount",
+    t."transactiondate",
+    t."transactionstatus",
+    t."merchantname",
+    t."transactioncategory",
+    t."senderAccountId",
+    t."receiverAccountId",
+    c_receiver."firstname" AS "childName"
+  FROM "Transaction" t
 
-UNION ALL
+  JOIN "Account" a_sender
+    ON a_sender.accountid = t."senderAccountId"
 
-SELECT
-  t."transactionid",
-  t."transactiontype",
-  t."amount",
-  t."transactiondate",
-  t."transactionstatus",
-  t."merchantname",
-  t."transactioncategory",
-  t."senderAccountId",
-  t."receiverAccountId"
-  c_sender."firstname" AS "childName" -- 👈 جلب اسم الطفل المرسل
-FROM "Transaction" t
-JOIN "Account" a_receiver
-  ON a_receiver.accountid = t."receiverAccountId"
-JOIN "Wallet" w_receiver
-  ON w_receiver.walletid = a_receiver.walletid
-    AND w_receiver.parentid = ${parentId}
+  JOIN "Wallet" w_sender
+    ON w_sender.walletid = a_sender.walletid
 
-ORDER BY "transactiondate" DESC;
+  LEFT JOIN "Child" c_receiver
+    ON c_receiver.parentid = w_sender.parentid
 
-    `;
+  WHERE w_sender.parentid = ${parentId}
+
+  UNION ALL
+
+  SELECT
+    t."transactionid",
+    t."transactiontype",
+    t."amount",
+    t."transactiondate",
+    t."transactionstatus",
+    t."merchantname",
+    t."transactioncategory",
+    t."senderAccountId",
+    t."receiverAccountId",
+    c_sender."firstname" AS "childName"
+
+  FROM "Transaction" t
+
+  JOIN "Account" a_receiver
+    ON a_receiver.accountid = t."receiverAccountId"
+
+  JOIN "Wallet" w_receiver
+    ON w_receiver.walletid = a_receiver.walletid
+
+  LEFT JOIN "Child" c_sender
+    ON c_sender.parentid = w_receiver.parentid
+
+  WHERE w_receiver.parentid = ${parentId}
+
+  ORDER BY "transactiondate" DESC
+`;
 
     return res.status(200).json({
       status: "success",
