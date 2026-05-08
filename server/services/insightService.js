@@ -752,7 +752,7 @@ export async function getParentInsights(parentId) {
             FROM "Child" c
             WHERE c.parentid = ${parentId}
         `;
-
+        console.log("🧪 CHILDREN:", children);
         if (children.length === 0) {
             return [
                 { type: "empty", title: "No Children", message: "You haven’t added any children yet" },
@@ -768,7 +768,7 @@ export async function getParentInsights(parentId) {
             WHERE w.childid = ANY(${childIds})
             AND a.accounttype = 'SpendingAccount'
         `;
-
+        console.log("🧪 ACCOUNTS:", accounts);
         if (accounts.length === 0) {
             return [{ type: "empty", title: "No Data", message: "No spending data available yet" }];
         }
@@ -784,6 +784,7 @@ export async function getParentInsights(parentId) {
             AND t.transactiondate >= CURRENT_DATE - INTERVAL '7 days'
             GROUP BY w.childid
         `;
+        console.log("🧪 WEEKLY:", weekly);
 
         const totalSpending = weekly.reduce((sum, r) => sum + Number(r.total || 0), 0);
 
