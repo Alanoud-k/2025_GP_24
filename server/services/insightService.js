@@ -1061,6 +1061,7 @@ RULES:
   - younger kids → simpler encouraging words
   - teens → more mature realistic wording
 - Keep response under 2 short sentences.
+- Maximum 25 words.
 - Sound supportive and human.
 - Avoid generic advice like "budget more".
 - Do NOT repeat exact numbers unless necessary.
@@ -1086,6 +1087,7 @@ RULES:
 - Avoid sounding judgmental.
 - Avoid generic advice.
 - Keep the response under 2 short sentences.
+- Maximum 25 words.
 - Sound professional but warm.
 
 ${languageInstruction}
