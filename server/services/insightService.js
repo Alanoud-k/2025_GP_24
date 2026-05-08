@@ -413,6 +413,15 @@ import OpenAI from "openai";
 
 export async function getChildInsights(childId) {
     try {
+
+        const childData = await sql`
+            SELECT age
+            FROM "Child"
+            WHERE childid = ${childId}
+        `;
+
+        const childAge = childData[0]?.age ?? null;
+
         const spendingAccounts = await sql`
             SELECT a."accountid"
             FROM "Account" a
@@ -421,10 +430,46 @@ export async function getChildInsights(childId) {
             AND a."accounttype" = 'SpendingAccount'
         `;
 
+        const savingAccount = await sql`
+    SELECT balance
+    FROM "Account" a
+    JOIN "Wallet" w 
+        ON a.walletid = w.walletid
+    WHERE w.childid = ${childId}
+    AND a.accounttype = 'SavingAccount'
+`;
+
+const savingBalance = Number(savingAccount[0]?.balance ?? 0);
+
+const goal = await sql`
+    SELECT 
+        g.goalname,
+        g.targetamount,
+        a.balance,
+        ROUND((a.balance / NULLIF(g.targetamount,0)) * 100, 0) AS progress
+    FROM "Goal" g
+    JOIN "Account" a 
+        ON g.accountid = a.accountid
+    WHERE g.childid = ${childId}
+    AND g.goalstatus = 'InProgress'
+    ORDER BY progress DESC
+    LIMIT 1
+`;
+
         if (spendingAccounts.length === 0) return [];
 
         const spendingAccountId = spendingAccounts[0].accountid;
         const insights = [];
+
+        const earnedThisWeek = await sql`
+    SELECT SUM(amount) AS total
+    FROM "Transaction"
+    WHERE "receiverAccountId" = ${spendingAccountId}
+    AND "transactiontype"::text IN ('Allowance', 'Deposit', 'Transfer')
+    AND "transactiondate" >= CURRENT_DATE - INTERVAL '30 days'
+`;
+
+const earnedAmount = Number(earnedThisWeek[0]?.total ?? 0);
 
         // 1️⃣ Weekly spending (Rolling 7 days)
         const weeklySpending = await sql`
@@ -436,7 +481,7 @@ export async function getChildInsights(childId) {
         `;
 
         const totalSpending = Number(weeklySpending[0].total ?? 0);
-console.log("💰 TOTAL SPENDING:", totalSpending);
+        console.log("💰 TOTAL SPENDING:", totalSpending);
         if (totalSpending > 0) {
             insights.push({
                 type: "weekly",
@@ -490,29 +535,47 @@ console.log("totalSpending > 0:", totalSpending > 0);
         if (maxCategory && totalSpending > 0) {
             const percentage = Math.round((maxAmount / totalSpending) * 100);
 
-            // ✅ build summary for AI
-            const summary = `
-            - Top category: ${maxCategory} (${percentage}%)
-            - Total spending: ${totalSpending} SAR
-            `;
+const goalName = goal[0]?.goalname ?? "none";
+
+const progress =
+goal.length > 0
+? Math.round(
+(Number(goal[0].balance ?? 0) /
+Number(goal[0].targetamount ?? 1)) * 100
+)
+: 0;
+
+const summary = `
+Child age: ${childAge ?? "unknown"}
+
+Earned recently: ${earnedAmount} SAR
+
+Saved money: ${savingBalance} SAR
+
+Spent recently: ${totalSpending} SAR
+
+Top spending category: ${maxCategory ?? "none"}
+
+Goal name: ${goalName}
+
+Goal progress: ${progress}%
+`;
 
            // ✅ call OpenAI
             let aiMessage;
 
             try {
-console.log("⚡ BEFORE AI CALL");
 
 console.log("⚡ BEFORE AI CALL");
 aiMessage = await generateInsight(summary, "child");
 console.log("⚡ AFTER AI CALL");
 
-console.log("⚡ AFTER AI CALL");
             } catch (err) {
                 console.error("AI Error:", err);
 
             // ✅ fallback message using YOUR existing logic style
-            aiMessage = `You spent a lot on ${maxCategory} recently. Try setting a small budget to manage your spending better.`;
-            }
+aiMessage =
+`${percentage}% of your recent spending was on ${maxCategory}. Small changes can help you save more for your goals.`;            }
                 insights.push({
                 type: "ai-category",
                 title: "Smart Insight",
@@ -539,14 +602,20 @@ console.log("⚡ AFTER AI CALL");
         }
 
         // 5️⃣ Goal progress insight
-        const goal = await sql`
-            SELECT g.goalname, g.targetamount, a.balance
-            FROM "Goal" g
-            JOIN "Account" a ON g.accountid = a.accountid
-            WHERE g.childid = ${childId}
-            AND g.goalstatus = 'InProgress'
-            ORDER BY g.goalid DESC LIMIT 1
-        `;
+      /*  const goal = await sql`
+    SELECT 
+        g.goalname,
+        g.targetamount,
+        a.balance,
+        ROUND((a.balance / NULLIF(g.targetamount,0)) * 100, 0) AS progress
+    FROM "Goal" g
+    JOIN "Account" a 
+        ON g.accountid = a.accountid
+    WHERE g.childid = ${childId}
+    AND g.goalstatus = 'InProgress'
+    ORDER BY progress DESC
+    LIMIT 1
+`;*/
 
         if (goal.length > 0) {
             const goalName = goal[0].goalname;
@@ -582,6 +651,16 @@ console.log("⚡ AFTER AI CALL");
                 }
             }
         }
+
+       /* const earnedThisWeek = await sql`
+            SELECT SUM(amount) AS total
+            FROM "Transaction"
+            WHERE "receiverAccountId" = ${spendingAccountId}
+            AND "transactiontype"::text IN ('Allowance', 'Deposit', 'Transfer')
+            AND "transactiondate" >= CURRENT_DATE - INTERVAL '30 days'
+        `;*/
+
+       // const earnedAmount = Number(earnedThisWeek[0]?.total ?? 0);
 
         // 4️⃣ Category change vs last week (Rolling 14 days vs 7 days)
         const lastWeek = await sql`
@@ -780,7 +859,7 @@ export async function getParentInsights(parentId) {
             JOIN "Account" a ON t."senderAccountId" = a.accountid
             JOIN "Wallet" w ON a.walletid = w.walletid
             WHERE a.accountid = ANY(${accountIds})
-            AND t.transactiontype = 'Payment'
+            AND t.transactiontype::text = 'Payment'
             AND t.transactiondate >= CURRENT_DATE - INTERVAL '30 days'
             GROUP BY w.childid
         `;
@@ -793,7 +872,7 @@ export async function getParentInsights(parentId) {
                 SELECT SUM(t.amount) as total
                 FROM "Transaction" t
                 WHERE t."senderAccountId" = ANY(${accountIds})
-                AND t.transactiontype = 'Payment'
+                AND t.transactiontype::text = 'Payment'
                 AND t.transactiondate >= CURRENT_DATE - INTERVAL '14 days'
                 AND t.transactiondate < CURRENT_DATE - INTERVAL '7 days'
             `;
@@ -832,7 +911,7 @@ export async function getParentInsights(parentId) {
                 SELECT t.transactioncategory, SUM(t.amount) as total
                 FROM "Transaction" t
                 WHERE t."senderAccountId" = ANY(${accountIds})
-                AND t.transactiontype = 'Payment'
+                AND t.transactiontype::text = 'Payment'
                 AND t.transactiondate >= CURRENT_DATE - INTERVAL '30 days'
                 GROUP BY t.transactioncategory
             `;
@@ -846,11 +925,35 @@ export async function getParentInsights(parentId) {
 
             if (topCategory && totalSpending > 0) {
                 const percent = Math.round((max / totalSpending) * 100);
-                const summary = `
-                - Top category: ${topCategory} (${percent}%)
-                - Total spending: ${totalSpending} SAR
-                - Number of children: ${children.length}
-                `;
+
+const topChild = weekly.sort(
+(a, b) => Number(b.total) - Number(a.total)
+)[0];
+
+const topChildName =
+children.find(c => c.childid === topChild?.childid)?.firstname;
+
+//const percent = Math.round((max / totalSpending) * 100);
+
+const summary = `
+Number of children: ${children.length}
+
+Total family spending: ${totalSpending} SAR
+
+Top spending category: ${topCategory ?? "none"}
+
+Highest spending child: ${topChildName ?? "none"}
+
+Category percentage: ${percent}%
+
+Weekly spending:
+${weekly.map(w => {
+const childName =
+children.find(c => c.childid === w.childid)?.firstname;
+
+return `${childName}: ${Number(w.total).toFixed(0)} SAR`;
+}).join("\n")}
+`;
 
 let aiMessage;
 
@@ -881,7 +984,7 @@ console.log("⚡ AFTER AI CALL");} catch (err) {
             SELECT SUM(t.amount) as total
             FROM "Transaction" t
             WHERE t."senderAccountId" = ANY(${accountIds})
-            AND t.transactiontype = 'Payment'
+            AND t.transactiontype::text = 'Payment'
             AND t.transactiondate >= CURRENT_DATE - INTERVAL '14 days'
             AND t.transactiondate < CURRENT_DATE - INTERVAL '7 days'
         `;
@@ -911,53 +1014,79 @@ const client = new OpenAI({
 });
 
 export async function generateInsight(summary, userType, language = "en") {
+
 console.log("🚀 generateInsight CALLED");
-console.log("SUMMARY:", summary);
-console.log("USER TYPE:", userType);
-console.log("LANGUAGE:", language);
-console.log("API KEY EXISTS:", !!process.env.OPENAI_API_KEY);
-  let toneInstruction = "";
 
-  if (userType === "parent") {
-    toneInstruction = "Speak like a calm financial advisor.";
-  } else {
-    toneInstruction = "Speak simply and encouragingly, like talking to a child.";
-  }
+const languageInstruction =
+language === "ar"
+? "Write the response in Arabic."
+: "Write the response in English.";
 
-  let languageInstruction = language === "ar"
-    ? "Write the response in Arabic."
-    : "Write the response in English.";
+let rolePrompt = "";
 
-  const prompt = `
-You are a smart financial coach.
+if (userType === "child") {
 
-${toneInstruction}
+rolePrompt = `
+You are a smart financial coach for children.
+
+Your job is to give ONE short personalized insight.
+
+RULES:
+- Use the Earn / Save / Spend model.
+- Focus on whichever area needs the most attention.
+- If spending is much higher than earning, focus on spending habits.
+- If the child earns money but saves very little, encourage saving.
+- If spending is healthy and saving is good, encourage the child positively.
+- If a goal exists, mention it naturally by name.
+- NEVER invent a goal that does not exist.
+- Match the tone to the child's age:
+  - younger kids → simpler encouraging words
+  - teens → more mature realistic wording
+- Keep response under 2 short sentences.
+- Sound supportive and human.
+- Avoid generic advice like "budget more".
+- Do NOT repeat exact numbers unless necessary.
+
 ${languageInstruction}
 
-Data:
+Child data:
 ${summary}
-
-Write ONE short insight (max 2 sentences).
-
-Rules:
-- Be specific to the situation
-- Avoid generic advice like "budget more"
-- Sound natural and human
-- Do NOT repeat numbers exactly
 `;
+
+} else {
+
+rolePrompt = `
+You are a smart financial assistant for parents.
+
+Your job is to provide ONE short useful family spending insight.
+
+RULES:
+- Focus on meaningful spending patterns.
+- Mention trends or unusual spending behavior.
+- If one child spends much more than others, mention it naturally.
+- If spending is balanced, mention that positively.
+- Avoid sounding judgmental.
+- Avoid generic advice.
+- Keep the response under 2 short sentences.
+- Sound professional but warm.
+
+${languageInstruction}
+
+Family data:
+${summary}
+`;
+
+}
+
 console.log("⏱ Sending request to OpenAI...");
-  const response = await client.responses.create({
-    model: "gpt-4o-mini",
-    input: prompt,
-    temperature: 0.7,
-  });
 
-  console.log("✅ OpenAI responded");
-console.log("OPENAI RESPONSE:", JSON.stringify(response, null, 2));
+const response = await client.responses.create({
+model: "gpt-4o-mini",
+input: rolePrompt,
+temperature: 0.7,
+});
 
-console.log("🧠 AI TEXT:", response.output_text);
+console.log("✅ OpenAI responded");
 
 return response.output_text || "Smart insight unavailable.";
-
-  return response.output_text || "Smart insight unavailable.";
 }
