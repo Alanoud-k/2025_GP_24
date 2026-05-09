@@ -840,7 +840,7 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
               isTodo ? (chore.description ?? l10n.noNotifications) : (isWaiting ? l10n.notifications : l10n.transactions),
               style: TextStyle(fontSize: 13, color: isWaiting ? Colors.orange : Colors.grey[600], fontWeight: isWaiting ? FontWeight.bold : FontWeight.normal),
             ),
-            // ✅ رسالة الرفض تظهر بوضوح تحت الوصف
+// ✅ عرض رسالة الرفض الفعلية القادمة من الـ Backend
             if (isRejected)
               Padding(
                 padding: const EdgeInsetsDirectional.only(top: 6.0),
@@ -848,7 +848,17 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
                   children: [
                     const Icon(Icons.info_outline, color: Colors.red, size: 14),
                     const SizedBox(width: 4),
-                    Expanded(child: Text(l10n.forSmarterChildren, style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold))),
+                    // استخدمنا المتغير chore.rejectionReason مع نص احتياطي في حال كان فارغاً
+                    Expanded(
+                      child: Text(
+                        chore.rejectionReason ?? l10n.pleaseFixTask, 
+                        style: const TextStyle(
+                          color: Colors.red, 
+                          fontSize: 12, 
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
