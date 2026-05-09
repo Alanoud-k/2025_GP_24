@@ -8,7 +8,6 @@ import {
 const router = express.Router();
 
 import { protect } from "../middleware/authMiddleware.js";
-import { startAllowanceCron } from "./cron/allowanceCron.js";
 
 router.get("/:childId", protect, getAllowanceByChild);
 router.put("/:childId", protect, upsertAllowanceByChild);

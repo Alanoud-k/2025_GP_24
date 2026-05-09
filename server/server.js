@@ -25,6 +25,8 @@ import qrRoutes from "./routes/qrRoutes.js";
 import insightRoutes from './routes/insightRoutes.js';
 //
 import allowanceRoutes from "./routes/allowanceRoutes.js";
+import { startAllowanceCron } from "./cron/allowanceCron.js";
+
 // ENV SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,6 +103,8 @@ app.use("/api/allowance", allowanceRoutes);
 app.use("/api/rewards", rewardRoutes);
 // Create payment
 app.post("/api/create-payment/:parentId", createPayment);
+
+
 
 /* ---------------------------------------------------------
    REDIRECT PAGES
@@ -197,6 +201,9 @@ app.get("/", (_req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+
+startAllowanceCron();
+  console.log("⏰ Allowance Cron Job started!");
 });
 
 ////////////////////////////
