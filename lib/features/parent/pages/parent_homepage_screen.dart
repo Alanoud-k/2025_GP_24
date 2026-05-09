@@ -13,6 +13,8 @@ import 'parent_notification_screen.dart';
 import 'parent_transactions_screen.dart';
 import 'parent_transfer_screen.dart';
 import 'package:my_app/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:my_app/core/providers/locale_provider.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -273,9 +275,14 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   Future<void> _fetchInsights() async {
     final url = Uri.parse("${ApiConfig.baseUrl}/api/insights/parent/$parentId");
 
+    final locale = Provider.of<LocaleProvider>(
+      context,
+      listen: false,
+    ).locale.languageCode;
+
     final res = await http.get(
       url,
-      headers: {"Authorization": "Bearer $token"},
+      headers: {"Authorization": "Bearer $token", "x-language": locale},
     );
 
     if (res.statusCode == 200) {

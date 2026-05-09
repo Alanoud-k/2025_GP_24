@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'child_notifications_screen.dart';
 import 'child_chores_screen.dart';
 import 'child_transactions_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:my_app/core/providers/locale_provider.dart';
 
 class ChildHomePageScreen extends StatefulWidget {
   final int childId;
@@ -259,11 +261,17 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
   Future<void> _fetchInsights() async {
     final url = Uri.parse("${widget.baseUrl}/api/insights/${widget.childId}");
     try {
+      final locale = Provider.of<LocaleProvider>(
+        context,
+        listen: false,
+      ).locale.languageCode;
+
       final response = await http.get(
         url,
         headers: {
           "Authorization": "Bearer ${widget.token}",
           "Content-Type": "application/json",
+          "x-language": locale,
         },
       );
       if (response.statusCode == 200) {

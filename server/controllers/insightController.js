@@ -4,7 +4,12 @@ import { getChildInsights, getChildChartData, getParentChartData, getGoalInsight
 export async function getInsights(req, res) {
     try {
         const childId = req.params.childId;
-        const insights = await getChildInsights(childId);
+        const language = req.headers["x-language"] || "en";
+
+const insights = await getChildInsights(
+    childId,
+    language
+);
         res.status(200).json(insights);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch insights" });
@@ -56,8 +61,12 @@ export async function getGoalsInsights(req, res) {
 export async function getParentInsightsController(req, res) {
     try {
         const parentId = req.params.parentId;
-        const insights = await getParentInsights(parentId);
-        res.json(insights);
+const language = req.headers["x-language"] || "en";
+
+const insights = await getParentInsights(
+    parentId,
+    language
+);        res.json(insights);
     } catch (error) {
     console.error("PARENT INSIGHTS ERROR:", error);
     res.status(500).json({ error: "Failed to fetch parent insights" });

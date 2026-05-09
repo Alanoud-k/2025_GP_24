@@ -411,7 +411,11 @@
 import { sql } from '../config/db.js';
 import OpenAI from "openai";
 
-export async function getChildInsights(childId) {
+export async function getChildInsights(
+    childId,
+    language = "en"
+)
+ {
     try {
 
 const childData = await sql`
@@ -585,8 +589,11 @@ Goal progress: ${progress}%
             try {
 
 console.log("⚡ BEFORE AI CALL");
-aiMessage = await generateInsight(summary, "child");
-console.log("⚡ AFTER AI CALL");
+aiMessage = await generateInsight(
+    summary,
+    "child",
+    language
+);console.log("⚡ AFTER AI CALL");
 
             } catch (err) {
                 console.error("AI Error:", err);
@@ -841,7 +848,10 @@ export async function getParentChartData(parentId, month, year, childName, perio
     } catch (error) { console.error("Parent Chart Error:", error); throw error; }
 }
 
-export async function getParentInsights(parentId) {
+export async function getParentInsights(
+    parentId,
+    language = "en"
+) {
     try {
         const insights = [];
         const children = await sql`
@@ -978,8 +988,11 @@ let aiMessage;
 try {
 console.log("⚡ BEFORE AI CALL");
 
-aiMessage = await generateInsight(summary, "parent");
-
+aiMessage = await generateInsight(
+    summary,
+    "parent",
+    language
+);
 console.log("⚡ AFTER AI CALL");} catch (err) {
     console.error("AI Error:", err);
 
