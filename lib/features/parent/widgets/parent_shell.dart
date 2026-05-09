@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:my_app/utils/check_auth.dart';
-import 'package:my_app/l10n/app_localizations.dart'; // تم إضافة استيراد الترجمة
+import 'package:my_app/l10n/app_localizations.dart'; 
 
 import '../pages/parent_homepage_screen.dart';
+import '../pages/parent_select_child_screen.dart';
 import '../pages/parent_chores_screen.dart';
 import '../pages/parent_allowance_screen.dart';
 import '../pages/parent_gifts_screen.dart';
 import '../pages/parent_more_screen.dart';
 import 'package:my_app/core/api_config.dart';
-
-//const String baseUrl = "https://2025gp24-production.up.railway.app";
 
 class ParentShell extends StatefulWidget {
   final int parentId;
@@ -29,7 +28,7 @@ class _ParentShellState extends State<ParentShell> {
 
   bool _initialized = false;
 
-  // 0: Home, 1: Chores, 2: Allowance, 3: Gifts, 4: More
+  // 0: Home, 1: Chores, 2: Transfer, 3: Gifts, 4: More
   int _index = 0;
 
   @override
@@ -60,11 +59,11 @@ class _ParentShellState extends State<ParentShell> {
       );
     }
 
-    // Pages order must match nav indexes
+    // هنا تم إصلاح الترتيب لتكون كل صفحة في سطر منفصل وبدون أخطاء التعليقات
     final pages = [
       ParentHomeScreen(parentId: parentId, token: token), // 0
       ParentChoresScreen(parentId: parentId, token: token), // 1
-      ParentAllowanceScreen(parentId: parentId, token: token), // 2 
+      ParentSelectChildScreen(parentId: parentId, token: token, transferMode: true), // 2
       ParentGiftsScreen(parentId: parentId, token: token), // 3
       MorePage(parentId: parentId, token: token), // 4
     ];
@@ -93,7 +92,7 @@ class ParentBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // تهيئة الترجمة
+    final l10n = AppLocalizations.of(context)!;
 
     const double barHeight = 80;
     const double iconSize = 26;
@@ -110,7 +109,7 @@ class ParentBottomNavBar extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // Bar background
-          PositionedDirectional( // استخدام PositionedDirectional لدعم RTL
+          PositionedDirectional(
             bottom: 0,
             start: 0,
             end: 0,
@@ -118,7 +117,6 @@ class ParentBottomNavBar extends StatelessWidget {
               height: barHeight,
               decoration: const BoxDecoration(
                 color: Colors.white,
-                // استخدام BorderRadiusDirectional لدعم RTL
                 borderRadius: BorderRadiusDirectional.only(
                   topStart: Radius.circular(26),
                   topEnd: Radius.circular(26),
@@ -141,16 +139,16 @@ class ParentBottomNavBar extends StatelessWidget {
                         children: [
                           _NavItem(
                             asset: "assets/icons/Reward.svg",
-                            label: l10n.chores_action, // نص مترجم
+                            label: l10n.chores_action,
                             isSelected: currentIndex == 1,
                             iconSize: iconSize,
                             onTap: () => onTap(1),
                           ),
                           _NavItem(
-                            asset: "assets/icons/Card.svg",
-                            label: l10n.allowance, // نص مترجم
+                            iconData: Icons.swap_horiz_rounded,
+                            label: l10n.transferMoney_action,
                             isSelected: currentIndex == 2,
-                            iconSize: iconSize,
+                            iconSize: iconSize + 2,
                             onTap: () => onTap(2),
                           ),
                         ],
@@ -163,14 +161,14 @@ class ParentBottomNavBar extends StatelessWidget {
                         children: [
                           _NavItem(
                             asset: "assets/icons/Gift.svg",
-                            label: l10n.rewards, // نص مترجم
+                            label: l10n.rewards,
                             isSelected: currentIndex == 3,
                             iconSize: iconSize,
                             onTap: () => onTap(3),
                           ),
                           _NavItem(
                             asset: "assets/icons/More.svg",
-                            label: l10n.more, // نص مترجم
+                            label: l10n.more,
                             isSelected: currentIndex == 4,
                             iconSize: iconSize,
                             onTap: () => onTap(4),
@@ -185,7 +183,7 @@ class ParentBottomNavBar extends StatelessWidget {
           ),
 
           // Floating Home button
-          PositionedDirectional( // استخدام PositionedDirectional لدعم RTL
+          PositionedDirectional(
             top: 10,
             child: GestureDetector(
               onTap: () => onTap(0),
@@ -236,14 +234,17 @@ class ParentBottomNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final String asset;
+  final String? asset;
+  final IconData? iconData;
   final String label;
   final bool isSelected;
   final double iconSize;
   final VoidCallback onTap;
 
   const _NavItem({
-    required this.asset,
+    super.key,
+    this.asset,
+    this.iconData,
     required this.label,
     required this.isSelected,
     required this.iconSize,
@@ -264,12 +265,15 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset(
-              asset,
-              width: iconSize,
-              height: iconSize,
-              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-            ),
+            if (iconData != null)
+              Icon(iconData, size: iconSize, color: color)
+            else if (asset != null)
+              SvgPicture.asset(
+                asset!,
+                width: iconSize,
+                height: iconSize,
+                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+              ),
             const SizedBox(height: 4),
             Text(
               label,

@@ -1235,7 +1235,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Teach them to save by splitting their weekly allowance.';
 
   @override
-  String get weeklyAmountLabel => 'Weekly Amount';
+  String get weeklyAmountLabel => 'Amount';
 
   @override
   String get allocationSplitLabel => 'Allocation Split';
@@ -1406,7 +1406,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalBalance => 'Total Balance';
 
   @override
-  String get transferMoney_action => 'Transfer Money';
+  String get transferMoney_action => 'Transfer';
 
   @override
   String get chores_action => 'Chores';

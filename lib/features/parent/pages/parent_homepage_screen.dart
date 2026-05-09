@@ -15,6 +15,7 @@ import 'parent_transfer_screen.dart';
 import 'package:my_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:my_app/core/providers/locale_provider.dart';
+import 'parent_allowance_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   final int parentId;
@@ -628,29 +629,14 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: _ActionCard(
-                        title: l10n.transferMoney,
-                        asset: "assets/icons/transactions.png",
-                        labelStyle: fintechLabelStyle,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ParentSelectChildScreen(
-                                parentId: parentId,
-                                token: token,
-                                transferMode: true,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
+Expanded(child: _ActionCard(
+                    title: l10n.allowance, 
+                    iconData: Icons.account_balance_wallet_rounded, // أيقونة الحصالة من Flutter
+                    labelStyle: fintechLabelStyle, 
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ParentAllowanceScreen(parentId: widget.parentId, token: widget.token)))
+                  )),
+                ]),
+                const SizedBox(height: 100), // مساحة للـ Nav Bar
               ],
             ),
           ),
@@ -890,15 +876,68 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
   }
 }
 
+// class _ActionCard extends StatelessWidget {
+//   final String title;
+//   final String asset;
+//   final VoidCallback onTap;
+//   final TextStyle labelStyle;
+  
+
+//   const _ActionCard({
+//     required this.title,
+//     required this.asset,
+//     required this.onTap,
+//     required this.labelStyle,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Material(
+//       color: Colors.white,
+//       borderRadius: BorderRadius.circular(18),
+//       child: InkWell(
+//         borderRadius: BorderRadius.circular(18),
+//         onTap: onTap,
+//         child: Container(
+//           padding: const EdgeInsets.symmetric(vertical: 18),
+//           decoration: BoxDecoration(
+//             color: Colors.white,
+//             borderRadius: BorderRadius.circular(18),
+//             border: Border.all(color: const Color(0xFFEDEDED), width: 1),
+//             boxShadow: [
+//               BoxShadow(
+//                 color: Colors.black.withOpacity(0.06),
+//                 blurRadius: 8,
+//                 offset: const Offset(0, 4),
+//               ),
+//             ],
+//           ),
+//           child: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             children: [
+//               Image.asset(asset, height: 28, fit: BoxFit.contain),
+//               const SizedBox(height: 10),
+//               Text(title, style: labelStyle),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 class _ActionCard extends StatelessWidget {
   final String title;
-  final String asset;
+  final String? asset;
+  final IconData? iconData; // 👈 إضافة دعم أيقونات Flutter
   final VoidCallback onTap;
   final TextStyle labelStyle;
 
   const _ActionCard({
+    super.key,
     required this.title,
-    required this.asset,
+    this.asset,
+    this.iconData,
     required this.onTap,
     required this.labelStyle,
   });
@@ -928,7 +967,12 @@ class _ActionCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(asset, height: 28, fit: BoxFit.contain),
+              // 👇 التحقق: إذا أرسلنا أيقونة يعرضها، وإلا يعرض الصورة
+              if (iconData != null)
+                Icon(iconData, size: 30, color: const Color(0xFF2EA49E))
+              else if (asset != null)
+                Image.asset(asset!, height: 28, fit: BoxFit.contain),
+                
               const SizedBox(height: 10),
               Text(title, style: labelStyle),
             ],

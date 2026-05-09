@@ -498,7 +498,7 @@
   "proceedToPayment": "Proceed to Payment",
   "allowanceSetupTitle": "Allowance Setup",
   "allowanceSetupSubtitle": "Teach them to save by splitting their weekly allowance.",
-  "weeklyAmountLabel": "Weekly Amount",
+  "weeklyAmountLabel": "Amount",
   "allocationSplitLabel": "Allocation Split",
   "percentSave": "{percent}% Save",
   "@percentSave": {
@@ -590,7 +590,7 @@
   "saturday": "Saturday",
 
   "totalBalance": "Total Balance",
-  "transferMoney_action": "Transfer Money",
+  "transferMoney_action": "Transfer",
   "chores_action": "Chores",
   "transactions_action": "Transactions",
   "moneyRequests": "Money Requests",

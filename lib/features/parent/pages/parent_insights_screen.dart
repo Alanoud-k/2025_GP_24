@@ -412,8 +412,7 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.arrow_forward : Icons.arrow_back, color: textColor), 
-          onPressed: () => Navigator.pop(context)
+         icon: Icon(Icons.arrow_back, color: textColor),          onPressed: () => Navigator.pop(context)
         ),
       ),
       body: SafeArea(

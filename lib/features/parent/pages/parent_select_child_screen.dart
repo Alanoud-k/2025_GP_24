@@ -63,7 +63,6 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
   Future<void> _fetchChildren() async {
     await checkAuthStatus(context);
     
-    // We fetch localizations before the async gap
     final l10n = AppLocalizations.of(context)!;
     
     if (token == null) {
@@ -152,21 +151,22 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                 ),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.black87,
-                          size: 24,
-                           // Flips in RTL
+                    // 👇 إخفاء زر العودة إذا كنا في وضع التحويل من الشريط السفلي
+                    if (!widget.transferMode)
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsetsDirectional.only(end: 16, top: 8, bottom: 8),
+                          child: const Icon(
+                            Icons.arrow_back, // يتكيف تلقائياً مع الاتجاه
+                            color: Colors.black87,
+                            size: 24,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
+                    
                     Text(
-                      l10n.selectChildTitle,
+                      widget.transferMode ? l10n.transferTitle : l10n.selectChildTitle,
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -334,7 +334,7 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                                                       color: Colors.black54,
                                                     ),
                                                   ),
-                                                  Image.asset("assets/icons/riyal.png", height: 16),
+                                                  Image.asset("assets/icons/Sar.png", height: 16), // تم التعديل إلى Sar.png المعتمد في المشروع
                                                   const SizedBox(width: 4),
                                                   Flexible(
                                                     child: Text(
@@ -360,7 +360,7 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
                                                       color: Colors.black54,
                                                     ),
                                                   ),
-                                                  Image.asset("assets/icons/riyal.png", height: 16),
+                                                  Image.asset("assets/icons/Sar.png", height: 16), // تم التعديل إلى Sar.png
                                                   const SizedBox(width: 4),
                                                   Flexible(
                                                     child: Text(

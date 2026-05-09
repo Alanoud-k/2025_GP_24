@@ -498,7 +498,7 @@
   "proceedToPayment": "المتابعة للدفع",
   "allowanceSetupTitle": "إعداد المصروف",
   "allowanceSetupSubtitle": "علمهم الادخار بتقسيم مصروفهم الأسبوعي.",
-  "weeklyAmountLabel": "المبلغ الأسبوعي",
+  "weeklyAmountLabel": "المبلغ",
   "allocationSplitLabel": "تقسيم المبلغ",
   "percentSave": "ادخار {percent}%",
   "@percentSave": {

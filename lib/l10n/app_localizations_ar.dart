@@ -1226,7 +1226,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get allowanceSetupSubtitle => 'علمهم الادخار بتقسيم مصروفهم الأسبوعي.';
 
   @override
-  String get weeklyAmountLabel => 'المبلغ الأسبوعي';
+  String get weeklyAmountLabel => 'المبلغ';
 
   @override
   String get allocationSplitLabel => 'تقسيم المبلغ';

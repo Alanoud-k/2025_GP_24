@@ -214,15 +214,24 @@ class _ParentAllowanceScreenState extends State<ParentAllowanceScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        automaticallyImplyLeading: false, // نضعها false لأننا سنخصص الـ leading بأنفسنا
         title: Text(l10n.allowanceSetupTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: secondaryDark,
-        leading: _currentStep > 0 ? IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut),
-        ) : null,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (_currentStep > 0) {
+              // إذا كنا في خطوة متقدمة، ارجع للخطوة السابقة
+              _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+            } else {
+              // إذا كنا في الخطوة الأولى، ارجع للصفحة الرئيسية للأب
+              Navigator.pop(context);
+            }
+          },
+        ),
       ),
       body: SafeArea(
         child: Column(

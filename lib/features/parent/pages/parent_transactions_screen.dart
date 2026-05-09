@@ -138,7 +138,7 @@ class _ParentTransactionsScreenState extends State<ParentTransactionsScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(isRtl ? Icons.arrow_forward : Icons.arrow_back, color: kTextDark),
+          icon: Icon(Icons.arrow_back, color: kTextDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(

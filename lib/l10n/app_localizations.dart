@@ -2441,7 +2441,7 @@ abstract class AppLocalizations {
   /// No description provided for @weeklyAmountLabel.
   ///
   /// In en, this message translates to:
-  /// **'Weekly Amount'**
+  /// **'Amount'**
   String get weeklyAmountLabel;
 
   /// No description provided for @allocationSplitLabel.
@@ -2759,7 +2759,7 @@ abstract class AppLocalizations {
   /// No description provided for @transferMoney_action.
   ///
   /// In en, this message translates to:
-  /// **'Transfer Money'**
+  /// **'Transfer'**
   String get transferMoney_action;
 
   /// No description provided for @chores_action.
