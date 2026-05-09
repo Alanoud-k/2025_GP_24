@@ -5,7 +5,10 @@ import { sql } from "../config/db.js";
 export const startAllowanceCron = () => {
   // يعمل كل دقيقة
   cron.schedule("* * * * *", async () => {
-    const now = new Date();
+    
+    // 👇 تحويل الوقت الحالي ليكون بتوقيت الرياض بدقة تامة
+    const riyadhDateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" });
+    const now = new Date(riyadhDateStr);
     
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const currentDayOfWeek = days[now.getDay()]; 
@@ -14,12 +17,16 @@ export const startAllowanceCron = () => {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const currentTime = `${hours}:${minutes}`;
-    const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    
+    // تاريخ اليوم بصيغة YYYY-MM-DD
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
 
-    console.log(`💸 Checking Allowances: ${currentDayOfWeek}, Day ${currentDayOfMonth} at ${currentTime}`);
+    console.log(`💸 Checking Allowances: ${currentDayOfWeek}, Day ${currentDayOfMonth} at ${currentTime} (Riyadh Time)`);
 
     try {
-      // جلب الأطفال الذين حان وقت مصروفهم الآن!
       const rows = await sql`
         SELECT
           a.childid, c.parentid, a.amount, c."default_saving_ratio",
@@ -64,15 +71,13 @@ export const startAllowanceCron = () => {
         const parentBalance = Number(parentAcc[0].balance);
 
         if (parentBalance < total) {
-          console.warn(`⚠️ فشل التحويل: رصيد الأب ${parentId} لا يغطي مصروف الطفل ${childId}. المطلوب: ${total}, المتوفر: ${parentBalance}`);
-          // هنا يمكنك إضافة كود لإرسال إشعار (Notification) للأب بأن رصيده غير كافٍ للمصروف!
+          console.warn(`⚠️ فشل التحويل: رصيد الأب لا يغطي.`);
           continue; 
         }
 
         const saveAmount = +(total * saveRatio).toFixed(2);
         const spendAmount = +(total - saveAmount).toFixed(2);
 
-        // تنفيذ المعاملة المالية (Transaction)
         await sql`BEGIN`;
         try {
           await sql`UPDATE "Account" SET balance = balance - ${total} WHERE accountid = ${parentAccountId}`;
