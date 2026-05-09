@@ -84,7 +84,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get privacyPolicy => 'سياسة الخصوصية';
 
   @override
-  String get continue_ => 'متابعة';
+  String get continue_ => 'التالي';
 
   @override
   String get pleaseEnterMobile => 'الرجاء إدخال رقم الجوال';
@@ -672,7 +672,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get somethingWentWrongGeneric => 'حدث خطأ ما';
+  String get somethingWentWrongGeneric => 'حدث خطأ ما، يرجى المحاولة لاحقاً.';
 
   @override
   String get notEnoughBalanceToMove => 'ليس لديك رصيد كافٍ لنقل هذا المبلغ.';
@@ -1275,7 +1275,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get currencySarLabel => 'ر.س';
+  String get currencySarLabel => ' ر.س';
 
   @override
   String get spend => 'إنفاق';
@@ -1932,6 +1932,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get allowance => 'المصروف';
+
+  @override
+  String get pleaseSelectChildFirst => 'الرجاء اختيار طفل أولاً';
+
+  @override
+  String get whenToTransfer => 'متى يتم التحويل؟';
+
+  @override
+  String get frequency => 'التكرار';
+
+  @override
+  String get dayOfMonth => 'يوم الشهر';
 
   @override
   String get requestedAmount => 'طلب مبلغ';

@@ -459,33 +459,15 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
 
                     const SizedBox(height: 30),
 
-                    if (_chartData.isNotEmpty) ...[
-                      SizedBox(
-                        height: 250,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            PieChart(PieChartData(sectionsSpace: 4, centerSpaceRadius: 60, sections: _buildChartSections())),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(selectedChild == "All" ? Icons.people_outline : Icons.category_outlined, size: 30, color: Colors.grey),
-                                const SizedBox(height: 2),
-                                Text(l10n.totalWord, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey)),
-                                const SizedBox(height: 2),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset('assets/icons/riyal.png', height: 14),
-                                    const SizedBox(width: 4),
-                                    Text(_totalSpent.toStringAsFixed(0), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
-                                  ],
-                                ),
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
+if (_chartData.isNotEmpty) ...[
+  // التبديل بناءً على اختيار الأب
+  selectedChild == "All" 
+      ? _buildBarChart(textColor) 
+      : _buildPieChart(l10n, textColor),
+  
+  const SizedBox(height: 40),
+  Text(l10n.details, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+  const SizedBox(height: 16),
                       const SizedBox(height: 40),
                       Text(l10n.details, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
                       const SizedBox(height: 16),
@@ -554,4 +536,148 @@ class _ParentInsightsScreenState extends State<ParentInsightsScreen> {
       return PieChartSectionData(color: color, value: entry.value, title: '${percentVal.toStringAsFixed(0)}%', radius: isLarge ? 55 : 50, titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white));
     }).toList();
   }
+
+// --- دالة رسم الأعمدة (عند اختيار جميع الأبناء) ---
+  Widget _buildBarChart(Color textColor) {
+    if (_chartData.isEmpty) return const SizedBox();
+
+    double maxY = 0;
+    for (var val in _chartData.values) {
+      if (val > maxY) maxY = val;
+    }
+    // إضافة مساحة 20% فوق أعلى عمود لشكل جمالي أفضل
+    maxY = maxY + (maxY * 0.2); 
+    if (maxY == 0) maxY = 10;
+
+    int index = 0;
+    List<BarChartGroupData> barGroups = [];
+    List<String> names = _chartData.keys.toList();
+
+    for (var entry in _chartData.entries) {
+      final color = _chartColors[index % _chartColors.length];
+      barGroups.add(
+        BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: entry.value,
+              color: color,
+              width: 22,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              backDrawRodData: BackgroundBarChartRodData(
+                show: true,
+                toY: maxY,
+                color: Colors.grey.shade200, // لون خلفية العمود
+              ),
+            ),
+          ],
+        ),
+      );
+      index++;
+    }
+
+    return SizedBox(
+      height: 250,
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: maxY,
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              tooltipBgColor: const Color(0xFF2C3E50),              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  '${names[group.x.toInt()]}\n',
+                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  children: [
+                    TextSpan(
+                      text: '${rod.toY.toStringAsFixed(0)} SAR',
+                      style: const TextStyle(color: Color(0xFF37C4BE), fontWeight: FontWeight.w900, fontSize: 14),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          titlesData: FlTitlesData(
+            show: true,
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (double value, TitleMeta meta) {
+                  if (value.toInt() >= 0 && value.toInt() < names.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        names[value.toInt()],
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                getTitlesWidget: (double value, TitleMeta meta) {
+                  if (value == maxY) return const SizedBox.shrink();
+                  return Text(
+                    value.toInt().toString(),
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade200, strokeWidth: 1),
+          ),
+          borderData: FlBorderData(show: false), // إخفاء إطار الرسمة
+          barGroups: barGroups,
+        ),
+      ),
+    );
+  }
+
+  // --- دالة رسم الدائرة البيانية (عند اختيار طفل محدد) ---
+  Widget _buildPieChart(AppLocalizations l10n, Color textColor) {
+    return SizedBox(
+      height: 250,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PieChart(PieChartData(
+            sectionsSpace: 4, 
+            centerSpaceRadius: 60, 
+            sections: _buildChartSections()
+          )),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.category_outlined, size: 30, color: Colors.grey),
+              const SizedBox(height: 2),
+              Text(l10n.totalWord, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.grey)),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/icons/riyal.png', height: 14),
+                  const SizedBox(width: 4),
+                  Text(_totalSpent.toStringAsFixed(0), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
+                ],
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
 }

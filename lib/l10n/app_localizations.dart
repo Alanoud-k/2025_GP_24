@@ -581,7 +581,7 @@ abstract class AppLocalizations {
   /// No description provided for @insights.
   ///
   /// In en, this message translates to:
-  /// **'Insights'**
+  /// **'Charts'**
   String get insights;
 
   /// No description provided for @totalWord.
@@ -1391,7 +1391,7 @@ abstract class AppLocalizations {
   /// No description provided for @somethingWentWrongGeneric.
   ///
   /// In en, this message translates to:
-  /// **'Something went wrong'**
+  /// **'Something went wrong. Please try again.'**
   String get somethingWentWrongGeneric;
 
   /// No description provided for @notEnoughBalanceToMove.
@@ -2525,7 +2525,7 @@ abstract class AppLocalizations {
   /// No description provided for @currencySarLabel.
   ///
   /// In en, this message translates to:
-  /// **'SAR'**
+  /// **' SAR'**
   String get currencySarLabel;
 
   /// No description provided for @spend.
@@ -3251,7 +3251,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectChildTitle.
   ///
   /// In en, this message translates to:
-  /// **'Select Child'**
+  /// **'Select a Child'**
   String get selectChildTitle;
 
   /// No description provided for @yourChildren.
@@ -3739,6 +3739,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allowance'**
   String get allowance;
+
+  /// No description provided for @pleaseSelectChildFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a child first'**
+  String get pleaseSelectChildFirst;
+
+  /// No description provided for @whenToTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'When to transfer?'**
+  String get whenToTransfer;
+
+  /// No description provided for @frequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get frequency;
+
+  /// No description provided for @dayOfMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of the month'**
+  String get dayOfMonth;
 
   /// No description provided for @requestedAmount.
   ///

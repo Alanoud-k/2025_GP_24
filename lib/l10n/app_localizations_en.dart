@@ -253,7 +253,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addCard => 'Add Card';
 
   @override
-  String get insights => 'Insights';
+  String get insights => 'Charts';
 
   @override
   String get totalWord => 'Total';
@@ -674,7 +674,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get somethingWentWrongGeneric => 'Something went wrong';
+  String get somethingWentWrongGeneric =>
+      'Something went wrong. Please try again.';
 
   @override
   String get notEnoughBalanceToMove =>
@@ -1283,7 +1284,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get currencySarLabel => 'SAR';
+  String get currencySarLabel => ' SAR';
 
   @override
   String get spend => 'Spend';
@@ -1675,7 +1676,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get selectChildTitle => 'Select Child';
+  String get selectChildTitle => 'Select a Child';
 
   @override
   String get yourChildren => 'Your Children';
@@ -1944,6 +1945,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get allowance => 'Allowance';
+
+  @override
+  String get pleaseSelectChildFirst => 'Please select a child first';
+
+  @override
+  String get whenToTransfer => 'When to transfer?';
+
+  @override
+  String get frequency => 'Frequency';
+
+  @override
+  String get dayOfMonth => 'Day of the month';
 
   @override
   String get requestedAmount => 'requested';
