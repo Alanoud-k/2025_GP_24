@@ -186,6 +186,16 @@ app.get("/payment-success", (_req, res) => {
 });
 
 
+/* ---------------------------------------------------------
+   DEEP LINK REDIRECT (BRIDGE)
+--------------------------------------------------------- */
+app.get("/api/payment-redirect", (req, res) => {
+  // أخذ أي بيانات أرسلتها ميسر في الرابط (مثل حالة الفاتورة)
+  const queryString = new URLSearchParams(req.query).toString();
+  
+  // التحويل الفوري إلى تطبيق حصالة عبر الـ Deep Link
+  res.redirect(`hasala://payment-result?${queryString}`);
+});
 
 app.get("/payment-failed", (_req, res) => {
   res.send("Payment failed.");

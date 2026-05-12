@@ -62,11 +62,12 @@
 
 // server/controllers/createPaymentController.js
 
+// server/controllers/createPaymentController.js
 import axios from "axios";
 
 const MOYASAR_API_URL = "https://api.moyasar.com/v1/payments";
 const MOYASAR_SECRET = process.env.MOYASAR_SECRET_KEY;
-// يمكنك الإبقاء على APP_URL إذا كنت تحتاجه لأمور أخرى
+const APP_URL = "https://2025gp24-production.up.railway.app";
 
 export async function createPayment(req, res) {
   try {
@@ -74,13 +75,11 @@ export async function createPayment(req, res) {
     const amount = Number(req.body.amount);
 
     if (!parentId || !amount || amount <= 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid parentId or amount" });
+      return res.status(400).json({ success: false, message: "Invalid parentId or amount" });
     }
 
-    // ⭐ تم تغيير رابط العودة هنا ليكون رابطاً عميقاً يفتح التطبيق
-    const callbackUrl = "hasala://payment-result";
+    // ⭐ تم التعديل هنا: رابط https حقيقي يوجه للباك إند الخاص بك
+    const callbackUrl = `${APP_URL}/api/payment-redirect`;
 
     const paymentBody = {
       amount: Math.round(amount * 100),
@@ -113,10 +112,6 @@ export async function createPayment(req, res) {
     });
   } catch (err) {
     console.error("createPayment error:", err.response?.data || err.message);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create payment",
-      error: err.response?.data || err.message
-    });
+    return res.status(500).json({ success: false });
   }
 }
