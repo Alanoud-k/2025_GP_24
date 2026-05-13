@@ -251,7 +251,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addCard => 'إضافة بطاقة';
 
   @override
-  String get insights => 'تحليل المصروافات';
+  String get insights => 'تحليل المصروفات';
 
   @override
   String get totalWord => 'Total';
@@ -1643,7 +1643,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get languageChangedHint => 'تم تغيير اللغة بنجاح';
+  String get languageChangedHint =>
+      'تم تغيير اللغة. يرجى إعادة تشغيل التطبيق إذا لم تتغير تلقائياً.';
 
   @override
   String get noCardFoundTitle => 'لا توجد بطاقة مضافة';
@@ -1828,12 +1829,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get transferSuccessful => 'تم التحويل بنجاح!';
 
   @override
-  String get savingLabel => 'الادخار';
-
-  @override
-  String get spendingLabel => 'المصروفات';
-
-  @override
   String get updateChildWalletPrompt => 'سيتم تحديث رصيد محفظة طفلك.';
 
   @override
@@ -1979,6 +1974,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get moyasar => 'مدفوعات ميسر';
 
   @override
+  String get savingLabel => 'الادخار';
+
+  @override
+  String get spendingLabel => 'المصروفات';
+
+  @override
   String transferToChildMessage(String amount, String childName) {
     return 'تحويل مبلغ $amount ريال إلى طفلك $childName';
   }
@@ -2049,9 +2050,105 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get insight_title_no_goals_yet => 'No Goals Yet';
+  String get insight_title_no_goals_yet => 'لا توجد أهداف بعد';
 
   @override
-  String get insight_msg_no_goals_yet =>
-      'Start your first goal and track your progress here.';
+  String get insight_msg_no_goals_yet => 'ابدأ هدفك الأول وتتبع تقدمك هنا.';
+
+  @override
+  String get insight_title_no_children => 'لا يوجد أبناء';
+
+  @override
+  String get insight_msg_no_children => 'لم تقم بإضافة أي أبناء بعد';
+
+  @override
+  String get insight_title_get_started => 'ابدأ الآن';
+
+  @override
+  String get insight_msg_get_started => 'أضف طفلاً للبدء في تتبع المصروفات';
+
+  @override
+  String get insight_title_no_data => 'لا توجد بيانات';
+
+  @override
+  String get insight_msg_no_data => 'لا توجد بيانات مصروفات متاحة بعد';
+
+  @override
+  String get insight_title_no_activity => 'لا يوجد نشاط';
+
+  @override
+  String get insight_msg_no_activity_7d =>
+      'لم يتم تسجيل أي مصروفات في الأيام السبعة الماضية';
+
+  @override
+  String get insight_msg_no_activity_recent => 'لم يتم تسجيل أي مصروفات مؤخراً';
+
+  @override
+  String get insight_title_spending_trend => 'اتجاه الإنفاق';
+
+  @override
+  String get insight_msg_trend_decreased =>
+      'انخفض الإنفاق مقارنة بالأسبوع الماضي';
+
+  @override
+  String get insight_msg_trend_consistent =>
+      'استقر الإنفاق مقارنة بالأسبوع الماضي';
+
+  @override
+  String get insight_title_recent_spending => 'الإنفاق الأخير';
+
+  @override
+  String get insight_title_top_spender => 'الأكثر إنفاقاً';
+
+  @override
+  String get insight_msg_top_spender_similar =>
+      'أنفق جميع الأبناء مبالغ متقاربة مؤخراً';
+
+  @override
+  String get insight_title_average_spending => 'متوسط الإنفاق';
+
+  @override
+  String get insight_title_total_spent => 'إجمالي الإنفاق';
+
+  @override
+  String get insight_msg_top_category_balanced =>
+      'الإنفاق متوازن عبر جميع التصنيفات';
+
+  @override
+  String get insight_title_smart_insight => 'رؤية ذكية';
+
+  @override
+  String insight_msg_recent_spending(String name, String amount) {
+    return 'أنفق $name مبلغ $amount ريال مؤخراً';
+  }
+
+  @override
+  String insight_msg_top_spender(String name, String amount) {
+    return 'كان $name الأكثر إنفاقاً مؤخراً ($amount ريال)';
+  }
+
+  @override
+  String insight_msg_average_spending(String amount) {
+    return 'متوسط الإنفاق لكل طفل هو $amount ريال';
+  }
+
+  @override
+  String insight_msg_top_category_percent(String percentage, String category) {
+    return 'شكلت مصاريف $category ما نسبته $percentage% من الإنفاق';
+  }
+
+  @override
+  String insight_msg_total_spent(String amount) {
+    return 'إجمالي الإنفاق في الأيام الـ 7 الماضية هو $amount ريال';
+  }
+
+  @override
+  String insight_msg_trend_increased(String percentage) {
+    return 'زاد الإنفاق بنسبة $percentage% مقارنة بالأسبوع الماضي';
+  }
+
+  @override
+  String insight_msg_trend_decreased_percent(String percentage) {
+    return 'انخفض الإنفاق بنسبة $percentage% مقارنة بالأسبوع الماضي';
+  }
 }

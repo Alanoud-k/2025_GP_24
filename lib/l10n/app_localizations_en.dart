@@ -1654,7 +1654,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get languageChangedHint => 'Language changed successfully';
+  String get languageChangedHint =>
+      'Language changed. Please restart the app if it does not change automatically.';
 
   @override
   String get noCardFoundTitle => 'No card found';
@@ -1839,12 +1840,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transferSuccessful => 'Transfer Successful!';
 
   @override
-  String get savingLabel => 'Saving';
-
-  @override
-  String get spendingLabel => 'Spending';
-
-  @override
   String get updateChildWalletPrompt =>
       'This will update your child’s wallet balance.';
 
@@ -1992,6 +1987,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moyasar => 'Moyasar Payment';
 
   @override
+  String get savingLabel => 'Saving';
+
+  @override
+  String get spendingLabel => 'Spending';
+
+  @override
   String transferToChildMessage(String amount, String childName) {
     return 'Transferred $amount SAR to $childName';
   }
@@ -2067,4 +2068,102 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get insight_msg_no_goals_yet =>
       'Start your first goal and track your progress here.';
+
+  @override
+  String get insight_title_no_children => 'No Children';
+
+  @override
+  String get insight_msg_no_children => 'You haven’t added any children yet';
+
+  @override
+  String get insight_title_get_started => 'Get Started';
+
+  @override
+  String get insight_msg_get_started =>
+      'Add a child to start tracking spending';
+
+  @override
+  String get insight_title_no_data => 'No Data';
+
+  @override
+  String get insight_msg_no_data => 'No spending data available yet';
+
+  @override
+  String get insight_title_no_activity => 'No Activity';
+
+  @override
+  String get insight_msg_no_activity_7d =>
+      'No spending recorded in the last 7 days';
+
+  @override
+  String get insight_msg_no_activity_recent => 'No spending recorded recently';
+
+  @override
+  String get insight_title_spending_trend => 'Spending Trend';
+
+  @override
+  String get insight_msg_trend_decreased =>
+      'Spending decreased compared to last week';
+
+  @override
+  String get insight_msg_trend_consistent =>
+      'Spending remained consistent compared to last week';
+
+  @override
+  String get insight_title_recent_spending => 'Recent Spending';
+
+  @override
+  String get insight_title_top_spender => 'Top Spender';
+
+  @override
+  String get insight_msg_top_spender_similar =>
+      'All children spent similar amounts recently';
+
+  @override
+  String get insight_title_average_spending => 'Average Spending';
+
+  @override
+  String get insight_title_total_spent => 'Total Spent';
+
+  @override
+  String get insight_msg_top_category_balanced =>
+      'Spending is balanced across categories';
+
+  @override
+  String get insight_title_smart_insight => 'Smart Insight';
+
+  @override
+  String insight_msg_recent_spending(String name, String amount) {
+    return '$name spent $amount SAR recently';
+  }
+
+  @override
+  String insight_msg_top_spender(String name, String amount) {
+    return '$name spent the most recently ($amount SAR)';
+  }
+
+  @override
+  String insight_msg_average_spending(String amount) {
+    return 'Average spending per child is $amount SAR';
+  }
+
+  @override
+  String insight_msg_top_category_percent(String percentage, String category) {
+    return '$percentage% of spending was on $category';
+  }
+
+  @override
+  String insight_msg_total_spent(String amount) {
+    return 'Total spending in the last 7 days is $amount SAR';
+  }
+
+  @override
+  String insight_msg_trend_increased(String percentage) {
+    return 'Spending increased by $percentage% compared to last week';
+  }
+
+  @override
+  String insight_msg_trend_decreased_percent(String percentage) {
+    return 'Spending decreased by $percentage% compared to last week';
+  }
 }

@@ -3215,7 +3215,7 @@ abstract class AppLocalizations {
   /// No description provided for @languageChangedHint.
   ///
   /// In en, this message translates to:
-  /// **'Language changed successfully'**
+  /// **'Language changed. Please restart the app if it does not change automatically.'**
   String get languageChangedHint;
 
   /// No description provided for @noCardFoundTitle.
@@ -3548,18 +3548,6 @@ abstract class AppLocalizations {
   /// **'Transfer Successful!'**
   String get transferSuccessful;
 
-  /// No description provided for @savingLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Saving'**
-  String get savingLabel;
-
-  /// No description provided for @spendingLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Spending'**
-  String get spendingLabel;
-
   /// No description provided for @updateChildWalletPrompt.
   ///
   /// In en, this message translates to:
@@ -3830,6 +3818,18 @@ abstract class AppLocalizations {
   /// **'Moyasar Payment'**
   String get moyasar;
 
+  /// No description provided for @savingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get savingLabel;
+
+  /// No description provided for @spendingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending'**
+  String get spendingLabel;
+
   /// No description provided for @transferToChildMessage.
   ///
   /// In en, this message translates to:
@@ -3949,6 +3949,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start your first goal and track your progress here.'**
   String get insight_msg_no_goals_yet;
+
+  /// No description provided for @insight_title_no_children.
+  ///
+  /// In en, this message translates to:
+  /// **'No Children'**
+  String get insight_title_no_children;
+
+  /// No description provided for @insight_msg_no_children.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven’t added any children yet'**
+  String get insight_msg_no_children;
+
+  /// No description provided for @insight_title_get_started.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get insight_title_get_started;
+
+  /// No description provided for @insight_msg_get_started.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a child to start tracking spending'**
+  String get insight_msg_get_started;
+
+  /// No description provided for @insight_title_no_data.
+  ///
+  /// In en, this message translates to:
+  /// **'No Data'**
+  String get insight_title_no_data;
+
+  /// No description provided for @insight_msg_no_data.
+  ///
+  /// In en, this message translates to:
+  /// **'No spending data available yet'**
+  String get insight_msg_no_data;
+
+  /// No description provided for @insight_title_no_activity.
+  ///
+  /// In en, this message translates to:
+  /// **'No Activity'**
+  String get insight_title_no_activity;
+
+  /// No description provided for @insight_msg_no_activity_7d.
+  ///
+  /// In en, this message translates to:
+  /// **'No spending recorded in the last 7 days'**
+  String get insight_msg_no_activity_7d;
+
+  /// No description provided for @insight_msg_no_activity_recent.
+  ///
+  /// In en, this message translates to:
+  /// **'No spending recorded recently'**
+  String get insight_msg_no_activity_recent;
+
+  /// No description provided for @insight_title_spending_trend.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending Trend'**
+  String get insight_title_spending_trend;
+
+  /// No description provided for @insight_msg_trend_decreased.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending decreased compared to last week'**
+  String get insight_msg_trend_decreased;
+
+  /// No description provided for @insight_msg_trend_consistent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending remained consistent compared to last week'**
+  String get insight_msg_trend_consistent;
+
+  /// No description provided for @insight_title_recent_spending.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Spending'**
+  String get insight_title_recent_spending;
+
+  /// No description provided for @insight_title_top_spender.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Spender'**
+  String get insight_title_top_spender;
+
+  /// No description provided for @insight_msg_top_spender_similar.
+  ///
+  /// In en, this message translates to:
+  /// **'All children spent similar amounts recently'**
+  String get insight_msg_top_spender_similar;
+
+  /// No description provided for @insight_title_average_spending.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Spending'**
+  String get insight_title_average_spending;
+
+  /// No description provided for @insight_title_total_spent.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Spent'**
+  String get insight_title_total_spent;
+
+  /// No description provided for @insight_msg_top_category_balanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending is balanced across categories'**
+  String get insight_msg_top_category_balanced;
+
+  /// No description provided for @insight_title_smart_insight.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Insight'**
+  String get insight_title_smart_insight;
+
+  /// No description provided for @insight_msg_recent_spending.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} spent {amount} SAR recently'**
+  String insight_msg_recent_spending(String name, String amount);
+
+  /// No description provided for @insight_msg_top_spender.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} spent the most recently ({amount} SAR)'**
+  String insight_msg_top_spender(String name, String amount);
+
+  /// No description provided for @insight_msg_average_spending.
+  ///
+  /// In en, this message translates to:
+  /// **'Average spending per child is {amount} SAR'**
+  String insight_msg_average_spending(String amount);
+
+  /// No description provided for @insight_msg_top_category_percent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}% of spending was on {category}'**
+  String insight_msg_top_category_percent(String percentage, String category);
+
+  /// No description provided for @insight_msg_total_spent.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spending in the last 7 days is {amount} SAR'**
+  String insight_msg_total_spent(String amount);
+
+  /// No description provided for @insight_msg_trend_increased.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending increased by {percentage}% compared to last week'**
+  String insight_msg_trend_increased(String percentage);
+
+  /// No description provided for @insight_msg_trend_decreased_percent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending decreased by {percentage}% compared to last week'**
+  String insight_msg_trend_decreased_percent(String percentage);
 }
 
 class _AppLocalizationsDelegate
