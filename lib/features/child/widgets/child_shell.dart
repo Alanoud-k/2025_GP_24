@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart'; 
 
 import 'package:my_app/utils/check_auth.dart';
+import 'package:my_app/l10n/app_localizations.dart'; 
 
 // Pages
 import '../pages/child_homepage_screen.dart';
 import '../pages/child_goals_screen.dart';
-import '../pages/child_rewards_screen.dart';
+import '../pages/child_rewards_screen.dart'; // مسار صفحة الجوائز الصحيح
 import '../pages/child_game_screen.dart';
 import '../pages/child_card_screen.dart';
 import '../pages/child_more_screen.dart';
 import '../pages/child_qr_scan_image_screen.dart';
-
-// Widgets
-import '../widgets/child_bottom_nav_bar.dart';
+import '../pages/child_request_money_screen.dart'; 
+import 'child_bottom_nav_bar.dart'; // تأكد من استدعاء النافقيشن بار هنا
 
 class ChildShell extends StatefulWidget {
   final int childId;
@@ -34,13 +35,13 @@ class ChildShell extends StatefulWidget {
 }
 
 class _ChildShellState extends State<ChildShell> {
-  int currentIndex = 2;
+  int currentIndex = 2; // الهوم بيج هي الافتراضية في المنتصف
 
   String childName = "Child User";
   String childPhone = "";
   bool isLoadingData = true;
 
-  int? spendingAccountId; // new field
+  int? spendingAccountId;
 
   @override
   void initState() {
@@ -76,7 +77,7 @@ class _ChildShellState extends State<ChildShell> {
         setState(() {
           childName = data["firstName"] ?? "Child User";
           childPhone = data["phoneNo"] ?? "";
-          spendingAccountId = data["spendingAccountId"]; // must exist
+          spendingAccountId = data["spendingAccountId"]; 
           isLoadingData = false;
         });
       } else {
@@ -96,34 +97,39 @@ class _ChildShellState extends State<ChildShell> {
       );
     }
 
+    // هنا يتم ربط الصفحات بالأرقام
     final List<Widget> pages = [
-      ChildRewardsScreen(
-        childId: widget.childId,
-        token: widget.token,
-        baseUrl: widget.baseUrl,
-      ),
-      ChildGameScreen(
-        childId: widget.childId,
-        token: widget.token,
-        baseUrl: widget.baseUrl,
-      ),
-      ChildHomePageScreen(
-        childId: widget.childId,
-        token: widget.token,
-        baseUrl: widget.baseUrl,
-      ),
-      ChildQrScanImageScreen(
-        childId: widget.childId,
-        token: widget.token,
-        baseUrl: widget.baseUrl,
-      ),
       ChildMoreScreen(
         childId: widget.childId,
         token: widget.token,
         baseUrl: widget.baseUrl,
         username: childName,
         phoneNo: childPhone,
-      ),
+      ), // الزر رقم 0: المزيد
+      
+      ChildQrScanImageScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+      ), // الزر رقم 1: الدفع
+
+      ChildHomePageScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+      ), // الزر رقم 2: الهوم بيج (الرئيسية في المنتصف)
+
+      ChildRequestMoneyScreen(
+        childId: widget.childId,
+        baseUrl: widget.baseUrl,
+        token: widget.token,
+      ), // الزر رقم 3: طلب مبلغ
+
+      ChildRewardsScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+      ), // الزر رقم 4: الجوائز
     ];
 
     return Scaffold(

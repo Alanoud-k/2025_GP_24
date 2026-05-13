@@ -40,21 +40,8 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
   String? _demoMerchantName;
   double? _demoAmount;
 
-  final TextEditingController _merchantCtrl = TextEditingController(
-  );
-  final TextEditingController _amountCtrl = TextEditingController(
-    text: "10.00",
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Initialize the demo text only if it's currently empty
-    if (_merchantCtrl.text.isEmpty) {
-      final l10n = AppLocalizations.of(context)!;
-      _merchantCtrl.text = l10n.demoMerchant;
-    }
-  }
+  final TextEditingController _merchantCtrl = TextEditingController();
+  final TextEditingController _amountCtrl = TextEditingController();
 
   @override
   void dispose() {
@@ -190,95 +177,97 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) {
+      builder: (BuildContext sheetContext) {
+        // الحل الجذري لمشكلة الكيبورد: الـ Padding يتفاعل مع حجم الكيبورد في الأسفل
         return Padding(
-          padding: EdgeInsetsDirectional.only(
-            start: 16,
-            end: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.generateDemoQr,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2C3E50),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _merchantCtrl,
-                  decoration: InputDecoration(
-                    labelText: l10n.merchantName,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+          child: SingleChildScrollView(
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.generateDemoQr,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2C3E50),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _amountCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: l10n.amountSAR,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _creatingQr
-                            ? null
-                            : () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF2EA49E),
-                          side: const BorderSide(color: Color(0xFF2EA49E)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(l10n.cancel),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _merchantCtrl,
+                    decoration: InputDecoration(
+                      labelText: l10n.merchantName,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _creatingQr
-                            ? null
-                            : () async {
-                                await _createDemoQr();
-                                if (mounted) Navigator.pop(context);
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2EA49E),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(_creatingQr ? l10n.generating : l10n.generate),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _amountCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: l10n.amountSAR,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _creatingQr
+                              ? null
+                              : () => Navigator.pop(sheetContext),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF2EA49E),
+                            side: const BorderSide(color: Color(0xFF2EA49E)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(l10n.cancel),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _creatingQr
+                              ? null
+                              : () async {
+                                  await _createDemoQr();
+                                  if (mounted) Navigator.pop(sheetContext);
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2EA49E),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(_creatingQr ? l10n.generating : l10n.generate),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -501,7 +490,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                       borderRadius: BorderRadius.circular(18),
                                     ),
                                   ),
-                                  child: Text(l10n.useThisQr),
+                                child: Text(l10n.useThisQr),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -517,7 +506,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                 },
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: primary,
-                                  side: BorderSide(color: primary),
+                                  side: const BorderSide(color: primary),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
                                   ),
@@ -567,6 +556,7 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                                       ),
                               ),
                               const SizedBox(height: 22),
+                              // تم إرجاع الزر كما كان لإضافة الصورة من الاستوديو فقط
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(

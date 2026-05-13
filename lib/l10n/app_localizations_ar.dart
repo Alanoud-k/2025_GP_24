@@ -2115,7 +2115,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'الإنفاق متوازن عبر جميع التصنيفات';
 
   @override
-  String get insight_title_smart_insight => 'رؤية ذكية';
+  String get insight_title_smart_insight => 'نصائح ذكية';
 
   @override
   String insight_msg_recent_spending(String name, String amount) {

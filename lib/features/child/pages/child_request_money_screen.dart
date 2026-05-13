@@ -302,10 +302,8 @@ class _ChildRequestMoneyScreenState extends State<ChildRequestMoneyScreen>
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50)),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false, // <-- إزالة سهم الرجوع بشكل قاطع
+        
       ),
       body: Column(
         children: [

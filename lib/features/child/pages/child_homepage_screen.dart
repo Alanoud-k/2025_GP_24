@@ -347,10 +347,16 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
                         const SizedBox(height: 12),
                         _keysBadge(l10n),
                         const SizedBox(height: 24),
+                        
+                        // 1. هنا قمنا بوضع بطاقات الرؤى (Insights) أولاً
+                        if (insights.isNotEmpty) _insightsSection(l10n),
+                        const SizedBox(height: 20), // مسافة فاصلة
+                        
+                        // 2. وهنا قمنا بتأخير شبكة الأزرار (Actions) لتكون تحتها
                         _actionsGrid(l10n),
                         const SizedBox(height: 24),
-                        if (insights.isNotEmpty) _insightsSection(l10n),
-                        const SizedBox(height: 20),
+                        
+                        // بطاقة المخطط البياني
                         _breakdownCard(l10n),
                         const SizedBox(height: 40),
                       ],
@@ -587,122 +593,7 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
     );
   }
 
-  Widget _actionsGrid(AppLocalizations l10n) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              _actionButton(l10n.chores, Icons.checklist_rounded, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChildChoresScreen(
-                      childId: widget.childId,
-                      token: widget.token,
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 12),
-              _actionButton(l10n.transactions, Icons.receipt_long_outlined, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChildTransactionsScreen(
-                      childId: widget.childId,
-                      token: widget.token,
-                      baseUrl: widget.baseUrl,
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            children: [
-              _actionButton(l10n.goals, Icons.flag_rounded, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChildGoalsScreen(
-                      childId: widget.childId,
-                      baseUrl: widget.baseUrl,
-                      token: widget.token,
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 12),
-              _actionButton(l10n.requestMoney, Icons.payments_rounded, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChildRequestMoneyScreen(
-                      childId: widget.childId,
-                      baseUrl: widget.baseUrl,
-                      token: widget.token,
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFEDEDED), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              height: 40,
-              width: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFF37C4BE).withOpacity(0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, size: 22, color: const Color(0xFF2EA49E)),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                text,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ✅ دوال الترجمة الخاصة بالرسائل الذكية
   String _getTranslatedTitle(String titleKey, AppLocalizations l10n) {
@@ -723,6 +614,8 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         return l10n.insight_title_goal_progress;
       case "insight_title_spending_increase":
         return l10n.insight_title_spending_increase;
+      case "insight_title_smart_insight":
+       return l10n.insight_title_smart_insight;
       default:
         return titleKey;
     }
@@ -806,6 +699,112 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
       maxLines: 4,
       overflow: TextOverflow.ellipsis,
       text: TextSpan(children: spans),
+    );
+  }
+
+  Widget _actionsGrid(AppLocalizations l10n) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _actionButton(l10n.chores, Icons.checklist_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildChoresScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _actionButton(l10n.transactions, Icons.receipt_long_outlined, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildTransactionsScreen(
+                      childId: widget.childId,
+                      token: widget.token,
+                      baseUrl: widget.baseUrl,
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _actionButton(l10n.goals, Icons.flag_rounded, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChildGoalsScreen(
+                      childId: widget.childId,
+                      baseUrl: widget.baseUrl,
+                      token: widget.token,
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+ Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDEDED), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF37C4BE).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 22, color: const Color(0xFF2EA49E)),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

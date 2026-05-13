@@ -963,7 +963,7 @@
   "insight_title_average_spending": "متوسط الإنفاق",
   "insight_title_total_spent": "إجمالي الإنفاق",
   "insight_msg_top_category_balanced": "الإنفاق متوازن عبر جميع التصنيفات",
-  "insight_title_smart_insight": "رؤية ذكية",
+  "insight_title_smart_insight": "نصائح ذكية",
   
   "insight_msg_recent_spending": "أنفق {name} مبلغ {amount} ريال مؤخراً",
   "@insight_msg_recent_spending": { "placeholders": { "name": { "type": "String" }, "amount": { "type": "String" } } },
