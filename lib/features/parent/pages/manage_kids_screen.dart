@@ -344,15 +344,17 @@ class _ManageKidsScreenState extends State<ManageKidsScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _buildModernTextField(
+                _buildModernTextField(
                       context: context,
                       controller: firstName,
                       label: l10n.firstNameLabel,
                       icon: Icons.person_outline,
                       validator: (v) {
                         if (v == null || v.isEmpty) return l10n.enterFirstName;
-                        if (!RegExp(r'^[a-zA-Z]+$').hasMatch(v))
+                        // السماح بالحروف العربية والإنجليزية والمسافات
+                        if (!RegExp(r'^[\u0600-\u06FFa-zA-Z\s]+$').hasMatch(v.trim())) {
                           return l10n.lettersOnly;
+                        }
                         return null;
                       },
                     ),

@@ -884,7 +884,7 @@
   "allowance": "المصروف",
   "requestedAmount": "طلب مبلغ",
   "requestedMoney": "طلب مبلغاً مالياً",
-  "redeemedPrize": "قام باستبدال جائزة",
+  "redeemedPrize": "قام باستبدال جائزة قم بتنفيذها له حالا !",
   "completedTask": "أنهى مهمة",
   "walletTopUp": "شحن المحفظة",
   "moneyTransfer": "حوالة مالية",

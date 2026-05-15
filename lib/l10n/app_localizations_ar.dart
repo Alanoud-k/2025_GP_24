@@ -1947,7 +1947,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get requestedMoney => 'طلب مبلغاً مالياً';
 
   @override
-  String get redeemedPrize => 'قام باستبدال جائزة';
+  String get redeemedPrize => 'قام باستبدال جائزة قم بتنفيذها له حالا !';
 
   @override
   String get completedTask => 'أنهى مهمة';
