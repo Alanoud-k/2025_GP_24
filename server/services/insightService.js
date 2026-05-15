@@ -1385,8 +1385,7 @@ RULES:
 - Sound supportive and human.
 - Avoid generic advice like "budget more".
 - Do NOT repeat exact numbers unless necessary.
-- CRITICAL: DO NOT translate or transliterate names. Keep names EXACTLY as they appear in the data (e.g., if a name is in English, output it in English even if the response is in Arabic).
-
+- STRICT NAME RULE: Keep all names EXACTLY in their original English/Latin letters as they appear in quotes. DO NOT transliterate or translate them into Arabic letters under any circumstances. (Example: write "Rahaf", DO NOT write "رهاف" or "رهف").
 ${languageInstruction}
 
 Child data:
@@ -1410,8 +1409,7 @@ RULES:
 - Keep the response under 2 short sentences.
 - Maximum 25 words.
 - Sound professional but warm.
-- CRITICAL: DO NOT translate or transliterate names. Keep names EXACTLY as they appear in the data (e.g., if a name is in English, output it in English even if the response is in Arabic).
-
+- STRICT NAME RULE: Keep all names EXACTLY in their original English/Latin letters as they appear in quotes. DO NOT transliterate or translate them into Arabic letters under any circumstances. (Example: write "Rahaf", DO NOT write "رهاف" or "رهف").
 ${languageInstruction}
 
 Family data:
