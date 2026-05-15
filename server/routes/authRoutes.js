@@ -29,7 +29,6 @@ import {
 } from "../controllers/childController.js";
 
 import { transferMoney } from "../controllers/transferController.js";
-import { protect } from "../middleware/authMiddleware.js";
 import { updateChildLimit } from "../controllers/authController.js";
 import { changeParentPassword, changeChildPassword } from "../controllers/parentController.js";
 
