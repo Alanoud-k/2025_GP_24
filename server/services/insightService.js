@@ -1385,6 +1385,7 @@ RULES:
 - Sound supportive and human.
 - Avoid generic advice like "budget more".
 - Do NOT repeat exact numbers unless necessary.
+- CRITICAL: DO NOT translate or transliterate names. Keep names EXACTLY as they appear in the data (e.g., if a name is in English, output it in English even if the response is in Arabic).
 
 ${languageInstruction}
 
