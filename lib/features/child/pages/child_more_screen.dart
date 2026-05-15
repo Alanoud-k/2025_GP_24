@@ -387,7 +387,6 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
         ),
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(l10n.selectPhotoProof ?? "تغيير الصورة الشخصية", style: const TextStyle(fontWeight: FontWeight.bold)),
           content: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
