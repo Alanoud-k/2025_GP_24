@@ -194,10 +194,10 @@ class _ParentMoneyRequestsScreenState extends State<ParentMoneyRequestsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.moneyRequestTitle),
-        leading: IconButton(
-          icon: Icon(isRtl ? Icons.arrow_forward : Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading:  IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.black),
+                            onPressed: () => Navigator.pop(context),
+                          ),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,

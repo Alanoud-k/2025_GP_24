@@ -10,13 +10,13 @@ import 'package:my_app/l10n/app_localizations.dart';
 // Pages
 import '../pages/child_homepage_screen.dart';
 import '../pages/child_goals_screen.dart';
-import '../pages/child_rewards_screen.dart'; // مسار صفحة الجوائز الصحيح
+import '../pages/child_rewards_screen.dart'; 
 import '../pages/child_game_screen.dart';
 import '../pages/child_card_screen.dart';
 import '../pages/child_more_screen.dart';
 import '../pages/child_qr_scan_image_screen.dart';
 import '../pages/child_request_money_screen.dart'; 
-import 'child_bottom_nav_bar.dart'; // تأكد من استدعاء النافقيشن بار هنا
+import 'child_bottom_nav_bar.dart'; 
 
 class ChildShell extends StatefulWidget {
   final int childId;
@@ -35,7 +35,8 @@ class ChildShell extends StatefulWidget {
 }
 
 class _ChildShellState extends State<ChildShell> {
-  int currentIndex = 2; // الهوم بيج هي الافتراضية في المنتصف
+  // تم تغيير الرقم الافتراضي إلى 0 ليكون متطابقاً مع ترتيب الأب
+  int currentIndex = 0; 
 
   String childName = "Child User";
   String childPhone = "";
@@ -97,15 +98,13 @@ class _ChildShellState extends State<ChildShell> {
       );
     }
 
-    // هنا يتم ربط الصفحات بالأرقام
+    // هنا أعدنا الترتيب ليكون منطقياً ومتطابقاً مع تصميم الأب
     final List<Widget> pages = [
-      ChildMoreScreen(
+      ChildHomePageScreen(
         childId: widget.childId,
         token: widget.token,
         baseUrl: widget.baseUrl,
-        username: childName,
-        phoneNo: childPhone,
-      ), // الزر رقم 0: المزيد
+      ), // الزر رقم 0: الهوم بيج (الرئيسية في المنتصف)
       
       ChildQrScanImageScreen(
         childId: widget.childId,
@@ -113,23 +112,25 @@ class _ChildShellState extends State<ChildShell> {
         baseUrl: widget.baseUrl,
       ), // الزر رقم 1: الدفع
 
-      ChildHomePageScreen(
-        childId: widget.childId,
-        token: widget.token,
-        baseUrl: widget.baseUrl,
-      ), // الزر رقم 2: الهوم بيج (الرئيسية في المنتصف)
-
       ChildRequestMoneyScreen(
         childId: widget.childId,
         baseUrl: widget.baseUrl,
         token: widget.token,
-      ), // الزر رقم 3: طلب مبلغ
+      ), // الزر رقم 2: طلب مبلغ
 
       ChildRewardsScreen(
         childId: widget.childId,
         token: widget.token,
         baseUrl: widget.baseUrl,
-      ), // الزر رقم 4: الجوائز
+      ), // الزر رقم 3: الجوائز
+
+      ChildMoreScreen(
+        childId: widget.childId,
+        token: widget.token,
+        baseUrl: widget.baseUrl,
+        username: childName,
+        phoneNo: childPhone,
+      ), // الزر رقم 4: المزيد
     ];
 
     return Scaffold(

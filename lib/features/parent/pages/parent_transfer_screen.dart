@@ -682,7 +682,7 @@ class _ParentTransferScreenState extends State<ParentTransferScreen> {
                   elevation: 3,
                 ),
                 child: Text(
-                  l10n.continue_, 
+                  l10n.confirmBtn, 
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,

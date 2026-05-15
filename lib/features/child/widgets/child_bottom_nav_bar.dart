@@ -30,7 +30,7 @@ class ChildBottomNavBar extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          // خلفية الشريط بتصميم الأب
+          // خلفية الشريط
           PositionedDirectional(
             bottom: 0,
             start: 0,
@@ -52,21 +52,14 @@ class ChildBottomNavBar extends StatelessWidget {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28), // تطابق مع الأب
+                padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Row(
                   children: [
-                    // القسم الأيسر
+                    // القسم الأيمن في الشاشة (الذي سيظهر أولاً من اليمين في اللغة العربية)
                     Expanded(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _NavItem(
-                            asset: "assets/icons/More.svg",
-                            label: l10n.more,
-                            isSelected: currentIndex == 0,
-                            iconSize: iconSize,
-                            onTap: () => onTap(0),
-                          ),
                           _NavItem(
                             asset: "assets/icons/qr.svg",
                             label: l10n.pay,
@@ -74,25 +67,32 @@ class ChildBottomNavBar extends StatelessWidget {
                             iconSize: iconSize,
                             onTap: () => onTap(1),
                           ),
+                          _NavItem(
+                            iconData: Icons.payments_rounded,
+                            label: l10n.requestMoney,
+                            isSelected: currentIndex == 2,
+                            iconSize: iconSize,
+                            onTap: () => onTap(2),
+                          ),
                         ],
                       ),
                     ),
 
-                    // القسم الأيمن
+                    // القسم الأيسر في الشاشة (الذي سيظهر أخيراً من اليمين للغة العربية)
                     Expanded(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _NavItem(
-                            iconData: Icons.payments_rounded,
-                            label: l10n.requestMoney,
+                            iconData: Icons.emoji_events_rounded, // كأس البطولة
+                            label: l10n.prizes,
                             isSelected: currentIndex == 3,
                             iconSize: iconSize,
                             onTap: () => onTap(3),
                           ),
                           _NavItem(
-                            iconData: Icons.emoji_events_rounded, // كأس البطولة
-                            label: l10n.prizes,
+                            asset: "assets/icons/More.svg",
+                            label: l10n.more,
                             isSelected: currentIndex == 4,
                             iconSize: iconSize,
                             onTap: () => onTap(4),
@@ -106,11 +106,11 @@ class ChildBottomNavBar extends StatelessWidget {
             ),
           ),
 
-          // زر الهوم العائم (رقم 2)
+          // زر الهوم العائم (رقم 0)
           PositionedDirectional(
             top: 10,
             child: GestureDetector(
-              onTap: () => onTap(2),
+              onTap: () => onTap(0),
               child: Container(
                 width: homeOuter,
                 height: homeOuter,
@@ -130,7 +130,7 @@ class ChildBottomNavBar extends StatelessWidget {
                     width: homeInner,
                     height: homeInner,
                     decoration: BoxDecoration(
-                      color: currentIndex == 2 ? kPrimary : const Color(0xFFCCCCCC),
+                      color: currentIndex == 0 ? kPrimary : const Color(0xFFCCCCCC),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -177,7 +177,7 @@ class _NavItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 75, // زيادة العرض قليلاً لاستيعاب النصوص الطويلة مثل Request Money
+        width: 75,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -193,14 +193,14 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              maxLines: 2, // جعل النص ينزل لسطر ثاني إذا كان طويلاً
+              maxLines: 2, 
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: color,
-                height: 1.1, // تقليل المسافة بين السطرين ليكون الشكل أجمل
+                height: 1.1, 
               ),
             ),
           ],
