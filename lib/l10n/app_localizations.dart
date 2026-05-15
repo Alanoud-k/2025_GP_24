@@ -1190,6 +1190,18 @@ abstract class AppLocalizations {
   /// **'Target amount'**
   String get targetAmount;
 
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
   /// No description provided for @enterTarget.
   ///
   /// In en, this message translates to:

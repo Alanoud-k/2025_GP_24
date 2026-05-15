@@ -964,7 +964,8 @@
   "insight_title_total_spent": "إجمالي الإنفاق",
   "insight_msg_top_category_balanced": "الإنفاق متوازن عبر جميع التصنيفات",
   "insight_title_smart_insight": "نصائح ذكية",
-  
+  "camera": "الكاميرا",
+  "gallery": "المعرض",
   "insight_msg_recent_spending": "أنفق {name} مبلغ {amount} ريال مؤخراً",
   "@insight_msg_recent_spending": { "placeholders": { "name": { "type": "String" }, "amount": { "type": "String" } } },
   "insight_msg_top_spender": "كان {name} الأكثر إنفاقاً مؤخراً ({amount} ريال)",

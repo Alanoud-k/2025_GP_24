@@ -656,7 +656,8 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
     );
   }
 
-  // ✅ الملاحظة 4: توحيد الألوان للنافذة البيضاء والأخضر التركوازي
+// ✅ الملاحظة 4: تم تحديث النافذة لتدعم الكاميرا ومعرض الصور معاً
+  // ✅ الملاحظة 4: تم تحديث النافذة لتدعم الكاميرا ومعرض الصور معاً (مع إصلاح الترجمة والأقواس)
   void _showCompletionDialog(ChoreModel chore) {
     final l10n = AppLocalizations.of(context)!;
     File? selectedImage;
@@ -679,31 +680,63 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
                 children: [
                   Text(l10n.selectPhotoProof),
                   const SizedBox(height: 15),
-                  GestureDetector(
-                    onTap: () async {
-                      final picked = await picker.pickImage(source: ImageSource.gallery);
-                      if (picked != null) setStateDialog(() => selectedImage = File(picked.path));
-                    },
-                    child: Container(
-                      height: 150,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: hassalaGreen1.withOpacity(0.5), width: 1.5), // ✅ إطار أخضر
-                        image: selectedImage != null ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover) : null
-                      ),
-                      child: selectedImage == null 
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.photo_library, size: 40, color: hassalaGreen1),
-                              const SizedBox(height: 8),
-                              Text(l10n.tapToOpenGallery, style: const TextStyle(color: hassalaGreen1, fontWeight: FontWeight.bold)),
-                            ],
-                          )
-                        : null,
+                  Container(
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: hassalaGreen1.withOpacity(0.5), width: 1.5), 
+                      image: selectedImage != null ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover) : null
                     ),
+                    child: selectedImage == null 
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // 📸 خيار الكاميرا
+                            InkWell(
+                              onTap: () async {
+                                final picked = await picker.pickImage(source: ImageSource.camera);
+                                if (picked != null) setStateDialog(() => selectedImage = File(picked.path));
+                              },
+                              child: Column( // تمت إزالة const من هنا
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.camera_alt, size: 40, color: hassalaGreen1), // وضعناها هنا
+                                  const SizedBox(height: 8), // و هنا
+                                  Text(l10n.camera, style: const TextStyle(color: hassalaGreen1, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            
+                            // فاصل رأسي لتجميل التصميم
+                            Container(width: 1, height: 60, color: hassalaGreen1.withOpacity(0.3)),
+
+                            // 🖼️ خيار المعرض
+                            InkWell(
+                              onTap: () async {
+                                final picked = await picker.pickImage(source: ImageSource.gallery);
+                                if (picked != null) setStateDialog(() => selectedImage = File(picked.path));
+                              },
+                              child: Column( // تمت إزالة const من هنا
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.photo_library, size: 40, color: hassalaGreen1), // وضعناها هنا
+                                  const SizedBox(height: 8), // و هنا
+                                  Text(l10n.gallery, style: const TextStyle(color: hassalaGreen1, fontWeight: FontWeight.bold)),
+                                ], // تمت إضافة القوس المفقود هنا ✅
+                              ),
+                            ),
+                          ],
+                        )
+                      // ❌ زر لحذف الصورة في حال أراد المستخدم تغييرها
+                      : Align(
+                          alignment: AlignmentDirectional.topEnd,
+                          child: IconButton(
+                            icon: const Icon(Icons.cancel, color: Colors.red, size: 28),
+                            onPressed: () => setStateDialog(() => selectedImage = null), // يفرغ الصورة ليعود لخيارات الالتقاط
+                          ),
+                        ),
                   ),
                 ],
               ),

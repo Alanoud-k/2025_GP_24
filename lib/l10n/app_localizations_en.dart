@@ -569,6 +569,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get targetAmount => 'Target amount';
 
   @override
+  String get camera => 'Camera';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
   String get enterTarget => 'Enter target';
 
   @override

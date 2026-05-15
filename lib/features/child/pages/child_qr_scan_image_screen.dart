@@ -68,7 +68,8 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
     return '$y-$m-$day $h:$min';
   }
 
-  Future<void> _pickAndScan() async {
+// أضفنا ImageSource source كـ Parameter للدالة
+  Future<void> _pickAndScan(ImageSource source) async {
     final l10n = AppLocalizations.of(context)!;
     setState(() {
       _error = null;
@@ -76,7 +77,8 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
     });
 
     try {
-      final file = await _picker.pickImage(source: ImageSource.gallery);
+      // نستخدم المصدر الممرر للدالة بدلاً من الاستوديو فقط
+      final file = await _picker.pickImage(source: source);
 
       if (file == null) {
         setState(() => _loading = false);
@@ -557,27 +559,51 @@ class _ChildQrScanImageScreenState extends State<ChildQrScanImageScreen> {
                               ),
                               const SizedBox(height: 22),
                               // تم إرجاع الزر كما كان لإضافة الصورة من الاستوديو فقط
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: (_loading || _creatingQr)
-                                      ? null
-                                      : _pickAndScan,
-                                  icon: const Icon(Icons.image_outlined),
-                                  label: Text(
-                                    _loading ? l10n.scanning : l10n.chooseQrImage,
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primary,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
+                       // أزرار اختيار الكاميرا أو المعرض
+                              Row(
+                                children: [
+                                  // زر الكاميرا
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: (_loading || _creatingQr)
+                                          ? null
+                                          : () => _pickAndScan(ImageSource.camera),
+                                      icon: const Icon(Icons.camera_alt_outlined),
+                                      label: Text(
+                                        _loading ? l10n.scanning : l10n.camera,
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(18),
+                                        ),
+                                      ),
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // زر المعرض
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: (_loading || _creatingQr)
+                                          ? null
+                                          : () => _pickAndScan(ImageSource.gallery),
+                                      icon: const Icon(Icons.photo_library_outlined),
+                                     label: Text(
+                                        _loading ? l10n.scanning : l10n.gallery,
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(18),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
                             ],
                             if (_error != null) ...[

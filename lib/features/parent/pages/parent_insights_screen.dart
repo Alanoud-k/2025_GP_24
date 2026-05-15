@@ -464,8 +464,6 @@ if (_chartData.isNotEmpty) ...[
       ? _buildBarChart(textColor) 
       : _buildPieChart(l10n, textColor),
   
-  const SizedBox(height: 40),
-  Text(l10n.details, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
   const SizedBox(height: 16),
                       const SizedBox(height: 40),
                       Text(l10n.details, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),

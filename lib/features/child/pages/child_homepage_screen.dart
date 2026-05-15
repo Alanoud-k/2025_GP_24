@@ -115,15 +115,27 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
           Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
         return;
       }
-      if (response.statusCode == 200) {
+   if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         double _toDouble(dynamic v) =>
             (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
+        
+        // --- التعديل هنا ---
+        final prefs = await SharedPreferences.getInstance();
+        String fetchedAvatar = data['avatar'] ?? data['avatarurl'] ?? ''; // تأكد من اسم الحقل القادم من الباك اند
+        if (fetchedAvatar.isNotEmpty) {
+           await prefs.setString('child_avatar_url_${widget.childId}', fetchedAvatar);
+        } else {
+           fetchedAvatar = prefs.getString('child_avatar_url_${widget.childId}') ?? '';
+        }
+        // ------------------
+
         setState(() {
           childName = data['firstName'] ?? '';
           spendBalance = _toDouble(data['spend']);
           savingBalance = _toDouble(data['saving']);
           currentPoints = data['rewardKeys'] ?? 0;
+          avatarUrl = fetchedAvatar.isNotEmpty ? fetchedAvatar : null; // ربط المتغير
           _loading = false;
         });
       } else {
@@ -375,10 +387,15 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Row(
             children: [
-              const CircleAvatar(
+               CircleAvatar(
                 radius: 24,
-                backgroundColor: Colors.grey,
-                child: Icon(Icons.person, size: 26, color: Colors.white),
+                backgroundColor: Colors.grey.shade400,
+                backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
+                    ? NetworkImage("${widget.baseUrl}$avatarUrl")
+                    : null,
+                child: (avatarUrl == null || avatarUrl!.isEmpty)
+                    ? const Icon(Icons.person, size: 26, color: Colors.white)
+                    : null,
               ),
               const SizedBox(width: 10),
               Expanded(

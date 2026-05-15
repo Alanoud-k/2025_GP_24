@@ -1,7 +1,12 @@
 // server/routes/authRoutes.js  (ESM)
 
 import express from "express";
-//import { uploadAvatar } from "../middleware/uploadAvatar.js";
+import cloudinary from "../cloudinary.js"; // تأكدي أن مسار cloudinary صحيح لديكِ
+
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary"; 
+import { protect } from "../middleware/authMiddleware.js";
+import { updateChildAvatar } from "../controllers/authController.js"; // قم بتعديل المسار حسب ملفك
 
 import {
   checkUser,
@@ -60,5 +65,20 @@ router.post("/transfer", protect, transferMoney);
   //uploadAvatar.single("avatar"),
   //updateChildAvatar
 //);
+
+// ✅ إعداد التخزين على Cloudinary للصور الشخصية (Avatar)
+const avatarStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'hassalah_avatars', // 👈 مجلد منفصل للصور الشخصية للترتيب
+    allowed_formats: ['jpg', 'png', 'jpeg'],
+  },
+});
+
+const uploadAvatar = multer({ storage: avatarStorage });
+
+// --- مسار رفع وتحديث الصورة الشخصية ---
+// لاحظ أننا نستخدم uploadAvatar.single('avatar') لأننا في فلاتر سمينا الحقل 'avatar'
+router.post("/child/avatar/:childId", protect, uploadAvatar.single('avatar'), updateChildAvatar);
 
 export default router;

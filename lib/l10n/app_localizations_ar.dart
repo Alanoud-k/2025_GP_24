@@ -566,6 +566,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get targetAmount => 'المبلغ المستهدف';
 
   @override
+  String get camera => 'الكاميرا';
+
+  @override
+  String get gallery => 'المعرض';
+
+  @override
   String get enterTarget => 'أدخل المبلغ المستهدف';
 
   @override

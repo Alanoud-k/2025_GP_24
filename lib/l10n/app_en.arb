@@ -196,6 +196,8 @@
   "errGoalNotFound": "This goal no longer exists.",
   "editGoal": "Edit goal",
   "targetAmount": "Target amount",
+  "camera": "Camera",
+  "gallery": "Gallery",
   "enterTarget": "Enter target",
   "targetMustBeGreater": "Target must be ≥ saved amount",
   "saveBtn": "Save",

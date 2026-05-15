@@ -655,3 +655,40 @@ export const updateChildLimit = async (req, res) => {
   }
 };
 
+
+// دالة تحديث الصورة الشخصية للطفل
+export const updateChildAvatar = async (req, res) => {
+  const { childId } = req.params;
+  
+  // التأكد من وصول الملف من Cloudinary
+  if (!req.file) {
+    return res.status(400).json({ error: "لم يتم إرفاق صورة." });
+  }
+
+  // رابط الصورة المرفوعة على Cloudinary
+  const avatarUrl = req.file.path; 
+
+  try {
+    // تحديث حقل avatarurl في جدول Child (حسب اسم الحقل لديك في Neon)
+    const updated = await sql`
+      UPDATE "Child" 
+      SET "avatarurl" = ${avatarUrl}
+      WHERE "childid" = ${childId} 
+      RETURNING "avatarurl"
+    `;
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: "لم يتم العثور على الطفل." });
+    }
+
+    // إرجاع الرابط الجديد للفرونت اند لكي يحفظه ويعرضه
+    return res.json({ 
+      message: "تم تحديث الصورة الشخصية بنجاح", 
+      avatarUrl: updated[0].avatarurl 
+    });
+  } catch (err) {
+    console.error("❌ Error updating avatar:", err);
+    return res.status(500).json({ error: "فشل في تحديث الصورة الشخصية" });
+  }
+};
+
