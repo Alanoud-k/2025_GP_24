@@ -1410,6 +1410,7 @@ RULES:
 - Keep the response under 2 short sentences.
 - Maximum 25 words.
 - Sound professional but warm.
+- CRITICAL: DO NOT translate or transliterate names. Keep names EXACTLY as they appear in the data (e.g., if a name is in English, output it in English even if the response is in Arabic).
 
 ${languageInstruction}
 
