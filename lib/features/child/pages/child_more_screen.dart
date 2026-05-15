@@ -435,7 +435,7 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
       // تحديث: ضع الرابط الصحيح للباك اند الخاص برفع صورة الطفل هنا
        final uri = Uri.parse('${widget.baseUrl}/api/auth/child/avatar/${widget.childId}');      var request = http.MultipartRequest('POST', uri)
         ..headers.addAll({'Authorization': 'Bearer ${widget.token}'})
-        ..files.add(await http.MultipartFile.fromPath('avatarurl', image.path)); // تأكد أن اسم الحقل 'avatar' يطابق الباك اند
+        ..files.add(await http.MultipartFile.fromPath('avatar', image.path)); // تأكد أن اسم الحقل 'avatar' يطابق الباك اند
 
       var response = await request.send();
       
@@ -554,13 +554,13 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                CircleAvatar(
+                            CircleAvatar(
                                   radius: 35,
                                   backgroundColor: Colors.teal,
                                   backgroundImage: _localAvatar != null
                                       ? FileImage(_localAvatar!) as ImageProvider
                                       : (_savedAvatarUrl != null && _savedAvatarUrl!.isNotEmpty
-                                          ? NetworkImage("${widget.baseUrl}$_savedAvatarUrl")
+                                          ? NetworkImage(_savedAvatarUrl!.startsWith('http') ? _savedAvatarUrl! : "${widget.baseUrl}$_savedAvatarUrl")
                                           : null),
                                   child: _localAvatar == null && (_savedAvatarUrl == null || _savedAvatarUrl!.isEmpty)
                                       ? const Icon(Icons.person, size: 32, color: Colors.white)

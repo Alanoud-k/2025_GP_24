@@ -120,9 +120,10 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         double _toDouble(dynamic v) =>
             (v is num) ? v.toDouble() : (double.tryParse(v.toString()) ?? 0.0);
         
-        // --- التعديل هنا ---
+       // --- التعديل هنا ---
         final prefs = await SharedPreferences.getInstance();
-        String fetchedAvatar = data['avatar'] ?? data['avatarurl'] ?? ''; // تأكد من اسم الحقل القادم من الباك اند
+        // تأكدنا من تغطية كل الأسماء المحتملة القادمة من الباك اند
+        String fetchedAvatar = data['avatarUrl'] ?? data['avatarurl'] ?? data['avatar'] ?? ''; 
         if (fetchedAvatar.isNotEmpty) {
            await prefs.setString('child_avatar_url_${widget.childId}', fetchedAvatar);
         } else {
@@ -387,11 +388,11 @@ class _ChildHomePageScreenState extends State<ChildHomePageScreen> {
         Expanded(
           child: Row(
             children: [
-               CircleAvatar(
+           CircleAvatar(
                 radius: 24,
                 backgroundColor: Colors.grey.shade400,
                 backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
-                    ? NetworkImage("${widget.baseUrl}$avatarUrl")
+                    ? NetworkImage(avatarUrl!.startsWith('http') ? avatarUrl! : "${widget.baseUrl}$avatarUrl")
                     : null,
                 child: (avatarUrl == null || avatarUrl!.isEmpty)
                     ? const Icon(Icons.person, size: 26, color: Colors.white)
