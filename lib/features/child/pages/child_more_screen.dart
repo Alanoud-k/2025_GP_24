@@ -476,7 +476,15 @@ class _ChildMoreScreenState extends State<ChildMoreScreen> {
   // ---------------------------------------------------------
   void _performLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    
+    // 🛑 امسح هذا السطر: 
+    // await prefs.clear();
+    
+    // ✅ استخدم هذا السطر لمسح بيانات الجلسة فقط (حافظ على الجولة والصور واللغة):
+    await prefs.remove('token');
+    await prefs.remove('childId'); 
+    await prefs.remove('role'); // إذا كنت تستخدم role لتحديد نوع الحساب
+    
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);
   }

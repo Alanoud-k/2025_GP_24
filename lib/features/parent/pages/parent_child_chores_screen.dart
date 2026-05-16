@@ -731,6 +731,26 @@ class _ParentChildChoresScreenState extends State<ParentChildChoresScreen>
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                        )
+                      else
+                        Container(
+                          margin: const EdgeInsetsDirectional.only(start: 6),
+                          padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.shade50,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            l10n.oneTime, // أو المتغير الخاص بمرة واحدة
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.purple,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       if (isActive && !isSubmitted) ...[
                         const SizedBox(width: 8),

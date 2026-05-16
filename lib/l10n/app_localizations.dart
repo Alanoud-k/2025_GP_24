@@ -4117,6 +4117,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Spending decreased by {percentage}% compared to last week'**
   String insight_msg_trend_decreased_percent(String percentage);
+
+  /// No description provided for @tour_wallet_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Balance 💰'**
+  String get tour_wallet_title;
+
+  /// No description provided for @tour_wallet_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your smart wallet! Here you can see your total parent balance, ready for your control and family budget monitoring.'**
+  String get tour_wallet_body;
+
+  /// No description provided for @tour_add_card_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Card 💳'**
+  String get tour_add_card_title;
+
+  /// No description provided for @tour_add_card_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first step to easy top-ups! Link your credit or debit card securely to fund your account anytime. 🔒'**
+  String get tour_add_card_body;
+
+  /// No description provided for @tour_add_money_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Money 💵'**
+  String get tour_add_money_title;
+
+  /// No description provided for @tour_add_money_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up in a flash! Add funds to your wallet and start the financial literacy journey with your family. 🚀'**
+  String get tour_add_money_body;
+
+  /// No description provided for @tour_notifications_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications 🔔'**
+  String get tour_notifications_title;
+
+  /// No description provided for @tour_notifications_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your smart bell! Keeps you fully updated with your kids\' monetary requests or completed chores waiting review. 👀'**
+  String get tour_notifications_body;
+
+  /// No description provided for @tour_my_children_title.
+  ///
+  /// In en, this message translates to:
+  /// **'My Children'**
+  String get tour_my_children_title;
+
+  /// No description provided for @tour_my_children_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your little heroes\' hub! Add your children, monitor their personal wallets, and track their savings progress. 🎉'**
+  String get tour_my_children_body;
+
+  /// No description provided for @tour_insights_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending Insights 📈'**
+  String get tour_insights_title;
+
+  /// No description provided for @tour_insights_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your smart financial advisor! Get beautifully detailed charts to deeply understand your family\'s spending habits. 📊'**
+  String get tour_insights_body;
+
+  /// No description provided for @tour_allowance_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular Allowance 🗓️'**
+  String get tour_allowance_title;
+
+  /// No description provided for @tour_allowance_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Effortless regular allowance! Set up allowances (whether weekly or monthly) and automate their saving/spending splits completely. 🔄'**
+  String get tour_allowance_body;
+
+  /// No description provided for @tour_transactions_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions 📝'**
+  String get tour_transactions_title;
+
+  /// No description provided for @tour_transactions_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Full transparency ledger! Every wallet deposit, top-up, or transfer is securely listed here for accurate tracking. 🔍'**
+  String get tour_transactions_body;
+
+  /// No description provided for @tour_nav_bar_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation Bar 🗺️'**
+  String get tour_nav_bar_title;
+
+  /// No description provided for @tour_nav_bar_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your magic navigation gateway! Seamlessly jump between active family chores, instant fund transfers, reward catalogs, and more! 🚀'**
+  String get tour_nav_bar_body;
+
+  /// No description provided for @tour_button_skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tour_button_skip;
+
+  /// No description provided for @tour_chores_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Chores & Tasks 🧹'**
+  String get tour_chores_title;
+
+  /// No description provided for @tour_chores_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign daily or weekly chores to your kids and reward them with keys once they are done!'**
+  String get tour_chores_body;
+
+  /// No description provided for @tour_transfer_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant Transfer 💸'**
+  String get tour_transfer_title;
+
+  /// No description provided for @tour_transfer_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Want to send a gift or extra money? Transfer funds to your kids\' wallets instantly. 🚀'**
+  String get tour_transfer_body;
+
+  /// No description provided for @tour_rewards_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards Store 🎁'**
+  String get tour_rewards_title;
+
+  /// No description provided for @tour_rewards_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Create excitement! Set up fun rewards (like trips or gifts) your kids can redeem with their earned keys. 🏆'**
+  String get tour_rewards_body;
+
+  /// No description provided for @tour_more_title.
+  ///
+  /// In en, this message translates to:
+  /// **'More Control ⚙️'**
+  String get tour_more_title;
+
+  /// No description provided for @tour_more_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Account settings, security, language options, and all extra features are right here. 🛠️'**
+  String get tour_more_body;
+
+  /// No description provided for @tour_child_welcome_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome, Hero! 👋'**
+  String get tour_child_welcome_title;
+
+  /// No description provided for @tour_child_welcome_body.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your personal space in Hassalah. Here you will learn how to manage your money and become financially smart! '**
+  String get tour_child_welcome_body;
+
+  /// No description provided for @tour_child_spend_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending Balance 🛍️'**
+  String get tour_child_spend_title;
+
+  /// No description provided for @tour_child_spend_body.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the money you can spend on things you love. Spend wisely! '**
+  String get tour_child_spend_body;
+
+  /// No description provided for @tour_child_save_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings Balance 🏦'**
+  String get tour_child_save_title;
+
+  /// No description provided for @tour_child_save_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Here is your \"Secret Vault\"! The money you save for your big plans and future goals. 🚀'**
+  String get tour_child_save_body;
+
+  /// No description provided for @tour_child_keys_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievement Keys 🔑'**
+  String get tour_child_keys_title;
+
+  /// No description provided for @tour_child_keys_body.
+  ///
+  /// In en, this message translates to:
+  /// **'The more chores you complete, the more keys you collect! You can exchange them for awesome rewards later. 🏆'**
+  String get tour_child_keys_body;
+
+  /// No description provided for @tour_child_insights_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Tips 💡'**
+  String get tour_child_insights_title;
+
+  /// No description provided for @tour_child_insights_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Here, Hassalah gives you tips and encouraging messages to show how much you are improving in saving. 👀'**
+  String get tour_child_insights_body;
+
+  /// No description provided for @tour_child_chores_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Daily Chores ✅'**
+  String get tour_child_chores_title;
+
+  /// No description provided for @tour_child_chores_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter here to see the chores your parents assigned to you. Finish them and claim your reward! 💪'**
+  String get tour_child_chores_body;
+
+  /// No description provided for @tour_child_goals_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Goals & Dreams 🎯'**
+  String get tour_child_goals_title;
+
+  /// No description provided for @tour_child_goals_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Want to buy a bike? A PlayStation? Set your goal here and track how close you are to reaching it. 🏁'**
+  String get tour_child_goals_body;
+
+  /// No description provided for @tour_child_chart_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Spending Map 📊'**
+  String get tour_child_chart_title;
+
+  /// No description provided for @tour_child_chart_body.
+  ///
+  /// In en, this message translates to:
+  /// **'An awesome chart showing where your money went (Food, Games, Shopping) so you know your budget well. 🔍'**
+  String get tour_child_chart_body;
+
+  /// No description provided for @tour_child_nav_pay_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay in a Flash 🤳'**
+  String get tour_child_nav_pay_title;
+
+  /// No description provided for @tour_child_nav_pay_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Easily scan the store\'s code and pay directly from your phone without cash! ⚡'**
+  String get tour_child_nav_pay_body;
+
+  /// No description provided for @tour_child_nav_request_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Money 💸'**
+  String get tour_child_nav_request_title;
+
+  /// No description provided for @tour_child_nav_request_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of pocket money? You can request extra funds from your parents here and write them a nice message. '**
+  String get tour_child_nav_request_body;
+
+  /// No description provided for @tour_child_nav_prizes_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards Store 🎁'**
+  String get tour_child_nav_prizes_title;
+
+  /// No description provided for @tour_child_nav_prizes_body.
+  ///
+  /// In en, this message translates to:
+  /// **'The favorite place! Here you find the rewards your parents set up. Exchange your keys and enjoy your prize. 🎉'**
+  String get tour_child_nav_prizes_body;
 }
 
 class _AppLocalizationsDelegate

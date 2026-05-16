@@ -863,6 +863,13 @@ class _ChildChoresScreenState extends State<ChildChoresScreen> with SingleTicker
                 decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
                 child: Text(l10n.weekly, style: const TextStyle(fontSize: 10, color: Colors.blue)),
               ),
+            ] else ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsetsDirectional.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: Colors.purple.shade50, borderRadius: BorderRadius.circular(4)),
+                child: Text(l10n.oneTime, style: const TextStyle(fontSize: 10, color: Colors.purple)),
+              ),
             ]
           ],
         ),

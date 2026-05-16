@@ -2157,4 +2157,175 @@ class AppLocalizationsAr extends AppLocalizations {
   String insight_msg_trend_decreased_percent(String percentage) {
     return 'انخفض الإنفاق بنسبة $percentage% مقارنة بالأسبوع الماضي';
   }
+
+  @override
+  String get tour_wallet_title => 'الرصيد الإجمالي 💰';
+
+  @override
+  String get tour_wallet_body =>
+      'محفظتك الذكية الأمان كله هنا! هنا تشوف رصيدك الإجمالي المتوفر وجاهز للتحكم ومتابعة مصروفات عائلتك.';
+
+  @override
+  String get tour_add_card_title => 'إضافة بطاقة 💳';
+
+  @override
+  String get tour_add_card_body =>
+      'خطوتك الأولى لتسهيل الشحن! اربط بطاقتك البنكية بأمان لتعبئة محفظتك الذكية في أي وقت وبكل سلاسة. 🔒';
+
+  @override
+  String get tour_add_money_title => 'إضافة رصيد 💵';
+
+  @override
+  String get tour_add_money_body =>
+      'اشحن محفظتك بلمحة! من هنا تقدر تضيف أموال لحسابك وتبدأ رحلة تعزيز الوعي المالي مع عائلتك. 🚀';
+
+  @override
+  String get tour_notifications_title => 'الإشعارات 🔔';
+
+  @override
+  String get tour_notifications_body =>
+      'جرس التنبيهات الذكي! يخليك دايماً على اطلاع أول بأول بطلبات أطفالك المالية أو المهام اللي أنجزوها ومستنية مراجعتك. 👀';
+
+  @override
+  String get tour_my_children_title => 'أطفالي';
+
+  @override
+  String get tour_my_children_body =>
+      'ساحة أبطالك الصغار! من هنا تضيف أطفالك، وتتابع محافظهم الخاصة وتطور ادخارهم وتقسيم مصروفاتهم بسهولة. 🎉';
+
+  @override
+  String get tour_insights_title => 'تحليل المصروفات 📈';
+
+  @override
+  String get tour_insights_body =>
+      'مستشارك المالي الذكي! يعطيك تقارير ورسوماً بيانية تفصيلية تفهم منها عادات صرف العائلة والتحليلات الذكية. 📊';
+
+  @override
+  String get tour_allowance_title => 'المصروف الدوري 🗓️';
+
+  @override
+  String get tour_allowance_body =>
+      'المصروف الدوري بدون عناء! رتّب مصروف أطفالك (سواءً كان أسبوعي أو شهري) وتأكد من تقسيم أموالهم تلقائياً بين الادخار والإنفاق. 🔄';
+
+  @override
+  String get tour_transactions_title => 'المعاملات 📝';
+
+  @override
+  String get tour_transactions_body =>
+      'سجل الشفافية الكاملة! كل عملية إيداع، شحن، أو تحويل للأبناء مسجلة هنا بالتفصيل لضمان المتابعة الدقيقة. 🔍';
+
+  @override
+  String get tour_nav_bar_title => 'شريط التنقل السفلي 🗺️';
+
+  @override
+  String get tour_nav_bar_body =>
+      'بوابتك السحرية للتنقل! استخدم هذا الشريط للانتقال السريع بين إدارة مهام العائلة، التحويلات الفورية، الجوائز والمزيد! 🚀';
+
+  @override
+  String get tour_button_skip => 'تخطي';
+
+  @override
+  String get tour_chores_title => 'المهام والمسؤوليات 🧹';
+
+  @override
+  String get tour_chores_body =>
+      'من هنا تقدر تضيف مهام يومية أو أسبوعية لأطفالك، وتكافئهم عليها بالمفاتيح لما يخلصونها!';
+
+  @override
+  String get tour_transfer_title => 'التحويل الفوري 💸';
+
+  @override
+  String get tour_transfer_body =>
+      'تبي تحول بسرعة أو مصروف إضافي؟ بضغطة زر تقدر تحول المبالغ لمحفظة أطفالك فوراً . 🚀';
+
+  @override
+  String get tour_rewards_title => 'متجر المكافآت 🎁';
+
+  @override
+  String get tour_rewards_body =>
+      'هنا تصنع الحماس! أنشئ جوائز ممتعة (مثل رحلة أو هدية) يقدر أطفالك يستبدلونها بمفاتيحهم اللي جمعوها. 🏆';
+
+  @override
+  String get tour_more_title => 'المزيد من التحكم ⚙️';
+
+  @override
+  String get tour_more_body =>
+      'إعدادات الحساب، الأمان، تغيير اللغة، وكل الخصائص الإضافية تلاقيها هنا في مكان واحد. 🛠️';
+
+  @override
+  String get tour_child_welcome_title => 'أهلاً يا بطل! 👋';
+
+  @override
+  String get tour_child_welcome_body =>
+      'هذي مساحتك الخاصة في حصالة، هنا تتعلم كيف تدير فلوسك وتصير ذكي مالياً! ';
+
+  @override
+  String get tour_child_spend_title => 'رصيد المصروف 🛍️';
+
+  @override
+  String get tour_child_spend_body =>
+      'هنا الفلوس اللي تقدر تصرفها وتشتري فيها الأشياء اللي تحبها. اصرف بذكاء! ';
+
+  @override
+  String get tour_child_save_title => 'رصيد المدخرات 🏦';
+
+  @override
+  String get tour_child_save_body =>
+      'هنا \"خزنتك السرية\"! الفلوس اللي تجمعها لخططك الكبيرة وأهدافك المستقبلية. 🚀';
+
+  @override
+  String get tour_child_keys_title => 'مفاتيح الإنجاز 🔑';
+
+  @override
+  String get tour_child_keys_body =>
+      'كل ما خلصت مهام أكثر، جمعت مفاتيح أكثر! تقدر تبدلها بجوائز رهيبة بعدين. 🏆';
+
+  @override
+  String get tour_child_insights_title => 'نصائح ذكية 💡';
+
+  @override
+  String get tour_child_insights_body =>
+      'هنا حصالة تعطيك نصائح ورسائل تشجعك وتوريك كيف قاعد تتطور في الادخار. 👀';
+
+  @override
+  String get tour_child_chores_title => 'مهماتك اليومية ✅';
+
+  @override
+  String get tour_child_chores_body =>
+      'ادخل هنا وشوف وش المهام اللي طلبها منك بابا أو ماما، خلصها وخذ مكافئتك! 💪';
+
+  @override
+  String get tour_child_goals_title => 'أهدافك وطموحاتك 🎯';
+
+  @override
+  String get tour_child_goals_body =>
+      'تبي تشتري سيكل؟ بلايستيشن؟ حدد هدفك هنا وتابع كم بقى لك وتوصل له. 🏁';
+
+  @override
+  String get tour_child_chart_title => 'خريطة مصاريفك 📊';
+
+  @override
+  String get tour_child_chart_body =>
+      'رسم بياني رهيب يوريك وين راحت فلوسك (أكل، ألعاب، تسوق) عشان تعرف ميزانيتك صح. 🔍';
+
+  @override
+  String get tour_child_nav_pay_title => 'ادفع بلمحة 🤳';
+
+  @override
+  String get tour_child_nav_pay_body =>
+      'بكل سهولة امسح كود المتجر وادفع من جوالك مباشرة بدون كاش! ⚡';
+
+  @override
+  String get tour_child_nav_request_title => 'طلب مبلغ 💸';
+
+  @override
+  String get tour_child_nav_request_body =>
+      'خلص مصروفك؟ تقدر تطلب مبلغ إضافي من أهلك من هنا وتكتب لهم رسالة لطيفة. ';
+
+  @override
+  String get tour_child_nav_prizes_title => 'متجر الجوائز 🎁';
+
+  @override
+  String get tour_child_nav_prizes_body =>
+      'المكان المفضل! هنا تلاقي الجوائز اللي حطوها أهلك، استبدل مفاتيحك واستمتع بجائزتك. 🎉';
 }

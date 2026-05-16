@@ -1377,8 +1377,7 @@ class _GoalInsightsState extends State<_GoalInsights> {
   }
 
   Widget _buildInsightText(String message) {
-    final parts = message.split("SAR");
-    const textStyle = TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800, height: 1.35);
+  final parts = message.split(RegExp(r'\s*(SAR|ريال|ر\.س)\s*', caseSensitive: false));    const textStyle = TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800, height: 1.35);
 
     if (parts.length == 1) return Text(message, maxLines: 4, overflow: TextOverflow.ellipsis, style: textStyle);
 

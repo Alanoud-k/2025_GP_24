@@ -49,7 +49,9 @@ class _MorePageState extends State<MorePage> {
 
   Future<void> _forceLogout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    //await prefs.clear();
+    await prefs.remove('token');
+   await prefs.remove('parentId');
 
     if (mounted) {
       Navigator.pushNamedAndRemoveUntil(context, '/mobile', (_) => false);

@@ -2172,4 +2172,175 @@ class AppLocalizationsEn extends AppLocalizations {
   String insight_msg_trend_decreased_percent(String percentage) {
     return 'Spending decreased by $percentage% compared to last week';
   }
+
+  @override
+  String get tour_wallet_title => 'Total Balance 💰';
+
+  @override
+  String get tour_wallet_body =>
+      'Your smart wallet! Here you can see your total parent balance, ready for your control and family budget monitoring.';
+
+  @override
+  String get tour_add_card_title => 'Add Card 💳';
+
+  @override
+  String get tour_add_card_body =>
+      'Your first step to easy top-ups! Link your credit or debit card securely to fund your account anytime. 🔒';
+
+  @override
+  String get tour_add_money_title => 'Add Money 💵';
+
+  @override
+  String get tour_add_money_body =>
+      'Top up in a flash! Add funds to your wallet and start the financial literacy journey with your family. 🚀';
+
+  @override
+  String get tour_notifications_title => 'Notifications 🔔';
+
+  @override
+  String get tour_notifications_body =>
+      'Your smart bell! Keeps you fully updated with your kids\' monetary requests or completed chores waiting review. 👀';
+
+  @override
+  String get tour_my_children_title => 'My Children';
+
+  @override
+  String get tour_my_children_body =>
+      'Your little heroes\' hub! Add your children, monitor their personal wallets, and track their savings progress. 🎉';
+
+  @override
+  String get tour_insights_title => 'Spending Insights 📈';
+
+  @override
+  String get tour_insights_body =>
+      'Your smart financial advisor! Get beautifully detailed charts to deeply understand your family\'s spending habits. 📊';
+
+  @override
+  String get tour_allowance_title => 'Regular Allowance 🗓️';
+
+  @override
+  String get tour_allowance_body =>
+      'Effortless regular allowance! Set up allowances (whether weekly or monthly) and automate their saving/spending splits completely. 🔄';
+
+  @override
+  String get tour_transactions_title => 'Transactions 📝';
+
+  @override
+  String get tour_transactions_body =>
+      'Full transparency ledger! Every wallet deposit, top-up, or transfer is securely listed here for accurate tracking. 🔍';
+
+  @override
+  String get tour_nav_bar_title => 'Navigation Bar 🗺️';
+
+  @override
+  String get tour_nav_bar_body =>
+      'Your magic navigation gateway! Seamlessly jump between active family chores, instant fund transfers, reward catalogs, and more! 🚀';
+
+  @override
+  String get tour_button_skip => 'Skip';
+
+  @override
+  String get tour_chores_title => 'Chores & Tasks 🧹';
+
+  @override
+  String get tour_chores_body =>
+      'Assign daily or weekly chores to your kids and reward them with keys once they are done!';
+
+  @override
+  String get tour_transfer_title => 'Instant Transfer 💸';
+
+  @override
+  String get tour_transfer_body =>
+      'Want to send a gift or extra money? Transfer funds to your kids\' wallets instantly. 🚀';
+
+  @override
+  String get tour_rewards_title => 'Rewards Store 🎁';
+
+  @override
+  String get tour_rewards_body =>
+      'Create excitement! Set up fun rewards (like trips or gifts) your kids can redeem with their earned keys. 🏆';
+
+  @override
+  String get tour_more_title => 'More Control ⚙️';
+
+  @override
+  String get tour_more_body =>
+      'Account settings, security, language options, and all extra features are right here. 🛠️';
+
+  @override
+  String get tour_child_welcome_title => 'Welcome, Hero! 👋';
+
+  @override
+  String get tour_child_welcome_body =>
+      'This is your personal space in Hassalah. Here you will learn how to manage your money and become financially smart! ';
+
+  @override
+  String get tour_child_spend_title => 'Spending Balance 🛍️';
+
+  @override
+  String get tour_child_spend_body =>
+      'This is the money you can spend on things you love. Spend wisely! ';
+
+  @override
+  String get tour_child_save_title => 'Savings Balance 🏦';
+
+  @override
+  String get tour_child_save_body =>
+      'Here is your \"Secret Vault\"! The money you save for your big plans and future goals. 🚀';
+
+  @override
+  String get tour_child_keys_title => 'Achievement Keys 🔑';
+
+  @override
+  String get tour_child_keys_body =>
+      'The more chores you complete, the more keys you collect! You can exchange them for awesome rewards later. 🏆';
+
+  @override
+  String get tour_child_insights_title => 'Smart Tips 💡';
+
+  @override
+  String get tour_child_insights_body =>
+      'Here, Hassalah gives you tips and encouraging messages to show how much you are improving in saving. 👀';
+
+  @override
+  String get tour_child_chores_title => 'Your Daily Chores ✅';
+
+  @override
+  String get tour_child_chores_body =>
+      'Enter here to see the chores your parents assigned to you. Finish them and claim your reward! 💪';
+
+  @override
+  String get tour_child_goals_title => 'Your Goals & Dreams 🎯';
+
+  @override
+  String get tour_child_goals_body =>
+      'Want to buy a bike? A PlayStation? Set your goal here and track how close you are to reaching it. 🏁';
+
+  @override
+  String get tour_child_chart_title => 'Your Spending Map 📊';
+
+  @override
+  String get tour_child_chart_body =>
+      'An awesome chart showing where your money went (Food, Games, Shopping) so you know your budget well. 🔍';
+
+  @override
+  String get tour_child_nav_pay_title => 'Pay in a Flash 🤳';
+
+  @override
+  String get tour_child_nav_pay_body =>
+      'Easily scan the store\'s code and pay directly from your phone without cash! ⚡';
+
+  @override
+  String get tour_child_nav_request_title => 'Request Money 💸';
+
+  @override
+  String get tour_child_nav_request_body =>
+      'Out of pocket money? You can request extra funds from your parents here and write them a nice message. ';
+
+  @override
+  String get tour_child_nav_prizes_title => 'Rewards Store 🎁';
+
+  @override
+  String get tour_child_nav_prizes_body =>
+      'The favorite place! Here you find the rewards your parents set up. Exchange your keys and enjoy your prize. 🎉';
 }

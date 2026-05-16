@@ -900,7 +900,7 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (isWeekly)
+                 if (isWeekly)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,
@@ -913,6 +913,21 @@ class _ParentChoresScreenState extends State<ParentChoresScreen>
                         child: Text(
                           l10n.weeklyBadge,
                           style: const TextStyle(fontSize: 10, color: Colors.blue),
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          l10n.oneTimeOption, // تأكدي من استخدام متغير الترجمة المناسب لديكِ
+                          style: const TextStyle(fontSize: 10, color: Colors.purple),
                         ),
                       ),
                     const SizedBox(width: 8),

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/utils/check_auth.dart';
 import 'package:my_app/core/api_config.dart';
 import 'parent_transfer_screen.dart';
+import 'manage_kids_screen.dart';
 
 class ParentSelectChildScreen extends StatefulWidget {
   final int parentId;
@@ -131,6 +132,28 @@ class _ParentSelectChildScreenState extends State<ParentSelectChildScreen> {
     const hassalaGreen = Color(0xFF2EA49E);
 
     return Scaffold(
+      // --- أضف هذا الجزء هنا ---
+      floatingActionButton: FloatingActionButton(
+  onPressed: () async {
+    // الانتقال المباشر باستخدام MaterialPageRoute
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ManageKidsScreen(),
+        settings: RouteSettings(
+          arguments: {'parentId': widget.parentId},
+        ),
+      ),
+    );
+    
+    // هذا السطر سينتظر حتى تقوم بإغلاق صفحة الإضافة والعودة، ثم يحدّث القائمة فوراً
+    _fetchChildren(); 
+  },
+  backgroundColor: const Color(0xFF37C4BE),
+  child: const Icon(Icons.add, color: Colors.white, size: 28),
+),
+
+      // -------------------------
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
