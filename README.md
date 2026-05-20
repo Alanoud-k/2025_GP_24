@@ -1,31 +1,51 @@
  <h1 align="center">💰 حصّالة – Smart Family Wallet</h1>
 <p align="center"> <img src="https://github.com/user-attachments/assets/e29aa7ee-8350-4fdd-bc60-e377ef82f8ce" alt="Hassalah Screenshot" width="50%" /> </p>
-<h2>📖 Introduction</h2>
-Our project, حصّالة, is an intelligent FinTech application designed to enhance the financial experience of Saudi families and strengthen financial awareness among children and teenagers.
+<h2>📖 Overview</h2>
+Our project, حصّالة, is a family-oriented FinTech mobile application designed to help Saudi families teach children healthy financial habits through parental supervision, gamification, and AI-powered insights.
 
-The app provides a user-friendly digital environment that enables parents to manage allowances, monitor spending, organize tasks, and promote responsible financial behavior in an engaging and simple way.
+The app enables parents to manage allowances, monitor spending, assign chores, and guide responsible financial behavior, while helping children learn saving, goal-setting, and making thoughtful spending decisions supported by AI-driven analytics that provide accurate insights into their financial habits.
 
-It also empowers children to learn essential financial skills—such as saving, goal-setting, and making thoughtful spending decisions supported by AI-driven analytics that provide accurate insights into their financial habits.
-
-Our project aligns with the goals of Saudi Vision 2030 by promoting digital empowerment, improving financial literacy, and fostering a financially responsible new generation from an early age.
+Supporting Saudi Vision 2030 through financial literacy, digital empowerment, and fintech innovation.
 
 <h2>🚀 Features</h2>
 
-✨ Full parental control over all financial and behavioral aspects, including allowances, spending, goals, tasks, and approvals.
+<h3>👨‍👩‍👧 Parent Features</h3>
 
-✨ Smooth Parent → Child wallet transfers with real-time tracking.
+✨ Full parental control dashboard for managing allowances, spending limits, goals, tasks, and approvals.
 
-✨ Instant payment approval system, allowing parents to approve or reject a child’s money request immediately.
+✨ Real-time monitoring of children's financial activity and transaction history.
 
-✨ Smart rewards system with gamification, encouraging positive financial behavior and motivating children consistently.
+✨ Instant approval or rejection system for children’s money requests.
 
-✨ One time and weekly chore management, linking completed tasks to earnings and rewards.
+✨ Scheduled allowance management with automatic transfers.
 
-✨ Saving goals for children, enabling them to create personalized financial goals with clear and simple progress tracking.
+✨ Smart financial insights and spending analysis powered by AI.
 
-✨ AI-powered smart reports, providing parents with accurate insights into their children’s financial behavior and spending patterns.
+✨ Chore assignment and reward management to encourage responsibility and positive habits.
 
-✨ Comprehensive and categorized transaction history for children’s wallets, featuring intelligent auto-classification for an organized, easy-to-navigate view.
+<h3>🧒 Child Features</h3>
+
+✨ Personal digital wallet with separated saving and spending balances.
+
+✨ Saving goals with visual progress tracking to encourage better money management.
+
+✨ QR-based payment simulation for safe and interactive financial experiences.
+
+✨ Smart categorized transaction history for easier spending tracking and awareness.
+
+✨ Interactive and child-friendly financial learning experience.
+
+✨ Gamified rewards system using one-time and weekly chores, keys, and achievements to encourage positive financial behavior.
+
+<h2>🤖 AI-Powered Features</h2>
+
+✨ AI-powered transaction categorization that automatically classifies spending into categories such as food, shopping, entertainment, transportation, and more.
+
+✨ Smart financial insights generated from user spending behavior and transaction analysis.
+
+✨ Personalized spending summaries and recommendations for both parents and children.
+
+✨ Intelligent analytics that help families better understand financial habits and improve money management decisions.
 
 <h2>🛠️ Technology Stack</h2>
 
@@ -43,10 +63,35 @@ Our project aligns with the goals of Saudi Vision 2030 by promoting digital empo
 
 <h2>⚡ Launching Instructions</h2>
 
-Clone the repository
+<h3>1️⃣ Clone Repository</h3>
 
-Install dependencies
+```bash
+git clone <repository-link>
+```
 
-Connect to the Neon PostgreSQL database
+<h3>2️⃣ Install Dependencies</h3>
 
-Run the Flutter app
+```bash
+flutter pub get
+npm install
+```
+
+<h3>3️⃣ Run Backend</h3>
+
+```bash
+npm start
+```
+
+<h3>4️⃣ Run Flutter App</h3>
+
+```bash
+flutter run
+```
+
+
+<h2>👩‍💻 Team Members</h2>
+
+- Reema Aleshiwy
+- Alanoud Alshayea
+- Norah Alzumaya
+- Hissah Alotaibi
